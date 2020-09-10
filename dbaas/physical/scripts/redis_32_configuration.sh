@@ -1216,17 +1216,17 @@ EOF_DBAAS_CONFIGSENTINELFILE
 
 }
 
-configure_graylog()
+configure_log()
 {
     if [ $(grep -c CentOS /etc/redhat-release) -ne 0 ]
     then
         sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
+        sed -i "\$a*.*                    @{{ LOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
     else
         echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a*.*                    @{{ LOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
     fi
     /etc/init.d/rsyslog restart
 }
@@ -1241,7 +1241,7 @@ configure_graylog()
 
     create_config_http
     createconfigdbrsyslogfile
-    configure_graylog
+    configure_log
 
     {% if ONLY_SENTINEL %}
 

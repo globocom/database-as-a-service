@@ -431,9 +431,33 @@ class Database(BaseModel):
             credential.endpoint, stream, search_field, self.name
         )
 
+    def __kibana_url(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+
+        if self.databaseinfra.plan.is_pre_provisioned:
+            return ""
+
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.KIBANA_LOG
+        )
+        search_field = credential.get_parameter_by_name('search_field')
+        if not search_field:
+            return ""
+        time_query = "_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-6h,to:now))"
+        filter_query = "_a=(columns:!(_source),filters:!(),interval:auto,query:(language:lucene,query:'{}:{}'))".format(
+            search_field, self.name
+        )
+        return "{}/app/kibana#/discover?{}&{}".format(
+            credential.endpoint, time_query, filter_query
+        )
+
     def get_log_url(self):
         if Configuration.get_by_name_as_int('graylog_integration') == 1:
             return self.__graylog_url()
+        if Configuration.get_by_name_as_int('kibana_integration') == 1:
+            return self.__kibana_url()
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
