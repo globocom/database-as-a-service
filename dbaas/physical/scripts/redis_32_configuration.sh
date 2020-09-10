@@ -1216,14 +1216,6 @@ EOF_DBAAS_CONFIGSENTINELFILE
 
 }
 
-configure_log()
-{
-    echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a*.*                    @{{ LOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
-    /etc/init.d/rsyslog restart
-}
-
 {% if CONFIGFILE_ONLY %}
 
     {% if not ONLY_SENTINEL %}
@@ -1234,7 +1226,6 @@ configure_log()
 
     create_config_http
     createconfigdbrsyslogfile
-    configure_log
 
     {% if ONLY_SENTINEL %}
 

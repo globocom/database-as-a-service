@@ -156,20 +156,11 @@ EOF_DBAAS_CONFIGDBFILE
     die_if_error "Error setting mysql.conf"
 }
 
-configure_log()
-{
-    echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: DBAAS,MYSQL,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a*.*                    @{{ LOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
-    /etc/init.d/rsyslog restart
-}
-
 {% if CONFIGFILE_ONLY %}
     createconfigdbfile
 {% else %}
     createconfigdbfile
     createconfigdbrsyslogfile
-    configure_log
 {% endif %}
 
 exit 0
