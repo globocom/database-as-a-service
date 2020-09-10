@@ -99,6 +99,7 @@ class BaseTopology(object):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
@@ -107,6 +108,7 @@ class BaseTopology(object):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForMigrateEngine',
             'workflow.steps.util.plan.ConfigureForMigrateEngine',
+            'workflow.steps.util.plan.ConfigureLogMigrateEngine',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
@@ -321,6 +323,7 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
@@ -354,6 +357,7 @@ class BaseTopology(object):
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{

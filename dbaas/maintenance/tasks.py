@@ -154,6 +154,7 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationMigration',
             'workflow.steps.util.plan.ConfigureMigration',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )}, {
         'Preparing new environment': (

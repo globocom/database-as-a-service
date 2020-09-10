@@ -301,6 +301,10 @@ class ConfigureLog(Configure):
             self.run_script(self.plan.script.configure_log)
 
 
+class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
+    pass
+
+
 class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
     pass
 
