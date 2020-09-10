@@ -298,7 +298,7 @@ class ConfigureLog(Configure):
 
     def do(self):
         if self.is_valid:
-            self.run_script(self.plan.script.configure_log)
+            self.run_script(self.plan.script.configure_log_template)
 
 
 class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):

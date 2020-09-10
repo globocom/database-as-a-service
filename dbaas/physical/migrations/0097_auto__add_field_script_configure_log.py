@@ -12,6 +12,8 @@ class Migration(SchemaMigration):
         db.add_column(u'physical_script', 'configure_log',
                       self.gf('django.db.models.fields.CharField')(max_length=300, null=True, blank=True),
                       keep_default=False)
+        db.execute(
+            "update physical_script set configure_log = 'rsyslog_config.sh';COMMIT;")
 
 
     def backwards(self, orm):

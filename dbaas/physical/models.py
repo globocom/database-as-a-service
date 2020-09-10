@@ -351,6 +351,10 @@ class Script(BaseModel):
     def metric_collector_template(self):
         return self._get_content(self.metric_collector)
 
+    @property
+    def configure_log_template(self):
+        return self._get_content(self.configure_log)
+
 
 class ReplicationTopology(BaseModel):
 
