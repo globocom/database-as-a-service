@@ -64,7 +64,6 @@ class PlanStep(BaseInstanceStep):
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
 
         variables['configuration'] = self.get_configuration()
-        variables['LOG_ENDPOINT'] = self.get_log_endpoint()
 
         variables.update(self.get_variables_specifics())
         return variables
@@ -286,6 +285,20 @@ class InitializationForNewInfra(Initialization, PlanStepNewInfra):
 
 class ConfigureForNewInfra(Configure, PlanStepNewInfra):
     pass
+
+
+class ConfigureLog(Configure):
+
+    def __unicode__(self):
+        return "Configuring Log..."
+
+    @property
+    def extra_variables(self):
+        return {'LOG_ENDPOINT': self.get_log_endpoint()}
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.configure_log)
 
 
 class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
