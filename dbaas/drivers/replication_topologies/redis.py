@@ -79,7 +79,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -126,7 +126,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -411,7 +411,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
@@ -463,7 +463,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
@@ -589,7 +589,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',

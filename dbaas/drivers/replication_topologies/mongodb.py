@@ -221,7 +221,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -376,7 +376,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -645,7 +645,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -710,7 +710,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',

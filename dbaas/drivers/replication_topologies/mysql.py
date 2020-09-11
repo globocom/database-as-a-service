@@ -82,7 +82,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -144,7 +144,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -189,7 +189,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.mysql.SetFilePermission',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
@@ -495,7 +495,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -598,7 +598,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -1083,7 +1083,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
-            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.plan.ConfigureLogForNewInfra',
             'workflow.steps.util.mysql.SetFilePermission',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
@@ -1142,7 +1142,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
-            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.plan.ConfigureLogForNewInfra',
             'workflow.steps.util.mysql.SetServeridMigrate',
             'workflow.steps.util.mysql.SetFilePermission',
             'workflow.steps.util.mysql.DisableReplication',
@@ -1303,7 +1303,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -1396,7 +1396,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -1463,7 +1463,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
-            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.plan.ConfigureLogForNewInfra',
             'workflow.steps.util.mysql.SetFilePermission',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
@@ -1538,7 +1538,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
-            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.plan.ConfigureLogForNewInfra',
             'workflow.steps.util.mysql.SetServeridMigrate',
             'workflow.steps.util.mysql.SetFilePermission',
             'workflow.steps.util.mysql.DisableReplication',
