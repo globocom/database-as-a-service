@@ -8,7 +8,6 @@ from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
-from drivers.errors import ReplicationNotRunningError
 from workflow.steps.util.ssl import InfraSSLBaseName
 
 
@@ -214,7 +213,9 @@ class StartRsyslog(DatabaseStep):
         return_code, output = self.run_script(script)
         if return_code != 0:
             raise EnvironmentError(
-                'Could not {} rsyslog {}: {}'.format(action, return_code, output)
+                'Could not {} rsyslog {}: {}'.format(
+                    action, return_code, output
+                )
             )
 
     def _start(self):
@@ -638,6 +639,7 @@ class SetSlavesMigration(SetSlave):
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
 
+
 class StartMonit(DatabaseStep):
     def __unicode__(self):
         return "Starting monit..."
@@ -801,8 +803,8 @@ class checkAndFixMySQLReplication(DatabaseStep):
         master_instance = self.driver.get_master_instance()
         if not master_instance:
             raise EnvironmentError(
-                "There is no master instance. Check FoxHA and database" \
-                " read-write instances."
+                ("There is no master instance. Check FoxHA and database"
+                 " read-write instances.")
             )
         return master_instance
 
@@ -865,7 +867,7 @@ class checkAndFixMySQLReplicationRollback(checkAndFixMySQLReplication):
         pass
 
     def undo(self):
-        return super(checkAndFixReplicationRollback, self).do()
+        return super(checkAndFixMySQLReplicationRollback, self).do()
 
 
 class StopNonDatabaseInstance(Stop):
@@ -878,6 +880,7 @@ class StartNonDatabaseInstance(Start):
     @property
     def is_valid(self):
         return not self.instance.is_database
+
 
 class StartNonDatabaseInstanceRollback(Start):
     @property
