@@ -92,7 +92,7 @@ def create_database(
 
     if steps_for_instances(
         steps, instances, task, database_create.update_step,
-        since_step=since_step
+        since_step=since_step, step_manager=database_create
     ):
         database_create.set_success()
         task.set_status_success('Database created')
