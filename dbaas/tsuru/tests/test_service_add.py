@@ -151,7 +151,7 @@ class OthersValidatetionsTestCase(BaseValidationTestCase):
         )
 
     @patch('notification.tasks.TaskRegister.create_task', new=MagicMock())
-    @patch('notification.tasks.create_database')
+    @patch('notification.tasks.TaskRegister.database_create')
     def test_call_database_create(self, create_database_mock):
         resp = self.do_request()
 
