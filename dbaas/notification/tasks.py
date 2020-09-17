@@ -604,14 +604,14 @@ def send_mail_24hours_before_auto_task(self):
         request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
     try:
-        scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
+        scheduled_tasks = maintenance_models.TaskSchedule.objects.filter(
             status=maintenance_models.TaskSchedule.SCHEDULED,
             scheduled_for__day=one_day_later.day,
             scheduled_for__month=one_day_later.month,
             scheduled_for__year=one_day_later.year,
             scheduled_for__hour=one_day_later.hour,
         )
-        for scheduled_task in scheudled_tasks:
+        for scheduled_task in scheduled_tasks:
             task.update_details(
                 "Sendind mail for found for {} at {}...".format(
                     scheduled_task.database,
@@ -656,12 +656,12 @@ def check_ssl_expire_at(self):
             task.update_details(
                 "Checking database {}...".format(database), persist=True
             )
-            scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
+            scheduled_tasks = maintenance_models.TaskSchedule.objects.filter(
                 status=maintenance_models.TaskSchedule.SCHEDULED,
                 scheduled_for__lte=one_month_later,
                 database=database
             )
-            if scheudled_tasks:
+            if scheduled_tasks:
                 task.update_details("Already scheduled!\n", persist=True)
             else:
                 task_schedule = maintenance_models.TaskSchedule.objects.create(
