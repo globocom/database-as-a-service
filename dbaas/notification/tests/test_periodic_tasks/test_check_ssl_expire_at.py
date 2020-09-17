@@ -69,13 +69,6 @@ class CheckSslExpireAt(TestCase):
         check_ssl_expire_at()
         self.assertFalse(filter_mock.called)
 
-    @patch('notification.tasks.Configuration.get_by_name',
-           new=MagicMock(return_value='other_env'))
-    @patch('notification.tasks.maintenance_models.TaskSchedule.objects.filter')
-    def test_dont_find_infras_if_env_configured(self, filter_mock):
-        check_ssl_expire_at()
-        self.assertFalse(filter_mock.called)
-
     @patch('notification.tasks.maintenance_models.TaskSchedule.objects.create')
     @patch('maintenance.models.schedule_task_notification', new=MagicMock())
     def test_already_have_task_scheduled(self, create_mock):
