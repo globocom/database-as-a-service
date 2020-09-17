@@ -645,15 +645,10 @@ def check_ssl_expire_at(self):
         request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
     one_month_later = today + timedelta(days=30)
-    check_ssl_envs = Configuration.get_by_name('check_ssl_envs')
-    extra_filters = {}
-    if check_ssl_envs:
-        extra_filters = {'environment__name__in': check_ssl_envs.split(',')}
     try:
         infras = DatabaseInfra.objects.filter(
             ssl_configured=True,
-            instances__hostname__ssl_expire_at__lte=one_month_later,
-            **extra_filters
+            instances__hostname__ssl_expire_at__lte=one_month_later
         ).distinct()
         for infra in infras:
             database = infra.databases.first()
@@ -662,8 +657,7 @@ def check_ssl_expire_at(self):
                 "Checking database {}...".format(database), persist=True
             )
             scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
-                Q(status=maintenance_models.TaskSchedule.SCHEDULED)
-                | Q(status=maintenance_models.TaskSchedule.ERROR),
+                status=maintenance_models.TaskSchedule.SCHEDULED,
                 scheduled_for__lte=one_month_later,
                 database=database
             )
