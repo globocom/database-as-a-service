@@ -1516,23 +1516,30 @@ class Pool(BaseModel):
     name = models.CharField(
         verbose_name=_("Pool Name"), max_length=200)
 
-    environment = models.ForeignKey(
-        'Environment', related_name='pools'
-    )
+    cluster_name = models.CharField(
+        verbose_name=_("Cluster name"), max_length=255)
 
-    rancher_endpoint = models.CharField(
-        verbose_name=_("Rancher EndPoint"), max_length=255)
+    cluster_id = models.CharField(
+        verbose_name=_("Cluster ID"), max_length=255)
 
     cluster_endpoint = models.CharField(
         verbose_name=_("Cluster EndPoint"), max_length=255,
         blank=True, null=False
     )
 
-    cluster_id = models.CharField(
-        verbose_name=_("Cluster ID"), max_length=255)
+    rancher_endpoint = models.CharField(
+        verbose_name=_("Rancher EndPoint"), max_length=255)
 
-    token = EncryptedCharField(
-        verbose_name=_("Token"), max_length=255, blank=True, null=False
+    rancher_token = EncryptedCharField(
+        verbose_name=_("Rancher Token"), max_length=255, blank=True, null=False
+    )
+
+    dbaas_token = EncryptedCharField(
+        verbose_name=_("DBaaS Token"), max_length=255, blank=True, null=False
+    )
+
+    environment = models.ForeignKey(
+        'Environment', related_name='pools'
     )
 
     teams = models.ManyToManyField('account.Team')

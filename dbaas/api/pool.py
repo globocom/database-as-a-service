@@ -36,13 +36,13 @@ class PoolAPI(viewsets.ModelViewSet):
 
     def validate_required_fields(self, data):
         required_fields = (
-            "name",
-            "rancher_endpoint",
-            "cluster_endpoint",
+            "cluster_name",
             "cluster_id",
-            "token",
+            "cluster_endpoint",
+            "rancher_endpoint",
+            "rancher_token",
+            "dbaas_token",
             "teams",
-            "team_token"
         )
         for field in required_fields:
             if not data.get(field, ''):
@@ -79,14 +79,23 @@ class PoolAPI(viewsets.ModelViewSet):
         teams = self.validate_and_get_teams(team_names)
         #teams = Team.objects.filter(name__in=teams_names)
 
-        team_token = data.pop('team_token')
-        # TODO: Validade team token
+        dbaas_token = data.get('dbaas_token')
+        # TODO: Validade dbaas_token
+
+        data['name'] = "{}:{}".format(
+            data.get('cluster_name'),
+            data.get('cluster_id')
+        )
 
         headers = self.get_success_headers(data)
 
+        print data
+
         pool = self.model.objects.create(**data)
+
         for team in teams:
             pool.teams.add(team)
+
         return Response(
             {"pool": pool.id}, status=status.HTTP_201_CREATED,
             headers=headers
