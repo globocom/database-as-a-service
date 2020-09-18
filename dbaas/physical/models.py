@@ -1520,8 +1520,13 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
-    endpoint = models.CharField(
-        verbose_name=_("EndPoint"), max_length=255)
+    rancher_endpoint = models.CharField(
+        verbose_name=_("Rancher EndPoint"), max_length=255)
+
+    cluster_endpoint = models.CharField(
+        verbose_name=_("Cluster EndPoint"), max_length=255,
+        blank=True, null=False
+    )
 
     cluster_id = models.CharField(
         verbose_name=_("Cluster ID"), max_length=255)
