@@ -562,7 +562,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
-            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.StartCheckOnlyOsProcess',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.metric_collector.RestartTelegraf',
         )

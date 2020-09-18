@@ -106,7 +106,7 @@ class DatabaseStep(BaseInstanceStep):
     def is_valid(self):
         return self.host
 
-    def is_os_process_running(self, process_name):
+    def is_os_process_running(self, process_name, wait_stop=True):
         script = "ps -ef | grep {} | grep -v grep | wc -l".format(
             process_name
         )
@@ -120,6 +120,8 @@ class DatabaseStep(BaseInstanceStep):
             if processes == 0:
                 return False
             LOG.info("{} is running".format(process_name))
+            if not wait_stop:
+                return True
             sleep(CHECK_SECONDS)
 
         return True
@@ -201,6 +203,20 @@ class Start(DatabaseStep):
 
     def undo(self):
         self.undo_klass(self.instance).do()
+
+class StartCheckOnlyOsProcess(Start):
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return_code, output = self.start_database()
+        if return_code != 0:
+            process_name = self.driver.get_database_process_name()
+            if not self.is_os_process_running(process_name, False):
+                raise EnvironmentError(
+                    'Could not start database {}: {}'.format(
+                        return_code, output)
+                )
 
 
 class StartRsyslog(DatabaseStep):

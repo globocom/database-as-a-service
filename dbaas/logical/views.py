@@ -1500,10 +1500,14 @@ class UpgradeDatabaseRetryView(View):
 class AddInstancesDatabaseRetryView(View):
 
     def get(self, request, *args, **kwargs):
-        service_obj = services.AddReadOnlyInstanceService(
-            request, self.database, retry=True
-        )
-        service_obj.execute()
+        try:
+            service_obj = services.AddReadOnlyInstanceService(
+                request, self.database, retry=True
+            )
+            service_obj.execute()
+        except Exception as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
+
         return HttpResponseRedirect(
             reverse(
                 'admin:logical_database_hosts',
