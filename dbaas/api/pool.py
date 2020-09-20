@@ -67,6 +67,13 @@ class PoolAPI(viewsets.ModelViewSet):
             teams.append(team)
         return teams
 
+    def validade_toke(self, teams, token):
+        for team in teams:
+            if token == team.token:
+                return
+        error = 'Token {} is not valid.'.format(token)
+        raise ValidationError(error)
+
     def create(self, request):
         serializer = self.get_serializer(
             data=request.DATA, files=request.FILES)
@@ -77,10 +84,9 @@ class PoolAPI(viewsets.ModelViewSet):
 
         team_names = data.pop('teams')
         teams = self.validate_and_get_teams(team_names)
-        #teams = Team.objects.filter(name__in=teams_names)
 
         dbaas_token = data.get('dbaas_token')
-        # TODO: Validade dbaas_token
+        self.validade_toke(teams, dbaas_token)
 
         data['name'] = "{}:{}".format(
             data.get('cluster_name'),
