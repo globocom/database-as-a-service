@@ -1514,7 +1514,7 @@ class Cloud(BaseModel):
 
 class Pool(BaseModel):
     name = models.CharField(
-        verbose_name=_("Pool Name"), max_length=200)
+        verbose_name=_("Pool Name"), max_length=200, unique=True)
 
     cluster_name = models.CharField(
         verbose_name=_("Cluster name"), max_length=255)
