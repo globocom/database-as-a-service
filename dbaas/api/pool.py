@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 from rest_framework import viewsets, serializers, status, filters
 from rest_framework.response import Response
-
+from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Environment, Pool
 from account.models import Team
 from api.team import TeamSerializer
@@ -88,20 +88,26 @@ class PoolAPI(viewsets.ModelViewSet):
         dbaas_token = data.get('dbaas_token')
         self.validade_toke(teams, dbaas_token)
 
-        data['name'] = "{}:{}".format(
+        pool_name = "{}:{}".format(
             data.get('cluster_name'),
             data.get('cluster_id')
         )
+        data['name'] = pool_name
 
-        headers = self.get_success_headers(data)
+        pool, created = self.model.objects.get_or_create(
+            name=pool_name,
+            defaults=data
+        )
+        if not created:
+            for attr, value in data.items():
+                setattr(pool, attr, value)
+            pool.save()
 
-        print data
-
-        pool = self.model.objects.create(**data)
-
+        pool.teams.clear()
         for team in teams:
             pool.teams.add(team)
 
+        headers = self.get_success_headers(data)
         return Response(
             {"pool": pool.id}, status=status.HTTP_201_CREATED,
             headers=headers
