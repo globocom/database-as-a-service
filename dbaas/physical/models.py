@@ -1547,11 +1547,12 @@ class Pool(BaseModel):
     def __unicode__(self):
         return '{}'.format(self.name)
 
+    @property
     def as_headers(self):
         return {
             "K8S-Token": self.rancher_token,
             "K8S-Namespace": "default",
-            "K8S-Endpoint": self.rancher_endpoint,
+            "K8S-Endpoint": self.cluster_endpoint,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }
