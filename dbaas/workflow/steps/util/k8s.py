@@ -73,10 +73,6 @@ class BaseK8SStep(BaseInstanceStep):
         )
 
     @property
-    def volume_claim_name(self):
-        return 'pvc-{}'.format(self.hostname())
-
-    @property
     def statefulset_name(self):
         return self.hostname().split('.')[0]
 
@@ -161,7 +157,6 @@ class NewVolumeK8S(BaseK8SStep):
         self.provider.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
-            volume_name=self.volume_claim_name,
         )
 
     def undo(self):
