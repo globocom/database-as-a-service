@@ -10,7 +10,7 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
-from physical.models import Vip
+from physical.models import Pool, Vip
 from util import check_ssh
 
 
@@ -163,6 +163,11 @@ class BaseInstanceStep(object):
         task = manager.last()
         if task and task.is_running:
             return task
+
+    @property
+    def pool(self):
+        if self.create and self.create.pool:
+            return Pool.objects.get(name=self.create.pool, environment=self.create.environment)
 
     def _get_vip(self, vip_identifier, env):
         client = VipProviderClient(env)

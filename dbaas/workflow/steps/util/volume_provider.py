@@ -89,6 +89,12 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
+    @property
+    def headers(self):
+        if self.pool:
+            return self.pool.as_headers
+        return {}
+
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None, is_active=True):
         url = self.base_url + "volume/new"
         data = {
@@ -98,7 +104,7 @@ class VolumeProviderBase(BaseInstanceStep):
             "snapshot_id": snapshot_id,
         }
 
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
 
@@ -112,14 +118,14 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def destroy_volume(self, volume):
         url = "{}volume/{}".format(self.base_url, volume.identifier)
-        response = delete(url)
+        response = delete(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         volume.delete()
 
     def get_volume(self, volume):
         url = "{}volume/{}".format(self.base_url, volume.identifier)
-        response = get(url)
+        response = get(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
@@ -150,7 +156,7 @@ class VolumeProviderBase(BaseInstanceStep):
             "db_name": self.database.name,
             "team_name": self.database.team.name
         }
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
 
         if not response.ok:
             raise IndexError(response.content, response)
@@ -162,7 +168,7 @@ class VolumeProviderBase(BaseInstanceStep):
             snapshot.snapshopt_id,
             force
         )
-        response = delete(url)
+        response = delete(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['removed']
@@ -171,7 +177,7 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}snapshot/{}/restore".format(
             self.base_url, snapshot.snapshopt_id
         )
-        response = post(url)
+        response = post(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
@@ -183,7 +189,7 @@ class VolumeProviderBase(BaseInstanceStep):
         }
         if access_type:
             data['access_type'] = access_type
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
@@ -192,13 +198,13 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}snapshot/{}/state".format(
             self.base_url, snapshot.snapshopt_id
         )
-        response = get(url)
+        response = get(url, headers=self.headers)
         if not response.ok:
             raise VolumeProviderGetSnapshotState(response.content, response)
         return response.json()['state']
 
     def _get_command(self, url, payload, exception_class):
-        response = get(url, json=payload)
+        response = get(url, json=payload, headers=self.headers)
         if not response.ok:
             raise exception_class(response.content, response)
         return response.json()['command']
@@ -241,7 +247,7 @@ class VolumeProviderBase(BaseInstanceStep):
             volume.identifier,
             host.address
         )
-        response = delete(url)
+        response = delete(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
@@ -252,7 +258,7 @@ class VolumeProviderBase(BaseInstanceStep):
             'with_fstab': fstab,
             'data_directory': data_directory
         }
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['command']
@@ -267,7 +273,7 @@ class VolumeProviderBase(BaseInstanceStep):
             'dest_dir': dest_dir,
             'snap_dir': snap_dir
         }
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['command']
@@ -283,7 +289,7 @@ class VolumeProviderBase(BaseInstanceStep):
             'target_ip': dest_ip,
             'target_dir': dest_dir
         }
-        response = get(url, json=data)
+        response = get(url, json=data, headers=self.headers)
         if not response.ok:
             raise VolumeProviderScpFromSnapshotCommand(
                 response.content,
@@ -296,14 +302,14 @@ class VolumeProviderBase(BaseInstanceStep):
         data = {
             'data_directory': data_directory
         }
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['command']
 
     def clean_up(self, volume):
         url = "{}commands/{}/cleanup".format(self.base_url, volume.identifier)
-        response = get(url)
+        response = get(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         command = response.json()['command']
@@ -1077,7 +1083,7 @@ class ResizeVolume(VolumeProviderBase):
             "new_size_kb": self.infra.disk_offering.size_kb,
         }
 
-        response = post(url, json=data)
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
 

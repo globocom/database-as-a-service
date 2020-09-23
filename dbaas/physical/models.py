@@ -1545,7 +1545,16 @@ class Pool(BaseModel):
     teams = models.ManyToManyField('account.Team')
 
     def __unicode__(self):
-        return '%s' % (self.name)
+        return '{}'.format(self.name)
+
+    def as_headers(self):
+        return {
+            "K8S-Token": self.rancher_token,
+            "K8S-Namespace": "default",
+            "K8S-Endpoint": self.rancher_endpoint,
+            "K8S-Storage-Type": "",
+            "K8S-Verify-Ssl": "false",
+        }
 
 
 ##########################################################################
