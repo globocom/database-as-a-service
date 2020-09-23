@@ -73,10 +73,6 @@ class BaseK8SStep(BaseInstanceStep):
         )
 
     @property
-    def volume_claim_name(self):
-        return 'pvc-{}'.format(self.hostname())
-
-    @property
     def statefulset_name(self):
         return self.hostname().split('.')[0]
 
@@ -148,10 +144,6 @@ class NewVolumeK8S(BaseK8SStep):
                 and self.host_migrate == self.step_manager)
 
     def _remove_volume(self, volume):
-        # self.client.delete_namespaced_persistent_volume_claim(
-        #     self.volume_claim_name, self.namespace
-        # )
-        # volume.delete()
         self.provider.destroy_volume(volume)
 
     def do(self):
@@ -161,16 +153,13 @@ class NewVolumeK8S(BaseK8SStep):
         self.provider.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
-            volume_name=self.volume_claim_name,
         )
 
     def undo(self):
         if not self.instance.is_database:
             return
-        volume = Volume.objects.get(
-            identifier=self.volume_claim_name
-        )
-        self._remove_volume(volume)
+        for volume in self.host.volumes.all():
+            self._remove_volume(volume)
 
 
 class NewServiceK8S(BaseK8SStep):
@@ -251,7 +240,7 @@ class NewPodK8S(BaseK8SStep):
             'MEMORY': 200,
             'CPU_LIMIT': 200,
             'MEMORY_LIMIT': 400,
-            'VOLUME_CLAIM_NAME': self.volume_claim_name,
+            'VOLUME_CLAIM_NAME': self.latest_disk.identifier,
             'CONFIG_MAP_NAME': self.config_map_name,
             'CONFIG_FILE_NAME': self.database_config_name,
             'DATABASE_LOG_DIR': self.database_log_dir,
