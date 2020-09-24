@@ -1216,21 +1216,6 @@ EOF_DBAAS_CONFIGSENTINELFILE
 
 }
 
-configure_graylog()
-{
-    if [ $(grep -c CentOS /etc/redhat-release) -ne 0 ]
-    then
-        sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
-    else
-        echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
-    fi
-    /etc/init.d/rsyslog restart
-}
-
 {% if CONFIGFILE_ONLY %}
 
     {% if not ONLY_SENTINEL %}
@@ -1241,7 +1226,6 @@ configure_graylog()
 
     create_config_http
     createconfigdbrsyslogfile
-    configure_graylog
 
     {% if ONLY_SENTINEL %}
 

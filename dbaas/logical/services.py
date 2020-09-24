@@ -59,7 +59,8 @@ class AddReadOnlyInstanceService:
 
     def check_database_status(self):
         try:
-            check_is_database_dead(self.database.id, 'Add read-only instances')
+            if not self.retry:
+                check_is_database_dead(self.database.id, 'Add read-only instances')
             check_is_database_enabled(
                 self.database.id,
                 'Add read-only instances',

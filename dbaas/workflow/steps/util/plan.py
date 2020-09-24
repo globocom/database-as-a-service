@@ -5,6 +5,7 @@ from dbaas_credentials.models import CredentialType
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
 from physical.models import Offering, Volume
+from system.models import Configuration
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -63,16 +64,23 @@ class PlanStep(BaseInstanceStep):
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
 
         variables['configuration'] = self.get_configuration()
-        variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
 
         variables.update(self.get_variables_specifics())
         return variables
 
-    def get_graylog_config(self):
-        credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.GRAYLOG
-        )
+    def get_log_endpoint(self):
+        if Configuration.get_by_name_as_int('graylog_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+        elif Configuration.get_by_name_as_int('kibana_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.KIBANA_LOG
+            )
+        else:
+            return ""
         return credential.get_parameter_by_name('endpoint_log')
 
     @property
@@ -276,6 +284,28 @@ class InitializationForNewInfra(Initialization, PlanStepNewInfra):
 
 
 class ConfigureForNewInfra(Configure, PlanStepNewInfra):
+    pass
+
+
+class ConfigureLog(Configure):
+
+    def __unicode__(self):
+        return "Configuring Log..."
+
+    @property
+    def extra_variables(self):
+        return {'LOG_ENDPOINT': self.get_log_endpoint()}
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.configure_log_template)
+
+
+class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
+    pass
+
+
+class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
     pass
 
 

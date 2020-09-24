@@ -107,25 +107,12 @@ EOF_DBAAS
 
 }
 
-    if [ $(grep -c CentOS /etc/redhat-release) -ne 0 ]
-    then
-        sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,MONGODB,{{DATABASENAME}}\"" /etc/rsyslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
-    else
-        echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,MONGODB,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
-    fi
-    /etc/init.d/rsyslog restart
-
 
 {% if CONFIGFILE_ONLY %}
     createconfigdbfile
 {% else %}
     createconfigdbfile
     createmongodbkeyfile
-    configure_graylog
 {% endif %}
 
 exit 0

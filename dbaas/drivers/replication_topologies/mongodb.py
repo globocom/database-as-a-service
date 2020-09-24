@@ -157,6 +157,7 @@ class MongoDBSingle(BaseMongoDB):
         return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',) + \
             super(MongoDBSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
             ('workflow.steps.mongodb.upgrade.database'
@@ -220,6 +221,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -261,6 +263,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -373,6 +376,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -417,6 +421,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
@@ -522,6 +527,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
@@ -554,8 +560,9 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
-            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.StartCheckOnlyOsProcess',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.metric_collector.RestartTelegraf',
         )
@@ -571,6 +578,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.plan.ConfigureForResizeLog',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.StartForResizeLog',
                 'workflow.steps.util.database.CheckIsUpForResizeLog',
@@ -637,6 +645,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -701,6 +710,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -750,6 +760,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
@@ -836,6 +847,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -966,6 +978,7 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
@@ -992,5 +1005,6 @@ class MongoDBSingle42(MongoDBSingle):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
