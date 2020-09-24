@@ -6,7 +6,7 @@ from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
-from base import BaseInstanceStep, BaseProvider
+from base import BaseInstanceStep
 
 
 class VolumeProviderException(Exception):
@@ -53,7 +53,7 @@ class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
 
-class VolumeProviderBase(BaseInstanceStep, BaseProvider):
+class VolumeProviderBase(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
