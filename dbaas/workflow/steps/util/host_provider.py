@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
 from util import get_credentials_for, exec_remote_command_host
-from base import BaseInstanceStep
+from base import BaseInstanceStep, BaseProvider
 from vm import WaitingBeReady
 from workflow.steps.util.vm import HostStatus
 
@@ -51,7 +51,7 @@ class HostProviderInfoException(HostProviderException):
     pass
 
 
-class Provider(object):
+class Provider(BaseProvider):
 
     def __init__(self, instance, environment):
         self.instance = instance
@@ -104,6 +104,7 @@ class Provider(object):
     def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
+        kw['headers'] = self.headers
         return action(url, **kw)
 
     def start(self):

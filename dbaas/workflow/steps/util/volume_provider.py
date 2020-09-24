@@ -6,7 +6,7 @@ from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
-from base import BaseInstanceStep
+from base import BaseInstanceStep, BaseProvider
 
 
 class VolumeProviderException(Exception):
@@ -53,7 +53,7 @@ class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
 
-class VolumeProviderBase(BaseInstanceStep):
+class VolumeProviderBase(BaseInstanceStep, BaseProvider):
 
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
@@ -88,12 +88,6 @@ class VolumeProviderBase(BaseInstanceStep):
         return "{}/{}/{}/".format(
             self.credential.endpoint, self.provider, self.environment
         )
-
-    @property
-    def headers(self):
-        if self.pool:
-            return self.pool.as_headers
-        return {}
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None, is_active=True):
         url = self.base_url + "volume/new"

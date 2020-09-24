@@ -553,3 +553,12 @@ class ACLFromHellClient(object):
                         rule_id, host)
                     LOG.error(msg)
         return None
+
+
+class BaseProvider(object):
+
+    @property
+    def headers(self):
+        if self.pool:
+            return self.pool.as_headers
+        return {}
