@@ -3,7 +3,7 @@ import logging
 
 import yaml
 from django.template.loader import render_to_string
-from kubernetes import client, config
+from kubernetes.client import Configuration, ApiClient, CoreV1Api
 from dbaas_credentials.models import CredentialType
 
 from base import BaseInstanceStep
@@ -98,13 +98,12 @@ class BaseK8SStep(BaseInstanceStep):
 
     @property
     def client(self):
-        from kubernetes.client import Configuration, ApiClient, AppsV1beta1Api
         configuration = Configuration()
         configuration.api_key['authorization'] = "Bearer {}".format(self.headers['K8S-Token'])
         configuration.host = self.headers['K8S-Endpoint']
         configuration.verify_ssl = self._verify_ssl
         api_client = ApiClient(configuration)
-        return AppsV1beta1Api(api_client)
+        return CoreV1Api(api_client)
 
     @property
     def _verify_ssl(self):
