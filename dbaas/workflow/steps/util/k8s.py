@@ -449,15 +449,24 @@ class NewConfigMapK8S(BaseK8SStep):
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
 
         variables['configuration'] = self.get_configuration()
-        variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
+        variables['LOG_ENDPOINT'] = self.get_log_endpoint()
 
         return variables
 
-    def get_graylog_config(self):
-        credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.GRAYLOG
-        )
+    def get_log_endpoint(self):
+        from system.models import Configuration
+        if Configuration.get_by_name_as_int('graylog_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+        elif Configuration.get_by_name_as_int('kibana_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.KIBANA_LOG
+            )
+        else:
+            return ""
         return credential.get_parameter_by_name('endpoint_log')
 
     @property
