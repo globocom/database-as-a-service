@@ -51,7 +51,7 @@ class HostProviderInfoException(HostProviderException):
     pass
 
 
-class Provider(object):
+class Provider(BaseInstanceStep):
 
     def __init__(self, instance, environment):
         self.instance = instance
@@ -104,6 +104,7 @@ class Provider(object):
     def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
+        kw['headers'] = self.headers
         return action(url, **kw)
 
     def start(self):

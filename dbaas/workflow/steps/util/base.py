@@ -170,6 +170,12 @@ class BaseInstanceStep(object):
             return Pool.objects.get(name=self.create.pool, environment=self.create.environment)
         return Pool.objects.last()
 
+    @property
+    def headers(self):
+        if self.pool:
+            return self.pool.as_headers
+        return {}
+
     def _get_vip(self, vip_identifier, env):
         client = VipProviderClient(env)
         return client.get_vip(vip_identifier)
@@ -554,3 +560,4 @@ class ACLFromHellClient(object):
                         rule_id, host)
                     LOG.error(msg)
         return None
+
