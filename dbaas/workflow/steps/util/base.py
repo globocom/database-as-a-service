@@ -168,6 +168,7 @@ class BaseInstanceStep(object):
     def pool(self):
         if self.create and self.create.pool:
             return Pool.objects.get(name=self.create.pool, environment=self.create.environment)
+        return Pool.objects.last()
 
     def _get_vip(self, vip_identifier, env):
         client = VipProviderClient(env)
