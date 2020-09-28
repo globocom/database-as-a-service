@@ -7,7 +7,8 @@ from django.contrib.admin import SimpleListFilter, helpers
 from account.templatetags import team as team_templatetag
 import logging
 from django.core.exceptions import PermissionDenied
-from django.contrib.admin.options import csrf_protect_m, IncorrectLookupParameters
+from django.contrib.admin.options import csrf_protect_m, \
+    IncorrectLookupParameters
 from django.contrib.auth import get_permission_codename
 from django.template.response import SimpleTemplateResponse, TemplateResponse
 from django.http import HttpResponseRedirect
@@ -46,7 +47,7 @@ class TeamAdmin(admin.DjangoServicesAdmin):
     service_class = TeamService
     list_display = ["name", "role", "database_limit", "email", "organization"]
     filter_horizontal = ['users']
-    list_filter = (RoleListFilter, "organization", )
+    list_filter = (RoleListFilter, "organization")
     search_fields = ('name',)
 
     def database_limit(self, team):
@@ -71,6 +72,13 @@ class TeamAdmin(admin.DjangoServicesAdmin):
             'view': self.has_view_permission(request),
         }
 
+    def queryset(self, request):
+        is_dba = request.user.team_set.filter(role__name="role_dba").exists()
+        if is_dba:
+            return super(TeamAdmin, self).queryset(request)
+        else:
+            return request.user.team_set.all()
+
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
         """
@@ -79,12 +87,14 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         from django.contrib.admin.views.main import ERROR_FLAG
         opts = self.model._meta
         app_label = opts.app_label
-        if not self.has_view_permission(request, None):
+        if not self.has_view_permission(request, None) and not self.has_change_permission(request, None):
             raise PermissionDenied
 
         list_display = self.get_list_display(request)
         if self.has_change_permission(request, None):
-            list_display_links = self.get_list_display_links(request, list_display)
+            list_display_links = self.get_list_display_links(
+                request, list_display
+            )
         else:
             list_display_links = (None,)
         list_filter = self.get_list_filter(request)
@@ -213,7 +223,9 @@ class TeamAdmin(admin.DjangoServicesAdmin):
             action_form = None
 
         selection_note_all = ungettext('%(total_count)s selected',
-            'All %(total_count)s selected', cl.result_count)
+                                       'All %(total_count)s selected',
+                                       cl.result_count)
+
 
         context = {
             'module_name': force_text(opts.verbose_name_plural),
@@ -231,7 +243,6 @@ class TeamAdmin(admin.DjangoServicesAdmin):
             'actions_on_bottom': self.actions_on_bottom,
             'actions_selection_counter': self.actions_selection_counter,
             'preserved_filters': self.get_preserved_filters(request),
-            'has_view_permission': self.has_view_permission(request),
         }
         context.update(extra_context or {})
 
