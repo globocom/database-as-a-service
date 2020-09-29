@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static system_config %}
+{% load i18n admin_static system_config team %}
 
 {% block extrastyle %}
     {{ block.super }}
@@ -99,7 +99,10 @@
                                     {% else %}
                                         <td class="model-name"><a href="{{ model.admin_url }}">{{ model.name }}</a></td>
                                     {% endif %}
-
+                                
+                                {% elif model.perms.view %}
+                                    <td class="model-name"><a href="{% model_view_url app.app_label app.name model.object_name%}">{{ model.name }}</a></td>
+                                
                                 {% else %}
                                     <td class="model-name">{{ model.name }}</td>
                                 {% endif %}
