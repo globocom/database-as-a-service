@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ SERVICE_NAME }}
+spec:
+  type: NodePort
+  selector:
+    name: {{ LABEL_NAME }}
+  ports:
+  - port: {{ INSTANCE_PORT }}
+    targetPort: {{ INSTANCE_PORT }}

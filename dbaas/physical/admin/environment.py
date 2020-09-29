@@ -15,6 +15,6 @@ class EnvironmentDBMonitorAttrInline(admin.StackedInline):
 
 class EnvironmentAdmin(admin.ModelAdmin):
     search_fields = ("name",)
-    list_display = ("name",)
+    list_display = ("name", "min_of_zones", "stage", "cloud", "provisioner")
     save_on_top = True
     inlines = [EnvironmentDBMonitorAttrInline]

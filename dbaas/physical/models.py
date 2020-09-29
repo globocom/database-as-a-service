@@ -23,6 +23,7 @@ from physical.errors import (NoDiskOfferingGreaterError,
 from system.models import Configuration
 from util.models import BaseModel
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -42,25 +43,65 @@ class Offering(BaseModel):
         return '{}'.format(self.name)
 
 
-
 class Environment(BaseModel):
+
+    DEV = 1
+    PROD = 2
+    STAGE_CHOICES = (
+        (DEV, 'Dev'),
+        (PROD, 'Prod'),
+    )
+
+    CLOUDSTACK = 1
+    AWS = 2
+    KUBERNETES = 3
+
+    PROVISIONER_CHOICES = (
+        (CLOUDSTACK, 'Cloud Stack'),
+        (AWS, 'AWS'),
+        (KUBERNETES, 'Kubernetes'),
+    )
+
     name = models.CharField(
         verbose_name=_("Environment"), max_length=100, unique=True)
     min_of_zones = models.PositiveIntegerField(default=1)
-
     migrate_environment = models.ForeignKey(
         'Environment', related_name='migrate_to', blank=True, null=True
     )
-
     cloud = models.ForeignKey(
         'Cloud', related_name='environment_cloud',
         unique=False, null=False, blank=False, on_delete=models.PROTECT)
+    stage = models.IntegerField(choices=STAGE_CHOICES, default=DEV)
+    provisioner = models.IntegerField(
+        choices=PROVISIONER_CHOICES, default=CLOUDSTACK
+    )
 
     def __unicode__(self):
         return '%s' % (self.name)
 
     def active_plans(self):
         return self.plans.filter(is_active=True)
+
+    @classmethod
+    def prod_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(stage=cls.PROD):
+            envs.append(env.name)
+        return envs
+
+    @classmethod
+    def dev_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(stage=cls.DEV):
+            envs.append(env.name)
+        return envs
+
+    @classmethod
+    def k8s_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(provisioner=cls.KUBERNETES):
+            envs.append(env.name)
+        return envs
 
 
 class EnvironmentGroup(BaseModel):
@@ -1169,7 +1210,11 @@ class Host(BaseModel):
 
 
 class Volume(BaseModel):
-    host = models.ForeignKey(Host, related_name="volumes")
+    host = models.ForeignKey(
+        Host, related_name="volumes",
+        null=True,
+        on_delete=models.SET_NULL
+    )
     identifier = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     total_size_kb = models.IntegerField(null=True, blank=True)
@@ -1546,6 +1591,61 @@ class Cloud(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+
+class Pool(BaseModel):
+    name = models.CharField(
+        verbose_name=_("Pool Name"), max_length=200, unique=True)
+
+    cluster_name = models.CharField(
+        verbose_name=_("Cluster name"), max_length=255)
+
+    cluster_id = models.CharField(
+        verbose_name=_("Cluster ID"), max_length=255)
+
+    cluster_endpoint = models.CharField(
+        verbose_name=_("Cluster EndPoint"), max_length=255,
+        blank=True, null=False
+    )
+
+    rancher_endpoint = models.CharField(
+        verbose_name=_("Rancher EndPoint"), max_length=255)
+
+    rancher_token = EncryptedCharField(
+        verbose_name=_("Rancher Token"), max_length=255, blank=True, null=False
+    )
+
+    dbaas_token = EncryptedCharField(
+        verbose_name=_("DBaaS Token"), max_length=255, blank=True, null=False
+    )
+
+    environment = models.ForeignKey(
+        'Environment', related_name='pools'
+    )
+
+    teams = models.ManyToManyField('account.Team')
+
+    def __unicode__(self):
+        return '{}'.format(self.name)
+
+    @property
+    def as_headers(self):
+        return {
+            "K8S-Token": self.rancher_token,
+            "K8S-Namespace": "default",
+            "K8S-Endpoint": self.cluster_endpoint,
+            "K8S-Storage-Type": "",
+            "K8S-Verify-Ssl": "false",
+        }
+
+
+##########################################################################
+# Exceptions
+##########################################################################
+
+
+class PlanNotFound(Exception):
+    pass
 
 
 ##########################################################################

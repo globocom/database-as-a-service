@@ -90,7 +90,8 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
             subscribe_to_email_events=retry_from.subscribe_to_email_events,
             is_protected=retry_from.is_protected,
             user=request.user,
-            retry_from=retry_from
+            retry_from=retry_from,
+            **{'pool': retry_from.pool}
         )
 
         url = reverse('admin:notification_taskhistory_changelist')

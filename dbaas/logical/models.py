@@ -160,6 +160,12 @@ class Database(BaseModel):
         User, related_name='databases_quarantine',
         null=True, blank=True, editable=False
     )
+    pool = models.ForeignKey(
+        'physical.Pool',
+        related_name="databases",
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
 
     def team_contact(self):
         if self.team:

@@ -36,6 +36,7 @@ class TeamAdmin(admin.ModelAdmin):
     filter_horizontal = ['users']
     list_filter = (RoleListFilter, "organization", )
     search_fields = ('name',)
+    readonly_fields = ["token", ]
 
     def database_limit(self, team):
         return team_templatetag.render_usage(team)

@@ -680,6 +680,7 @@ class DatabaseCreate(DatabaseMaintenanceTask):
     subscribe_to_email_events = models.BooleanField(default=True)
     is_protected = models.BooleanField(default=False)
     user = models.CharField(max_length=200)
+    pool = models.CharField(max_length=200, null=True, blank=True)
 
     def __unicode__(self):
         return "Creating {}".format(self.name)

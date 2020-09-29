@@ -51,7 +51,7 @@ class HostProviderInfoException(HostProviderException):
     pass
 
 
-class Provider(object):
+class Provider(BaseInstanceStep):
 
     def __init__(self, instance, environment):
         self.instance = instance
@@ -104,6 +104,7 @@ class Provider(object):
     def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
+        kw['headers'] = self.headers
         return action(url, **kw)
 
     def start(self):
@@ -160,7 +161,8 @@ class Provider(object):
             )
         return True
 
-    def create_host(self, infra, offering, name, team_name, zone=None, database_name=''):
+    def create_host(self, infra, offering, name, team_name, zone=None,
+                    database_name='', host_obj=None, **kw):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -173,6 +175,7 @@ class Provider(object):
             "team_name": team_name,
             "database_name": database_name
         }
+        data.update(kw)
         if zone:
             data['zone'] = zone
 
@@ -181,17 +184,18 @@ class Provider(object):
             raise HostProviderCreateVMException(response.content, response)
 
         content = response.json()
-
-        host = Host()
+        if host_obj is None:
+            host = Host()
+            host.hostname = content["address"]
+        else:
+            host = host_obj
         host.address = content["address"]
-        host.hostname = host.address
         host.user = self.vm_credential.user
         host.password = self.vm_credential.password
         host.provider = self.provider
         host.identifier = content["id"]
         host.offering = offering
         host.save()
-
         return host
 
     def destroy_host(self, host):

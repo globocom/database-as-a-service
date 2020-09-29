@@ -1,9 +1,9 @@
 from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
-from util import slugify, gen_infra_names, get_vm_name
+from util import get_vm_name
 from util.providers import get_deploy_settings, get_deploy_instances
-from workflow.workflow import steps_for_instances, rollback_for_instances_full
-from models import DatabaseCreate
+from workflow.workflow import rollback_for_instances_full
+
 from logical.forms.database import DatabaseForm
 
 
@@ -61,7 +61,7 @@ def get_instances_for(infra, topology_path):
                 instance = infra.instances.get(
                     Q(hostname__hostname__startswith=instance_name) |
                     Q(dns__startswith=instance_name),
-                    port=instance_type.port,
+                    # port=instance_type.port,
                 )
             except Instance.DoesNotExist:
                 instance = Instance()
@@ -75,57 +75,6 @@ def get_instances_for(infra, topology_path):
             instances.append(instance)
 
     return instances
-
-
-def create_database(
-    name, plan, environment, team, project, description, task,
-    backup_hour, maintenance_window, maintenance_day,
-    subscribe_to_email_events=True, is_protected=False,
-    user=None, retry_from=None
-):
-    topology_path = plan.replication_topology.class_path
-
-    name = slugify(name)
-    base_name = gen_infra_names(name, 0)
-    infra = get_or_create_infra(base_name, plan, environment, backup_hour,
-                                maintenance_window, maintenance_day,
-                                retry_from)
-    instances = get_instances_for(infra, topology_path)
-
-    database_create = DatabaseCreate()
-    database_create.task = task
-    database_create.name = name
-    database_create.plan = plan
-    database_create.environment = environment
-    database_create.team = team
-    database_create.project = project
-    database_create.description = description
-    database_create.subscribe_to_email_events = subscribe_to_email_events
-    database_create.is_protected = is_protected
-    database_create.user = user.username if user else task.user
-    database_create.infra = infra
-    database_create.database = infra.databases.first()
-    database_create.save()
-
-    steps = get_deploy_settings(topology_path)
-
-    since_step = None
-    if retry_from:
-        since_step = retry_from.current_step
-
-    if steps_for_instances(
-        steps, instances, task, database_create.update_step,
-        since_step=since_step
-    ):
-        database_create.set_success()
-        task.set_status_success('Database created')
-        database_create.database.finish_task()
-    else:
-        database_create.set_error()
-        task.set_status_error(
-            'Could not create database\n'
-            'Please check error message and do retry'
-        )
 
 
 def rollback_create(maintenance, task, user=None, instances=None):

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ CONFIG_MAP_NAME }}
+  labels:
+    app: {{ CONFIG_MAP_LABEL }}
+data:
+  {{ CONFIG_FILE_NAME }}: |
+    {{ CONFIG_CONTENT }}

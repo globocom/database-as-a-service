@@ -33,6 +33,7 @@ from .update_ssl import UpdateSslAPI
 from .restart_database import RestartDatabaseAPI
 from .databaase_migrate_engine import DatabaseMigrateEngineAPI
 from .remove_readonly import RemoveInstanceDatabaseAPI
+from .pool import PoolAPI
 
 
 router = DefaultRouter()
@@ -44,6 +45,7 @@ router.register(r'plan', PlanAPI)
 router.register(r'engine', EngineAPI)
 router.register(r'engine_type', EngineTypeAPI)
 router.register(r'host', HostAPI)
+router.register(r'pool', PoolAPI)
 
 # logical
 router.register(r'project', ProjectAPI)

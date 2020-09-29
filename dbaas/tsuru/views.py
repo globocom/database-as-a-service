@@ -19,15 +19,17 @@ from dbaas.middleware import UserMiddleware
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
 from util import simple_health_check
-from physical.models import Plan, Environment
+from physical.models import Plan, Environment, PlanNotFound, Pool
 from account.models import AccountUser, Team
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
-from system import models
+from system.models import Configuration
 from workflow.steps.util.base import ACLFromHellClient
 from maintenance.models import DatabaseCreate
+from django.utils.functional import cached_property
 
 LOG = logging.getLogger(__name__)
+DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
 
 
 class ListPlans(APIView):
@@ -250,144 +252,259 @@ class ServiceUnitBind(APIView):
 
 
 class ServiceAdd(APIView):
-
     renderer_classes = (JSONRenderer, JSONPRenderer)
+    required_params = ('description', 'plan', 'user', 'name', 'team')
+    search_metadata_params = ('plan', 'user', 'team', 'pool')
     model = Database
 
-    def post(self, request, format=None):
-        data = request.DATA
-        name = data['name']
-        user = data['user']
-        team = data['team']
-        env = get_url_env(request)
+    def __init__(self, *args, **kw):
+        super(ServiceAdd, self).__init__(*args, **kw)
+        self.extra_params = {}
 
-        try:
-            description = data['description']
-            if not description:
-                raise Exception("A description must be provided")
-        except Exception as e:
-            msg = "A description must be provided."
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @cached_property
+    def data(self):
+        data = self.request.DATA
+        for k, v in data.iteritems():
+            if k.startswith("parameters."):
+                data.pop(k)
+                data[k.replace('parameters.', '')] = v
+        return data
 
-        name_regexp = re.compile('^[a-z][a-z0-9_]+$')
-        if name_regexp.match(name) is None:
-            msg = "Your database name must match /^[a-z][a-z0-9_]+$/ ."
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def description_param(self):
+        return self.data.get('description')
 
-        try:
-            Database.objects.get(name=name, environment__name=env)
-            msg = "There is already a database called {} in {}.".format(
-                name, env
-            )
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def name_param(self):
+        return self.data.get('name')
 
-        except ObjectDoesNotExist:
-            pass
+    @property
+    def user_param(self):
+        return self.data.get('user')
 
-        if database_name_evironment_constraint(name, env):
-            msg = "{} already exists in env {}!".format(name, env)
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def dbaas_user(self):
+        return AccountUser.objects.get(email=self.user_param)
 
-        try:
-            dbaas_user = AccountUser.objects.get(email=user)
-        except ObjectDoesNotExist as e:
-            msg = "User does not exist."
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
-            )
-        except MultipleObjectsReturned as e:
-            msg = "There are multiple user for {} email.".format(user)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    @property
+    def team_param(self):
+        return self.data.get('team')
 
-        try:
-            dbaas_team = Team.objects.get(name=team)
-        except ObjectDoesNotExist as e:
-            msg = "Team does not exist."
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def dbaas_team(self):
+        return Team.objects.get(name=self.team_param)
 
-        try:
-            dbaas_user.team_set.get(name=dbaas_team.name)
-        except ObjectDoesNotExist as e:
-            msg = "The user is not on {} team.".format(dbaas_team.name)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def env_param(self):
+        return get_url_env(self.request)
 
-        try:
-            dbaas_environment = Environment.objects.get(name=env)
-        except(ObjectDoesNotExist) as e:
-            msg = "Environment does not exist."
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def env(self):
+        return Environment.objects.get(name=self.env_param)
 
-        databases_used_by_team = dbaas_team.count_databases_in_use(
-            environment=dbaas_environment
-        )
-        database_alocation_limit = dbaas_team.database_alocation_limit
+    @property
+    def is_k8s_env(self):
+        k8s_envs = Environment.k8s_envs()
+        return self.env_param in k8s_envs
 
-        if databases_used_by_team >= database_alocation_limit:
-            msg = ("The database alocation limit of {} has been exceeded for "
-                   "the selected team: {}").format(
-                database_alocation_limit, dbaas_team
-            )
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
+    @property
+    def plan_param(self):
+        return self.data.get('plan')
 
-        if 'plan' not in data:
-            msg = "Plan was not found"
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
-            )
-
-        plan = data['plan']
+    @cached_property
+    def dbaas_plan(self):
         hard_plans = Plan.objects.values(
             'name', 'description', 'pk', 'environments__name'
         ).extra(
             where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
         )
         plans = get_plans_dict(hard_plans)
-        plan = [splan for splan in plans if splan['name'] == plan]
-        LOG.info("Plan: {}".format(plan))
+        plan = [splan for splan in plans if splan['name'] == self.plan_param]
 
         if any(plan):
-            dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
+            return Plan.objects.get(pk=plan[0]['pk'])
         else:
-            msg = "Plan was not found"
+            raise PlanNotFound("Plan was not found")
+
+    @property
+    def pool_param(self):
+        return self.data.get('pool')
+
+    @property
+    def dbaas_pool(self):
+        return Pool.objects.get(name=self.pool_param)
+
+    def _validate_required_params(self):
+        for param_name in self.required_params:
+            param_value = self.data.get(param_name)
+            if not param_value:
+                msg = "Param {} must be provided.".format(param_name)
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+    def _validate_search_metadata_params(self):
+        """
+            Search the field param on database.
+            Ex. param user
+            Search the username on database if does not found we return
+            the error
+
+        """
+        for param_name in self.search_metadata_params:
+            if param_name in self.data:
+                try:
+                    getattr(self, 'dbaas_{}'.format(param_name))
+                except (ObjectDoesNotExist, PlanNotFound):
+                    return log_and_response(
+                        msg='{} <{}> was not found'.format(
+                            param_name.capitalize(),
+                            getattr(self, '{}_param'.format(param_name))
+                        ),
+                        http_status=status.HTTP_400_BAD_REQUEST
+                    )
+
+    def _validate_database(self):
+        msg = ''
+        if DATABASE_NAME_REGEX.match(self.name_param) is None:
+            msg = "Your database name must match /^[a-z][a-z0-9_]+$/ ."
+        try:
+            Database.objects.get(
+                name=self.name_param, environment__name=self.env_param
+            )
+            msg = "There is already a database called {} in {}.".format(
+                self.name_param, self.env
+            )
+        except Database.DoesNotExist:
+            pass
+        if database_name_evironment_constraint(self.name_param, self.env):
+            msg = "{} already exists in env {}!".format(
+                self.name_param, self.env_param
+            )
+        if msg:
+            return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+    def _validate_user(self):
+        msg = ''
+        try:
+            AccountUser.objects.get(email=self.user_param)
+        except MultipleObjectsReturned as e:
+            msg = "There are multiple user for {} email.".format(
+                self.user_param
+            )
+        if msg:
+            return log_and_response(
+                    msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
+                )
+
+    def _validate_team(self):
+        try:
+            self.dbaas_user.team_set.get(name=self.team_param)
+        except ObjectDoesNotExist as e:
+            msg = "The user is not on {} team.".format(self.team_param)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def _validate_env(self):
+        try:
+            self.env
+        except ObjectDoesNotExist:
+            msg = "Environment was not found"
             return log_and_response(
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
-        if dbaas_environment not in dbaas_plan.environments.all():
-            msg = 'Plan "{}" is not available to "{}" environment'.format(
-                dbaas_plan, dbaas_environment
+    def _validate_database_alocation(self):
+        databases_used_by_team = self.dbaas_team.count_databases_in_use(
+            environment=self.env
+        )
+        database_alocation_limit = self.dbaas_team.database_alocation_limit
+
+        if databases_used_by_team >= database_alocation_limit:
+            msg = ("The database alocation limit of {} has been exceeded for "
+                   "the selected team: {}").format(
+                database_alocation_limit, self.dbaas_team
             )
             return log_and_response(
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
+
+    def _validate_plan(self):
+        if self.env not in self.dbaas_plan.environments.all():
+            msg = 'Plan "{}" is not available to "{}" environment'.format(
+                self.dbaas_plan, self.env
+            )
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+            ), self.dbaas_plan
+
+    def _validate_if_kubernetes_env(self):
+        if self.is_k8s_env:
+            if 'pool' not in self.data:
+                msg = ("To create database on kubernetes you must pass the "
+                       "pool name. Add the parameter "
+                       "--plan-param pool=<POOL_NAME>")
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+            if not self.dbaas_pool.teams.filter(name=self.team_param).exists():
+                msg = "The Team <{}> arent on Pool <{}>".format(
+                    self.team_param, self.pool_param
+                )
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+            self.extra_params.update({'pool': self.dbaas_pool})
+
+    def post(self, request, format=None):
+        err = self._validate_required_params()
+        if err is not None:
+            return err
+        err = self._validate_search_metadata_params()
+        if err is not None:
+            return err
+        err = self._validate_env()
+        if err is not None:
+            return err
+        err = self._validate_database()
+        if err is not None:
+            return err
+        err = self._validate_user()
+        if err is not None:
+            return err
+        err = self._validate_team()
+        if err is not None:
+            return err
+        err = self._validate_database_alocation()
+        if err is not None:
+            return err
+        err = self._validate_plan()
+        if err is not None:
+            return err
+        err = self._validate_if_kubernetes_env()
+        if err is not None:
+            return err
 
         backup_hour, maintenance_hour, maintenance_day = (
             DatabaseForm.randomize_backup_and_maintenance_hour()
         )
+
         TaskRegister.database_create(
-            name=name, plan=dbaas_plan, environment=dbaas_environment,
-            team=dbaas_team, project=None, description=description,
-            user=dbaas_user, is_protected=True, backup_hour=backup_hour,
+            name=self.name_param,
+            plan=self.dbaas_plan,
+            environment=self.env,
+            team=self.dbaas_team,
+            project=None,
+            description=self.description_param,
+            user=self.dbaas_user,
+            is_protected=True,
+            backup_hour=backup_hour,
             maintenance_window=maintenance_hour,
-            maintenance_day=maintenance_day
+            maintenance_day=maintenance_day,
+            **self.extra_params
         )
 
         return Response(status=status.HTTP_201_CREATED)
@@ -484,7 +601,7 @@ def get_url_env(request):
 def log_and_response(msg, http_status, e="Conditional Error."):
     LOG.warn(msg)
     LOG.warn("Error: {}".format(e))
-    return Response(msg, http_status)
+    return Response("[DBaaS Error] {}".format(msg), http_status)
 
 
 def last_database_create(database_name, env):
@@ -593,12 +710,12 @@ def get_network_from_ip(ip, database_environment):
 
 
 def get_database(name, env):
-    if env in models.Configuration.get_by_name_as_list('dev_envs'):
+    if env in Configuration.get_by_name_as_list('dev_envs'):
         database = Database.objects.filter(
             name=name, environment__name=env
         ).exclude(is_in_quarantine=True)[0]
     else:
-        prod_envs = models.Configuration.get_by_name_as_list('prod_envs')
+        prod_envs = Configuration.get_by_name_as_list('prod_envs')
         database = Database.objects.filter(
             name=name, environment__name__in=prod_envs
         ).exclude(is_in_quarantine=True)[0]
@@ -608,6 +725,7 @@ def get_database(name, env):
 
 def check_acl_service_and_get_unit_network(database, data,
                                            ignore_ip_error=False):
+
     try:
         acl_credential = get_credentials_for(
             environment=database.environment,

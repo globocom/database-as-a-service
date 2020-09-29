@@ -13,6 +13,7 @@ from .disk_offering import DiskOfferingAdmin
 from .parameter import ParameterAdmin
 from .offering import OfferingAdmin
 from .cloud import CloudAdmin
+from .pool import PoolAdmin
 
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
@@ -28,3 +29,4 @@ admin.site.register(models.DiskOffering, DiskOfferingAdmin)
 admin.site.register(models.Parameter, ParameterAdmin)
 admin.site.register(models.Cloud, CloudAdmin)
 admin.site.register(models.Script)
+admin.site.register(models.Pool, PoolAdmin)

@@ -42,7 +42,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
             databaseinfra__engine__engine_type__name='mongodb'
         )
 
-    @patch('notification.tasks.create_database_with_retry')
+    @patch('notification.tasks.create_database.delay')
     def test_post_create_new(self, mock_delay):
         url = self.url_list()
         test_obj = self.model_new()

@@ -144,6 +144,10 @@ class Team(BaseModel):
         Organization, related_name="team_organization",
         unique=False, null=False, blank=False, on_delete=models.PROTECT)
 
+    token = EncryptedCharField(
+        verbose_name=_("Token"), max_length=255, blank=True, null=True
+    )
+
     class Meta:
         # putting permissions for account user and role in team model,
         # because it clashes with the proxied classes permissions
@@ -239,6 +243,10 @@ class Team(BaseModel):
             )
             return 0
 
+    def generate_token(self):
+        from uuid import uuid4
+        return uuid4().hex
+
     @property
     def emergency_contacts(self):
         if self.contacts:
@@ -329,6 +337,7 @@ def team_pre_save(sender, **kwargs):
 
     team = kwargs.get('instance')
     if not team.id:
+        team.token = team.generate_token()
         return
     before_update_team = Team.objects.get(pk=team.pk)
     if team.organization != before_update_team.organization:
