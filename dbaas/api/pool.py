@@ -51,7 +51,7 @@ class PoolAPI(viewsets.ModelViewSet):
 
     def update_environment(self, data):
         env_name = data.get('environment', '')
-        k8s_envs = Configuration.get_by_name_as_list('k8s_envs')
+        k8s_envs = Environment.k8s_envs()
         env = Environment.objects.get(
             name=env_name if env_name else k8s_envs[0]
         )

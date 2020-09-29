@@ -301,7 +301,7 @@ class ServiceAdd(APIView):
 
     @property
     def is_k8s_env(self):
-        k8s_envs = Configuration.get_by_name_as_list('k8s_envs')
+        k8s_envs = Environment.k8s_envs()
         return self.env_param in k8s_envs
 
     @property

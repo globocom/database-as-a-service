@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
-from physical.models import Plan
+from physical.models import Plan, Environment
 from system.models import Configuration
 from model_mommy import mommy
 
@@ -33,7 +33,8 @@ class BaseValidationTestCase(TestCase):
         self.env = 'dev'
         self.k8s_env_name = 'k8s_env'
         self.environment = mommy.make('Environment', name=self.env)
-        self.k8s_env = mommy.make('Environment', name=self.k8s_env_name)
+        self.k8s_env = mommy.make('Environment',
+            name=self.k8s_env_name, provisioner=Environment.KUBERNETES)
         self.url = reverse('tsuru:service-add', args=(self.env,))
         self.name = 'fake_database'
         self.user = '{}@admin.com'.format(self.USERNAME)
