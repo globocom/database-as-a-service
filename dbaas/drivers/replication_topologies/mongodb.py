@@ -42,6 +42,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -108,6 +109,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -145,6 +147,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
