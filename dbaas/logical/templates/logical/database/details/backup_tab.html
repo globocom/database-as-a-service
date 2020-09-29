@@ -1,5 +1,5 @@
 {% extends "logical/database/details/base.html" %}
-{% load admin_static %}
+{% load admin_static system_config %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -73,7 +73,11 @@
 
   {% if database.databaseinfra.plan.replication_topology.can_clone_db %}
     <div class="panel-heading">
-      <h3 class="panel-title">Clone</h3>
+      <h3 class="panel-title" id="id_clone_title">Clone</h3>
+      {% if cant_clone_db %}
+        {% get_configuration "clone_size_limit" "size_limit" %}
+        <h5 style='color:red;'>*Clone is only available for databases with size equal to {{ size_limit }}GB or smaller.</h5>
+      {% endif %}
     </div>
     <div class="panel-body">
       <div class="control-group">
@@ -81,7 +85,7 @@
           <label>Destination database:</label>
         </div>
         <div class="controls">
-          <input id="id_clone_name" maxlength="64" name="clone_name" type="text"/>
+          <input id="id_clone_name" maxlength="64" name="clone_name" type="text" {% if cant_clone_db %} disabled {% endif %}/>
         </div>
       </div>
       <div class="control-group">
@@ -89,7 +93,7 @@
           <label>Environment:</label>
         </div>
         <div class="controls">
-          <select id="id_clone_env" name="clone_env">
+          <select id="id_clone_env" name="clone_env" {% if cant_clone_db %} disabled {% endif %} >
             <option></option>
             {% for environment in environments %}
               <option value="{{ environment.id }}">{{ environment }}</option>
@@ -102,7 +106,7 @@
           <label>Plan:</label>
         </div>
         <div class="controls">
-          <select id="id_clone_plan" name="clone_plan">
+          <select id="id_clone_plan" name="clone_plan" {% if cant_clone_db %} disabled {% endif %}>
           </select>
         </div>
       </div>

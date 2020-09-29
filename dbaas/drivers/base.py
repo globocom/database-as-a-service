@@ -70,6 +70,14 @@ class BaseDriver(object):
         """
         return self._masters_size_in_bytes('used_size_in_bytes')
 
+    @property
+    def set_require_ssl_for_users(self):
+        return False
+
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return False
+
     def test_connection(self, credential=None):
         """ Tests the connection to the database """
         raise NotImplementedError()
@@ -90,6 +98,12 @@ class BaseDriver(object):
             func(*func_args, **func_kwargs)
         except ConnectionError:
             pass
+        except Exception as e:
+            error = e.message
+            if len(error) >= 2 and error[0] == 2002 and "Can't connect to " in error[1]:
+                return
+            raise e
+
 
     def try_remove_database(self, database):
         self._pass_if_connection_error(self.remove_database, database)
@@ -386,7 +400,7 @@ class BaseDriver(object):
         return self.get_master_instance()
 
     def build_new_infra_auth(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def set_user_require_ssl(self, credential):
         raise NotImplementedError()

@@ -17,3 +17,14 @@ class DatabaseMaintenanceTaskManager(models.Manager):
             return last_task
 
         return False
+
+    @property
+    def last_available_retry(self):
+        maintenance = self.order_by("can_do_retry", "pk").last()
+        if not maintenance:
+            return
+        if not maintenance.can_do_retry:
+            return
+        if not maintenance.is_status_error:
+            return
+        return maintenance

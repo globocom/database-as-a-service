@@ -93,3 +93,13 @@
     color: #FFF;
     text-decoration: none;
 }
+
+.notify-text {
+    font-size: 15px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.text-white {
+    color: #FFF;
+}

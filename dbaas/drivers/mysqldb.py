@@ -46,6 +46,10 @@ class MySQL(BaseDriver):
     def ports(self):
         return (3306,)
 
+    @property
+    def set_require_ssl_for_users(self):
+        return True
+
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
         uri = "mysql://<user>:<password>@%s" % (self.databaseinfra.endpoint)
@@ -79,7 +83,7 @@ class MySQL(BaseDriver):
             try:
                 if self.check_instance_is_master(instance):
                     return instance
-            except ConnectionError:
+            except driver_errors.ConnectionError:
                 continue
 
         return None
@@ -150,9 +154,9 @@ class MySQL(BaseDriver):
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise driver_errors.AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
-                raise ConnectionError(e.args[1])
+                raise driver_errors.ConnectionError(e.args[1])
             elif e.args[0] == LOST_CONNECTION:
-                raise ConnectionError(e.args[1])
+                raise driver_errors.ConnectionError(e.args[1])
             else:
                 raise driver_errors.GenericDriverError(e.args)
         finally:
@@ -195,7 +199,7 @@ class MySQL(BaseDriver):
                 else:
                     raise driver_errors.GenericDriverError(e.args)
             except Exception as e:
-                driver_errors.GenericDriverError(e.args)
+                raise driver_errors.GenericDriverError(e.args)
 
     def query(self, query_string, instance=None):
         return self.__query(query_string, instance)

@@ -5,6 +5,7 @@ from dbaas_credentials.models import CredentialType
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
 from physical.models import Offering, Volume
+from system.models import Configuration
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -41,9 +42,12 @@ class PlanStep(BaseInstanceStep):
             # TODO: Remove that when VP is ready
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
             'ENVIRONMENT': self.environment,
-            'HAS_PERSISTENCE': self.infra.plan.has_persistence,
+            'HAS_PERSISTENCE': self.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'SSL_CONFIGURED': self.infra.ssl_configured,
+            'SSL_MODE_ALLOW': self.infra.ssl_mode == self.infra.ALLOWTLS,
+            'SSL_MODE_PREFER': self.infra.ssl_mode == self.infra.PREFERTLS,
+            'SSL_MODE_REQUIRE': self.infra.ssl_mode == self.infra.REQUIRETLS,
         }
 
         if self.infra.ssl_configured:
@@ -54,21 +58,29 @@ class PlanStep(BaseInstanceStep):
             variables['INFRA_SSL_CA'] = infra_ssl.ca_file_path
             variables['INFRA_SSL_CERT'] = infra_ssl.cert_file_path
             variables['INFRA_SSL_KEY'] = infra_ssl.key_file_path
+            variables['MASTER_SSL_CA'] = infra_ssl.master_ssl_ca
             variables['INSTANCE_SSL_CA'] = instance_ssl.ca_file_path
             variables['INSTANCE_SSL_CERT'] = instance_ssl.cert_file_path
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
 
         variables['configuration'] = self.get_configuration()
-        variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
 
         variables.update(self.get_variables_specifics())
         return variables
 
-    def get_graylog_config(self):
-        credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.GRAYLOG
-        )
+    def get_log_endpoint(self):
+        if Configuration.get_by_name_as_int('graylog_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+        elif Configuration.get_by_name_as_int('kibana_integration') == 1:
+            credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.KIBANA_LOG
+            )
+        else:
+            return ""
         return credential.get_parameter_by_name('endpoint_log')
 
     @property
@@ -275,6 +287,28 @@ class ConfigureForNewInfra(Configure, PlanStepNewInfra):
     pass
 
 
+class ConfigureLog(Configure):
+
+    def __unicode__(self):
+        return "Configuring Log..."
+
+    @property
+    def extra_variables(self):
+        return {'LOG_ENDPOINT': self.get_log_endpoint()}
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.configure_log_template)
+
+
+class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
+    pass
+
+
+class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
+    pass
+
+
 class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
     pass
 
@@ -382,3 +416,37 @@ class ResizeConfigure(ConfigureOnlyDBConfigFile):
     def undo(self):
         self._pack = self.resize.source_offer
         super(ResizeConfigure, self).undo()
+
+class ConfigureForChangePersistence(ConfigureOnlyDBConfigFile):
+
+    @property
+    def change_persistence(self):
+        persistence = self.database.change_persistence.last()
+        if persistence and persistence.is_running:
+            return persistence
+        raise EnvironmentError(
+            "There is not any 'Change Persistence Maintenance' running."
+        )
+
+    @property
+    def plan(self):
+        return self.change_persistence.target_plan
+
+    def get_configuration(self):
+        infra = self.infra
+        infra.plan = self.plan
+        configuration = configuration_factory(
+            infra, self.offering.memory_size_mb
+        )
+        return configuration
+
+
+class ConfigureWithoutSSL(Configure):
+
+    def get_variables_specifics(self):
+        base = super(ConfigureWithoutSSL, self).get_variables_specifics()
+        base['SSL_CONFIGURED'] = False
+        base['SSL_MODE_ALLOW'] = False
+        base['SSL_MODE_PREFER'] = False
+        base['SSL_MODE_REQUIRE'] = False
+        return base

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import datetime
+import datetime, time
 import json
 from collections import OrderedDict
-from operator import itemgetter
 import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
@@ -20,13 +19,9 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers.errors import CredentialAlreadyExists
-from physical.models import (
-    Host, DiskOffering, Environment, Plan, Offering,
-    EnginePatch
-)
+from physical.models import (Host, DiskOffering, Environment, Plan, Offering)
 from util import get_credentials_for
 from notification.tasks import TaskRegister, execute_scheduled_maintenance
-from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm, DatabaseForm
@@ -36,7 +31,7 @@ from logical.validators import (check_is_database_enabled,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
 from maintenance.models import (
-    DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
+    DatabaseUpgradePatch, TaskSchedule, DatabaseMigrateEngine,
     RecreateSlave, AddInstancesToDatabase, RemoveInstanceDatabase
 )
 from . import services
@@ -155,9 +150,8 @@ def check_permission(request, id, tab):
             messages.add_message(
                 request, messages.ERROR,
                 ('This database belong to {} team, you are not member of '
-                 "this team or has not access to database's environment").format(
-                     database.team
-                )
+                 "this team or has not access to database's environment"
+                 ).format(database.team)
             )
             can_access = False
         elif database.is_in_quarantine:
@@ -262,6 +256,11 @@ def database_details(request, context, database):
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
 
+    if database.databaseinfra.ssl_configured:
+        context['ssl_detail'] = 'SSL is configured.'
+    else:
+        context['ssl_detail'] = 'SSL is not configured.'
+
     return render_to_response(
         "logical/database/details/details_tab.html",
         context, RequestContext(request)
@@ -276,14 +275,89 @@ def database_credentials(request, context, database):
             database_configure_ssl(request, context, database)
         elif 'retry_setup_ssl' in request.POST:
             database_configure_ssl_retry(request, context, database)
+        elif 'set_ssl_required' in request.POST:
+            database_set_ssl_required(request, context, database)
+        elif 'retry_set_ssl_required' in request.POST:
+            database_set_ssl_required_retry(request, context, database)
+        elif 'set_ssl_not_required' in request.POST:
+            database_set_ssl_not_required(request, context, database)
+        elif 'retry_set_ssl_not_required' in request.POST:
+            database_set_ssl_not_required_retry(request, context, database)
+
+    infra = database.infra
+
+    print request.POST
 
     context['can_setup_ssl'] = \
-        (not database.infra.ssl_configured) and \
-        database.infra.plan.replication_topology.can_setup_ssl and \
+        (not infra.ssl_configured) and \
+        infra.plan.replication_topology.can_setup_ssl and \
         request.user.has_perm(constants.PERM_CONFIGURE_SSL)
 
     last_configure_ssl = database.configure_ssl.last()
     context['last_configure_ssl'] = last_configure_ssl
+
+    set_ssl_mode_retry_in_progress = False
+
+    can_set_ssl_required_retry = False
+    last_set_ssl_required = database.set_require_ssl.last()
+    if last_set_ssl_required:
+        if not last_set_ssl_required.is_status_success:
+            set_ssl_mode_retry_in_progress = True
+        if last_set_ssl_required.is_status_error:
+            can_set_ssl_required_retry = True
+
+    can_set_ssl_not_required_retry = False
+    last_set_ssl_not_required = database.set_not_require_ssl.last()
+    if last_set_ssl_not_required:
+        if not last_set_ssl_not_required.is_status_success:
+            set_ssl_mode_retry_in_progress = True
+        if last_set_ssl_not_required.is_status_error:
+            can_set_ssl_not_required_retry = True
+
+    can_set_ssl_required = \
+        (infra.plan.replication_topology.can_setup_ssl and \
+        infra.ssl_configured and \
+        infra.set_require_ssl_for_databaseinfra and \
+        infra.ssl_mode == infra.ALLOWTLS and \
+        not set_ssl_mode_retry_in_progress)
+
+    can_set_ssl_not_required = \
+        (infra.plan.replication_topology.can_setup_ssl and \
+        infra.ssl_configured and \
+        infra.set_require_ssl_for_databaseinfra and \
+        infra.ssl_mode == infra.REQUIRETLS and \
+        not set_ssl_mode_retry_in_progress)
+
+
+    context['can_set_ssl_required'] = can_set_ssl_required
+    context['can_set_ssl_not_required'] = can_set_ssl_not_required
+    context['can_set_ssl_required_retry'] = can_set_ssl_required_retry
+    context['can_set_ssl_not_required_retry'] = can_set_ssl_not_required_retry
+    context['last_set_ssl_required'] = last_set_ssl_required
+    context['last_set_ssl_not_required'] = last_set_ssl_not_required
+
+    databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+    if databaseinfra.ssl_configured:
+        if driver.set_require_ssl_for_databaseinfra:
+            if databaseinfra.ssl_mode == databaseinfra.REQUIRETLS:
+                ssl = 'SSL is configured and it\'s required for all users.'
+            else:
+                ssl = 'SSL is configured and it\'s allowed for all users.'
+        elif driver.set_require_ssl_for_users:
+            ssl = 'SSL is configured. ' \
+                  'Required SSL must be configured per user.'
+        else:
+            ssl = 'SSL is configured.'
+
+        ssl += ' The SSL certificate will expire on {}.'.format(
+            databaseinfra.earliest_ssl_expire_at)
+    else:
+        ssl = 'SSL is not configured'
+        if not infra.plan.replication_topology.can_setup_ssl:
+            ssl += ' and its setup is not available'
+        ssl += '.'
+    context['ssl_detail'] = ssl
 
     return render_to_response(
         "logical/database/details/credentials_tab.html",
@@ -313,14 +387,12 @@ def database_configure_ssl(request, context, database):
 
 def database_configure_ssl_retry(request, context=None, database=None,
                                  id=None):
-
     if database is None:
         database = Database.objects.get(id=id)
 
     can_do_configure_ssl, error = database.can_do_configure_ssl_retry()
-
     if can_do_configure_ssl:
-        last_configure_ssl = database.configure_ssl.last()
+        last_configure_ssl = database.configure_ssl.last_available_retry
         if not last_configure_ssl:
             error = "Database does not have configure SSL task!"
         elif not last_configure_ssl.is_status_error:
@@ -335,6 +407,116 @@ def database_configure_ssl_retry(request, context=None, database=None,
         messages.add_message(request, messages.ERROR, error)
     else:
         TaskRegister.database_configure_ssl(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_credentials',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+def database_set_ssl_required(request, context, database):
+
+    can_do_ssl, error = database.can_do_set_ssl_required()
+
+    if not can_do_ssl:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_set_ssl_required(
+            database=database,
+            user=request.user
+        )
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_credentials',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+def database_set_ssl_required_retry(request, context=None, database=None,
+                                 id=None):
+    if database is None:
+        database = Database.objects.get(id=id)
+
+    can_do_ssl, error = database.can_do_set_ssl_required_retry()
+    if can_do_ssl:
+        last_configure_ssl = database.set_require_ssl.last_available_retry
+        if not last_configure_ssl:
+            error = "Database does not have set SSL required task!"
+        elif not last_configure_ssl.is_status_error:
+            error = ("Cannot do retry, last set SSL required status "
+                     "is '{}'!").format(
+                        last_configure_ssl.get_status_display()
+            )
+        else:
+            since_step = last_configure_ssl.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_set_ssl_required(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_credentials',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+def database_set_ssl_not_required(request, context, database):
+
+    can_do_ssl, error = database.can_do_set_ssl_not_required()
+
+    if not can_do_ssl:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_set_ssl_not_required(
+            database=database,
+            user=request.user
+        )
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_credentials',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+def database_set_ssl_not_required_retry(request, context=None, database=None,
+                                 id=None):
+    if database is None:
+        database = Database.objects.get(id=id)
+
+    can_do_ssl, error = database.can_do_set_ssl_not_required_retry()
+    if can_do_ssl:
+        last_configure_ssl = database.set_not_require_ssl.last_available_retry
+        if not last_configure_ssl:
+            error = "Database does not have set SSL not required task!"
+        elif not last_configure_ssl.is_status_error:
+            error = ("Cannot do retry, last set SSL not required status "
+                     "is '{}'!").format(
+                        last_configure_ssl.get_status_display()
+            )
+        else:
+            since_step = last_configure_ssl.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_set_ssl_not_required(
             database=database,
             user=request.user,
             since_step=since_step
@@ -589,7 +771,6 @@ def database_change_parameters_retry(request, context, database):
                 request.POST, database
             )
         )
-
         if parameter_error:
             messages.add_message(request, messages.ERROR, error)
             return HttpResponseRedirect(
@@ -597,8 +778,7 @@ def database_change_parameters_retry(request, context, database):
                         kwargs={'id': database.id})
             )
 
-        last_change_parameters = database.change_parameters.last()
-
+        last_change_parameters = database.change_parameters.last_available_retry
         if not last_change_parameters.is_status_error:
             error = ("Cannot do retry, last change parameters status is"
                      " '{}'!").format(
@@ -665,7 +845,8 @@ def database_metrics(request, context, database):
         datasource = credential.get_parameter_by_name('environment')
 
     engine_type = (
-        database.engine_type if not database.engine_type == "mysql_percona" else "mysql"
+        database.engine_type if not database.engine_type == "mysql_percona"
+        else "mysql"
     )
 
     grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
@@ -687,7 +868,9 @@ def database_metrics(request, context, database):
 
     print "grafana_url_zabbix:{}", grafana_url_zabbix
 
-    dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
+    dashboard = credential.get_parameter_by_name(
+                'sofia_dbaas_database_dashboard'
+                )
 
     dashboard = dashboard.format(engine_type)
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
@@ -819,8 +1002,7 @@ def database_upgrade_retry(request, context, database):
     can_do_upgrade, error = database.can_do_upgrade_retry()
     if can_do_upgrade:
         source_plan = database.databaseinfra.plan
-        upgrades = database.upgrades.filter(source_plan=source_plan)
-        last_upgrade = upgrades.last()
+        last_upgrade = database.upgrades.filter(source_plan=source_plan).last_available_retry
         if not last_upgrade:
             error = "Database does not have upgrades from {} {}!".format(
                 source_plan.engine.engine_type, source_plan.engine.version
@@ -878,8 +1060,7 @@ def database_upgrade_patch_retry(request, context, database):
 def _upgrade_patch_retry(request, database):
     can_do_upgrade, error = database.can_do_upgrade_patch_retry()
     if can_do_upgrade:
-        upgrades = database.upgrades_patch.all()
-        last_upgrade = upgrades.last()
+        last_upgrade = database.upgrades_patch.last_available_retry
         if not last_upgrade:
             error = "Database does not have upgrades"
         elif not last_upgrade.is_status_error:
@@ -892,7 +1073,6 @@ def _upgrade_patch_retry(request, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-
         TaskRegister.database_upgrade_patch(
             database=database,
             patch=last_upgrade.target_patch,
@@ -990,7 +1170,7 @@ class DatabaseMaintenanceView(TemplateView):
         payload = self.request.POST
 
         for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
-            task = self.get_object(schedule_id)
+            task = self.get_object(scheduled_id)
             task.scheduled_for = TaskSchedule.next_maintenance_window(
                 datetime.date.today(),
                 int(payload.get('maintenance_window')),
@@ -1183,7 +1363,7 @@ class DatabaseUpgradeView(TemplateView):
         elif not last_migration.is_status_error:
             error = ("Cannot do retry, last engine migration. "
                      "Status is '{}'!").format(
-                        last_upgrade.get_status_display())
+                        last_migration.get_status_display())
         else:
             since_step = last_migration.current_step
 
@@ -1223,7 +1403,6 @@ class DatabaseUpgradeView(TemplateView):
             if self.database.infra.check_rfs_size(required_disk_size_gb):
                 patches_required_disk_size.append(patch)
         return patches_required_disk_size
-
 
     def get_context_data(self, **kwargs):
         # Upgrade region
@@ -1321,10 +1500,14 @@ class UpgradeDatabaseRetryView(View):
 class AddInstancesDatabaseRetryView(View):
 
     def get(self, request, *args, **kwargs):
-        service_obj = services.AddReadOnlyInstanceService(
-            request, self.database, retry=True
-        )
-        service_obj.execute()
+        try:
+            service_obj = services.AddReadOnlyInstanceService(
+                request, self.database, retry=True
+            )
+            service_obj.execute()
+        except Exception as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
+
         return HttpResponseRedirect(
             reverse(
                 'admin:logical_database_hosts',
@@ -1487,7 +1670,8 @@ class DatabaseHostsView(TemplateView):
                 full_description += ' - ' + '/'.join(attributes)
 
             host_data = {
-                'id': host.id, 'status': status, 'description': full_description,
+                'id': host.id, 'status': status,
+                'description': full_description,
                 'switch_database': switch_database, 'padding': padding,
                 'is_database': host.is_database
             }
@@ -1541,7 +1725,7 @@ def database_delete_host(request, database_id, host_id):
         exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
         exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
     ) as error:
-        messages.add_message(self.request, messages.ERROR, str(error))
+        messages.add_message(request, messages.ERROR, str(error))
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_hosts', kwargs={'id': database.id})
@@ -1575,6 +1759,7 @@ class RemoveInstanceDatabaseRetryView(View):
         return super(RemoveInstanceDatabaseRetryView, self).dispatch(
             request, *args, **kwargs
         )
+
 
 def _clone_database(request, database):
     can_be_cloned, error = database.can_be_cloned()
@@ -1760,6 +1945,9 @@ def database_backup(request, context, database):
         database.infra.backup_hour
     )
 
+    clone_size = Configuration.get_by_name_as_int('clone_size_limit', 10)
+    context['cant_clone_db'] = database.databaseinfra.disk_offering.size_gb() > clone_size
+
     return render_to_response(
         "logical/database/details/backup_tab.html",
         context, RequestContext(request)
@@ -1866,7 +2054,6 @@ def database_reinstall_vm(request, database_id, host_id):
             break
 
     can_reinstall_vm = True
-
     if database.is_being_used_elsewhere():
         messages.add_message(
             request, messages.ERROR,
@@ -1887,9 +2074,8 @@ def database_reinstall_vm(request, database_id, host_id):
 
 @database_view("")
 def database_reinstall_vm_retry(request, context, database):
-    last_reinstall_vm = database.reinstall_vm.last()
+    last_reinstall_vm = database.reinstall_vm.last_available_retry
     can_reinstall_vm = True
-
     if not last_reinstall_vm:
         messages.add_message(
             request, messages.ERROR,
@@ -1897,7 +2083,6 @@ def database_reinstall_vm_retry(request, context, database):
              'task in progress.')
         )
         can_reinstall_vm = False
-
     elif database.is_being_used_elsewhere(
             ['notification.tasks.reinstall_vm_database']):
         messages.add_message(
@@ -1906,7 +2091,6 @@ def database_reinstall_vm_retry(request, context, database):
              'another task.')
         )
         can_reinstall_vm = False
-
     else:
         instance = last_reinstall_vm.instance
         since_step = last_reinstall_vm.current_step
@@ -2032,3 +2216,83 @@ class ExecuteScheduleTaskView(RedirectView):
         )
         self.kwargs.pop('task_id')
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
+
+@database_view("")
+def change_persistence_retry(request, context, database):
+
+    can_do_chg_persistence, error = database.can_do_change_persistence_retry()
+
+    if can_do_chg_persistence:
+        last_change_persistence = database.change_persistence.last_available_retry
+        if not last_change_persistence:
+            error = "Database does not have change persistence task!"
+        elif not last_change_persistence.is_status_error:
+            error = ("Cannot do retry, last change persistence status "
+                     "is '{}'!").format(
+                        last_change_persistence.get_status_display()
+            )
+        else:
+            since_step = last_change_persistence.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_change_persistence(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+        time.sleep(1)
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_persistence',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+@database_view("")
+def change_persistence(request, context, database):
+
+    can_do_change_persistence, error = database.can_do_change_persistence()
+
+    if not can_do_change_persistence:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_change_persistence(
+            database=database,
+            user=request.user
+        )
+        time.sleep(1)
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_persistence',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+@database_view('persistence')
+def database_persistence(request, context, database):
+
+    if request.method == 'POST':
+
+        if 'retry_change_persistence' in request.POST:
+            return HttpResponseRedirect(
+                    reverse('admin:logical_database_change_persistence_retry',
+                            kwargs={'id': database.id})
+                )
+        elif 'database_change_persistence' in request.POST:
+            return HttpResponseRedirect(
+                    reverse('admin:logical_database_change_persistence',
+                            kwargs={'id': database.id})
+                )
+
+    context['last_change_persistence'] = database.change_persistence.last()
+
+    return render_to_response(
+        "logical/database/details/persistence_tab.html",
+        context, RequestContext(request)
+    )

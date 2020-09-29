@@ -47,6 +47,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ResizeConfigure',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.host_provider.Stop',
             'workflow.steps.util.host_provider.ChangeOffering',
             'workflow.steps.util.host_provider.Start',
@@ -99,6 +100,7 @@ class BaseTopology(object):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
@@ -107,6 +109,7 @@ class BaseTopology(object):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForMigrateEngine',
             'workflow.steps.util.plan.ConfigureForMigrateEngine',
+            'workflow.steps.util.plan.ConfigureLogMigrateEngine',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
@@ -281,6 +284,9 @@ class BaseTopology(object):
     def get_resize_oplog_steps_and_retry_steps_back(self):
         return self.get_resize_oplog_steps(), 0
 
+    def get_database_change_persistence_steps(self):
+        return ()
+
     def get_switch_write_instance_steps_description(self):
         return "Switch write database instance"
 
@@ -318,6 +324,7 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
@@ -351,6 +358,7 @@ class BaseTopology(object):
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
@@ -360,6 +368,7 @@ class BaseTopology(object):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),

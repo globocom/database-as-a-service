@@ -1,9 +1,10 @@
 from logging import getLogger
 from util import exec_remote_command_host
+from workflow.steps.util.ssl import InfraSSLBaseName
 
 LOG = getLogger(__name__)
 
-script_mongodb_rotate = """cat <<EOT >> /opt/dbaas/scripts/mongodb_rotate_script.sh
+script_mongodb_rotate = """cat <<EOT > /opt/dbaas/scripts/mongodb_rotate_script.sh
 #!/bin/bash
 source /root/.profile
 HOST_ADDRESS=\`/bin/hostname -i\`
@@ -12,12 +13,12 @@ then
     echo "Host Address not found!"
     exit 3
 fi
-IS_MASTER=\$(/usr/local/mongodb/bin/mongo \${HOST_ADDRESS}:27017/admin --quiet << EOF
+IS_MASTER=\$(/usr/local/mongodb/bin/mongo \${HOST_ADDRESS}:27017/admin %s --quiet << EOF
 db.isMaster()['ismaster']
 exit
 EOF
 )
-IS_SECONDARY=\$(/usr/local/mongodb/bin/mongo \${HOST_ADDRESS}:27017/admin --quiet << EOF
+IS_SECONDARY=\$(/usr/local/mongodb/bin/mongo \${HOST_ADDRESS}:27017/admin %s --quiet << EOF
 db.isMaster()['secondary']
 exit
 EOF
@@ -25,7 +26,7 @@ EOF
 # Checking whether node is primary/sencondary or arbiter
 if [ "\${IS_MASTER}" = "true" ] || [ "\${IS_SECONDARY}" = "true" ]
 then
-    /usr/local/mongodb/bin/mongo \$HOST_ADDRESS:27017/admin -u \${MONGODB_ADMIN_USER} -p \${MONGODB_ADMIN_PASSWORD} << EOF
+    /usr/local/mongodb/bin/mongo \$HOST_ADDRESS:27017/admin -u \${MONGODB_ADMIN_USER} -p \${MONGODB_ADMIN_PASSWORD} %s << EOF
     db.runCommand("logRotate");
     exit
 EOF
@@ -79,7 +80,9 @@ def execute(task, mongodb_restarted_hosts):
     user = password = None
     if mongodb_restarted_hosts:
         first_host = mongodb_restarted_hosts[0]
-        infra = first_host.database_instance().databaseinfra
+        instance = first_host.instances.first()
+        infra = instance.databaseinfra
+        master_ssl_ca = InfraSSLBaseName(instance).master_ssl_ca
         driver = infra.get_driver()
         user, password, _ = driver.build_new_infra_auth()
 
@@ -93,6 +96,16 @@ def execute(task, mongodb_restarted_hosts):
         )
         LOG.info(log)
         task.update_details(log, persist=True)
+
+        infra = host.instances.first().databaseinfra
+        if infra.ssl_mode == infra.REQUIRETLS:
+            ssl_connect = '--tls --tlsCAFile {}'.format(master_ssl_ca)
+        else:
+            ssl_connect = ''
+
+        script_mongodb_rotate_formated = script_mongodb_rotate % (
+            ssl_connect, ssl_connect, ssl_connect
+            )
 
         output = {}
         return_code = exec_remote_command_host(host, script_is_syslog, output)
@@ -136,7 +149,7 @@ def execute(task, mongodb_restarted_hosts):
                         host, create_log_params_script, output
                     )
                     exec_remote_command_host(
-                        host, script_mongodb_rotate, output
+                        host, script_mongodb_rotate_formated, output
                     )
                     exec_remote_command_host(
                         host, script_mongodb_log_params, output

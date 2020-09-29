@@ -48,7 +48,7 @@
                 <td>
                   <p class="error_message">Invalid value.</p>
                   {% if parameter.parameter_type == "boolean" %}
-                    {% if parameter.engine_type == "mysql" %}
+                    {% if "mysql" in parameter.engine_type %}
                         <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
                          name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
                          {% if not parameter.editable_parameter %} disabled {% endif %}>

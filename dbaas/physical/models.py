@@ -355,9 +355,12 @@ class Script(BaseModel):
     start_replication = models.CharField(
         max_length=300, help_text="File path", null=True, blank=True
     )
-
     metric_collector = models.CharField(
-        max_length=300, help_text="File path", null=True, blank=True)
+        max_length=300, help_text="File path", null=True, blank=True
+    )
+    configure_log = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True
+    )
 
     def _get_content(self, file_name):
         path = file_name
@@ -388,6 +391,10 @@ class Script(BaseModel):
     @property
     def metric_collector_template(self):
         return self._get_content(self.metric_collector)
+
+    @property
+    def configure_log_template(self):
+        return self._get_content(self.configure_log)
 
 
 class ReplicationTopology(BaseModel):
@@ -601,6 +608,16 @@ class Plan(BaseModel):
         related_name='backwards_engine_plan'
     )
 
+    persistense_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Persisted/NoPersisted equivalent plan"),
+        on_delete=models.SET_NULL,
+        related_name='backwards_persisted_plan',
+        help_text=_(("For persisted plans, the equivalent not persisted plan. "
+                     "For not persisted plans, the equivalent persisted plan"
+                   ))
+    )
+
     @property
     def engine_type(self):
         return self.engine.engine_type
@@ -713,6 +730,15 @@ class DatabaseInfra(BaseModel):
         (DEAD, "Dead"),
         (ALERT, "Alert"))
 
+    ALLOWTLS = 1
+    PREFERTLS = 2
+    REQUIRETLS = 3
+
+    SSL_MODE = (
+        (ALLOWTLS, "allowTLS"),
+        (PREFERTLS, "preferTLS"),
+        (REQUIRETLS, "requireTLS"))
+
     name = models.CharField(
         verbose_name=_("DatabaseInfra Name"),
         max_length=100,
@@ -753,7 +779,6 @@ class DatabaseInfra(BaseModel):
         blank=True,
         null=True
     )
-
     endpoint_dns = models.CharField(
         verbose_name=_("DatabaseInfra Endpoint (DNS)"),
         max_length=255,
@@ -790,6 +815,12 @@ class DatabaseInfra(BaseModel):
     ssl_configured = models.BooleanField(
         verbose_name=_("SSL is Configured"),
         default=False)
+    ssl_mode = models.IntegerField(
+        choices=SSL_MODE,
+        verbose_name=_("SSL Mode"),
+        null=True,
+        blank=True,
+        default=None)
     backup_hour = models.IntegerField(
         verbose_name=_("Backup hour"),
         blank=False,
@@ -890,6 +921,15 @@ class DatabaseInfra(BaseModel):
         """
 
         return self.capacity - self.used
+
+    @property
+    def set_require_ssl_for_users(self):
+        return self.get_driver().set_require_ssl_for_users
+
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return self.get_driver().set_require_ssl_for_databaseinfra
+
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):

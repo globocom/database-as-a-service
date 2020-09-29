@@ -77,7 +77,7 @@ def build_add_replica_set_member_script(mongodb_version, readonly, arbiter):
     replica_id_string = '"_id": {{REPLICA_ID}}, ' if mongodb_version < '3.0.0' else ''
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
-        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} {{SSL_CONN_STRING}} <<EOF_DBAAS
         rs.add( { """ + replica_id_string + """
             "host": "{{HOSTADDRESS}}:{{PORT}}" """ + readonly_params + arbiter_params + """} )
         exit
@@ -89,7 +89,7 @@ def build_add_replica_set_member_script(mongodb_version, readonly, arbiter):
 def build_remove_read_only_replica_set_member_script():
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"
-        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} {{SSL_CONN_STRING}} <<EOF_DBAAS
         rs.remove( "{{HOSTADDRESS}}:{{PORT}}")
         exit
         \nEOF_DBAAS
@@ -123,7 +123,7 @@ def build_change_priority_script(size):
         )
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Change member priority"
-        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} {{SSL_CONN_STRING}} <<EOF_DBAAS
         cfg = rs.conf()
         """ + config + """
         rs.reconfig(cfg)

@@ -157,3 +157,11 @@ class UpdateInfraOrganizationName(DBMonitorStep):
 
         self.provider.update_database_organization(
             self.infra, self.organization_name)
+
+class UpdateInfraSSLMonitor(DBMonitorStep):
+
+    def __unicode__(self):
+        return "Update SSL info on DB Monitor..."
+
+    def do(self):
+        self.provider.update_database_ssl_info(self.infra)

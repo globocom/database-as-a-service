@@ -206,6 +206,18 @@ class Database(BaseModel):
         return self.plan.has_persistence
 
     @property
+    def has_persistense_equivalent_plan(self):
+        if self.plan.persistense_equivalent_plan:
+            return True
+        return False
+
+    @property
+    def persistence_change_text(self):
+        if self.has_persistence:
+            return 'Change to Memory Only'
+        return 'Change to Persisted'
+
+    @property
     def infra(self):
         return self.databaseinfra
 
@@ -425,9 +437,33 @@ class Database(BaseModel):
             credential.endpoint, stream, search_field, self.name
         )
 
+    def __kibana_url(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+
+        if self.databaseinfra.plan.is_pre_provisioned:
+            return ""
+
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.KIBANA_LOG
+        )
+        search_field = credential.get_parameter_by_name('search_field')
+        if not search_field:
+            return ""
+        time_query = "_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-6h,to:now))"
+        filter_query = "_a=(columns:!(_source),filters:!(),interval:auto,query:(language:lucene,query:'{}:{}'))".format(
+            search_field, self.name
+        )
+        return "{}/app/kibana#/discover?{}&{}".format(
+            credential.endpoint, time_query, filter_query
+        )
+
     def get_log_url(self):
         if Configuration.get_by_name_as_int('graylog_integration') == 1:
             return self.__graylog_url()
+        if Configuration.get_by_name_as_int('kibana_integration') == 1:
+            return self.__kibana_url()
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
@@ -630,6 +666,31 @@ class Database(BaseModel):
 
     def get_configure_ssl_retry_url(self):
         return "/admin/logical/database/{}/configure_ssl_retry/".format(
+            self.id
+        )
+
+    def get_set_ssl_required_url(self):
+        return "/admin/logical/database/{}/set_ssl_required/".format(self.id)
+
+    def get_set_ssl_required_retry_url(self):
+        return "/admin/logical/database/{}/set_ssl_required_retry/".format(
+            self.id
+        )
+
+    def get_set_ssl_not_required_url(self):
+        return "/admin/logical/database/{}/set_ssl_not_required/".format(
+            self.id)
+
+    def get_set_ssl_not_required_retry_url(self):
+        return "/admin/logical/database/{}/set_ssl_not_required_retry/".format(
+            self.id
+        )
+
+    def get_change_persistence_url(self):
+        return "/admin/logical/database/{}/change_persistence/".format(self.id)
+
+    def get_change_persistence_retry_url(self):
+        return "/admin/logical/database/{}/change_persistence_retry/".format(
             self.id
         )
 
@@ -922,7 +983,7 @@ class Database(BaseModel):
             error = ("Database in quarantine and cannot have the parameters "
                      "changed.")
         elif self.is_dead:
-            error = "Database is dead and cannot be resized."
+            error = "Database is dead and cannot have the parameters changed."
         elif self.is_being_used_elsewhere():
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
@@ -940,6 +1001,41 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere():
             error = ("Database cannot migrate host it is in use "
                      "by another task.")
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_persistence_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = ("Database in quarantine and cannot have the persistence "
+                     "changed.")
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.change_database_persistence')]):
+            error = "Database cannot have the persistence changed because" \
+                    " it is in use by another task."
+        elif not self.has_persistense_equivalent_plan:
+            error = "Database cannot have the persistence changed because" \
+                    " it has not any persistense equivalent plan "
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_persistence(self):
+        error = None
+        if self.is_in_quarantine:
+            error = ("Database in quarantine and cannot have the persistence "
+                     "changed.")
+        elif self.is_dead:
+            error = "Database is dead and cannot have the persistence changed."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot have the persistence changed because" \
+                    " it is in use by another task."
+        elif not self.has_persistense_equivalent_plan:
+            error = "Database cannot have the persistence changed because" \
+                    " it has not any persistense equivalent plan "
 
         if error:
             return False, error
@@ -984,6 +1080,63 @@ class Database(BaseModel):
         if error:
             return False, error
         return True, None
+
+
+    def can_do_set_ssl_required_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have set SSL " \
+                    "required."
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.database_set_ssl_required')]):
+            error = "Database cannot have set SSL required " \
+                    "because it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_required(self):
+        can_do_set_ssl_required, error = self.can_do_set_ssl_required_retry()
+
+        if can_do_set_ssl_required:
+            if self.is_dead:
+                error = "Database is dead and cannot have set SSL required."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot have set SSL required " \
+                        "because it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_not_required_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have set SSL not " \
+                    "required."
+        elif self.is_being_used_elsewhere(
+            [('notification.tasks.database_set_ssl_not_required')]):
+            error = "Database cannot have set SSL not required " \
+                    "because it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_not_required(self):
+        can_do_ssl, error = self.can_do_set_ssl_not_required_retry()
+
+        if can_do_ssl:
+            if self.is_dead:
+                error = "Database is dead and cannot have set SSL not " \
+                        "required."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot have set SSL not required " \
+                        "because it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
 
     def destroy(self, user):
         if not self.is_in_quarantine:

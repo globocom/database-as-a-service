@@ -594,7 +594,8 @@ class DatabaseReinstallVM(DatabaseMaintenanceTask):
     )
 
     def __unicode__(self):
-        return "{} change parameters".format(self.database.name)
+        return "{}-{} reinstall VM".format(
+            self.database.name, self.instance)
 
 
 class DatabaseResize(DatabaseMaintenanceTask):
@@ -1156,6 +1157,57 @@ class RestartDatabase(DatabaseMaintenanceTask):
                     pass
 
 
+class DatabaseChangePersistence(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="change_persistence"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_change_persistence"
+    )
+    source_plan = models.ForeignKey(
+        Plan, verbose_name="Source", null=True, blank=True, unique=False,
+        related_name="database_change_persistences_source",
+        on_delete=models.SET_NULL
+    )
+    target_plan = models.ForeignKey(
+        Plan, verbose_name="Target", null=True, blank=True, unique=False,
+        related_name="database_change_persistences_target",
+        on_delete=models.SET_NULL
+    )
+
+    def __unicode__(self):
+        return "{} change persistence".format(self.database.name)
+
+
+class DatabaseSetSSLRequired(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="set_require_ssl"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_ssl_require"
+    )
+
+    def __unicode__(self):
+        return "{} set SSL Required".format(self.database.name)
+
+
+class DatabaseSetSSLNotRequired(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="set_not_require_ssl"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_ssl_not_require"
+    )
+
+    def __unicode__(self):
+        return "{} set SSL Not Required".format(self.database.name)
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
@@ -1169,6 +1221,9 @@ simple_audit.register(DatabaseMigrate)
 simple_audit.register(DatabaseUpgradePatch)
 simple_audit.register(TaskSchedule)
 simple_audit.register(RestartDatabase)
+simple_audit.register(DatabaseChangePersistence)
+simple_audit.register(DatabaseSetSSLRequired)
+simple_audit.register(DatabaseSetSSLNotRequired)
 
 
 #########################################################

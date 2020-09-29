@@ -30,6 +30,7 @@ from physical.models import Engine
 from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
+    database_persistence, change_persistence, change_persistence_retry, \
     database_delete_host, UpgradeDatabaseRetryView, \
     database_upgrade_patch_retry, database_resize_retry, \
     database_resize_rollback, database_make_backup, \
@@ -39,7 +40,9 @@ from logical.views import database_details, DatabaseHostsView, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
     DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
-    RemoveInstanceDatabaseRetryView
+    RemoveInstanceDatabaseRetryView, \
+    database_set_ssl_required, database_set_ssl_required_retry, \
+    database_set_ssl_not_required, database_set_ssl_not_required_retry
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -240,8 +243,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_html.admin_order_field = "databaseinfra__engine"
 
     def offering_html(self, database):
-        last_resize = database.resizes.last()
-        last_reinstallvm = database.reinstall_vm.last()
+        last_resize = database.resizes.last_available_retry
+        last_reinstallvm = database.reinstall_vm.last_available_retry
         if last_resize and last_resize.is_status_error:
             resize_url = reverse('admin:maintenance_databaseresize_change', args=[last_resize.id])
             task_url = reverse('admin:notification_taskhistory_change', args=[last_resize.task.id])
@@ -719,6 +722,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="change_parameters_retry"
             ),
             url(
+                r'^/?(?P<id>\d+)/persistence/$',
+                self.admin_site.admin_view(database_persistence),
+                name="logical_database_persistence"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/change_persistence/$',
+                self.admin_site.admin_view(change_persistence),
+                name="logical_database_change_persistence"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/change_persistence_retry/$',
+                self.admin_site.admin_view(change_persistence_retry),
+                name="logical_database_change_persistence_retry"
+            ),
+            url(
                 r'^/?(?P<database_id>\d+)/hosts/(?P<host_id>\d+)/switch/$',
                 self.admin_site.admin_view(database_switch_write),
                 name="logical_database_switch"
@@ -752,6 +770,26 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/configure_ssl_retry/$',
                 self.admin_site.admin_view(database_configure_ssl_retry),
                 name="logical_database_configure_ssl_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_required/$',
+                self.admin_site.admin_view(database_set_ssl_required),
+                name="logical_database_set_ssl_required"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_required_retry/$',
+                self.admin_site.admin_view(database_set_ssl_required_retry),
+                name="logical_database_set_ssl_required_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_not_required/$',
+                self.admin_site.admin_view(database_set_ssl_not_required),
+                name="logical_database_set_ssl_not_required"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_not_required_retry/$',
+                self.admin_site.admin_view(database_set_ssl_not_required_retry),
+                name="logical_database_set_ssl_not_required_retry"
             ),
 
         )

@@ -4,6 +4,7 @@ from mock import patch, MagicMock
 
 from physical.tests.factory import InstanceFactory
 from model_mommy import mommy
+from physical.models import EngineType
 
 
 class UsedAndTotalValidator(object):
@@ -115,9 +116,11 @@ class PlanHelper(object):
                     )
                 )
             engine_conf = cls.engine_map[engine_name]
-            engine_type = mommy.make(
-                'EngineType', name=engine_name.split('_')[0]
-            )
+            try:
+                engine_type_name = engine_name.split('_')[0]
+                engine_type = EngineType.objects.get(name=engine_type_name)
+            except EngineType.DoesNotExist:
+                engine_type = mommy.make('EngineType', name=engine_type_name)
             engine = mommy.make(
                 'Engine', engine_type=engine_type
             )

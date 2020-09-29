@@ -14,7 +14,7 @@ createconfigdbfile()
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
 
 (cat <<EOF_DBAAS
-# mongodb.conf 4.0
+# mongodb.conf 4.2
 
 ########################################
 ## Storage configuration
@@ -64,6 +64,16 @@ net:
 {% if PORT %}
     port: {{ PORT }}
 {% endif %}
+{% if SSL_CONFIGURED %}
+    tls:
+        #mode: allowTLS #step 1
+        #mode: preferTLS #step 2
+        #mode: requireTLS #step 3
+        mode: {% if SSL_MODE_ALLOW %}allowTLS{% endif %}{% if SSL_MODE_PREFER %}preferTLS{% endif %}{% if SSL_MODE_REQUIRE %}requireTLS{% endif %}
+        certificateKeyFile: {{ INFRA_SSL_CERT }}
+        CAFile: {{ MASTER_SSL_CA }}
+        allowConnectionsWithoutCertificates: true
+{% endif %}
 
 ########################################
 ## Security
@@ -72,6 +82,12 @@ security:
 {% if 'mongodb_replica_set' in DRIVER_NAME %}
     # File used to authenticate in replica set environment
     keyFile: /data/mongodb.key
+    {% if SSL_CONFIGURED %}
+    #clusterAuthMode: sendKeyFile #step 1
+    #clusterAuthMode: sendX509 #setp 2
+    #clusterAuthMode: x509 #step 3
+    clusterAuthMode: {% if SSL_MODE_ALLOW %}sendKeyFile{% endif %}{% if SSL_MODE_PREFER %}sendX509{% endif %}{% if SSL_MODE_REQUIRE %}x509{% endif %}
+    {% endif %}
 {% else %}
     authorization: enabled
 {% endif %}

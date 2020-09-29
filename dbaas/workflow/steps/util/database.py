@@ -8,7 +8,7 @@ from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
-from drivers.errors import ReplicationNotRunningError
+from workflow.steps.util.ssl import InfraSSLBaseName
 
 
 LOG = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ class DatabaseStep(BaseInstanceStep):
     def is_valid(self):
         return self.host
 
-    def is_os_process_running(self, process_name):
+    def is_os_process_running(self, process_name, wait_stop=True):
         script = "ps -ef | grep {} | grep -v grep | wc -l".format(
             process_name
         )
@@ -120,9 +120,15 @@ class DatabaseStep(BaseInstanceStep):
             if processes == 0:
                 return False
             LOG.info("{} is running".format(process_name))
+            if not wait_stop:
+                return True
             sleep(CHECK_SECONDS)
 
         return True
+
+    @property
+    def root_certificate_file(self):
+        return InfraSSLBaseName(self.instance).master_ssl_ca
 
 
 class Stop(DatabaseStep):
@@ -198,6 +204,20 @@ class Start(DatabaseStep):
     def undo(self):
         self.undo_klass(self.instance).do()
 
+class StartCheckOnlyOsProcess(Start):
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return_code, output = self.start_database()
+        if return_code != 0:
+            process_name = self.driver.get_database_process_name()
+            if not self.is_os_process_running(process_name, False):
+                raise EnvironmentError(
+                    'Could not start database {}: {}'.format(
+                        return_code, output)
+                )
+
 
 class StartRsyslog(DatabaseStep):
 
@@ -209,7 +229,9 @@ class StartRsyslog(DatabaseStep):
         return_code, output = self.run_script(script)
         if return_code != 0:
             raise EnvironmentError(
-                'Could not {} rsyslog {}: {}'.format(action, return_code, output)
+                'Could not {} rsyslog {}: {}'.format(
+                    action, return_code, output
+                )
             )
 
     def _start(self):
@@ -633,6 +655,7 @@ class SetSlavesMigration(SetSlave):
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
 
+
 class StartMonit(DatabaseStep):
     def __unicode__(self):
         return "Starting monit..."
@@ -797,8 +820,8 @@ class checkAndFixMySQLReplication(DatabaseStep):
         master_instance = self.driver.get_master_instance()
         if not master_instance:
             raise EnvironmentError(
-                "There is no master instance. Check FoxHA and database" \
-                " read-write instances."
+                ("There is no master instance. Check FoxHA and database"
+                 " read-write instances.")
             )
         return master_instance
 
@@ -861,4 +884,48 @@ class checkAndFixMySQLReplicationRollback(checkAndFixMySQLReplication):
         pass
 
     def undo(self):
-        return super(checkAndFixReplicationRollback, self).do()
+        return super(checkAndFixMySQLReplicationRollback, self).do()
+
+
+class StopNonDatabaseInstance(Stop):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+
+class StartNonDatabaseInstance(Start):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+
+class StartNonDatabaseInstanceRollback(Start):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(StartNonDatabaseInstanceRollback, self).do()
+
+
+class StopNonDatabaseInstanceRollback(Stop):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(StopNonDatabaseInstanceRollback, self).do()
