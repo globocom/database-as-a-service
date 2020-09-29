@@ -82,6 +82,27 @@ class Environment(BaseModel):
     def active_plans(self):
         return self.plans.filter(is_active=True)
 
+    @classmethod
+    def prod_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(stage=cls.PROD):
+            envs.append(env.name)
+        return envs
+
+    @classmethod
+    def dev_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(stage=cls.DEV):
+            envs.append(env.name)
+        return envs
+
+    @classmethod
+    def k8s_envs(cls):
+        envs = []
+        for env in Environment.objects.filter(provisioner=cls.KUBERNETES):
+            envs.append(env.name)
+        return envs
+
 
 class EnvironmentGroup(BaseModel):
     name = models.CharField(max_length=100, help_text="Group name")
