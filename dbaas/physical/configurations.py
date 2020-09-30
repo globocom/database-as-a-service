@@ -631,6 +631,12 @@ class ConfigurationMySQL(ConfigurationBase):
         default = ''
         return self.get_parameter(parameter_name, default)
 
+    @property
+    def slave_net_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 60
+        return self.get_parameter(parameter_name, default)
+
 
 class ConfigurationMongoDB(ConfigurationBase):
     __ENGINE__ = 'mongodb'
