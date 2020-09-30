@@ -77,7 +77,7 @@ class BaseK8SStep(BaseInstanceStep):
 
     @property
     def pod_name(self):
-        return '{}'.format(self.statefulset_name)
+        return '{}-0'.format(self.statefulset_name)
 
     @property
     def config_map_name(self):

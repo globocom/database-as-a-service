@@ -227,6 +227,15 @@ class Provider(BaseInstanceStep):
             raise HostProviderInfoException(response.content, response)
         return response.json()
 
+    def status_host(self, host):
+        url = "{}/{}/{}/status/{}".format(
+            self.credential.endpoint, self.provider, self.environment, host.identifier
+        )
+        response = self._request(get, url)
+        if not response.ok:
+            raise HostProviderException(response.content, response)
+        return response.json()["host_status"]
+
 
 class HostProviderStep(BaseInstanceStep):
 
@@ -554,17 +563,10 @@ class WaitingBeReady(HostProviderStep):
         return "Waiting for host be ready..."
 
     def do(self):
-        url = "{}/{}/{}/status/{}".format(
-            self.credential.endpoint, self.provider, self.environment, self.instance.hostname.identifier
-        )
-        retries = 30
-        interval = 10
-        for attempt in range(retries):
-            response = self._request(get, url)
-            if not response.ok:
-                raise HostProviderException(response.content, response)
-            if response.json()["host_status"] == "READY":
+        for attempt in range(30):
+            status = self.provider.status_host(self.host)
+            if status == "READY":
                 return
             if attempt == self.retries - 1:
                 raise EnvironmentError('Host {} is not ready'.format(self.host))
-            sleep(interval)
+            sleep(10)
