@@ -1,4 +1,3 @@
-from time import sleep
 import logging
 
 import yaml
@@ -7,7 +6,7 @@ from kubernetes.client import Configuration, ApiClient, CoreV1Api
 from dbaas_credentials.models import CredentialType
 
 from base import BaseInstanceStep
-from physical.models import Volume, Host, Offering
+from physical.models import Host, Offering
 from util import get_credentials_for
 from physical.configurations import configuration_factory
 from workflow.steps.util.volume_provider import VolumeProviderBase
@@ -78,7 +77,7 @@ class BaseK8SStep(BaseInstanceStep):
 
     @property
     def pod_name(self):
-        return '{}-0'.format(self.statefulset_name)
+        return '{}'.format(self.statefulset_name)
 
     @property
     def config_map_name(self):
@@ -322,33 +321,6 @@ class NewPodK8S(BaseK8SStep):
         #     self.namespace,
         #     orphan_dependents=False
         # )
-
-
-class WaitingPodBeReady(BaseK8SStep):
-    retries = 30
-    interval = 10
-
-    def __unicode__(self):
-        return "Waiting POD be ready..."
-
-    def do(self):
-        for attempt in range(self.retries):
-            pod_data = self.client.read_namespaced_pod_status(
-                self.pod_name, self.namespace
-            )
-            for status_data in pod_data.status.conditions or []:
-                if status_data.type == 'Ready':
-                    if status_data.status == 'True':
-                        return True
-            if attempt == self.retries - 1:
-                LOG.error("Maximum number of login attempts.")
-                raise EnvironmentError('POD {} is not ready'.format(
-                    self.pod_name
-                ))
-
-            LOG.warning("Pod {} not ready.".format(self.pod_name))
-            LOG.info("Wating %i seconds to try again..." % (self.interval))
-            sleep(self.interval)
 
 
 class UpdateHostMetadata(BaseK8SStep):

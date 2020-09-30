@@ -8,7 +8,7 @@ from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
 from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
-from vm import WaitingBeReady
+from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -269,7 +269,7 @@ class Stop(HostProviderStep):
 
     def undo(self):
         Start(self.instance).do()
-        WaitingBeReady(self.instance).do()
+        WaitingVMBeReady(self.instance).do()
 
 
 class StopIfRunning(Stop):
@@ -546,3 +546,25 @@ class UpdateHostRootVolumeSize(HostProviderStep):
         root_size_gb = self.get_root_volume_size()
         self.host.root_size_gb = round(root_size_gb, 2)
         self.host.save()
+
+
+class WaitingBeReady(HostProviderStep):
+
+    def __unicode__(self):
+        return "Waiting for host be ready..."
+
+    def do(self):
+        url = "{}/{}/{}/status/{}".format(
+            self.credential.endpoint, self.provider, self.environment, self.instance.hostname.identifier
+        )
+        retries = 30
+        interval = 10
+        for attempt in range(retries):
+            response = self._request(get, url)
+            if not response.ok:
+                raise HostProviderException(response.content, response)
+            if response.json()["host_status"] == "READY":
+                return
+            if attempt == self.retries - 1:
+                raise EnvironmentError('Host {} is not ready'.format(self.host))
+            sleep(interval)
