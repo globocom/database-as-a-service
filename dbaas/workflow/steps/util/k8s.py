@@ -165,20 +165,9 @@ class NewVolumeK8S(BaseK8SStep):
 
 
 class NewServiceK8S(BaseK8SStep):
+
     def __unicode__(self):
         return "Creating Service on kubernetes..."
-
-    @property
-    def template_path(self):
-        return 'physical/scripts/k8s/service.yaml'
-
-    @property
-    def context(self):
-        return {
-            'SERVICE_NAME': self.service_name,
-            'LABEL_NAME': self.label_name,
-            'INSTANCE_PORT': self.driver.default_port,
-        }
 
     def do(self):
         provider = HostProvider(self.instance, self.environment)
