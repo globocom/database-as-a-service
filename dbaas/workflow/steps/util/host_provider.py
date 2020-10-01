@@ -198,6 +198,19 @@ class Provider(BaseInstanceStep):
         host.save()
         return host
 
+    def prepare(self):
+        url = "{}/{}/{}/prepare".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "engine": self.engine,
+            "name": self.instance.vm_name,
+            "group": self.infra.name,
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 201:
+            raise HostProviderException(response.content, response)
+
     def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
@@ -206,6 +219,15 @@ class Provider(BaseInstanceStep):
         response = self._request(delete, url, timeout=600)
         if not response.ok:
             raise HostProviderDestroyVMException(response.content, response)
+
+    def clean(self):
+        url = "{}/{}/{}/clean/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.instance.vm_name,
+        )
+        response = self._request(delete, url)
+        if not response.ok:
+            raise HostProviderException(response.content, response)
 
     def list_zones(self):
         url = "{}/{}/{}/zones".format(

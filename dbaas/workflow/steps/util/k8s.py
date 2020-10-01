@@ -181,18 +181,12 @@ class NewServiceK8S(BaseK8SStep):
         }
 
     def do(self):
-        if not self.instance.is_database:
-            return
-
-        self.client.create_namespaced_service(
-            self.namespace, self.yaml_file
-        )
+        provider = HostProvider(self.instance, self.environment)
+        provider.prepare()
 
     def undo(self):
-        self.client.delete_namespaced_service(
-            self.service_name,
-            self.namespace
-        )
+        provider = HostProvider(self.instance, self.environment)
+        provider.clean()
 
 
 class NewPodK8S(BaseK8SStep):
