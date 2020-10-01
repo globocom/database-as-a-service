@@ -10,9 +10,9 @@ This is an implementation of a database as a service api written in python + dja
 
 Below: Screenshot from the admin user.
 
-**image 1:** Listing databases and their summary informations.
+**image 1:** Listing databases and their summary information.
 
-![Listing databases and their summary informations](doc/img/manage_dbs.png "Listing databases and their summary informations")
+![Listing databases and their summary information](doc/img/manage_dbs.png "Listing databases and their summary information")
 
 **image 2:** example database view and all its credentials.
 
@@ -85,7 +85,7 @@ some minimum operational data on DB.
     make pip && make test
 
 
-## Running all test with docker( To run this the docker-compose must be avaliable)
+## Running all test with docker( To run this the docker-compose must be available)
 
     make docker_build && make test_with_docker
 
