@@ -563,10 +563,12 @@ class WaitingBeReady(HostProviderStep):
         return "Waiting for host be ready..."
 
     def do(self):
-        for attempt in range(30):
+        sleep(10)
+        retries = 30
+        for attempt in range(retries):
             status = self.provider.status_host(self.host)
             if status == "READY":
                 return
-            if attempt == self.retries - 1:
+            if attempt == retries - 1:
                 raise EnvironmentError('Host {} is not ready'.format(self.host))
             sleep(10)

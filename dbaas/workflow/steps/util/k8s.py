@@ -24,7 +24,6 @@ class BaseK8SStep(BaseInstanceStep):
             hostname = self.host.hostname
         else:
             hostname = self.instance.vm_name
-
         return hostname
 
     @property
@@ -203,10 +202,6 @@ class NewPodK8S(BaseK8SStep):
     @property
     def provider(self):
         return HostProvider(self.instance, self.environment)
-
-    @property
-    def client_class_name(self):
-        return "AppsV1beta1Api"
 
     @property
     def template_path(self):
