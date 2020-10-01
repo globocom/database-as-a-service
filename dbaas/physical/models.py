@@ -1623,7 +1623,7 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
-    teams = models.ManyToManyField('account.Team')
+    teams = models.ManyToManyField('account.Team', related_name='pools')
 
     def __unicode__(self):
         return '{}'.format(self.name)
