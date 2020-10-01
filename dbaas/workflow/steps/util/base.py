@@ -382,24 +382,6 @@ class HostProviderClient(object):
             data = resp.json()
             return data.get('offering_id')
 
-    def edit_host(self, host_id, payload):
-        api_host_url = '/{}/{}/host/{}'.format(
-            self.credential.project,
-            self.env.name,
-            host_id
-        )
-        resp = self._request(
-            requests.patch,
-            '{}{}'.format(self.credential.endpoint, api_host_url),
-            json=payload
-        )
-        if not resp.ok:
-            raise Exception(
-                "Cannot update host on host provider. Reason: {}".format(
-                    resp.reason
-                )
-            )
-
 
 class ACLFromHellClient(object):
 
