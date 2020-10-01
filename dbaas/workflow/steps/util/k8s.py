@@ -323,17 +323,13 @@ class UpdateHostMetadata(BaseK8SStep):
         return "Update address of instance and host with pod ip..."
 
     def do(self):
-        pod_metadata = self.client.read_namespaced_pod(
-            self.pod_name, 'default'
-        )
-        self.instance.address = pod_metadata.status.pod_ip
+        provider = HostProvider(self.instance, self.environment)
+        info = provider.host_info(self.host, refresh=True)
+        self.instance.address = info["address"]
         self.instance.port = self.driver.default_port
-
         host = self.host
         host.address = self.instance.address
         host.save()
-        hp_client = HostProviderClient(self.environment)
-        hp_client.edit_host(host.identifier, payload={'address': host.address})
 
 
 class CreateHostMetadata(BaseK8SStep):

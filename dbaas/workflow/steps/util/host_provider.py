@@ -217,11 +217,13 @@ class Provider(BaseInstanceStep):
         data = response.json()
         return data['zones']
 
-    def host_info(self, host):
+    def host_info(self, host, refresh=False):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
+        if refresh:
+            url = "{}/refresh".format(url)
         response = self._request(get, url)
         if not response.ok:
             raise HostProviderInfoException(response.content, response)
