@@ -14,6 +14,7 @@ from django.template.response import SimpleTemplateResponse, TemplateResponse
 from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.utils.translation import ungettext
+from django.utils.html import format_html
 
 from account.models import Role
 from account.forms.team import TeamAdminForm
@@ -45,7 +46,9 @@ class TeamAdmin(admin.DjangoServicesAdmin):
 
     form = TeamAdminForm
     service_class = TeamService
-    list_display = ["name", "role", "database_limit", "email", "organization"]
+    list_display = [
+        "name", "role", "database_limit", "team_pool", "email", "organization"
+    ]
     filter_horizontal = ['users']
     list_filter = (RoleListFilter, "organization")
     search_fields = ('name',)
@@ -72,6 +75,20 @@ class TeamAdmin(admin.DjangoServicesAdmin):
             'delete': self.has_delete_permission(request),
             'view': self.has_view_permission(request),
         }
+
+    def team_pool(self, team):
+        pools = team.pools.all()
+        pool_html = []
+        if pools:
+            pool_html.append('<ul>')
+            for pool in pools:
+                pool_html.append("<li>%s</li>" % pool.name)
+            pool_html.append('</ul>')
+            return format_html("".join(pool_html))
+        else:
+            return "N/A"
+
+    team_pool.short_description = "Pools"
 
     def queryset(self, request):
         is_dba = request.user.team_set.filter(role__name="role_dba").exists()
@@ -226,7 +243,6 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         selection_note_all = ungettext('%(total_count)s selected',
                                        'All %(total_count)s selected',
                                        cl.result_count)
-
 
         context = {
             'module_name': force_text(opts.verbose_name_plural),
