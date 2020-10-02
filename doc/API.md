@@ -17,7 +17,7 @@ Currently, only basic authentication is supported. So I recommend you use HTTPS.
    * [Create new credential](#post-apicredential)
    * [List all credentials](#get-apicredential)
    * [Show password](#get-apicredentialsome_id)
-   * [Reset password](#delete-apicredentialsome_idresetpassword)
+   * [Reset password](#post-apicredentialsome_idreset_password)
    * [Delete credential](#delete-apicredentialsome_id)
 
 ## Database
