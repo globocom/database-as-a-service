@@ -6,12 +6,11 @@ from kubernetes.client import Configuration, ApiClient, CoreV1Api
 from dbaas_credentials.models import CredentialType
 
 from base import BaseInstanceStep
-from physical.models import Host, Offering
+from plan import PlanStepNewInfra
+from physical.models import Host
 from util import get_credentials_for
-from physical.configurations import configuration_factory
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from workflow.steps.util.host_provider import Provider as HostProvider
-from workflow.steps.util.base import HostProviderClient
 
 
 LOG = logging.getLogger(__name__)
@@ -178,6 +177,45 @@ class NewServiceK8S(BaseK8SStep):
         provider.clean()
 
 
+class CreateConfigMap(PlanStepNewInfra):
+
+    def __unicode__(self):
+        return "Creating config map..."
+
+    def do(self):
+        if not self.instance.is_database:
+            return
+        context = self.script_variables
+        context['VOLUME_PATH_DB'] = '/data/db'
+        context['DATABASE_LOG_FULL_PATH'] = '/data/logs/mongodb.log'
+        configuration = render_to_string(
+            'physical/scripts/database_config_files/mongodb_40.conf',
+            context
+        )
+        provider = HostProvider(self.instance, self.environment)
+        provider.configure(configuration)
+
+    def undo(self):
+        if not self.instance.is_database:
+            return
+        provider = HostProvider(self.instance, self.environment)
+        provider.remove_configuration()
+
+
+class UpdateHostMetadata(BaseK8SStep):
+    def __unicode__(self):
+        return "Update address of instance and host with pod ip..."
+
+    def do(self):
+        provider = HostProvider(self.instance, self.environment)
+        info = provider.host_info(self.host, refresh=True)
+        self.instance.address = info["address"]
+        self.instance.port = self.driver.default_port
+        host = self.host
+        host.address = self.instance.address
+        host.save()
+
+
 class NewPodK8S(BaseK8SStep):
     def __unicode__(self):
         return "Creating POD on kubernetes..."
@@ -280,39 +318,7 @@ class NewPodK8S(BaseK8SStep):
         )
 
     def undo(self):
-        try:
-            host = self.instance.hostname
-        except self.instance.DoesNotExist:
-            self.delete_instance()
-            return
-
-        try:
-            pass
-            self.provider.destroy_host(self.host)
-        except (Host.DoesNotExist, IndexError):
-            pass
-        self.delete_instance()
-        if host.id:
-            host.delete()
-        # self.client.delete_namespaced_stateful_set(
-        #     self.statefulset_name,
-        #     self.namespace,
-        #     orphan_dependents=False
-        # )
-
-
-class UpdateHostMetadata(BaseK8SStep):
-    def __unicode__(self):
-        return "Update address of instance and host with pod ip..."
-
-    def do(self):
-        provider = HostProvider(self.instance, self.environment)
-        info = provider.host_info(self.host, refresh=True)
-        self.instance.address = info["address"]
-        self.instance.port = self.driver.default_port
-        host = self.host
-        host.address = self.instance.address
-        host.save()
+        self.provider.destroy_host(self.host)
 
 
 class CreateHostMetadata(BaseK8SStep):
@@ -330,129 +336,3 @@ class CreateHostMetadata(BaseK8SStep):
         host.save()
         self.instance.hostname = host
         self.instance.save()
-
-
-class NewConfigMapK8S(BaseK8SStep):
-    def __unicode__(self):
-        return "Creating config map..."
-
-    @property
-    def database(self):
-        from logical.models import Database
-        if self.infra.databases.exists():
-            return self.infra.databases.first()
-        database = Database()
-        step_manager = self.infra.databases_create.last()
-        database.name = (step_manager.name
-                         if step_manager else self.step_manager.name)
-        return database
-
-    @property
-    def template_path(self):
-        return 'physical/scripts/k8s/config_map.yaml'
-
-    @property
-    def context(self):
-        return {
-            'CONFIG_MAP_NAME': self.config_map_name,
-            'CONFIG_MAP_LABEL': self.label_name,
-            'CONFIG_FILE_NAME': self.database_config_name,
-            'CONFIG_CONTENT': 'config_content'
-        }
-
-    @property
-    def script_variables(self):
-        variables = {
-            'DATABASENAME': self.database.name,
-            'DBPASSWORD': self.infra.password,
-            'HOST': self.host.hostname.split('.')[0],
-            # 'HOSTADDRESS': self.instance.address,
-            'ENGINE': self.plan.engine.engine_type.name,
-            'MOVE_DATA': (
-                bool(self.upgrade) or
-                bool(self.reinstall_vm) or
-                bool(self.engine_migration)
-            ),
-            'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            'DISK_SIZE_IN_GB': (self.disk_offering.size_gb()
-                                if self.disk_offering else 8),
-            'ENVIRONMENT': self.environment,
-            'HAS_PERSISTENCE': self.infra.plan.has_persistence,
-            'IS_READ_ONLY': self.instance.read_only,
-            'SSL_CONFIGURED': self.infra.ssl_configured,
-            'DATABASE_LOG_FULL_PATH': self.database_log_full_path,
-            'VOLUME_PATH_ROOT': self.volume_path_root,
-            'VOLUME_PATH_DB': self.volume_path_db
-        }
-
-        if self.infra.ssl_configured:
-            from workflow.steps.util.ssl import InfraSSLBaseName
-            from workflow.steps.util.ssl import InstanceSSLBaseName
-            infra_ssl = InfraSSLBaseName(self.instance)
-            instance_ssl = InstanceSSLBaseName(self.instance)
-            variables['INFRA_SSL_CA'] = infra_ssl.ca_file_path
-            variables['INFRA_SSL_CERT'] = infra_ssl.cert_file_path
-            variables['INFRA_SSL_KEY'] = infra_ssl.key_file_path
-            variables['INSTANCE_SSL_CA'] = instance_ssl.ca_file_path
-            variables['INSTANCE_SSL_CERT'] = instance_ssl.cert_file_path
-            variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
-
-        variables['configuration'] = self.get_configuration()
-        variables['LOG_ENDPOINT'] = self.get_log_endpoint()
-
-        return variables
-
-    def get_log_endpoint(self):
-        from system.models import Configuration
-        if Configuration.get_by_name_as_int('graylog_integration') == 1:
-            credential = get_credentials_for(
-                environment=self.environment,
-                credential_type=CredentialType.GRAYLOG
-            )
-        elif Configuration.get_by_name_as_int('kibana_integration') == 1:
-            credential = get_credentials_for(
-                environment=self.environment,
-                credential_type=CredentialType.KIBANA_LOG
-            )
-        else:
-            return ""
-        return credential.get_parameter_by_name('endpoint_log')
-
-    @property
-    def offering(self):
-        if self.resize:
-            return self.resize.target_offer
-
-        try:
-            return self.infra.offering
-        except Offering.DoesNotExist:
-            return self.instance.offering
-
-    def get_configuration(self):
-        try:
-            configuration = configuration_factory(
-                self.infra, self.offering.memory_size_mb
-            )
-        except NotImplementedError:
-            return None
-        else:
-            return configuration
-
-    def do(self):
-        if not self.instance.is_database:
-            return
-
-        yaml_file = self.yaml_file
-        yaml_file['data']['mongodb.conf'] = render_to_string(
-            'physical/scripts/database_config_files/mongodb_40.conf',
-            self.script_variables
-        )
-        self.client.create_namespaced_config_map(
-            self.namespace, yaml_file
-        )
-
-    def undo(self):
-        self.client.delete_namespaced_config_map(
-            self.config_map_name,
-            self.namespace
-        )
