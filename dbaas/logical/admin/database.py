@@ -123,8 +123,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     fieldsets_add = (
         (None, {
             'fields': (
-                'name', 'description', 'project', 'environment', 'engine',
-                'team', 'team_contact', 'subscribe_to_email_events',
+                'name', 'description', 'project', 'environment', 'team',
+                'engine', 'team_contact', 'subscribe_to_email_events',
                 'backup_hour', 'maintenance_window', 'maintenance_day',
                 'plan', 'is_in_quarantine',
             )
