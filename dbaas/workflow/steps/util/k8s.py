@@ -185,12 +185,9 @@ class CreateConfigMap(PlanStepNewInfra):
     def do(self):
         if not self.instance.is_database:
             return
-        context = self.script_variables
-        context['VOLUME_PATH_DB'] = '/data/db'
-        context['DATABASE_LOG_FULL_PATH'] = '/data/logs/mongodb.log'
         configuration = render_to_string(
             'physical/scripts/database_config_files/mongodb_40.conf',
-            context
+            self.script_variables
         )
         provider = HostProvider(self.instance, self.environment)
         provider.configure(configuration)
