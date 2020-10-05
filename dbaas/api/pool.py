@@ -3,11 +3,9 @@ from __future__ import absolute_import, unicode_literals
 
 from rest_framework import viewsets, serializers, status, filters
 from rest_framework.response import Response
-from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Environment, Pool
 from account.models import Team
 from api.team import TeamSerializer
-from system.models import Configuration
 from django.core.exceptions import ValidationError
 
 
@@ -31,7 +29,7 @@ class PoolAPI(viewsets.ModelViewSet):
     filter_fields = (
         "name",
         "environment",
-        "teams__name"
+        "teams"
     )
 
     def validate_required_fields(self, data):
@@ -73,6 +71,14 @@ class PoolAPI(viewsets.ModelViewSet):
                 return
         error = 'Token {} is not valid.'.format(token)
         raise ValidationError(error)
+
+    def get_queryset(self):
+        params = self.request.GET.dict()
+        filter_params = {}
+        for k, v in params.iteritems():
+            if k.split('__')[0] in self.filter_fields:
+                filter_params[k] = v
+        return self.model.objects.filter(**filter_params)
 
     def create(self, request):
         serializer = self.get_serializer(
