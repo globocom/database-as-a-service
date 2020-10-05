@@ -27,7 +27,7 @@ spec:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_ROOT }}
             - name: {{ VOLUME_NAME }}
-              mountPath: {{ VOLUME_PATH_DB }}
+              mountPath: /data/db
               subPath: {{ VOLUME_SUBPATH_DB|default:"db" }}
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_CONFIGDB }}
@@ -107,7 +107,7 @@ spec:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_ROOT }}
             - name: {{ VOLUME_NAME }}
-              mountPath: {{ VOLUME_PATH_DB }}
+              mountPath: /data/db
               subPath: {{ VOLUME_SUBPATH_DB|default:"db" }}
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_CONFIGDB }}
@@ -187,7 +187,7 @@ spec:
                   fi
         - name: database-log
           image: busybox
-          args: [/bin/sh, -c, 'tail -n+1 -f {{ DATABASE_LOG_FULL_PATH }}']
+          args: [/bin/sh, -c, 'tail -n+1 -f /data/logs/mongodb.log']
           volumeMounts:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_ROOT }}
