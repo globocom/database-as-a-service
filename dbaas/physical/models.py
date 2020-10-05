@@ -83,25 +83,22 @@ class Environment(BaseModel):
         return self.plans.filter(is_active=True)
 
     @classmethod
+    def _get_envs_by_stage(cls, stage):
+        return cls.objects.filter(stage=stage).values_list(
+            'name', flat=True
+        )
+
+    @classmethod
     def prod_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(stage=cls.PROD):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_stage(cls.PROD)
 
     @classmethod
     def dev_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(stage=cls.DEV):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_stage(cls.DEV)
 
     @classmethod
     def k8s_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(provisioner=cls.KUBERNETES):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_stage(cls.KUBERNETES)
 
 
 class EnvironmentGroup(BaseModel):
