@@ -211,6 +211,33 @@ class Provider(BaseInstanceStep):
         if response.status_code != 201:
             raise HostProviderException(response.content, response)
 
+    def configure(self, configuration):
+        url = "{}/{}/{}/host/configure".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "host": self.host.hostname,
+            "group": self.infra.name,
+            "engine": self.engine,
+            "configuration": configuration
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderChangeOfferingException(
+                response.content,
+                response
+            )
+        return True
+
+    def remove_configuration(self):
+        url = "{}/{}/{}/host/configure/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.host.hostname
+        )
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyVMException(response.content, response)
+
     def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
@@ -223,7 +250,7 @@ class Provider(BaseInstanceStep):
     def clean(self):
         url = "{}/{}/{}/clean/{}".format(
             self.credential.endpoint, self.provider, self.environment,
-            self.instance.vm_name,
+            self.host.hostname,
         )
         response = self._request(delete, url)
         if not response.ok:
