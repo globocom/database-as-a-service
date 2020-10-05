@@ -1025,7 +1025,7 @@ class MongoDBSingleK8s(MongoDBSingle):
                 'workflow.steps.util.k8s.NewVolumeK8S',
             )}, {
             'Creating Config Map': (
-                'workflow.steps.util.k8s.NewConfigMapK8S',
+                'workflow.steps.util.k8s.CreateConfigMap',
             )}, {
             'Creating Pod': (
                 'workflow.steps.util.k8s.NewPodK8S',
