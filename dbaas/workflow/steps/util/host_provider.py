@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from time import sleep
 from requests import post, delete, get
+from time import sleep
+from urlparse import urljoin
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -198,6 +199,47 @@ class Provider(BaseInstanceStep):
         host.save()
         return host
 
+    def prepare(self):
+        url = "{}/{}/{}/prepare".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "engine": self.engine,
+            "name": self.instance.vm_name,
+            "group": self.infra.name,
+            "ports": [self.instance.port],
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 201:
+            raise HostProviderException(response.content, response)
+
+    def configure(self, configuration):
+        url = "{}/{}/{}/host/configure".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "host": self.host.hostname,
+            "group": self.infra.name,
+            "engine": self.engine,
+            "configuration": configuration
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderChangeOfferingException(
+                response.content,
+                response
+            )
+        return True
+
+    def remove_configuration(self):
+        url = "{}/{}/{}/host/configure/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.host.hostname
+        )
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyVMException(response.content, response)
+
     def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
@@ -206,6 +248,15 @@ class Provider(BaseInstanceStep):
         response = self._request(delete, url, timeout=600)
         if not response.ok:
             raise HostProviderDestroyVMException(response.content, response)
+
+    def clean(self):
+        url = "{}/{}/{}/clean/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.host.hostname,
+        )
+        response = self._request(delete, url)
+        if not response.ok:
+            raise HostProviderException(response.content, response)
 
     def list_zones(self):
         url = "{}/{}/{}/zones".format(
@@ -217,11 +268,13 @@ class Provider(BaseInstanceStep):
         data = response.json()
         return data['zones']
 
-    def host_info(self, host):
-        url = "{}/{}/{}/host/{}".format(
+    def host_info(self, host, refresh=False):
+        url = "{}/{}/{}/host/{}/".format(
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
+        if refresh:
+            url = urljoin(url, "refresh/")
         response = self._request(get, url)
         if not response.ok:
             raise HostProviderInfoException(response.content, response)
