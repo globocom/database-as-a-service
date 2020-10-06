@@ -158,6 +158,7 @@ class Team(BaseModel):
             ("change_role", "Can change role"),
             ("add_role", "Can add role"),
             ("delete_role", "Can delete role"),
+            ("view_team", "Can view team"),
         )
         ordering = ['name']
 
@@ -192,14 +193,14 @@ class Team(BaseModel):
     def users_without_team(cls):
         """get all users without team"""
         users = []
-        all_users = Set(User.objects.all())
+        all_users = set(User.objects.all())
         teams = Team.objects.all()
         for team in teams:
             for user in team.users.all():
                 if user not in users:
                     users.append(user)
 
-        return list(all_users.difference(Set(users)))
+        return list(all_users.difference(set(users)))
 
     @classmethod
     def users_at_same_team(cls, current_user):

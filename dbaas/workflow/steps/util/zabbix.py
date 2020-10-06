@@ -195,3 +195,27 @@ class UpdateMonitoringRemoveHostgroup(UpdateMonitoring):
             self.zabbix_provider.remove_hostgroup_on_host(
                  host_name=host_name,
                  hostgroup_name=self.hostgroup_name)
+
+class UpdateMongoDBSSL(ZabbixStep):
+
+    def __unicode__(self):
+        return "Update SSL info on Zabbix..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        if self.infra.ssl_mode == self.infra.REQUIRETLS:
+            value = 'True'
+        else:
+            value = 'False'
+
+        self.zabbix_provider.update_macro(
+            host_name=self.instance.dns,
+            macro='{$MONGO_SSL}',
+            value=value
+        )

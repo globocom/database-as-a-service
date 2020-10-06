@@ -61,6 +61,7 @@ max_heap_table_size             = {{ configuration.max_heap_table_size.value }}
 
 wait_timeout                    = {{ configuration.wait_timeout.value }}
 interactive_timeout             = {{ configuration.interactive_timeout.value }}
+slave_net_timeout               = {{ configuration.slave_net_timeout.value }}
 log_bin_trust_function_creators = {{ configuration.log_bin_trust_function_creators.value }}
 
 {% if configuration.sql_mode.value != 'default' %}
@@ -74,7 +75,6 @@ sync_binlog                     = {{ configuration.sync_binlog.value }}
 expire_logs_days                = {{ configuration.expire_logs_days.value }}
 max_binlog_size                 = {{ configuration.max_binlog_size.value }}
 log_slave_updates               = {{ configuration.log_slave_updates.value }}
-log_slave_updates
 
 
 # Slow Query Logging

@@ -42,6 +42,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -108,6 +109,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -145,6 +147,7 @@ class BaseMongoDB(BaseTopology):
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
+                'workflow.steps.util.zabbix.UpdateMongoDBSSL',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -1022,13 +1025,13 @@ class MongoDBSingleK8s(MongoDBSingle):
                 'workflow.steps.util.k8s.NewVolumeK8S',
             )}, {
             'Creating Config Map': (
-                'workflow.steps.util.k8s.NewConfigMapK8S',
+                'workflow.steps.util.k8s.CreateConfigMap',
             )}, {
             'Creating Pod': (
                 'workflow.steps.util.k8s.NewPodK8S',
             )}, {
             'Waiting VMs': (
-                'workflow.steps.util.k8s.WaitingPodBeReady',
+                'workflow.steps.util.host_provider.WaitingBeReady',
                 # 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Creating dns': (

@@ -84,7 +84,11 @@ Base.DbaasNotification = {};
     function resetNotificationCnt() {
       var $notificationContainer = $("#dropdown-menu-notification");
       var $notificationCnt = $notificationContainer.find(".notification-cnt");
+      var $notificationText = $notificationContainer.find(".notify-text");
+      var $notificationBell = $notificationContainer.find(".fa-bell");
       replaceCssClass($notificationCnt, "badge-warning", "badge-default");
+      replaceCssClass($notificationText, "text-warning", "text-default");
+      replaceCssClass($notificationBell, "text-warning", "text-white");
       $notificationCnt.text("0");
     }
 
@@ -187,11 +191,15 @@ Base.DbaasNotification = {};
 
       $("#dropdown-menu-notification .dropdown-menu").html(html);
       var notificationQuantity = view.notificationQuantity(),
-        $notificationCount = $("#dropdown-menu-notification .notification-cnt");
+        $notificationCount = $("#dropdown-menu-notification .notification-cnt"),
+        $notificationText = $("#dropdown-menu-notification .notify-text"),
+        $notificationBell = $("#dropdown-menu-notification .fa-bell");
       if ($("#dropdown-menu-notification.open").length === 0) {
         if (notificationQuantity != parseInt($notificationCount.text())) {
           $notificationCount.text(view.notificationQuantity());
           replaceCssClass($notificationCount, "badge-default", "badge-warning");
+          replaceCssClass($notificationText, "text-default", "text-warning");
+          replaceCssClass($notificationBell, "text-white", "text-warning");
         }
       }
       else {
