@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from time import sleep
 from requests import post, delete, get
+from time import sleep
+from urlparse import urljoin
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -268,12 +269,12 @@ class Provider(BaseInstanceStep):
         return data['zones']
 
     def host_info(self, host, refresh=False):
-        url = "{}/{}/{}/host/{}".format(
+        url = "{}/{}/{}/host/{}/".format(
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
         if refresh:
-            url = "{}/refresh".format(url)
+            url = urljoin(url, "refresh/")
         response = self._request(get, url)
         if not response.ok:
             raise HostProviderInfoException(response.content, response)
