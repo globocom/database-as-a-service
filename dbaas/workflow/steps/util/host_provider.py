@@ -206,6 +206,7 @@ class Provider(BaseInstanceStep):
             "engine": self.engine,
             "name": self.instance.vm_name,
             "group": self.infra.name,
+            "ports": [self.instance.port],
         }
         response = self._request(post, url, json=data)
         if response.status_code != 201:
