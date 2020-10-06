@@ -106,18 +106,6 @@
                 $(document.getElementsByClassName("field-engine")[0]).fadeOut("slow");
             }
         },
-        envIsKubernetes: function(envId) {
-            var result = 99;
-            $.ajax({
-                type: "GET",
-                dataType: "json",
-                async: false,
-                url: "/api/environment/?get_provisioner_by_label=Kubernetes&&id=" + envId
-            }).done(function (response) {
-                result = response.environment.length > 0
-            });
-            return result
-        },
         filter_pools: function() {
             var envId = $("#id_environment").val() || null;
             var teamId = $("#id_team").val() || null;
