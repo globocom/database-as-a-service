@@ -6,7 +6,7 @@ from base import BaseInstanceStep
 from plan import PlanStepNewInfra
 from physical.models import Host
 from workflow.steps.util.volume_provider import VolumeProviderBase
-from workflow.steps.util.host_provider import Provider as HostProvider
+from workflow.steps.util.host_provider import CreateVirtualMachine, Provider as HostProvider
 
 
 LOG = logging.getLogger(__name__)
@@ -97,41 +97,9 @@ class UpdateHostMetadata(BaseK8SStep):
         pass
 
 
-class NewPodK8S(BaseK8SStep):
+class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
     def __unicode__(self):
         return "Creating POD on kubernetes..."
-
-    @property
-    def team(self):
-        if self.has_database:
-            return self.database.team.name
-        elif self.create:
-            return self.create.team.name
-        elif (self.step_manager
-              and hasattr(self.step_manager, 'origin_database')):
-            return self.step_manager.origin_database.team.name
-
-    @property
-    def stronger_offering(self):
-        return self.plan.stronger_offering
-
-    @property
-    def weaker_offering(self):
-        return self.plan.weaker_offering
-
-    @property
-    def database_offering(self):
-        if self.host_migrate and self.host_migrate.database_migrate:
-            return self.host_migrate.database_migrate.offering
-        if self.has_database:
-            return self.infra.offering
-        return self.stronger_offering
-
-    @property
-    def offering(self):
-        if self.instance.is_database:
-            return self.database_offering
-        return self.weaker_offering
 
     def do(self):
         if not self.instance.is_database:
