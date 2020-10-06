@@ -11,7 +11,8 @@ from account.models import User
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
-from physical.models import Plan, DatabaseInfra, Instance
+from physical.models import (Plan, DatabaseInfra,
+                             Instance, Pool)
 from util import email_notifications, get_worker_name
 from util.decorators import only_one
 from util import providers as util_providers
@@ -80,7 +81,15 @@ def create_database(
     database_create.user = user.username if user else task.user
     database_create.infra = infra
     database_create.database = infra.databases.first()
-    database_create.pool = kw.get('pool')
+    pool_name = kw.get('pool')
+    if pool_name:
+        pool = Pool.objects.get(
+            name=pool_name,
+            environment=environment
+        )
+    else:
+        pool = None
+    database_create.pool = pool
     database_create.save()
 
     steps = get_deploy_settings(topology_path)
