@@ -408,7 +408,7 @@ class HostInfoTestCase(BaseProviderTestCase):
         post_params = get_mock.call_args
         self.assertEqual(
             post_params[0][0],
-            'fake_endpoint/fake_project/fake_env/host/fake_identifier1'
+            'fake_endpoint/fake_project/fake_env/host/fake_identifier1/'
         )
         self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
 
