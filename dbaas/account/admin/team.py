@@ -16,7 +16,6 @@ from django.utils.encoding import force_text
 from django.utils.translation import ungettext
 
 from account.models import Role
-from account.forms.team import TeamAdminForm
 from account.service.team import TeamService
 
 LOG = logging.getLogger(__name__)
@@ -43,7 +42,6 @@ class RoleListFilter(SimpleListFilter):
 
 class TeamAdmin(admin.DjangoServicesAdmin):
 
-    form = TeamAdminForm
     service_class = TeamService
     list_display = ["name", "role", "database_limit", "email", "organization"]
     filter_horizontal = ['users']
