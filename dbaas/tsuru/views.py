@@ -254,7 +254,7 @@ class ServiceUnitBind(APIView):
 class ServiceAdd(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     required_params = ('description', 'plan', 'user', 'name', 'team')
-    search_metadata_params = ('plan', 'user', 'team', 'pool')
+    search_metadata_params = ('plan', 'user', 'team')
     model = Database
 
     def __init__(self, *args, **kw):
@@ -263,12 +263,7 @@ class ServiceAdd(APIView):
 
     @cached_property
     def data(self):
-        data = self.request.DATA
-        for k, v in data.iteritems():
-            if k.startswith("parameters."):
-                data.pop(k)
-                data[k.replace('parameters.', '')] = v
-        return data
+        return self.request.DATA
 
     @property
     def description_param(self):
@@ -328,7 +323,7 @@ class ServiceAdd(APIView):
 
     @property
     def pool_param(self):
-        return self.data.get('pool')
+        return self.request.META.get('X-Tsuru-Pool-Name')
 
     @property
     def dbaas_pool(self):
@@ -387,14 +382,12 @@ class ServiceAdd(APIView):
                 )
 
     def _validate_user(self):
-        msg = ''
         try:
             AccountUser.objects.get(email=self.user_param)
         except MultipleObjectsReturned as e:
             msg = "There are multiple user for {} email.".format(
                 self.user_param
             )
-        if msg:
             return log_and_response(
                     msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
                 )
@@ -443,10 +436,18 @@ class ServiceAdd(APIView):
 
     def _validate_if_kubernetes_env(self):
         if self.is_k8s_env:
-            if 'pool' not in self.data:
-                msg = ("To create database on kubernetes you must pass the "
-                       "pool name. Add the parameter "
-                       "--plan-param pool=<POOL_NAME>")
+            if not self.pool_param:
+                msg = ("the header <X-Tsuru-Pool-Name> was not found "
+                       "on headers. Contact tsuru team.")
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                self.dbaas_pool
+            except Pool.DoesNotExist:
+                msg = "Pool <{}> was not found".format(
+                    self.pool_param
+                )
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
                 )
@@ -710,17 +711,17 @@ def get_network_from_ip(ip, database_environment):
 
 
 def get_database(name, env):
-    if env in Configuration.get_by_name_as_list('dev_envs'):
-        database = Database.objects.filter(
-            name=name, environment__name=env
-        ).exclude(is_in_quarantine=True)[0]
+    query_params = {
+        'name': name
+    }
+    if env in Environment.dev_envs():
+        query_params['environment__name'] = env
     else:
-        prod_envs = Configuration.get_by_name_as_list('prod_envs')
-        database = Database.objects.filter(
-            name=name, environment__name__in=prod_envs
-        ).exclude(is_in_quarantine=True)[0]
+        query_params['environment__name__in'] = Environment.prod_envs()
 
-    return database
+    return Database.objects.filter(
+        **query_params
+    ).exclude(is_in_quarantine=True)[0]
 
 
 def check_acl_service_and_get_unit_network(database, data,

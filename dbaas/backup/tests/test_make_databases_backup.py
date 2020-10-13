@@ -7,6 +7,7 @@ from model_mommy import mommy
 from backup.tasks import make_databases_backup
 from backup.models import Snapshot, BackupGroup
 from dbaas.tests.helpers import DatabaseHelper, InfraHelper, PlanHelper
+from physical.models import Environment
 
 
 FAKE_NOW = datetime(2020, 1, 1, 5, 10, 00)
@@ -33,14 +34,10 @@ class TestMakeDatabasesBackup(TestCase):
         mommy.make(
             'Configuration', name='backup_hour', value=str(self.backup_hour)
         )
-        mommy.make(
-            'Configuration', name='prod_envs', value='prod,prod-cm,aws-prod'
+        self.dev_env = mommy.make(
+            'Environment', name='dev', stage=Environment.DEV
         )
-        mommy.make(
-            'Configuration', name='dev_envs', value='dev,qa2,aws-dev'
-        )
-        self.dev_env = mommy.make('Environment', name='dev')
-        mommy.make('Environment', name='prod')
+        mommy.make('Environment', name='prod', stage=Environment.PROD)
         _, _, _, self.plan = PlanHelper.create()
         self.infra = InfraHelper.create(
             backup_hour=self.backup_hour,

@@ -226,8 +226,8 @@ def make_databases_backup(self):
     )
     status = TaskHistory.STATUS_SUCCESS
     environments = Environment.objects.all()
-    prod_envs = Configuration.get_by_name_as_list('prod_envs')
-    dev_envs = Configuration.get_by_name_as_list('dev_envs')
+    prod_envs = Environment.prod_envs()
+    dev_envs = Environment.dev_envs()
     env_names_order = prod_envs + dev_envs
     if not env_names_order:
         env_names_order = [env.name for env in environments]
