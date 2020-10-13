@@ -33,14 +33,19 @@ class BaseValidationTestCase(TestCase):
         self.env = 'dev'
         self.k8s_env_name = 'k8s_env'
         self.environment = mommy.make('Environment', name=self.env)
-        self.k8s_env = mommy.make('Environment',
-            name=self.k8s_env_name, provisioner=Environment.KUBERNETES)
+        self.k8s_env = mommy.make(
+            'Environment',
+            name=self.k8s_env_name,
+            provisioner=Environment.KUBERNETES
+        )
         self.url = reverse('tsuru:service-add', args=(self.env,))
         self.name = 'fake_database'
         self.user = '{}@admin.com'.format(self.USERNAME)
         self.description = 'fake desc'
         self.plan = mommy.make(
-            'Plan', name='fake_plan', provider=Plan.CLOUDSTACK
+            'Plan',
+            name='fake_plan',
+            provider=Plan.CLOUDSTACK
         )
         self.plan.environments.add(self.environment)
         self.payload = {
@@ -50,6 +55,10 @@ class BaseValidationTestCase(TestCase):
             'team': self.team.name,
             'plan': self.plan_name
         }
+        self.headers = {
+            'X-Tsuru-Pool-Name': 'Fake Pool',
+            'X-Tsuru-Pool-Provisioner': 'docker'
+        }
 
     def tearDown(self):
         self.client.logout()
@@ -57,7 +66,8 @@ class BaseValidationTestCase(TestCase):
     def do_request(self):
         return self.client.post(
                 self.url,
-                self.payload
+                self.payload,
+                **self.headers
             )
 
     def _assert_resp(self, resp, msg):
@@ -177,18 +187,31 @@ class K8sValidationTestCase(BaseValidationTestCase):
         self.pool_name = 'fake_pool'
         self.pool = mommy.make('Pool', name=self.pool_name)
         self.pool.teams.add(self.team)
-        self.payload['parameters.pool'] = self.pool_name
+        # self.payload['parameters.pool'] = self.pool_name
+        self.headers = {
+            'X-Tsuru-Pool-Name': self.pool_name,
+            'X-Tsuru-Pool-Provisioner': 'kubernetes',
+            'X-Tsuru-Cluster-Name': 'fake cluster name',
+            'X-Tsuru-Cluster-Provisioner': 'rancher',
+            'X-Tsuru-Cluster-Addresses': 'fake rancher endpoint'
+        }
 
-    def test_pool_not_in_payload(self):
-        self.payload.pop('parameters.pool')
+    def test_pool_not_in_header(self):
+        self.headers.pop('X-Tsuru-Pool-Name')
         self.do_request_and_assert(
-            ("To create database on kubernetes you must pass the "
-             "pool name. Add the parameter "
-             "--plan-param pool=<POOL_NAME>")
+            ("the header <X-Tsuru-Pool-Name> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_header_empty(self):
+        self.headers['X-Tsuru-Pool-Name'] = ''
+        self.do_request_and_assert(
+            ("the header <X-Tsuru-Pool-Name> was not found "
+             "on headers. Contact tsuru team.")
         )
 
     def test_pool_not_found(self):
-        self.payload['parameters.pool'] = 'unexistent pool'
+        self.headers['X-Tsuru-Pool-Name'] = 'unexistent pool'
         self.do_request_and_assert(
             "Pool <unexistent pool> was not found"
         )
