@@ -60,8 +60,8 @@ class CheckDatabasesStatusTestCase(TestCase):
     ):
         DatabaseHelper.create(status=Database.INITIALIZING)
         DatabaseHelper.create(status=Database.ALIVE)
-        database_alert = DatabaseHelper.create(status=Database.ALERT, name='alert')
-        database_dead = DatabaseHelper.create(status=Database.DEAD, name='dead')
+        database_alert = DatabaseHelper.create(status=Database.ALERT)
+        database_dead = DatabaseHelper.create(status=Database.DEAD)
         task_register_mock.return_value = self.task_history
 
         calls = [call(database_dead), call(database_alert)]
