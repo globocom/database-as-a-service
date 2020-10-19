@@ -56,8 +56,8 @@ class BaseValidationTestCase(TestCase):
             'plan': self.plan_name
         }
         self.headers = {
-            'X-Tsuru-Pool-Name': 'Fake Pool',
-            'X-Tsuru-Pool-Provisioner': 'docker'
+            'HTTP_X_TSURU_POOL_NAME': 'Fake Pool',
+            'HTTP_X_TSURU_POOL_PROVISIONER': 'docker'
         }
 
     def tearDown(self):
@@ -189,29 +189,29 @@ class K8sValidationTestCase(BaseValidationTestCase):
         self.pool.teams.add(self.team)
         # self.payload['parameters.pool'] = self.pool_name
         self.headers = {
-            'X-Tsuru-Pool-Name': self.pool_name,
-            'X-Tsuru-Pool-Provisioner': 'kubernetes',
-            'X-Tsuru-Cluster-Name': 'fake cluster name',
-            'X-Tsuru-Cluster-Provisioner': 'rancher',
-            'X-Tsuru-Cluster-Addresses': 'fake rancher endpoint'
+            'HTTP_X_TSURU_POOL_NAME': self.pool_name,
+            'HTTP_X_TSURU_POOL_PROVISIONER': 'kubernetes',
+            'HTTP_X_TSURU_CLUSTER_NAME': 'fake cluster name',
+            'HTTP_X_TSURU_CLUSTER_PROVISIONER': 'rancher',
+            'HTTP_X_TSURU_CLUSTER_ADDRESS': 'fake rancher endpoint'
         }
 
     def test_pool_not_in_header(self):
-        self.headers.pop('X-Tsuru-Pool-Name')
+        self.headers.pop('HTTP_X_TSURU_POOL_NAME')
         self.do_request_and_assert(
-            ("the header <X-Tsuru-Pool-Name> was not found "
+            ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
              "on headers. Contact tsuru team.")
         )
 
     def test_pool_header_empty(self):
-        self.headers['X-Tsuru-Pool-Name'] = ''
+        self.headers['HTTP_X_TSURU_POOL_NAME'] = ''
         self.do_request_and_assert(
-            ("the header <X-Tsuru-Pool-Name> was not found "
+            ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
              "on headers. Contact tsuru team.")
         )
 
     def test_pool_not_found(self):
-        self.headers['X-Tsuru-Pool-Name'] = 'unexistent pool'
+        self.headers['HTTP_X_TSURU_POOL_NAME'] = 'unexistent pool'
         self.do_request_and_assert(
             "Pool <unexistent pool> was not found"
         )
