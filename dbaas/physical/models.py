@@ -1168,6 +1168,7 @@ class Host(BaseModel):
         auto_now_add=False,
         blank=True,
         null=True)
+    version = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return self.hostname
