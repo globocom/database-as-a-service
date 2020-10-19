@@ -323,7 +323,7 @@ class ServiceAdd(APIView):
 
     @property
     def pool_param(self):
-        return self.request.META.get('X-Tsuru-Pool-Name')
+        return self.request.META.get('HTTP_X_TSURU_POOL_NAME')
 
     @property
     def dbaas_pool(self):
@@ -438,7 +438,7 @@ class ServiceAdd(APIView):
         LOG.info("Tsuru Debug headers:{}".format(self.request.META))
         if self.is_k8s_env:
             if not self.pool_param:
-                msg = ("the header <X-Tsuru-Pool-Name> was not found "
+                msg = ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
                        "on headers. Contact tsuru team.")
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
