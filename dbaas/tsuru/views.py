@@ -435,6 +435,7 @@ class ServiceAdd(APIView):
             ), self.dbaas_plan
 
     def _validate_if_kubernetes_env(self):
+        LOG.info("Tsuru Debug headers:{}".format(self.request.META))
         if self.is_k8s_env:
             if not self.pool_param:
                 msg = ("the header <X-Tsuru-Pool-Name> was not found "
