@@ -257,6 +257,8 @@ class ServiceAdd(APIView):
     required_params = ('description', 'plan', 'user', 'name', 'team')
     search_metadata_params = ('plan', 'user', 'team')
     model = Database
+    tsuru_pool_name_header = 'HTTP_X_TSURU_POOL_NAME'
+    tsuru_pool_endpoint_header = 'HTTP_X_TSURU_CLUSTER_ADDRESSES'
 
     def __init__(self, *args, **kw):
         super(ServiceAdd, self).__init__(*args, **kw)
@@ -324,11 +326,11 @@ class ServiceAdd(APIView):
 
     @property
     def pool_param(self):
-        return self.request.META.get('HTTP_X_TSURU_POOL_NAME')
+        return self.request.META.get(self.tsuru_pool_name_header)
 
     @property
     def pool_endpoint_param(self):
-        return self.request.META.get('HTTP_X_TSURU_CLUSTER_ADDRESS')
+        return self.request.META.get(self.tsuru_pool_endpoint_header)
 
     @property
     def dbaas_pool(self):
@@ -445,15 +447,19 @@ class ServiceAdd(APIView):
         LOG.info("Tsuru Debug headers:{}".format(self.request.META))
         if self.is_k8s_env:
             if not self.pool_param:
-                msg = ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
-                       "on headers. Contact tsuru team.")
+                msg = ("the header <{}> was not found "
+                       "on headers. Contact tsuru team.".format(
+                           self.tsuru_pool_name_header
+                       ))
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
                 )
             if not self.pool_endpoint_param:
                 msg = (
-                    "the header <HTTP_X_TSURU_CLUSTER_ADDRESS> "
-                    "was not found on headers. Contact tsuru team."
+                    "the header <{}> "
+                    "was not found on headers. Contact tsuru team.".format(
+                        self.tsuru_pool_endpoint_header
+                    )
                 )
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
