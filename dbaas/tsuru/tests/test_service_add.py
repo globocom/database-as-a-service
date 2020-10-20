@@ -185,7 +185,12 @@ class K8sValidationTestCase(BaseValidationTestCase):
             name="k8s_envs", value=self.k8s_env_name
         )
         self.pool_name = 'fake_pool'
-        self.pool = mommy.make('Pool', name=self.pool_name)
+        self.pool_endpoint = 'https://www.fake.rancher/endpoint'
+        self.pool = mommy.make(
+            'Pool',
+            name=self.pool_name,
+            cluster_endpoint=self.pool_endpoint
+        )
         self.pool.teams.add(self.team)
         # self.payload['parameters.pool'] = self.pool_name
         self.headers = {
@@ -193,13 +198,20 @@ class K8sValidationTestCase(BaseValidationTestCase):
             'HTTP_X_TSURU_POOL_PROVISIONER': 'kubernetes',
             'HTTP_X_TSURU_CLUSTER_NAME': 'fake cluster name',
             'HTTP_X_TSURU_CLUSTER_PROVISIONER': 'rancher',
-            'HTTP_X_TSURU_CLUSTER_ADDRESS': 'fake rancher endpoint'
+            'HTTP_X_TSURU_CLUSTER_ADDRESS': self.pool_endpoint
         }
 
     def test_pool_not_in_header(self):
         self.headers.pop('HTTP_X_TSURU_POOL_NAME')
         self.do_request_and_assert(
             ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_endpoint_not_in_header(self):
+        self.headers.pop('HTTP_X_TSURU_CLUSTER_ADDRESS')
+        self.do_request_and_assert(
+            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESS> was not found "
              "on headers. Contact tsuru team.")
         )
 
@@ -210,10 +222,22 @@ class K8sValidationTestCase(BaseValidationTestCase):
              "on headers. Contact tsuru team.")
         )
 
-    def test_pool_not_found(self):
-        self.headers['HTTP_X_TSURU_POOL_NAME'] = 'unexistent pool'
+    def test_pool_endoint_header_empty(self):
+        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS'] = ''
         self.do_request_and_assert(
-            "Pool <unexistent pool> was not found"
+            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESS> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_not_found(self):
+        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS'] = (
+            'unexistent pool address'
+        )
+        self.do_request_and_assert(
+            "Pool with name <{}> and endpoint <{}> was not found".format(
+                self.pool_name,
+                self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS']
+            )
         )
 
     def test_pool_not_on_team_of_user(self):

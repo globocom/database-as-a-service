@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
+
 import requests
 from slugify import slugify
-from dbaas_credentials.models import CredentialType
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,10 +12,8 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from networkapiclient import Ip, Network
-from logical.validators import database_name_evironment_constraint
-from logical.models import Database
-from logical.forms import DatabaseForm
-from dbaas.middleware import UserMiddleware
+from django.utils.functional import cached_property
+
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
 from util import simple_health_check
@@ -23,10 +21,13 @@ from physical.models import Plan, Environment, PlanNotFound, Pool
 from account.models import AccountUser, Team
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
-from system.models import Configuration
 from workflow.steps.util.base import ACLFromHellClient
 from maintenance.models import DatabaseCreate
-from django.utils.functional import cached_property
+from dbaas_credentials.models import CredentialType
+from logical.validators import database_name_evironment_constraint
+from logical.models import Database
+from logical.forms import DatabaseForm
+from dbaas.middleware import UserMiddleware
 
 LOG = logging.getLogger(__name__)
 DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
@@ -326,8 +327,14 @@ class ServiceAdd(APIView):
         return self.request.META.get('HTTP_X_TSURU_POOL_NAME')
 
     @property
+    def pool_endpoint_param(self):
+        return self.request.META.get('HTTP_X_TSURU_CLUSTER_ADDRESS')
+
+    @property
     def dbaas_pool(self):
-        return Pool.objects.get(name=self.pool_param)
+        return Pool.objects.get(
+            cluster_endpoint=self.pool_endpoint_param
+        )
 
     def _validate_required_params(self):
         for param_name in self.required_params:
@@ -443,11 +450,22 @@ class ServiceAdd(APIView):
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
                 )
+            if not self.pool_endpoint_param:
+                msg = (
+                    "the header <HTTP_X_TSURU_CLUSTER_ADDRESS> "
+                    "was not found on headers. Contact tsuru team."
+                )
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
             try:
                 self.dbaas_pool
             except Pool.DoesNotExist:
-                msg = "Pool <{}> was not found".format(
-                    self.pool_param
+                msg = (
+                    "Pool with name <{}> and endpoint <{}> was not found"
+                ).format(
+                    self.pool_param,
+                    self.pool_endpoint_param
                 )
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
