@@ -94,7 +94,7 @@ class UpdateHostMetadata(BaseK8SStep):
         host.save()
 
     def undo(self):
-        pass
+        self.do()
 
 
 class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
