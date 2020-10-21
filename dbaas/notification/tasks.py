@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from datetime import date, timedelta, datetime
+from time import sleep
 import traceback
 
 from celery.utils.log import get_task_logger
@@ -480,25 +481,48 @@ def check_databases_status(self):
         'status', 'name'
     )
     try:
-        if len(databases) == 0:
-            task_history.update_status_for(
-                TaskHistory.STATUS_SUCCESS, details="All databases are alive."
-            )
-            return
-        database_status = -1
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details='')
         for database in databases:
-            LOG.info(database)
-            if database.status != database_status:
-                database_status = database.status
-                task_history.update_details(
-                    'Databases with status {}:\n'.format(
-                        database.get_status_display()
-                    )
-                )
-            task_history.update_details("{}\n".format(database), True)
+            check_database_is_alive.delay(database)
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="All databases were checked."
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+    return
+
+
+@app.task(bind=True)
+def check_database_is_alive(self, database):
+    LOG.info("Checking {} status".format(database))
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name
+    )
+    task_history.object_id = database.id
+    task_history.object_class = database._meta.db_table
+    status = [Database.ALIVE, Database.INITIALIZING]
+    task_history.update_status_for(
+        TaskHistory.STATUS_RUNNING,
+        details='Checking {} status\n'.format(database)
+    )
+    sleep(60)
+    retries = 3
+    for attempt in range(retries):
+        database.update_status()
+        if database.status in status:
+            task_history.update_status_for(
+                TaskHistory.STATUS_SUCCESS,
+                details='Database {} is {}\n'.format(
+                    database, database.get_status_display()
+                )
+            )
+            return
+        sleep(60)
+    task_history.update_status_for(
+        TaskHistory.STATUS_ERROR, details='Database {} is {}\n'.format(
+            database, database.get_status_display()
+        )
+    )
     return
 
 
@@ -689,7 +713,7 @@ def send_mail_24hours_before_auto_task(self):
 @app.task(bind=True)
 @only_one(key="checksslexpireattask")
 def check_ssl_expire_at(self):
-    #LOG.info("Retrieving all SSL MySQL databases")
+    # LOG.info("Retrieving all SSL MySQL databases")
     today = date.today()
     worker_name = get_worker_name()
     task = TaskHistory.register(
@@ -1594,7 +1618,7 @@ def update_organization_name_monitoring(self, task, database,
 
 @app.task(bind=True)
 def change_database_persistence(self, database, user, task,
-        source_plan, target_plan, since_step=0):
+                                source_plan, target_plan, since_step=0):
 
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -1934,8 +1958,10 @@ class TaskRegister(object):
         analyze_databases.delay(task_history=task)
 
     @classmethod
-    def database_clone(cls, origin_database, user, clone_name,
-                       plan, environment, retry_from=None):
+    def database_clone(
+        cls, origin_database, user, clone_name, plan, environment,
+        retry_from=None
+    ):
 
         task_params = {
             'task_name': 'clone_database',
@@ -2477,7 +2503,6 @@ class TaskRegister(object):
             organization_name=organization_name
         )
 
-
     @classmethod
     def database_change_persistence(cls, database, user, since_step=None):
 
@@ -2514,7 +2539,6 @@ class TaskRegister(object):
 
         change_database_persistence.delay(**delay_params)
 
-
     @classmethod
     def database_set_ssl_required(cls, database, user, since_step=None):
 
@@ -2543,7 +2567,6 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         database_set_ssl_required.delay(**delay_params)
-
 
     @classmethod
     def database_set_ssl_not_required(cls, database, user, since_step=None):
