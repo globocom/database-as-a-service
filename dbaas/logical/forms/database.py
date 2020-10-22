@@ -10,7 +10,7 @@ from django import forms
 
 from util import get_replication_topology_instance
 from drivers.factory import DriverFactory
-from physical.models import Plan, Environment, Engine
+from physical.models import Plan, Environment, Engine, Pool
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database
 from logical.validators import database_name_evironment_constraint
@@ -45,6 +45,7 @@ class DatabaseForm(models.ModelForm):
     ]
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
+    pool = forms.ModelChoiceField(queryset=Pool.objects, required=False)
     plan = AdvancedModelChoiceField(
         queryset=Plan.objects.filter(is_active='True'),
         required=False, widget=forms.RadioSelect,
@@ -64,10 +65,10 @@ class DatabaseForm(models.ModelForm):
     class Meta:
         model = Database
         fields = [
-            'name', 'description', 'project', 'environment', 'engine', 'team',
-            'subscribe_to_email_events', 'backup_hour', 'maintenance_window',
-            'maintenance_day', 'is_in_quarantine', 'plan',
-
+            'name', 'description', 'project', 'environment', 'team', 'pool',
+            'engine', 'subscribe_to_email_events', 'backup_hour',
+            'maintenance_window', 'maintenance_day', 'is_in_quarantine',
+            'plan'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -155,6 +156,13 @@ class DatabaseForm(models.ModelForm):
                 "Backup hour must not be equal to maintenance window."
             )
 
+    def _validate_pool(self, cleaned_data):
+        env = cleaned_data['environment']
+        pool = cleaned_data['pool']
+        if env.pools.exists() and pool is None:
+            self._errors["pool"] = self.error_class(
+                [_("Team: This field is required.")])
+
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
@@ -172,6 +180,7 @@ class DatabaseForm(models.ModelForm):
         self._validate_description(cleaned_data)
         self._validate_team(cleaned_data)
         self._validate_backup_hour(cleaned_data)
+        self._validate_pool(cleaned_data)
 
         if 'environment' in cleaned_data:
             environment = cleaned_data.get('environment', None)

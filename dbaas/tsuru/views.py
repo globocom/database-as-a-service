@@ -710,17 +710,17 @@ def get_network_from_ip(ip, database_environment):
 
 
 def get_database(name, env):
-    if env in Configuration.get_by_name_as_list('dev_envs'):
-        database = Database.objects.filter(
-            name=name, environment__name=env
-        ).exclude(is_in_quarantine=True)[0]
+    query_params = {
+        'name': name
+    }
+    if env in Environment.dev_envs():
+        query_params['environment__name'] = env
     else:
-        prod_envs = Configuration.get_by_name_as_list('prod_envs')
-        database = Database.objects.filter(
-            name=name, environment__name__in=prod_envs
-        ).exclude(is_in_quarantine=True)[0]
+        query_params['environment__name__in'] = Environment.prod_envs()
 
-    return database
+    return Database.objects.filter(
+        **query_params
+    ).exclude(is_in_quarantine=True)[0]
 
 
 def check_acl_service_and_get_unit_network(database, data,

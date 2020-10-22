@@ -7,6 +7,7 @@ from model_mommy import mommy
 from backup.tasks import make_instance_snapshot_backup
 from backup.models import Snapshot, BackupGroup
 from dbaas.tests.helpers import DatabaseHelper
+from physical.models import Environment
 
 
 def fake_exec_remote_command(*args, **kw):
@@ -29,17 +30,13 @@ class BaseTestCase(TestCase):
             'Configuration', name='backup_hour', value=str(self.backup_hour)
         )
         mommy.make(
-            'Configuration', name='prod_envs', value='prod,prod-cm,aws-prod'
-        )
-        mommy.make(
-            'Configuration', name='dev_envs', value='dev,qa2,aws-dev'
-        )
-        mommy.make(
             'Configuration', name='make_database_backup_hour',
             value=','.join(map(str, FAKE_MAKE_DATABASE_BACKUP_HOUR))
         )
-        self.dev_env = mommy.make('Environment', name='dev')
-        mommy.make('Environment', name='prod')
+        self.dev_env = mommy.make(
+            'Environment', name='dev', stage=Environment.DEV
+        )
+        mommy.make('Environment', name='prod', stage=Environment.PROD)
         self.engine_type = mommy.make(
             'EngineType', name='mysql'
         )

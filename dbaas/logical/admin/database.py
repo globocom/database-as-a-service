@@ -123,8 +123,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     fieldsets_add = (
         (None, {
             'fields': (
-                'name', 'description', 'project', 'environment', 'engine',
-                'team', 'team_contact', 'subscribe_to_email_events',
+                'name', 'description', 'project', 'environment', 'team',
+                'engine', 'team_contact', 'subscribe_to_email_events',
                 'backup_hour', 'maintenance_window', 'maintenance_day',
                 'plan', 'is_in_quarantine',
             )
@@ -419,7 +419,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     maintenance_window=form.cleaned_data['maintenance_window'],
                     maintenance_day=form.cleaned_data['maintenance_day'],
                     subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
-                    user=request.user
+                    user=request.user,
+                    pool=form.cleaned_data['pool'],
                 )
                 url = reverse('admin:notification_taskhistory_changelist')
                 # Redirect after POST
