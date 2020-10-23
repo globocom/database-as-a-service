@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets, serializers, status, filters
 from rest_framework.response import Response
+
 from physical.models import Environment, Pool
 from account.models import Team
 from api.team import TeamSerializer
-from django.core.exceptions import ValidationError
+from util.aclapi import AddACLAccess
+from system.models import Configuration
 
 
 class PoolSerializer(serializers.HyperlinkedModelSerializer):
@@ -80,7 +83,19 @@ class PoolAPI(viewsets.ModelViewSet):
                 filter_params[k] = v
         return self.model.objects.filter(**filter_params)
 
+    def create_acl_for(self, vpc, env, pool_name):
+        sources = Configuration.get_by_name_as_list('application_networks')
+        destinations = [vpc]
+        cli = AddACLAccess(
+            env, sources, destinations,
+            description="ACl created when pool {} was created".format(
+                pool_name
+            )
+        )
+        cli.create_acl(execute_job=True)
+
     def create(self, request):
+        vpc = request.DATA.pop('vpc')
         serializer = self.get_serializer(
             data=request.DATA, files=request.FILES)
         data = serializer.init_data
@@ -112,6 +127,8 @@ class PoolAPI(viewsets.ModelViewSet):
         pool.teams.clear()
         for team in teams:
             pool.teams.add(team)
+
+        self.create_acl_for(vpc, data['environment'], pool_name)
 
         headers = self.get_success_headers(data)
         return Response(
