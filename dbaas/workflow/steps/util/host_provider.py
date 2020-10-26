@@ -621,7 +621,7 @@ class WaitingBeReady(HostProviderStep):
         return "Waiting for host be ready..."
 
     def do(self):
-        sleep(30)
+        sleep(60)
         for attempt in range(self.RETRIES):
             status = self.provider.status_host(self.host)
             if status["host_status"] == "READY":
