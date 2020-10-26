@@ -168,8 +168,8 @@ class BaseInstanceStep(object):
     def pool(self):
         if self.create:
             return self.create.pool
-        if self.infra:
-            return self.infra.pool
+        if self.database:
+            return self.database.pool
 
     @property
     def headers(self):
