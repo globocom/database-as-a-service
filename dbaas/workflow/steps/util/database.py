@@ -9,6 +9,8 @@ from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
 from workflow.steps.util.ssl import InfraSSLBaseName
+from dbaas_credentials.models import CredentialType
+from util import get_credentials_for
 
 
 LOG = logging.getLogger(__name__)
@@ -929,3 +931,33 @@ class StopNonDatabaseInstanceRollback(Stop):
 
     def undo(self):
         return super(StopNonDatabaseInstanceRollback, self).do()
+
+class SetUsersPasswordFromCredentials(DatabaseStep):
+
+    def __unicode__(self):
+        return "Changing database users credentials..."
+
+    @property
+    def engine_credentials(self):
+        raise NotImplementedError()
+
+    def do(self):
+        final_user, final_password = self.driver.get_final_infra_credentials()
+        self.driver.change_user_password(None, final_user, final_password)
+        self.infra.user = final_user
+        self.infra.password = final_password
+        self.infra.save()
+
+        users = self.engine_credentials.get_parameters_by_group('user')
+        for user, password in users.items():
+            self.driver.change_user_password(None, user, password)
+
+class SetMongoDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
+    @property
+    def engine_credentials(self):
+        return get_credentials_for(self.environment, CredentialType.MONGODB)
+
+class SetMysqlDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
+    @property
+    def engine_credentials(self):
+        return get_credentials_for(self.environment, CredentialType.MYSQL)
