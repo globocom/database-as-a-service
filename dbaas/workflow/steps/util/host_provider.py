@@ -163,7 +163,8 @@ class Provider(BaseInstanceStep):
         return True
 
     def create_host(self, infra, offering, name, team_name, zone=None,
-                    database_name='', host_obj=None, port=None, volume_name=None):
+                    database_name='', host_obj=None, port=None,
+                    volume_name=None, init_user=None, init_password=None):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -182,6 +183,10 @@ class Provider(BaseInstanceStep):
             data['port'] = port
         if volume_name:
             data['volume_name'] = volume_name
+        if init_user:
+            data['init_user'] = init_user
+        if init_password:
+            data['init_password'] = init_password
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
