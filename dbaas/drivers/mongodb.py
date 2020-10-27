@@ -382,6 +382,10 @@ class MongoDB(BaseDriver):
                 name=instance.databaseinfra.user, password=new_password)
             return new_password
 
+    def change_user_password(self, instance, user, password):
+        with self.pymongo(instance=instance) as client:
+            client.admin.add_user(name=user, password=password)
+
     def clone(self):
         return CLONE_DATABASE_SCRIPT_NAME
 
@@ -620,10 +624,14 @@ class MongoDB(BaseDriver):
     def topology_name(cls):
         return ['mongodb_single']
 
+    @property
+    def credential_type(self):
+        return CredentialType.MONGODB
+
     def build_new_infra_auth(self):
         credential = get_credentials_for(
             environment=self.databaseinfra.environment,
-            credential_type=CredentialType.MONGODB
+            credential_type=self.credential_type
         )
         return credential.user, credential.password, None
 
