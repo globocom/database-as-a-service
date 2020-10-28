@@ -31,7 +31,7 @@ class Offering(BaseModel):
     name = models.CharField(
         verbose_name=_("Name"), max_length=100, help_text="Offering name"
     )
-    cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
+    cpus = models.FloatField(verbose_name=_("Number of CPUs"), default=0,)
     memory_size_mb = models.IntegerField(
         verbose_name=_("Memory (MB)"), default=0,
     )
