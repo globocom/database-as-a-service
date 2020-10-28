@@ -396,6 +396,7 @@ class ConfigureRestore(PlanStepRestore, Configure):
 
         return base
 
+
 class ConfigureOnlyDBConfigFile(Configure):
     def get_variables_specifics(self):
         base = super(ConfigureOnlyDBConfigFile, self).get_variables_specifics()

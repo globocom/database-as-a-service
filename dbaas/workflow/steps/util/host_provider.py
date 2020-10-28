@@ -290,7 +290,7 @@ class Provider(BaseInstanceStep):
         response = self._request(get, url)
         if not response.ok:
             raise HostProviderException(response.content, response)
-        return response.json()["host_status"]
+        return response.json()
 
 
 class HostProviderStep(BaseInstanceStep):
@@ -615,16 +615,54 @@ class UpdateHostRootVolumeSize(HostProviderStep):
 
 class WaitingBeReady(HostProviderStep):
 
+    RETRIES = 30
+
     def __unicode__(self):
         return "Waiting for host be ready..."
 
     def do(self):
-        sleep(10)
-        retries = 30
-        for attempt in range(retries):
+        sleep(60)
+        for attempt in range(self.RETRIES):
             status = self.provider.status_host(self.host)
-            if status == "READY":
+            if status["host_status"] == "READY":
+                self.host.version = status["version_id"]
+                self.host.save()
                 return
-            if attempt == retries - 1:
+            if attempt == self.RETRIES - 1:
                 raise EnvironmentError('Host {} is not ready'.format(self.host))
             sleep(10)
+
+    def undo(self):
+        self.do()
+
+
+class WaitingNewDeploy(WaitingBeReady):
+
+    def execute(self):
+        for attempt in range(self.RETRIES):
+            status = self.provider.status_host(self.host)
+            if status["host_status"] == "READY" and self.host.version != status["version_id"]:
+                self.host.version = status["version_id"]
+                self.host.save()
+                return
+            if attempt == self.RETRIES - 1:
+                raise EnvironmentError('Host {} is not ready'.format(self.host))
+            sleep(10)
+
+
+class WaitingNewDeployDo(WaitingNewDeploy):
+
+    def do(self):
+        self.execute()
+
+    def undo(self):
+        pass
+
+
+class WaitingNewDeployUndo(WaitingNewDeploy):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        self.execute()
