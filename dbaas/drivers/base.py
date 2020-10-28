@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from collections import Iterable
+from util import get_credentials_for
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -434,6 +435,29 @@ class BaseDriver(object):
 
     def get_start_pty_default(self):
         return False
+
+    @property
+    def credential_type(self):
+        raise NotImplementedError()
+
+    def get_initial_infra_credentials(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=self.credential_type
+        )
+        initusers = credential.get_parameters_by_group('inituser')
+        if len(initusers) == 0:
+            raise Exception('There is no initial user in database credentials')
+        for init_user, init_password in initusers.items():
+            break
+        return init_user, init_password
+
+    def get_final_infra_credentials(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=self.credential_type
+        )
+        return credential.user, credential.password
 
 
 class DatabaseStatus(object):
