@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from time import sleep
 from requests import post, delete, get
+from time import sleep
+from urlparse import urljoin
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -8,7 +9,7 @@ from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
 from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
-from vm import WaitingBeReady
+from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -162,7 +163,7 @@ class Provider(BaseInstanceStep):
         return True
 
     def create_host(self, infra, offering, name, team_name, zone=None,
-                    database_name='', host_obj=None, **kw):
+                    database_name='', host_obj=None, port=None, volume_name=None):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -175,9 +176,12 @@ class Provider(BaseInstanceStep):
             "team_name": team_name,
             "database_name": database_name
         }
-        data.update(kw)
         if zone:
             data['zone'] = zone
+        if port:
+            data['port'] = port
+        if volume_name:
+            data['volume_name'] = volume_name
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
@@ -198,6 +202,47 @@ class Provider(BaseInstanceStep):
         host.save()
         return host
 
+    def prepare(self):
+        url = "{}/{}/{}/prepare".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "engine": self.engine,
+            "name": self.instance.vm_name,
+            "group": self.infra.name,
+            "ports": [self.instance.port],
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 201:
+            raise HostProviderException(response.content, response)
+
+    def configure(self, configuration):
+        url = "{}/{}/{}/host/configure".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "host": self.host.hostname,
+            "group": self.infra.name,
+            "engine": self.engine,
+            "configuration": configuration
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderChangeOfferingException(
+                response.content,
+                response
+            )
+        return True
+
+    def remove_configuration(self):
+        url = "{}/{}/{}/host/configure/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.host.hostname
+        )
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyVMException(response.content, response)
+
     def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
@@ -206,6 +251,15 @@ class Provider(BaseInstanceStep):
         response = self._request(delete, url, timeout=600)
         if not response.ok:
             raise HostProviderDestroyVMException(response.content, response)
+
+    def clean(self):
+        url = "{}/{}/{}/clean/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.host.hostname,
+        )
+        response = self._request(delete, url)
+        if not response.ok:
+            raise HostProviderException(response.content, response)
 
     def list_zones(self):
         url = "{}/{}/{}/zones".format(
@@ -217,14 +271,25 @@ class Provider(BaseInstanceStep):
         data = response.json()
         return data['zones']
 
-    def host_info(self, host):
-        url = "{}/{}/{}/host/{}".format(
+    def host_info(self, host, refresh=False):
+        url = "{}/{}/{}/host/{}/".format(
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
+        if refresh:
+            url = urljoin(url, "refresh/")
         response = self._request(get, url)
         if not response.ok:
             raise HostProviderInfoException(response.content, response)
+        return response.json()
+
+    def status_host(self, host):
+        url = "{}/{}/{}/status/{}".format(
+            self.credential.endpoint, self.provider, self.environment, host.identifier
+        )
+        response = self._request(get, url)
+        if not response.ok:
+            raise HostProviderException(response.content, response)
         return response.json()
 
 
@@ -269,7 +334,7 @@ class Stop(HostProviderStep):
 
     def undo(self):
         Start(self.instance).do()
-        WaitingBeReady(self.instance).do()
+        WaitingVMBeReady(self.instance).do()
 
 
 class StopIfRunning(Stop):
@@ -546,3 +611,58 @@ class UpdateHostRootVolumeSize(HostProviderStep):
         root_size_gb = self.get_root_volume_size()
         self.host.root_size_gb = round(root_size_gb, 2)
         self.host.save()
+
+
+class WaitingBeReady(HostProviderStep):
+
+    RETRIES = 30
+
+    def __unicode__(self):
+        return "Waiting for host be ready..."
+
+    def do(self):
+        sleep(60)
+        for attempt in range(self.RETRIES):
+            status = self.provider.status_host(self.host)
+            if status["host_status"] == "READY":
+                self.host.version = status["version_id"]
+                self.host.save()
+                return
+            if attempt == self.RETRIES - 1:
+                raise EnvironmentError('Host {} is not ready'.format(self.host))
+            sleep(10)
+
+    def undo(self):
+        self.do()
+
+
+class WaitingNewDeploy(WaitingBeReady):
+
+    def execute(self):
+        for attempt in range(self.RETRIES):
+            status = self.provider.status_host(self.host)
+            if status["host_status"] == "READY" and self.host.version != status["version_id"]:
+                self.host.version = status["version_id"]
+                self.host.save()
+                return
+            if attempt == self.RETRIES - 1:
+                raise EnvironmentError('Host {} is not ready'.format(self.host))
+            sleep(10)
+
+
+class WaitingNewDeployDo(WaitingNewDeploy):
+
+    def do(self):
+        self.execute()
+
+    def undo(self):
+        pass
+
+
+class WaitingNewDeployUndo(WaitingNewDeploy):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        self.execute()

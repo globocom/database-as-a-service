@@ -31,7 +31,7 @@ class Offering(BaseModel):
     name = models.CharField(
         verbose_name=_("Name"), max_length=100, help_text="Offering name"
     )
-    cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
+    cpus = models.FloatField(verbose_name=_("Number of CPUs"), default=0,)
     memory_size_mb = models.IntegerField(
         verbose_name=_("Memory (MB)"), default=0,
     )
@@ -83,25 +83,30 @@ class Environment(BaseModel):
         return self.plans.filter(is_active=True)
 
     @classmethod
+    def _get_envs_by(cls, field_name, field_val):
+        return cls.objects.filter(**{field_name: field_val}).values_list(
+            'name', flat=True
+        )
+
+    @classmethod
+    def _get_envs_by_stage(cls, stage):
+        return cls._get_envs_by('stage', stage)
+
+    @classmethod
+    def _get_envs_by_provisioner(cls, provisioner):
+        return cls._get_envs_by('provisioner', provisioner)
+
+    @classmethod
     def prod_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(stage=cls.PROD):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_stage(cls.PROD)
 
     @classmethod
     def dev_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(stage=cls.DEV):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_stage(cls.DEV)
 
     @classmethod
     def k8s_envs(cls):
-        envs = []
-        for env in Environment.objects.filter(provisioner=cls.KUBERNETES):
-            envs.append(env.name)
-        return envs
+        return cls._get_envs_by_provisioner(cls.KUBERNETES)
 
 
 class EnvironmentGroup(BaseModel):
@@ -1168,6 +1173,7 @@ class Host(BaseModel):
         auto_now_add=False,
         blank=True,
         null=True)
+    version = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return self.hostname
@@ -1623,7 +1629,7 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
-    teams = models.ManyToManyField('account.Team')
+    teams = models.ManyToManyField('account.Team', related_name='pools')
 
     def __unicode__(self):
         return '{}'.format(self.name)

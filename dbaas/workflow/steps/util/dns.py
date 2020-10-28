@@ -14,7 +14,8 @@ class DNSStep(BaseInstanceStep):
         self.provider = DNSAPIProvider
         self._vip = None
 
-    def is_ipv4(self, ip):
+    @staticmethod
+    def is_ipv4(ip):
         try:
             socket.inet_aton(ip)
             return True
@@ -91,13 +92,42 @@ class ChangeEndpoint(DNSStep):
             )
             self.infra.save()
 
-
     def do(self):
         self.update_host_dns(self.host_migrate.host, self.host)
 
     def undo(self):
         self.update_host_dns(self.host, self.host_migrate.host)
         CheckIsReady(self.instance).do()
+
+
+class UpdateDNS(DNSStep):
+
+    def __unicode__(self):
+        return "Changing DNS endpoint..."
+
+    def do(self):
+        for instance in self.host.instances.all():
+            DNSAPIProvider.update_database_dns_content(
+                self.infra, instance.dns,
+                instance.address, self.host.address
+            )
+            instance.address = self.host.address
+            instance.save()
+
+        DNSAPIProvider.update_database_dns_content(
+            self.infra, self.host.hostname,
+            self.instance.address, self.host.address
+        )
+
+        if self.infra.endpoint and self.instance.address in self.infra.endpoint:
+            self.infra.endpoint = self.infra.endpoint.replace(
+                self.instance.address, self.host.address
+            )
+            self.infra.save()
+        self.instance.address = self.host.address
+
+    def undo(self):
+        self.do()
 
 
 
@@ -225,6 +255,7 @@ class RegisterDNSVipMigrate(RegisterDNSVip):
 class UnregisterDNSVipMigrate(RegisterDNSVip):
     def __unicode__(self):
         return "Unregistry dns for VIP of old environment..."
+
     def do(self):
         self.do_export = False
         return super(UnregisterDNSVipMigrate, self).undo()
@@ -263,7 +294,6 @@ class CheckVipIsReady(CheckIsReady):
 
     def __unicode__(self):
         return "Waiting for VIP DNS..."
-
 
     def do(self):
         if not self.must_check:

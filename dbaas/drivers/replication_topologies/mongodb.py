@@ -1015,6 +1015,32 @@ class MongoDBSingle42(MongoDBSingle):
 
 class MongoDBSingleK8s(MongoDBSingle):
 
+    def get_resize_steps(self):
+        return [{'Resizing database': (
+            # 'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            # 'workflow.steps.util.agents.Stop',
+            # 'workflow.steps.util.plan.ResizeConfigure',
+            # 'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.dns.UpdateDNS',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.k8s.UpdateHostMetadata',
+            'workflow.steps.util.host_provider.WaitingNewDeployUndo',
+            'workflow.steps.util.host_provider.ChangeOffering',
+            'workflow.steps.util.host_provider.WaitingNewDeployDo',
+            'workflow.steps.util.k8s.UpdateHostMetadata',
+            # 'workflow.steps.util.agents.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.dns.UpdateDNS',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.database.WaitForReplication',
+            'workflow.steps.util.infra.Offering',
+            'workflow.steps.util.vm.InstanceIsSlave',
+            # 'workflow.steps.util.zabbix.EnableAlarms',
+        )}]
+
     def get_deploy_steps(self):
         return [{
             'Creating k8s Service': (
@@ -1025,13 +1051,13 @@ class MongoDBSingleK8s(MongoDBSingle):
                 'workflow.steps.util.k8s.NewVolumeK8S',
             )}, {
             'Creating Config Map': (
-                'workflow.steps.util.k8s.NewConfigMapK8S',
+                'workflow.steps.util.k8s.CreateConfigMap',
             )}, {
             'Creating Pod': (
                 'workflow.steps.util.k8s.NewPodK8S',
             )}, {
             'Waiting VMs': (
-                'workflow.steps.util.k8s.WaitingPodBeReady',
+                'workflow.steps.util.host_provider.WaitingBeReady',
                 # 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Creating dns': (
