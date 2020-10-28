@@ -119,7 +119,6 @@ class AddACLAccess(object):
             if execute_job:
                 jobs = resp.json().get('jobs', [])
                 for job_id in jobs:
-                    import ipdb; ipdb.set_trace()
                     resp = self._run_job(job_id)
         else:
             err_msg = "FAIL for payload: {} Status: {} Error: {}!!".format(
