@@ -50,3 +50,18 @@ def team_contacts(self, team_id):
         "contacts": emergency_contacts(team_id)
     })
     return HttpResponse(response_json, content_type="application/json")
+
+
+def team_resources(self, team_id):
+    databases = Database.objects.filter(team_id=team_id)
+    resources = {'cpu': 0, 'memory': 0, 'disk': 0, 'vms': 0}
+    for database in databases:
+        hosts = database.databaseinfra.hosts
+        for host in hosts:
+            resources['cpu'] += host.offering.cpus
+            resources['memory'] += (host.offering.memory_size_mb / 1024)
+            resources['disk'] += host.root_size_gb
+            resources['vms'] += 1
+    response_json = json.dumps(resources)
+
+    return HttpResponse(response_json, content_type="application/json")
