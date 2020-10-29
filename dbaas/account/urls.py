@@ -6,6 +6,7 @@ urlpatterns = patterns(
     'account.views',
     url(r'^profile/(?P<user_id>\d+)/?$', "profile", name="account.profile"),
     url(r"^team_contacts/(?P<team_id>\d*)$", "team_contacts", name="contacts"),
+    url(r"^team_resources/(?P<team_id>\d*)$", "team_resources"),
 )
 
 if settings.LDAP_ENABLED:
