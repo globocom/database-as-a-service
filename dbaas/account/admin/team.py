@@ -15,6 +15,8 @@ from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.utils.translation import ungettext
 from django.utils.html import format_html
+from django.conf.urls.static import static
+from django.utils.safestring import mark_safe
 
 from account.models import Role
 from account.service.team import TeamService
@@ -45,15 +47,20 @@ class TeamAdmin(admin.DjangoServicesAdmin):
 
     service_class = TeamService
     list_display = [
-        "name", "role", "database_limit", "team_pool", "email", "organization"
+        "name", "role", "database_limit", "resources", "team_pool",
+        "token", "email", "organization"
     ]
     filter_horizontal = ['users']
     list_filter = (RoleListFilter, "organization")
     search_fields = ('name',)
-    readonly_fields = ["token", ]
 
     def database_limit(self, team):
         return team_templatetag.render_usage(team)
+
+    def resources(self, request):
+        html = ('<p id="resources">Loading..</p>')
+        # loading_img = static('/account/static/assets/img/loading.gif')
+        return format_html("".join(html))
 
     def get_actions(self, request):
         actions = super(TeamAdmin, self).get_actions(request)
