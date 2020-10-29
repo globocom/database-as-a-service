@@ -130,4 +130,5 @@ class CreateHostMetadata(BaseK8SStep):
         self.instance.save()
 
     def undo(self):
-        pass
+        host = self.instance.hostname
+        host.delete()
