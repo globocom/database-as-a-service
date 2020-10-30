@@ -1604,6 +1604,9 @@ class Pool(BaseModel):
     cluster_id = models.CharField(
         verbose_name=_("Cluster ID"), max_length=255)
 
+    project_id = models.CharField(
+        verbose_name=_("Project ID"), max_length=255, default="")
+
     cluster_endpoint = models.CharField(
         verbose_name=_("Cluster EndPoint"), max_length=255,
         blank=True, null=False
@@ -1634,7 +1637,7 @@ class Pool(BaseModel):
         return {
             "K8S-Token": self.rancher_token,
             "K8S-Endpoint": self.cluster_endpoint,
-            "K8S-Cluster-Id": self.cluster_id,
+            "K8S-Project-Id": self.project_id,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }
