@@ -1,5 +1,5 @@
 import logging
-
+from time import sleep
 from django.template.loader import render_to_string
 
 from base import BaseInstanceStep
@@ -54,11 +54,21 @@ class NewServiceK8S(BaseK8SStep):
     def __unicode__(self):
         return "Creating Service on kubernetes..."
 
+    RETRIES = 30
+
     def do(self):
         self.host_provider.prepare()
 
     def undo(self):
-        self.host_provider.clean()
+        for attempt in range(self.RETRIES):
+            try:
+                self.host_provider.clean()
+            except Exception as e:
+                if attempt == self.RETRIES - 1:
+                    raise e
+                sleep(10)
+        host = self.instance.hostname
+        host.delete()
 
 
 class CreateConfigMap(BaseK8SStep, PlanStepNewInfra):
@@ -130,5 +140,4 @@ class CreateHostMetadata(BaseK8SStep):
         self.instance.save()
 
     def undo(self):
-        host = self.instance.hostname
-        host.delete()
+        pass
