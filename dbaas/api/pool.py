@@ -39,6 +39,7 @@ class PoolAPI(viewsets.ModelViewSet):
         required_fields = (
             "cluster_name",
             "cluster_id",
+            "project_id",
             "cluster_endpoint",
             "rancher_endpoint",
             "rancher_token",
