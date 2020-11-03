@@ -63,6 +63,7 @@ class NewServiceK8S(BaseK8SStep):
         for attempt in range(self.RETRIES):
             try:
                 self.host_provider.clean()
+                break
             except Exception as e:
                 if attempt == self.RETRIES - 1:
                     raise e
