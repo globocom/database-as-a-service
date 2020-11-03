@@ -91,9 +91,11 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def headers(self):
+        header = {}
         if self.pool:
-            return self.pool.as_headers
-        return {}
+            header = self.pool.as_headers
+        header["K8S-Namespace"] = self.infra.name
+        return header
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None, is_active=True):
         url = self.base_url + "volume/new"
