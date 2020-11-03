@@ -1604,6 +1604,9 @@ class Pool(BaseModel):
     cluster_id = models.CharField(
         verbose_name=_("Cluster ID"), max_length=255)
 
+    project_id = models.CharField(
+        verbose_name=_("Project ID"), max_length=255, default="")
+
     cluster_endpoint = models.CharField(
         verbose_name=_("Cluster EndPoint"), max_length=255,
         blank=True, null=False
@@ -1633,8 +1636,8 @@ class Pool(BaseModel):
     def as_headers(self):
         return {
             "K8S-Token": self.rancher_token,
-            "K8S-Namespace": "default",
             "K8S-Endpoint": self.cluster_endpoint,
+            "K8S-Project-Id": self.project_id,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }
