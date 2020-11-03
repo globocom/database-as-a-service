@@ -9,7 +9,7 @@ from logical.forms.database import DatabaseForm
 
 def get_or_create_infra(base_name, plan, environment, backup_hour=None,
                         maintenance_window=None, maintenance_day=None,
-                        retry_from=None):
+                        retry_from=None, pool=None):
     if retry_from:
         infra = retry_from.infra
         base_name['infra'] = infra.name
@@ -36,6 +36,7 @@ def get_or_create_infra(base_name, plan, environment, backup_hour=None,
         )
         infra.maintenance_day = maintenance_day or random_maintenance_day
         infra.engine_patch = plan.engine.default_engine_patch
+        infra.pool = pool
         infra.save()
 
         driver = infra.get_driver()
