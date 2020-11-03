@@ -63,10 +63,18 @@ def create_database(
     topology_path = plan.replication_topology.class_path
 
     name = slugify(name)
+    pool_name = kw.get('pool')
+    if pool_name:
+        pool = Pool.objects.get(
+            name=pool_name,
+            environment=environment
+        )
+    else:
+        pool = None
     base_name = gen_infra_names(name, 0)
     infra = get_or_create_infra(base_name, plan, environment, backup_hour,
                                 maintenance_window, maintenance_day,
-                                retry_from)
+                                retry_from, pool=pool)
     instances = get_instances_for(infra, topology_path)
 
     database_create = DatabaseCreate()
@@ -82,14 +90,6 @@ def create_database(
     database_create.user = user.username if user else task.user
     database_create.infra = infra
     database_create.database = infra.databases.first()
-    pool_name = kw.get('pool')
-    if pool_name:
-        pool = Pool.objects.get(
-            name=pool_name,
-            environment=environment
-        )
-    else:
-        pool = None
     database_create.pool = pool
     database_create.save()
 

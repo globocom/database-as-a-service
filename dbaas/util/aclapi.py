@@ -2,11 +2,20 @@ from __future__ import print_function
 import requests
 import logging
 import copy
+from time import sleep
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 
 
 LOG = logging.getLogger(__name__)
+
+
+class RunJobError(Exception):
+    pass
+
+
+class GetJobError(Exception):
+    pass
 
 
 class AddACLAccess(object):
@@ -76,6 +85,10 @@ class AddACLAccess(object):
             - source: 10.10.10.10/20 destination: 1.1.1.1/27 ip
             - source: 10.10.10.10/20 destination: 2.2.2.2/27 ip
     """
+
+    wait_job_attemps = 60
+    wait_job_timeout = 10
+
     def __init__(self, env, sources=None, destinations=None,
                  default_port=None, description=None, networks=None):
         self.env = env
@@ -101,10 +114,27 @@ class AddACLAccess(object):
         )
 
     def _make_run_job_url(self, job_id):
-        return '{}api/jobs/{}/run'.format(
+        return '{}/run'.format(
+            self._make_get_job_url(job_id)
+        )
+
+    def _make_get_job_url(self, job_id):
+        return '{}api/jobs/{}'.format(
             self.credential.endpoint,
             job_id
         )
+
+    def _wait_job_finish(self, job_id):
+        attemps = self.wait_job_attemps
+        while attemps > 0:
+            job = self._get_job(job_id)
+            if job.get('jobs', {}).get('status') == 'SUCCESS':
+                LOG.info("Job {} executed with SUCCESS!!".format(
+                    job_id
+                ))
+                return
+            sleep(self.wait_job_timeout)
+            attemps -= 1
 
     def _create_acl(self, source, port, execute_job=True):
         payload = self._make_payload(source, port)
@@ -127,13 +157,35 @@ class AddACLAccess(object):
             LOG.error(err_msg)
             raise Exception(err_msg)
 
-    def _run_job(self, job_id):
+    def _get_job(self, job_id):
         resp = requests.get(
-            self._make_run_job_url(job_id),
+            self._make_get_job_url(job_id),
             auth=(self.credential.user, self.credential.password),
-            timeout=600,
+            timeout=110,
             verify=False
         )
+        if resp.ok:
+            LOG.info("Get Job {} executed with SUCCESS!!".format(
+                job_id
+            ))
+            return resp.json()
+        else:
+            err_msg = "FAIL to get job: {} Status: {} Error: {}!!".format(
+                job_id, resp.status_code, resp.content
+            )
+            LOG.error(err_msg)
+            raise GetJobError(err_msg)
+
+    def _run_job(self, job_id):
+        try:
+            resp = requests.get(
+                self._make_run_job_url(job_id),
+                auth=(self.credential.user, self.credential.password),
+                timeout=110,
+                verify=False
+            )
+        except requests.Timeout:
+            return self._wait_job_finish(job_id)
         if resp.ok:
             LOG.info("Job {} executed with SUCCESS!!".format(
                 job_id
@@ -143,7 +195,7 @@ class AddACLAccess(object):
                 job_id, resp.status_code, resp.content
             )
             LOG.error(err_msg)
-            raise Exception(err_msg)
+            raise RunJobError(err_msg)
 
     def _make_payload(self, source, port=None):
         rules = []

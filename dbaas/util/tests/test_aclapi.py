@@ -1,6 +1,7 @@
+import requests
 from unittest import TestCase
 from mock import patch, PropertyMock, MagicMock
-from util.aclapi import AddACLAccess
+from util.aclapi import AddACLAccess, RunJobError, GetJobError
 from collections import namedtuple
 
 
@@ -362,3 +363,185 @@ class CreateACLTestCase(BaseACLTestCase):
             'FAIL for payload',
             mock_error.call_args[0][0]
         )
+
+
+@patch('util.aclapi.AddACLAccess.credential', new=MagicMock())
+class RunJobTestCase(BaseACLTestCase):
+
+    def setUp(self):
+        super(RunJobTestCase, self).setUp()
+        self.client = AddACLAccess(
+            self.fake_env,
+            self.sources,
+            self.destinations,
+            self.default_port
+        )
+        self.mock_json_create_acl = MagicMock(
+            return_value={
+                'id': 'fake_acl_id', 'jobs': ['fake_job_id']
+            }
+        )
+        self.fake_resp_create_acl = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(True, 200, '', self.mock_json_create_acl)
+        self.mock_json_get_job = MagicMock(
+            return_value={
+                'id': 'fake_acl_id', 'jobs': ['fake_job_id']
+            }
+        )
+        self.fake_resp_get_job = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(True, 200, '', self.mock_json_get_job)
+
+    @patch('util.aclapi.requests.put')
+    def test_execute_run_job_when_is_configurated(self, mock_put):
+
+        mock_put.return_value = self.fake_resp_create_acl
+        with patch('util.aclapi.AddACLAccess._run_job') as mock_run_job:
+            self.client.create_acl(execute_job=True)
+            self.assertTrue(mock_run_job.called)
+
+    @patch('util.aclapi.requests.put')
+    def test_not_execute_run_job_when_is_configurated(self, mock_put):
+
+        mock_put.return_value = self.fake_resp_create_acl
+        with patch('util.aclapi.AddACLAccess._run_job') as mock_run_job:
+            self.client.create_acl(execute_job=False)
+            self.assertFalse(mock_run_job.called)
+
+    @patch('util.aclapi.LOG.info')
+    @patch('util.aclapi.AddACLAccess._wait_job_finish')
+    @patch('util.aclapi.requests.get')
+    def test_run_job_success(self, mock_get, mock_wait_job, mock_info):
+        mock_get.return_value = self.fake_resp_create_acl
+
+        self.client._run_job('fake_job_id')
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertFalse(mock_wait_job.called)
+        self.assertTrue(mock_info.called)
+        self.assertIn('SUCCESS', mock_info.call_args[0][0])
+
+    @patch('util.aclapi.LOG.error')
+    @patch('util.aclapi.AddACLAccess._wait_job_finish')
+    @patch('util.aclapi.requests.get')
+    def test_run_job_fail(self, mock_get, mock_wait_job, mock_error):
+        mock_get.return_value = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(False, 400, '', {})
+
+        with self.assertRaises(RunJobError):
+            self.client._run_job('fake_job_id')
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertFalse(mock_wait_job.called)
+        self.assertTrue(mock_error.called)
+        self.assertIn('FAIL', mock_error.call_args[0][0])
+
+    @patch('util.aclapi.AddACLAccess._wait_job_finish')
+    @patch('util.aclapi.requests.get')
+    def test_wait_job_finish_when_get_timeout_on_run_job(self, mock_get,
+                                                         mock_wait_job):
+        mock_get.side_effect = requests.Timeout
+
+        self.client._run_job('fake_job_id')
+        self.assertTrue(mock_wait_job.called)
+
+
+@patch('util.aclapi.AddACLAccess.credential', new=MagicMock())
+class GetJobTestCase(BaseACLTestCase):
+
+    def setUp(self):
+        super(GetJobTestCase, self).setUp()
+        self.client = AddACLAccess(
+            self.fake_env,
+            self.sources,
+            self.destinations,
+            self.default_port
+        )
+        self.mock_json = MagicMock(
+            return_value={
+                "jobs": {
+                    "create_timestamp": "2020-10-28 17:44:19",
+                    "environment": 1706,
+                    "finish_timestamp": "2020-10-28 17:44:44",
+                    "id_job": 3274906,
+                    "init_timestamp": "2020-10-28 17:44:44",
+                    "ip_version": "ipv4",
+                    "num_vlan": 60,
+                    "owner": "tsuru_app",
+                    "result": "success",
+                    "status": "SUCCESS",
+                    "type": "DIFF"},
+                "kind": "object#job"
+            }
+        )
+        self.fake_resp = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(True, 200, '', self.mock_json)
+
+    @patch('util.aclapi.LOG.info')
+    @patch('util.aclapi.requests.get')
+    def test_get_job_success(self, mock_get, mock_info):
+        mock_get.return_value = self.fake_resp
+
+        self.client._get_job('fake_job_id')
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertTrue(mock_info.called)
+        self.assertIn('SUCCESS', mock_info.call_args[0][0])
+
+    @patch('util.aclapi.LOG.error')
+    @patch('util.aclapi.requests.get')
+    def test_get_job_fail(self, mock_get, mock_error):
+        mock_get.return_value = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(False, 400, '', {})
+
+        with self.assertRaises(GetJobError):
+            self.client._get_job('fake_job_id')
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertTrue(mock_error.called)
+        self.assertIn('FAIL', mock_error.call_args[0][0])
+
+
+@patch('util.aclapi.AddACLAccess.credential', new=MagicMock())
+class WaitJobTestCase(BaseACLTestCase):
+
+    def setUp(self):
+        super(WaitJobTestCase, self).setUp()
+        self.client = AddACLAccess(
+            self.fake_env,
+            self.sources,
+            self.destinations,
+            self.default_port
+        )
+        self.mock_json = MagicMock(
+            return_value={
+                "jobs": {
+                    "create_timestamp": "2020-10-28 17:44:19",
+                    "environment": 1706,
+                    "finish_timestamp": "2020-10-28 17:44:44",
+                    "id_job": 3274906,
+                    "init_timestamp": "2020-10-28 17:44:44",
+                    "ip_version": "ipv4",
+                    "num_vlan": 60,
+                    "owner": "tsuru_app",
+                    "result": "success",
+                    "status": "SUCCESS",
+                    "type": "DIFF"},
+                "kind": "object#job"
+            }
+        )
+        self.fake_resp = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(True, 200, '', self.mock_json)
+        self.fake_resp_error = namedtuple(
+            'FakeResp', 'ok status_code content json'
+        )(False, 400, '', self.mock_json)
+
+    @patch('util.aclapi.LOG.info')
+    @patch('util.aclapi.AddACLAccess._get_job')
+    def test_job_finish_success(self, mock_get_job, mock_info):
+        mock_get_job.return_value = self.mock_json
+        self.client._wait_job_finish('fake_job_id')
+
+        self.assertEqual(mock_get_job.call_count, 1)
+        self.assertIn('SUCCESS', mock_info.call_args[0][0])

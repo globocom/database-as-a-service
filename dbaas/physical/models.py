@@ -847,6 +847,12 @@ class DatabaseInfra(BaseModel):
         help_text=_("Maintenance day")
     )
 
+    pool = models.ForeignKey(
+        'physical.Pool',
+        related_name="infra",
+        null=True, blank=True
+    )
+
     def __unicode__(self):
         return self.name
 
