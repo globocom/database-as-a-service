@@ -6,3 +6,9 @@
 #result_list td {
 	max-width: 250px;	
 }
+
+#resources img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
