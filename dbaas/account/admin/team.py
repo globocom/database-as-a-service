@@ -15,8 +15,8 @@ from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.utils.translation import ungettext
 from django.utils.html import format_html
-from django.conf.urls.static import static
 from django.utils.safestring import mark_safe
+from django.templatetags.static import static
 
 from account.models import Role
 from account.service.team import TeamService
@@ -58,9 +58,9 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         return team_templatetag.render_usage(team)
 
     def resources(self, request):
-        html = ('<p id="resources">Loading..</p>')
-        # loading_img = static('/account/static/assets/img/loading.gif')
-        return format_html("".join(html))
+        img = static("assets/img/loading.gif")
+        return format_html('<div id="resources"> <img src="{}" alt="Loading"></div>',
+                           mark_safe(img))
 
     def get_actions(self, request):
         actions = super(TeamAdmin, self).get_actions(request)
