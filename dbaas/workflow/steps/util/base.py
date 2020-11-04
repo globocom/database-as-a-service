@@ -172,9 +172,11 @@ class BaseInstanceStep(object):
 
     @property
     def headers(self):
+        header = {}
         if self.pool:
-            return self.pool.as_headers
-        return {}
+            header = self.pool.as_headers
+        header["K8S-Namespace"] = self.infra.name
+        return header
 
     def _get_vip(self, vip_identifier, env):
         client = VipProviderClient(env)

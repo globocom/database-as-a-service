@@ -1057,7 +1057,7 @@ class MongoDBSingleK8s(MongoDBSingle):
                 'workflow.steps.util.k8s.NewPodK8S',
             )}, {
             'Waiting VMs': (
-                'workflow.steps.util.host_provider.WaitingBeReady',
+                'workflow.steps.util.host_provider.WaitingNewDeployDo',
                 # 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Creating dns': (
