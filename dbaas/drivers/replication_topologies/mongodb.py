@@ -1015,6 +1015,10 @@ class MongoDBSingle42(MongoDBSingle):
 
 class MongoDBSingleK8s(MongoDBSingle):
 
+    @property
+    def driver_name(self):
+        return 'mongodb_single_k8s'
+
     def get_resize_steps(self):
         return [{'Resizing database': (
             # 'workflow.steps.util.zabbix.DisableAlarms',
@@ -1078,7 +1082,8 @@ class MongoDBSingleK8s(MongoDBSingle):
                 'workflow.steps.util.dns.CheckIsReady',
              )}, {
              'Creating Database': (
-                 'workflow.steps.util.database.Create',
+                'workflow.steps.util.database.SetMongoDBUsersPasswordFromCredentials',
+                'workflow.steps.util.database.Create',
              )}, {
              'Check ACL': (
                  'workflow.steps.util.acl.BindNewInstance',

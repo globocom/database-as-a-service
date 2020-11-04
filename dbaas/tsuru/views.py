@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
+
 import requests
 from slugify import slugify
-from dbaas_credentials.models import CredentialType
 from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,10 +12,8 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from networkapiclient import Ip, Network
-from logical.validators import database_name_evironment_constraint
-from logical.models import Database
-from logical.forms import DatabaseForm
-from dbaas.middleware import UserMiddleware
+from django.utils.functional import cached_property
+
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
 from util import simple_health_check
@@ -23,10 +21,13 @@ from physical.models import Plan, Environment, PlanNotFound, Pool
 from account.models import AccountUser, Team
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
-from system.models import Configuration
 from workflow.steps.util.base import ACLFromHellClient
 from maintenance.models import DatabaseCreate
-from django.utils.functional import cached_property
+from dbaas_credentials.models import CredentialType
+from logical.validators import database_name_evironment_constraint
+from logical.models import Database
+from logical.forms import DatabaseForm
+from dbaas.middleware import UserMiddleware
 
 LOG = logging.getLogger(__name__)
 DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
@@ -254,8 +255,10 @@ class ServiceUnitBind(APIView):
 class ServiceAdd(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     required_params = ('description', 'plan', 'user', 'name', 'team')
-    search_metadata_params = ('plan', 'user', 'team', 'pool')
+    search_metadata_params = ('plan', 'user', 'team')
     model = Database
+    tsuru_pool_name_header = 'HTTP_X_TSURU_POOL_NAME'
+    tsuru_pool_endpoint_header = 'HTTP_X_TSURU_CLUSTER_ADDRESSES'
 
     def __init__(self, *args, **kw):
         super(ServiceAdd, self).__init__(*args, **kw)
@@ -263,12 +266,7 @@ class ServiceAdd(APIView):
 
     @cached_property
     def data(self):
-        data = self.request.DATA
-        for k, v in data.iteritems():
-            if k.startswith("parameters."):
-                data.pop(k)
-                data[k.replace('parameters.', '')] = v
-        return data
+        return self.request.DATA
 
     @property
     def description_param(self):
@@ -328,11 +326,17 @@ class ServiceAdd(APIView):
 
     @property
     def pool_param(self):
-        return self.data.get('pool')
+        return self.request.META.get(self.tsuru_pool_name_header)
+
+    @property
+    def pool_endpoint_param(self):
+        return self.request.META.get(self.tsuru_pool_endpoint_header)
 
     @property
     def dbaas_pool(self):
-        return Pool.objects.get(name=self.pool_param)
+        return Pool.objects.get(
+            cluster_endpoint=self.pool_endpoint_param
+        )
 
     def _validate_required_params(self):
         for param_name in self.required_params:
@@ -387,14 +391,12 @@ class ServiceAdd(APIView):
                 )
 
     def _validate_user(self):
-        msg = ''
         try:
             AccountUser.objects.get(email=self.user_param)
         except MultipleObjectsReturned as e:
             msg = "There are multiple user for {} email.".format(
                 self.user_param
             )
-        if msg:
             return log_and_response(
                     msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
                 )
@@ -442,11 +444,35 @@ class ServiceAdd(APIView):
             ), self.dbaas_plan
 
     def _validate_if_kubernetes_env(self):
+        LOG.info("Tsuru Debug headers:{}".format(self.request.META))
         if self.is_k8s_env:
-            if 'pool' not in self.data:
-                msg = ("To create database on kubernetes you must pass the "
-                       "pool name. Add the parameter "
-                       "--plan-param pool=<POOL_NAME>")
+            if not self.pool_param:
+                msg = ("the header <{}> was not found "
+                       "on headers. Contact tsuru team.".format(
+                           self.tsuru_pool_name_header
+                       ))
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+            if not self.pool_endpoint_param:
+                msg = (
+                    "the header <{}> "
+                    "was not found on headers. Contact tsuru team.".format(
+                        self.tsuru_pool_endpoint_header
+                    )
+                )
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                self.dbaas_pool
+            except Pool.DoesNotExist:
+                msg = (
+                    "Pool with name <{}> and endpoint <{}> was not found"
+                ).format(
+                    self.pool_param,
+                    self.pool_endpoint_param
+                )
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
                 )
@@ -710,17 +736,17 @@ def get_network_from_ip(ip, database_environment):
 
 
 def get_database(name, env):
-    if env in Configuration.get_by_name_as_list('dev_envs'):
-        database = Database.objects.filter(
-            name=name, environment__name=env
-        ).exclude(is_in_quarantine=True)[0]
+    query_params = {
+        'name': name
+    }
+    if env in Environment.dev_envs():
+        query_params['environment__name'] = env
     else:
-        prod_envs = Configuration.get_by_name_as_list('prod_envs')
-        database = Database.objects.filter(
-            name=name, environment__name__in=prod_envs
-        ).exclude(is_in_quarantine=True)[0]
+        query_params['environment__name__in'] = Environment.prod_envs()
 
-    return database
+    return Database.objects.filter(
+        **query_params
+    ).exclude(is_in_quarantine=True)[0]
 
 
 def check_acl_service_and_get_unit_network(database, data,

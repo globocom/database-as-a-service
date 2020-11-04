@@ -33,14 +33,19 @@ class BaseValidationTestCase(TestCase):
         self.env = 'dev'
         self.k8s_env_name = 'k8s_env'
         self.environment = mommy.make('Environment', name=self.env)
-        self.k8s_env = mommy.make('Environment',
-            name=self.k8s_env_name, provisioner=Environment.KUBERNETES)
+        self.k8s_env = mommy.make(
+            'Environment',
+            name=self.k8s_env_name,
+            provisioner=Environment.KUBERNETES
+        )
         self.url = reverse('tsuru:service-add', args=(self.env,))
         self.name = 'fake_database'
         self.user = '{}@admin.com'.format(self.USERNAME)
         self.description = 'fake desc'
         self.plan = mommy.make(
-            'Plan', name='fake_plan', provider=Plan.CLOUDSTACK
+            'Plan',
+            name='fake_plan',
+            provider=Plan.CLOUDSTACK
         )
         self.plan.environments.add(self.environment)
         self.payload = {
@@ -50,6 +55,10 @@ class BaseValidationTestCase(TestCase):
             'team': self.team.name,
             'plan': self.plan_name
         }
+        self.headers = {
+            'HTTP_X_TSURU_POOL_NAME': 'Fake Pool',
+            'HTTP_X_TSURU_POOL_PROVISIONER': 'docker'
+        }
 
     def tearDown(self):
         self.client.logout()
@@ -57,7 +66,8 @@ class BaseValidationTestCase(TestCase):
     def do_request(self):
         return self.client.post(
                 self.url,
-                self.payload
+                self.payload,
+                **self.headers
             )
 
     def _assert_resp(self, resp, msg):
@@ -175,22 +185,59 @@ class K8sValidationTestCase(BaseValidationTestCase):
             name="k8s_envs", value=self.k8s_env_name
         )
         self.pool_name = 'fake_pool'
-        self.pool = mommy.make('Pool', name=self.pool_name)
+        self.pool_endpoint = 'https://www.fake.rancher/endpoint'
+        self.pool = mommy.make(
+            'Pool',
+            name=self.pool_name,
+            cluster_endpoint=self.pool_endpoint
+        )
         self.pool.teams.add(self.team)
-        self.payload['parameters.pool'] = self.pool_name
+        # self.payload['parameters.pool'] = self.pool_name
+        self.headers = {
+            'HTTP_X_TSURU_POOL_NAME': self.pool_name,
+            'HTTP_X_TSURU_POOL_PROVISIONER': 'kubernetes',
+            'HTTP_X_TSURU_CLUSTER_NAME': 'fake cluster name',
+            'HTTP_X_TSURU_CLUSTER_PROVISIONER': 'rancher',
+            'HTTP_X_TSURU_CLUSTER_ADDRESSES': self.pool_endpoint
+        }
 
-    def test_pool_not_in_payload(self):
-        self.payload.pop('parameters.pool')
+    def test_pool_not_in_header(self):
+        self.headers.pop('HTTP_X_TSURU_POOL_NAME')
         self.do_request_and_assert(
-            ("To create database on kubernetes you must pass the "
-             "pool name. Add the parameter "
-             "--plan-param pool=<POOL_NAME>")
+            ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_endpoint_not_in_header(self):
+        self.headers.pop('HTTP_X_TSURU_CLUSTER_ADDRESSES')
+        self.do_request_and_assert(
+            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESSES> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_header_empty(self):
+        self.headers['HTTP_X_TSURU_POOL_NAME'] = ''
+        self.do_request_and_assert(
+            ("the header <HTTP_X_TSURU_POOL_NAME> was not found "
+             "on headers. Contact tsuru team.")
+        )
+
+    def test_pool_endoint_header_empty(self):
+        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES'] = ''
+        self.do_request_and_assert(
+            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESSES> was not found "
+             "on headers. Contact tsuru team.")
         )
 
     def test_pool_not_found(self):
-        self.payload['parameters.pool'] = 'unexistent pool'
+        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES'] = (
+            'unexistent pool address'
+        )
         self.do_request_and_assert(
-            "Pool <unexistent pool> was not found"
+            "Pool with name <{}> and endpoint <{}> was not found".format(
+                self.pool_name,
+                self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES']
+            )
         )
 
     def test_pool_not_on_team_of_user(self):

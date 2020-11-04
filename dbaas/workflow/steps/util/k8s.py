@@ -115,10 +115,17 @@ class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
     def do(self):
         if not self.instance.is_database:
             return
+
+        init_user, init_password = self.driver.get_initial_infra_credentials()
         self.host_provider.create_host(
-            self.infra, self.offering, self.instance.vm_name, self.team,
-            port=self.instance.port, volume_name=self.host.volumes.last().identifier,
-            host_obj=self.host
+            self.infra, self.offering,
+            self.instance.vm_name,
+            self.team,
+            port=self.instance.port,
+            volume_name=self.host.volumes.last().identifier,
+            host_obj=self.host,
+            init_user=init_user,
+            init_password=init_password
         )
 
     def undo(self):

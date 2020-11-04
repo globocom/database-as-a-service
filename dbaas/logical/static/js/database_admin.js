@@ -105,6 +105,48 @@
             else{
                 $(document.getElementsByClassName("field-engine")[0]).fadeOut("slow");
             }
+        },
+        filter_pools: function() {
+            var envId = $("#id_environment").val() || null;
+            var teamId = $("#id_team").val() || null;
+            if(envId && teamId){
+                $.ajax({
+                    type: "GET",
+                    dataType: "json",
+                    async: false,
+                    url: "/api/environment/?get_provisioner_by_label=Kubernetes&&id=" + envId
+                }).done(function (response) {
+                    if (response.environment.length > 0) {
+                        var pool_selector = document.getElementById("id_pool");
+                        var self = this;
+                        $.ajax({
+                            type: "GET",
+                            dataType: "json",
+                            url: "/api/pool/?teams__id=" + teamId + "&environment__id=" + envId
+                        }).done(function (response) {
+                            response.pool.push({"id": ""});
+                            var options2ShowSelector = response.pool.map(function(pool) {
+                                return "[value='" + pool.id + "']";
+                            }).join(",");
+                            var $poolOptions = $("#id_pool option");
+                            $poolOptions.hide();
+                            $poolOptions.filter(options2ShowSelector).show();
+                            var selectedId = parseInt($poolOptions.filter(':selected').val(), 10);
+                            if (response.pool.indexOf(selectedId) === -1) {
+                                $poolOptions.filter("[value='']").eq(0).attr('selected', 'selected');
+                            }
+                        });
+                        $(document.getElementsByClassName("field-pool")[0]).fadeIn("slow");
+                    } else {
+                        $(document.getElementsByClassName("field-pool")[0]).fadeOut("slow");
+                    }
+                });
+                
+                
+            }
+            else{
+                $(document.getElementsByClassName("field-pool")[0]).fadeOut("slow");
+            }
         }
     };
 
@@ -130,6 +172,7 @@
 
         $("#id_environment").on("change", function() {
             database.update_engines(engines);
+            database.filter_pools();
             database.update_components();
             database.update_modal_message();
         });
@@ -137,6 +180,9 @@
 
         $("#id_engine").on("change", function() {
             database.update_components();
+        });
+        $("#id_team").on("change", function() {
+            database.filter_pools();
         });
         $("#id_engine").change();
 

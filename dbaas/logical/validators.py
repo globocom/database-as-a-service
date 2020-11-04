@@ -4,6 +4,8 @@ from errors import DatabaseInQuarantineError, DatabaseIsDeadError, \
     BusyDatabaseError, MigrationDatabaseError, NoResizeOption, \
     DatabaseWithoutPersistence
 from decimal import Decimal, DecimalException
+from physical.models import Environment
+
 
 class ParameterValidator(object):
 
@@ -96,7 +98,7 @@ def database_name_evironment_constraint(database_name, environment_name):
     if environment_name in dev_envs:
         return False
 
-    prod_envs = Configuration.get_by_name_as_list('prod_envs')
+    prod_envs = Environment.prod_envs()
     return any((
         database.environment.name in prod_envs
         for database in databases))

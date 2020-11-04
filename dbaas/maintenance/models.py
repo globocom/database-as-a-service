@@ -21,14 +21,12 @@ from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
 from physical.models import (
     Host, Plan, Environment, DatabaseInfra, Instance,
-    Offering, EnginePatch)
+    Offering, EnginePatch, Pool)
 from notification.models import TaskHistory
 from util.models import BaseModel
 from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
 from .managers import DatabaseMaintenanceTaskManager
-from util.email_notifications import schedule_task_notification
-from system.models import Configuration
 from dbaas.helpers import EmailHelper
 
 
@@ -680,7 +678,10 @@ class DatabaseCreate(DatabaseMaintenanceTask):
     subscribe_to_email_events = models.BooleanField(default=True)
     is_protected = models.BooleanField(default=False)
     user = models.CharField(max_length=200)
-    pool = models.CharField(max_length=200, null=True, blank=True)
+    pool = models.ForeignKey(
+        Pool, related_name='pools_create', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
 
     def __unicode__(self):
         return "Creating {}".format(self.name)

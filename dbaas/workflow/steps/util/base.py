@@ -10,7 +10,7 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
-from physical.models import Pool, Vip
+from physical.models import Vip
 from util import check_ssh
 
 
@@ -166,9 +166,10 @@ class BaseInstanceStep(object):
 
     @property
     def pool(self):
-        if self.create and self.create.pool:
-            return Pool.objects.get(name=self.create.pool, environment=self.create.environment)
-        return Pool.objects.last()
+        if self.create:
+            return self.create.pool
+        if self.infra:
+            return self.infra.pool
 
     @property
     def headers(self):
@@ -544,4 +545,3 @@ class ACLFromHellClient(object):
                         rule_id, host)
                     LOG.error(msg)
         return None
-

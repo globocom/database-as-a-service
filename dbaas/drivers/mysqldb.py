@@ -485,10 +485,14 @@ class MySQL(BaseDriver):
     def topology_name(cls):
         return ['mysql_single']
 
+    @property
+    def credential_type(self):
+        return CredentialType.MYSQL
+
     def build_new_infra_auth(self):
         credential = get_credentials_for(
             environment=self.databaseinfra.environment,
-            credential_type=CredentialType.MYSQL
+            credential_type=self.credential_type
         )
         return credential.user, credential.password, ''
 
