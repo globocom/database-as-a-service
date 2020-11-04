@@ -32,7 +32,7 @@
     });
 
     $(function() {
-        $("#result_list tbody tr").each(function(index){
+        $("#result_list tbody tr").each(function(){
             $this = $(this);
             var team_id = $this.find(".action-select").val() || "";
             var show_resources = $this.find("#resources");
