@@ -18,6 +18,10 @@ class GetJobError(Exception):
     pass
 
 
+class WaitJobTimeoutError(Exception):
+    pass
+
+
 class AddACLAccess(object):
     """
         Class to add ACL's on ACLAPI
@@ -125,7 +129,7 @@ class AddACLAccess(object):
         )
 
     def _wait_job_finish(self, job_id):
-        attemps = self.wait_job_attemps
+        attemps = copy.copy(self.wait_job_attemps)
         while attemps > 0:
             job = self._get_job(job_id)
             if job.get('jobs', {}).get('status') == 'SUCCESS':
@@ -135,6 +139,11 @@ class AddACLAccess(object):
                 return
             sleep(self.wait_job_timeout)
             attemps -= 1
+        err_msg = "Job not finished after {} attemps. JOB: {}!!".format(
+            self.wait_job_attemps, job
+        )
+        LOG.error(err_msg)
+        raise WaitJobTimeoutError(err_msg)
 
     def _create_acl(self, source, port, execute_job=True):
         payload = self._make_payload(source, port)

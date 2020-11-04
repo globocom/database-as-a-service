@@ -1,7 +1,9 @@
 import requests
 from unittest import TestCase
 from mock import patch, PropertyMock, MagicMock
-from util.aclapi import AddACLAccess, RunJobError, GetJobError
+from util.aclapi import (AddACLAccess, RunJobError,
+                         GetJobError,
+                         WaitJobTimeoutError)
 from collections import namedtuple
 
 
@@ -513,8 +515,9 @@ class WaitJobTestCase(BaseACLTestCase):
             self.destinations,
             self.default_port
         )
-        self.mock_json = MagicMock(
-            return_value={
+        self.client.wait_job_attemps = 3
+        self.client.wait_job_timeout = 1
+        self.mock_json = {
                 "jobs": {
                     "create_timestamp": "2020-10-28 17:44:19",
                     "environment": 1706,
@@ -529,7 +532,6 @@ class WaitJobTestCase(BaseACLTestCase):
                     "type": "DIFF"},
                 "kind": "object#job"
             }
-        )
         self.fake_resp = namedtuple(
             'FakeResp', 'ok status_code content json'
         )(True, 200, '', self.mock_json)
@@ -545,3 +547,17 @@ class WaitJobTestCase(BaseACLTestCase):
 
         self.assertEqual(mock_get_job.call_count, 1)
         self.assertIn('SUCCESS', mock_info.call_args[0][0])
+
+    @patch('util.aclapi.LOG.error')
+    @patch('util.aclapi.AddACLAccess._get_job')
+    def test_job_not_finish_success(self, mock_get_job, mock_error):
+        self.mock_json['jobs']['status'] = 'RUNNING'
+        mock_get_job.return_value = self.mock_json
+        with self.assertRaises(WaitJobTimeoutError):
+            self.client._wait_job_finish('fake_job_id')
+
+        self.assertEqual(mock_get_job.call_count, 3)
+        self.assertIn(
+            'Job not finished after 3 attemps',
+            mock_error.call_args[0][0]
+        )
