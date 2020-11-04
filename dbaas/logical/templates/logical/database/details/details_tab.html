@@ -66,10 +66,10 @@
       </select>
     </div>
   </div>
-  {% if database.pool %}
+  {% if database.databaseinfra.pool %}
   <div class="control-group">
     <div class="control-label"><label>Pool:</label></div>
-    <div class="controls"><p class="readonly" id="id_pool">{{ database.pool.name }}</p></div>
+    <div class="controls"><p class="readonly" id="id_pool">{{ database.databaseinfra.pool.name }}</p></div>
   </div>
   {% endif %}
   <div class="field-team_contact">

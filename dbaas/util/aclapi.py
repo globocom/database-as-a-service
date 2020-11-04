@@ -1,8 +1,25 @@
 from __future__ import print_function
 import requests
+import logging
 import copy
+from time import sleep
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
+
+
+LOG = logging.getLogger(__name__)
+
+
+class RunJobError(Exception):
+    pass
+
+
+class GetJobError(Exception):
+    pass
+
+
+class WaitJobTimeoutError(Exception):
+    pass
 
 
 class AddACLAccess(object):
@@ -17,7 +34,7 @@ class AddACLAccess(object):
         >>> destinations = ["9.9.9.9/20"]
         >>> default_port = 27017
         >>> cli = AddACLAccess(env, sources, destinations, default_port)
-        >>> cli.execute()
+        >>> cli.create_acl()
         Here we add 2 acls:
             - source: 1.1.1.1/27 destination: 9.9.9.9/20 tcp port: 27017
             - source: 2.2.2.2/27 destination: 9.9.9.9/20 tcp port: 27017
@@ -27,7 +44,7 @@ class AddACLAccess(object):
         >>> sources = [("1.1.1.1/27", 22), ("2.2.2.2/27", 443)]
         >>> destinations = ["9.9.9.9/20"]
         >>> cli = AddACLAccess(env, sources, destinations)
-        >>> cli.execute()
+        >>> cli.create_acl()
         Here we add 2 acls:
             - source: 1.1.1.1/27 destination: 9.9.9.9/20 tcp port: 22
             - source: 2.2.2.2/27 destination: 9.9.9.9/20 tcp port: 443
@@ -39,20 +56,20 @@ class AddACLAccess(object):
         >>> destinations = ["10.10.10.10/20", "11.11.11.11/20"]
         >>> default_port = 27017
         >>> cli = AddACLAccess(env, sources, destinations, default_port)
-        >>> cli.execute()
+        >>> cli.create_acl()
         Here we add 4 acls:
             - source: 1.1.1.1/27 destination: 10.10.10.10/20 tcp port: 27017
             - source: 1.1.1.1/27 destination: 11.11.11.11/20 tcp port: 27017
             - source: 2.2.2.2/27 destination: 10.10.10.10/20 tcp port: 27017
             - source: 2.2.2.2/27 destination: 11.11.11.11/20 tcp port: 27017
 
-        Ex. If the specific port and default port not setted, we create acl with ip
-        EACH source
+        Ex. If the specific port and default port not setted, we create acl
+        with ip EACH source
         >>> from util.aclapi import AddACLAccess
         >>> sources = ["1.1.1.1/27", "2.2.2.2/27"]
         >>> destinations = ["10.10.10.10/20", "11.11.11.11/20"]
         >>> cli = AddACLAccess(env, sources, destinations)
-        >>> cli.execute()
+        >>> cli.create_acl()
         Here we add 4 acls:
             - source: 1.1.1.1/27 destination: 10.10.10.10/20 ip
             - source: 1.1.1.1/27 destination: 11.11.11.11/20 ip
@@ -72,6 +89,10 @@ class AddACLAccess(object):
             - source: 10.10.10.10/20 destination: 1.1.1.1/27 ip
             - source: 10.10.10.10/20 destination: 2.2.2.2/27 ip
     """
+
+    wait_job_attemps = 60
+    wait_job_timeout = 10
+
     def __init__(self, env, sources=None, destinations=None,
                  default_port=None, description=None, networks=None):
         self.env = env
@@ -90,20 +111,100 @@ class AddACLAccess(object):
                 credential_type=CredentialType.ACLAPI)
         return self._credential
 
-    def _make_url(self, source):
+    def _make_acl_url(self, source):
         return '{}api/ipv4/acl/{}'.format(
             self.credential.endpoint,
             source
         )
 
-    def _request(self, source, payload):
-        resp = requests.put(
-            self._make_url(source),
-            json=payload,
-            auth=(self.credential.user, self.credential.password)
+    def _make_run_job_url(self, job_id):
+        return '{}/run'.format(
+            self._make_get_job_url(job_id)
         )
 
-        return resp
+    def _make_get_job_url(self, job_id):
+        return '{}api/jobs/{}'.format(
+            self.credential.endpoint,
+            job_id
+        )
+
+    def _wait_job_finish(self, job_id):
+        attemps = copy.copy(self.wait_job_attemps)
+        while attemps > 0:
+            job = self._get_job(job_id)
+            if job.get('jobs', {}).get('status') == 'SUCCESS':
+                LOG.info("Job {} executed with SUCCESS!!".format(
+                    job_id
+                ))
+                return
+            sleep(self.wait_job_timeout)
+            attemps -= 1
+        err_msg = "Job not finished after {} attemps. JOB: {}!!".format(
+            self.wait_job_attemps, job
+        )
+        LOG.error(err_msg)
+        raise WaitJobTimeoutError(err_msg)
+
+    def _create_acl(self, source, port, execute_job=True):
+        payload = self._make_payload(source, port)
+        resp = requests.put(
+            self._make_acl_url(source),
+            json=payload,
+            auth=(self.credential.user, self.credential.password),
+            verify=False
+        )
+        if resp.ok:
+            LOG.info("ACL {} created with SUCCESS!!".format(payload))
+            if execute_job:
+                jobs = resp.json().get('jobs', [])
+                for job_id in jobs:
+                    resp = self._run_job(job_id)
+        else:
+            err_msg = "FAIL for payload: {} Status: {} Error: {}!!".format(
+                payload, resp.status_code, resp.content
+            )
+            LOG.error(err_msg)
+            raise Exception(err_msg)
+
+    def _get_job(self, job_id):
+        resp = requests.get(
+            self._make_get_job_url(job_id),
+            auth=(self.credential.user, self.credential.password),
+            timeout=110,
+            verify=False
+        )
+        if resp.ok:
+            LOG.info("Get Job {} executed with SUCCESS!!".format(
+                job_id
+            ))
+            return resp.json()
+        else:
+            err_msg = "FAIL to get job: {} Status: {} Error: {}!!".format(
+                job_id, resp.status_code, resp.content
+            )
+            LOG.error(err_msg)
+            raise GetJobError(err_msg)
+
+    def _run_job(self, job_id):
+        try:
+            resp = requests.get(
+                self._make_run_job_url(job_id),
+                auth=(self.credential.user, self.credential.password),
+                timeout=110,
+                verify=False
+            )
+        except requests.Timeout:
+            return self._wait_job_finish(job_id)
+        if resp.ok:
+            LOG.info("Job {} executed with SUCCESS!!".format(
+                job_id
+            ))
+        else:
+            err_msg = "FAIL for job: {} Status: {} Error: {}!!".format(
+                job_id, resp.status_code, resp.content
+            )
+            LOG.error(err_msg)
+            raise RunJobError(err_msg)
 
     def _make_payload(self, source, port=None):
         rules = []
@@ -123,10 +224,12 @@ class AddACLAccess(object):
                     "dest-port-op": "eq",
                     "dest-port-start": str(port or self.default_port)
                 }
-                msg += ' port: {}'.format(rule['l4-options']['dest-port-start'])
+                msg += ' port: {}'.format(
+                    rule['l4-options']['dest-port-start']
+                )
             msg += '\n'
             rules.append(rule)
-        print(msg)
+        LOG.info(msg)
 
         return {
             "kind": "object#acl",
@@ -139,24 +242,17 @@ class AddACLAccess(object):
             source, port = source
         return source, port
 
-    def execute(self):
+    def create_acl(self, execute_job=True):
         for source in self.sources:
             source, port = self._parse_source(source)
-            print("Creating ACL for source: {}".format(source))
-            payload = self._make_payload(source, port)
-            print("Sending PUT to ACLAPI...")
-            resp = self._request(source, payload)
-            if resp.ok:
-                print("SUCCESS!!\n\n\n")
-            else:
-                print("FAIL Status: {} Error: {}!!\n\n\n".format(
-                    resp.status_code, resp.content
-                ))
+            LOG.info("Creating ACL for source: {}".format(source))
+            LOG.info("Sending PUT to ACLAPI...")
+            self._create_acl(source, port, execute_job=execute_job)
 
-    def execute_between_networks(self):
+    def create_acl_between_networks(self):
         for source in self.networks:
             destination = copy.copy(self.networks)
             destination.remove(source)
             self.sources = [source]
             self.destinations = destination
-            self.execute()
+            self.create_acl()

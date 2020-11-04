@@ -98,7 +98,7 @@ def database_name_evironment_constraint(database_name, environment_name):
     if environment_name in dev_envs:
         return False
 
-    prod_envs = Environment.prod_env()
+    prod_envs = Environment.prod_envs()
     return any((
         database.environment.name in prod_envs
         for database in databases))

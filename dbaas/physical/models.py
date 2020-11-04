@@ -31,7 +31,7 @@ class Offering(BaseModel):
     name = models.CharField(
         verbose_name=_("Name"), max_length=100, help_text="Offering name"
     )
-    cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
+    cpus = models.FloatField(verbose_name=_("Number of CPUs"), default=0,)
     memory_size_mb = models.IntegerField(
         verbose_name=_("Memory (MB)"), default=0,
     )
@@ -847,6 +847,12 @@ class DatabaseInfra(BaseModel):
         help_text=_("Maintenance day")
     )
 
+    pool = models.ForeignKey(
+        'physical.Pool',
+        related_name="infra",
+        null=True, blank=True
+    )
+
     def __unicode__(self):
         return self.name
 
@@ -1609,6 +1615,9 @@ class Pool(BaseModel):
     cluster_id = models.CharField(
         verbose_name=_("Cluster ID"), max_length=255)
 
+    project_id = models.CharField(
+        verbose_name=_("Project ID"), max_length=255, default="")
+
     cluster_endpoint = models.CharField(
         verbose_name=_("Cluster EndPoint"), max_length=255,
         blank=True, null=False
@@ -1638,8 +1647,8 @@ class Pool(BaseModel):
     def as_headers(self):
         return {
             "K8S-Token": self.rancher_token,
-            "K8S-Namespace": "default",
             "K8S-Endpoint": self.cluster_endpoint,
+            "K8S-Project-Id": self.project_id,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }

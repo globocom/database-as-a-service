@@ -70,7 +70,7 @@ class CheckSslExpireAt(TestCase):
         self.assertFalse(filter_mock.called)
 
     @patch('notification.tasks.maintenance_models.TaskSchedule.objects.create')
-    @patch('maintenance.models.schedule_task_notification', new=MagicMock())
+    @patch('util.email_notifications.schedule_task_notification', new=MagicMock())
     def test_already_have_task_scheduled(self, create_mock):
         task_schedule = TaskSchedule()
         task_schedule.database = self.database
