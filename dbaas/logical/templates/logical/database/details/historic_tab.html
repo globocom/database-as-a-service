@@ -38,9 +38,17 @@
         <tbody>
           {% for maintenance in maintenances %}
             <tr>
-              <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+              {% if is_dba %}
+                <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+              {% else %}
+                <td>{{ maintenance.verbose_name }}</td>
+              {% endif %}
               <td>{{ maintenance.task.user }}</td>
-              <td><a href={{ maintenance.task_url }}>{{ maintenance.task.task_status }}</a></td>
+              {% if is_dba %}
+                <td><a href={{ maintenance.task_url }}>{{ maintenance.task.task_status }}</a></td>
+              {% else %}
+                <td>{{ maintenance.task.task_status }}</td>
+              {% endif %}
               <td>{{ maintenance.started_at }}</td>
               <td>{{ maintenance.finished_at }}</td>
             </tr>
