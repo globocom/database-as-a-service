@@ -20,7 +20,7 @@ from django.utils.html import format_html, escape
 from django.forms.models import modelform_factory
 from django.core.exceptions import FieldError
 from dbaas import constants
-from account.models import Team, RoleEnvironment
+from account.models import Team
 from drivers.errors import DatabaseAlreadyExists
 from notification.tasks import TaskRegister
 from system.models import Configuration
@@ -40,7 +40,7 @@ from logical.views import database_details, DatabaseHostsView, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
     DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
-    RemoveInstanceDatabaseRetryView, \
+    RemoveInstanceDatabaseRetryView, database_historic, \
     database_set_ssl_required, database_set_ssl_required_retry, \
     database_set_ssl_not_required, database_set_ssl_not_required_retry
 
@@ -701,6 +701,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/metrics/$',
                 self.admin_site.admin_view(database_metrics),
                 name="logical_database_metrics"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/historic/$',
+                self.admin_site.admin_view(database_historic),
+                name="logical_database_historic"
             ),
             url(
                 r'^/?(?P<id>\d+)/destroy/$',

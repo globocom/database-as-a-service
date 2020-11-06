@@ -1120,6 +1120,14 @@ def database_resizes(request, context, database):
     )
 
 
+@database_view('historic')
+def database_historic(request, context, database):
+    return render_to_response(
+        "logical/database/details/historic_tab.html",
+        context, RequestContext(request)
+    )
+
+
 class DatabaseMigrateEngineRetry(View):
 
     def get(self, request, *args, **kwargs):
