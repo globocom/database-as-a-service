@@ -22,194 +22,25 @@
   </div>
   <div class="panel-heading">
     <h3 class="panel-title">
-      Core hosts
-      {% if database.plan.replication_topology.has_horizontal_scalability %}
-      <a href="javascript:void(0)" data-content="These are the main database hosts. They can be
-      {% if non_database_attribute %}
-        {{ core_attribute|lower }}, {{ read_only_attribute|lower }} or {{ non_database_attribute|lower }} only.
-      {% else %}
-        {{ core_attribute|lower }} or {{ read_only_attribute|lower }} only.
-      {% endif %}
-      They are used for high availability (HA) and can not be destroyed individually." class="show-info" data-original-title="Info"><span class="icon-info-sign"></span></a>
-      {% endif %}
+      Maintenances
     </h3>
   </div>
   <div class="panel-body">
     <div class="control-group">
-      <table id="table-hosts" class="table table-striped">
+      <table id="table-maintenances" class="table table-striped">
       <tbody>
-      {% for host in instances_core %}
-        <tr>
-        <td {% if host.padding %} class="padding-host" {% endif %}>
-        <div class="control-label" id="host-status-{{host.id}}"><label>
-        {{ host.status }}</label></div>
-        <div class="controls">
-          <p class="readonly" id="host_name_n{{ forloop.counter }}">
-            {% if is_dba %}
-              <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-              </td>
-              <td>{% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
-                  <a class="action_button btn btn-warning switch_host" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
-                    Switch host
-                  </a>
-              </td>
-              {% endif %}
-              {% if database.databaseinfra.plan.replication_topology.can_reinstall_vm %}
-                {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
-                  {% if host.id == last_reinstall_vm.instance.hostname.id %}
-                  <td>
-                      <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
-                      <p class="action_button"><a href="{% url 'admin:maintenance_databasereinstallvm_change' last_reinstall_vm.id %}" target='_blank'>Last reinstall vm</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_reinstall_vm.task.id %}" target='_blank'>task</a> and retry the reinstall vm clicking in button above</p>
-                  </td>
-                  {% endif %}
-                {% else %}
-                <td class="action-red-button">
-                  <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
-                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                  >Reinstall VM</a>
-                </td>
-                {% endif %}
-              {% endif %}
-              {% if database.databaseinfra.plan.replication_topology.can_recreate_slave and database.infra.plan.is_ha %}
-                {% if host.switch_database  %}
-                  <td class="action-red-button">
-                  </td>
-                {% else %}
-                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
-                    {% if host.id == last_recreat_slave.host.id %}
-                      <td>
-                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" data-host-id="{{host.id}}" title="Go to recreate slave page">Retry Recreate Slave</a>
-                      </td>
-                    {% endif %}
-                  {% else %}
-                    <td class="action-red-button">
-                      <a {% if not host.is_database %} style="display:none;" {% endif %}class="action_button btn btn-danger recreate-slave {{ host }}" data-toggle="modal" id="recreate_vm_btn"
-                        data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                      >Recreate Slave</a>
-                    </td>
-                  {% endif %}
-                {% endif %}
-              {% endif %}
-
-            {% else %}
-              {{ host.description }}
-              </td>
-            {% endif %}
-          </p>
-        </div>
+      {% for maintenance in maintenances %}
+        <td>{{ maintenance.verbose_name }}</td>
+        <td>{{ maintenance.task.user }}</td>
+        <td>{{ maintenance.task.task_status }}</td>
+        <td>{{ maintenance.started_at }}</td>
+        <td>{{ maintenance.finished_at }}</td>
         </tr>
       {% endfor %}
       </tbody>
       </table>
     </div>
   </div>
-  {% if database.plan.replication_topology.has_horizontal_scalability %}
-    <div class="panel-heading">
-      <h3 class="panel-title">
-        Read-Only hosts
-        <a href="javascript:void(0)" data-content="These are extra hosts created for the database. They are always {{ read_only_attribute|lower }} and can not be elected as {{ core_attribute|lower }}. They are used to scale the readings, since the application can read from these {{ read_only_attribute|lower }} instead of reading from the {{ core_attribute|lower }}. Each database can add up to {{ max_read_hosts }} read only hosts." class="show-info" data-original-title="Info"><span class="icon-info-sign"></span></a>
-      </h3>
-    </div>
-    {% if instances_read_only %}
-      <div class="panel-body">
-        {% for host in instances_read_only %}
-          <div class="control-label" id="host-status-{{host.id}}"><label>{{ host.status}}</label></div>
-          <div class="controls">
-            <p>
-              {% if is_dba %}
-                <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-                {% if database.databaseinfra.plan.replication_topology.can_reinstall_vm %}
-                  {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
-                    {% if host.id == last_reinstall_vm.instance.hostname.id %}
-                      <span>
-                          <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
-                      </span>
-                    {% endif %}
-                  {% else %}
-                    <td class="action-red-button">
-                      <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
-                        data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                      >Reinstall VM</a>
-                    </td>
-                  {% endif %}
-                {% endif %}
-                {% if database.databaseinfra.plan.replication_topology.can_recreate_slave %}
-                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
-                    {% if host.id == last_recreat_slave.host.id %}
-                      <td>
-                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
-                      </td>
-                    {% endif %}
-                  {% else %}
-                  <td class="action-red-button">
-                    <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
-                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                    >Recreate Slave</a>
-                  </td>
-                  {% endif %}
-                {% endif %}
-              {% endif %}
-              {% if remove_read_only_retry and remove_read_only_retry.instance.hostname.id == host.id %}
-                <a class="action_button btn btn-warning" title="Retry" href="{{ host.id }}/delete/?retry=1" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
-              {% else %}
-                <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
-              {% endif %}
-            </p>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {% if enable_host %}
-      <div class="control-group">
-        <div class="control-label">New instances:</div>
-        <div class="controls">
-            {% if add_read_only_retry %}
-              <select class="span1" id="id_add_read_qtd" name="add_read_qtd" disabled >
-                <option></option>
-                {% for add in enable_host %}
-                  {% if add == add_read_only_retry.number_of_instances %}
-                    <option value="{{add}}" selected>{{add}}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <input class="btn btn-warning" type="submit" value="Retry" name="add_read_only_retry" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
-              <input class="btn btn-danger" type="submit" value="Rollback" name="add_read_only_rollback" id="add_read_only_rollback_btn" onclick="return confirm('Are you sure?')"/>
-            {% else %}
-              <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
-                <option></option>
-                {% for add in enable_host %}
-                  <option value="{{ add }}">{{ add }}</option>
-                {% endfor %}
-              </select>
-              <input class="btn btn-primary" type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
-            {% endif %}
-        </div>
-       </div>
-    {% endif %}
-  {% endif %}
-
-  {% if instances_no_database %}
-    <div class="panel-heading">
-      <h3 class="panel-title">Non databases</h3>
-    </div>
-    <div class="panel-body">
-      <div class="control-group">
-        {% for instance in instances_no_database %}
-          <div class="control-label">{{ instance.get_instance_type_display }}:</div>
-          <div class="controls"><p class="readonly">{{ instance }}</p></div>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
-</fieldset>
-<div class="form-actions navbar navbar-fixed-bottom">
-  <div class="control-group">
-       <a type="button" class="btn btn-primary refresh-status" type="submit" value="Refresh" title="Status" id="id_status">
-         Update status
-       </a>
-  </div>
-</div>
 {% endblock %}
 
 {% block database_button_save %}
@@ -228,62 +59,4 @@
 {% endblock %}
 
 {% block js_footer %}
-{{ block.super }}
-
-<script type="text/javascript" src="{% static 'js/hosts.js' %}"></script>
-<script>
-  var database_id = '{{ database.id }}';
-
-  django.jQuery(document).ready(function($) {
-    $("#id_add_read_qtd").on("change", function() {
-      btn = document.getElementById("add_read_only_btn");
-      btn.disabled = $(this).val() == "";
-      if (btn.disabled) {
-        $(btn).addClass('action_button')
-              .removeClass('btn-primary');
-      } else {
-        $(btn).addClass('btn-primary');
-      }
-    });
-    $("#id_add_read_qtd").change();
-
-    $(".switch_host").on("click", function(event){
-      var $switchHost = $(event.target)
-      $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
-    })
-
-
-    $(".reinstallvm").on("click", function(event){
-      var $reinstallVM = $(event.target)
-      $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
-    })
-
-    running_update = false;
-    $("#id_status").on("click", function() {
-      if (running_update){
-        return;
-      }
-      running_update = true;
-      $("#id_status").attr('disabled','disabled');
-      jQuery.ajax({
-          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
-          complete: function () {
-            running_update = false;
-            $("#id_status").removeAttr('disabled');
-          },
-      }).done(function(response) {
-        if (response.error) {
-              alert(response.error);
-          } else {
-            var output = response['instances_status'];
-            output.forEach(function (instance){
-             $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
-            });
-          }
-        }).fail(function() {
-          alert("invalid server response");
-      });
-    });
-  });
-</script>
 {% endblock %}

@@ -1122,6 +1122,37 @@ def database_resizes(request, context, database):
 
 @database_view('historic')
 def database_historic(request, context, database):
+    context["maintenances"] = []
+    host_maintenances = ["host_maintenance", "migrate", "recreate_slave"]
+    database_maintenances = [
+        "task_schedules",
+        "engine_migrations",
+        "upgrades_patch",
+        "reinstall_vm",
+        "resizes",
+        "change_parameters",
+        "databases_create",
+        "databases_clone",
+        "origin_databases_clone",
+        "databases_destroy",
+        "database_restore",
+        "configure_ssl",
+        "database_migrate",
+        "filer_migrate",
+        "update_ssl_manager",
+        "add_instances_to_database_manager",
+        "remove_instances_database_manager",
+        "restart_database_manager",
+        "change_persistence",
+        "set_require_ssl",
+        "set_not_require_ssl",
+    ]
+    for related in database_maintenances:
+        maintenances = getattr(database, related).all()
+        for maintenance in maintenances:
+            maintenance.verbose_name = maintenance._meta.verbose_name
+            context["maintenances"].append(maintenance)
+    context["maintenances"].sort(key=lambda x: x.started_at, reverse=True)
     return render_to_response(
         "logical/database/details/historic_tab.html",
         context, RequestContext(request)
