@@ -40,7 +40,7 @@ from logical.views import database_details, DatabaseHostsView, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
     DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
-    RemoveInstanceDatabaseRetryView, database_historic, \
+    RemoveInstanceDatabaseRetryView, database_history, \
     database_set_ssl_required, database_set_ssl_required_retry, \
     database_set_ssl_not_required, database_set_ssl_not_required_retry
 
@@ -703,9 +703,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_metrics"
             ),
             url(
-                r'^/?(?P<id>\d+)/historic/$',
-                self.admin_site.admin_view(database_historic),
-                name="logical_database_historic"
+                r'^/?(?P<id>\d+)/history/$',
+                self.admin_site.admin_view(database_history),
+                name="logical_database_history"
             ),
             url(
                 r'^/?(?P<id>\d+)/destroy/$',

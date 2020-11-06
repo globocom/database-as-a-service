@@ -70,7 +70,7 @@
         {% if is_dba and database.has_persistense_equivalent_plan %}
           <li role="presentation" {% if current_tab == 'persistence' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_persistence' database.id %}">Persistence</a></li>
         {% endif %}
-        <li role="presentation" {% if current_tab == 'historic' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_historic' database.id %}">Historic</a></li>
+        <li role="presentation" {% if current_tab == 'history' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_history' database.id %}">History</a></li>
         <li role="presentation" {% if current_tab == 'destroy' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_destroy' database.id %}">Destroy</a></li>
       </ul>
     {% endblock %}

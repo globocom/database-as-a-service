@@ -1120,8 +1120,8 @@ def database_resizes(request, context, database):
     )
 
 
-@database_view('historic')
-def database_historic(request, context, database):
+@database_view('history')
+def database_history(request, context, database):
     context["maintenances"] = []
     host_maintenances = [
         "host_maintenance",
@@ -1167,7 +1167,7 @@ def database_historic(request, context, database):
             maintenance.task_url = reverse('admin:notification_taskhistory_change', args=[maintenance.task.id])
     context["maintenances"].sort(key=lambda x: x.started_at, reverse=True)
     return render_to_response(
-        "logical/database/details/historic_tab.html",
+        "logical/database/details/history_tab.html",
         context, RequestContext(request)
     )
 
