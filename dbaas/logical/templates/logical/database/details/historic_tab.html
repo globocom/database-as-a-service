@@ -28,23 +28,24 @@
   <div class="panel-body">
     <div class="control-group">
       <table id="table-maintenances" class="table table-striped">
-      <tr>
+        <tr>
           <th scope="col">Name</th>
           <th scope="col">User</th>
           <th scope="col">Status</th>
           <th scope="col">Started At</th>
           <th scope="col">Finished At</th>
-      </tr>
-      <tbody>
-      {% for maintenance in maintenances %}
-        <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
-        <td>{{ maintenance.task.user }}</td>
-        <td><a href={{ maintenance.task_url }}>{{ maintenance.task.task_status }}</a></td>
-        <td>{{ maintenance.started_at }}</td>
-        <td>{{ maintenance.finished_at }}</td>
         </tr>
-      {% endfor %}
-      </tbody>
+        <tbody>
+          {% for maintenance in maintenances %}
+            <tr>
+              <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+              <td>{{ maintenance.task.user }}</td>
+              <td><a href={{ maintenance.task_url }}>{{ maintenance.task.task_status }}</a></td>
+              <td>{{ maintenance.started_at }}</td>
+              <td>{{ maintenance.finished_at }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
   </div>

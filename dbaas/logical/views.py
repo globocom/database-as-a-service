@@ -1122,12 +1122,15 @@ def database_resizes(request, context, database):
 
 @database_view('historic')
 def database_historic(request, context, database):
-    context["maintenances"] = []
     host_maintenances = [
         "host_maintenance",
         "migrate",
         "recreate_slave"
     ]
+    maintenances = []
+    for related in host_maintenances:
+        for host in database.infra.hosts:
+            maintenances += getattr(host, related).all()
     database_maintenances = [
         "task_schedules",
         "engine_migrations",
@@ -1151,12 +1154,16 @@ def database_historic(request, context, database):
         "set_require_ssl",
         "set_not_require_ssl",
     ]
-    maintenances = []
     for related in database_maintenances:
         maintenances += getattr(database, related).all()
+
+    context["maintenances"] = []
     for maintenance in maintenances:
         maintenance.verbose_name = maintenance._meta.verbose_name
-        maintenance.url = reverse('admin:{}_{}_change'.format(maintenance._meta.app_label,  maintenance._meta.model_name), args=[maintenance.id])
+        maintenance.url = reverse(
+            'admin:{}_{}_change'.format(maintenance._meta.app_label, maintenance._meta.model_name),
+            args=[maintenance.id]
+        )
         if hasattr(maintenance, "task"):
             maintenance.task_url = reverse('admin:notification_taskhistory_change', args=[maintenance.task.id])
         context["maintenances"].append(maintenance)
