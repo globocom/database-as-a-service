@@ -1,0 +1,78 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+
+    .padding-host {
+        padding-left: 50px !important;
+    }
+  </style>
+{% endblock %}
+
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+  </div>
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      History
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+      <table id="table-maintenances" class="table table-striped">
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">User</th>
+          <th scope="col">Status</th>
+          <th scope="col">Started At</th>
+          <th scope="col">Finished At</th>
+        </tr>
+        <tbody>
+          {% for maintenance in maintenances %}
+            <tr>
+              {% if is_dba %}
+                <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+              {% else %}
+                <td>{{ maintenance.verbose_name }}</td>
+              {% endif %}
+              <td>{{ maintenance.task.user }}</td>
+              {% if is_dba %}
+                <td><a href={{ maintenance.task_url }}>{{ maintenance.task.task_status }}</a></td>
+              {% else %}
+                <td>{{ maintenance.task.task_status }}</td>
+              {% endif %}
+              <td>{{ maintenance.started_at }}</td>
+              <td>{{ maintenance.finished_at }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+
+{% block database_button_save %}
+
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
+
+{% if database.infra.plan.is_ha %}
+    {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process will switch hosts, and <font color='red'><b>it may cause connections errors</b></font> during the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% else %}
+    {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process <font color='red'><b>will stop the database</b></font> and, consequently, it will be <font color='red'><b>unavailable</b></font> until the the end of the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% endif %}
+
+{% if database.infra.plan.is_ha %}
+    {% include "admin/generic_confirmation_modal_input.html" with modal_id="recreate_vm_modal" unique_modal_name="ht_recreate_slave" modal_title="Recreate Slave" modal_body_text="The slave" modal_body_text_red="will be stoped" input_name="recreate_slave_input" submit_button_name="recreate_slave" submit_button_value="recreate" submit_button_id="confirm_recreate_vm_button" user_must_type="recreate" on_click_selector=".recreate-slave" payload_data_name="host_id" get_from_data='host-id' %}
+{% endif %}
+{% endblock %}
+
+{% block js_footer %}
+{% endblock %}
