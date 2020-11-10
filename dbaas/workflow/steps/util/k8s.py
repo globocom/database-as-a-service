@@ -145,6 +145,7 @@ class CreateHostMetadata(BaseK8SStep):
         host.provider = 'k8s'
         host.save()
         self.instance.hostname = host
+        self.instance.address = host.address
         self.instance.save()
 
     def undo(self):
