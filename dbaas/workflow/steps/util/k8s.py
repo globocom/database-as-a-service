@@ -80,9 +80,12 @@ class CreateConfigMap(BaseK8SStep, PlanStepNewInfra):
     def do(self):
         if not self.instance.is_database:
             return
+
+        script_variables = self.script_variables
+        script_variables['HOSTADDRESS'] = ""
         configuration = render_to_string(
             'physical/scripts/database_config_files/mongodb_40.conf',
-            self.script_variables
+            script_variables
         )
         self.host_provider.configure(configuration)
 
@@ -145,6 +148,7 @@ class CreateHostMetadata(BaseK8SStep):
         host.provider = 'k8s'
         host.save()
         self.instance.hostname = host
+        self.instance.address = host.address
         self.instance.save()
 
     def undo(self):
