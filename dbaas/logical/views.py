@@ -1159,10 +1159,13 @@ def database_history(request, context, database):
 
     for maintenance in context["maintenances"]:
         maintenance.verbose_name = maintenance._meta.verbose_name
-        maintenance.url = reverse(
-            'admin:{}_{}_change'.format(maintenance._meta.app_label, maintenance._meta.model_name),
-            args=[maintenance.id]
-        )
+        try:
+            maintenance.url = reverse(
+                'admin:{}_{}_change'.format(maintenance._meta.app_label, maintenance._meta.model_name),
+                args=[maintenance.id]
+            )
+        except:
+            maintenance.url = "#"
         if hasattr(maintenance, "task"):
             maintenance.task_url = reverse('admin:notification_taskhistory_change', args=[maintenance.task.id])
     context["maintenances"].sort(key=lambda x: x.started_at, reverse=True)
