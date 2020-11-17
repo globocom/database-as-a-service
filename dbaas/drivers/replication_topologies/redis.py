@@ -598,6 +598,7 @@ class RedisCluster(BaseRedis):
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
+                'workflow.steps.redis.cluster.CreateClusterRedisAddSlaves',
                 'workflow.steps.redis.cluster.SetInstanceShardTag',
             )}, {
             'Check DNS': (
@@ -751,58 +752,3 @@ class RedisCluster(BaseRedis):
     @property
     def driver_name(self):
         return 'redis_cluster'
-
-
-class RedisCluster5(RedisCluster):
-
-    def get_deploy_steps(self):
-        return [{
-            'Creating virtual machine': (
-                'workflow.steps.util.host_provider.CreateVirtualMachine',
-            )}, {
-            'Creating dns': (
-                'workflow.steps.util.dns.CreateDNS',
-            )}, {
-            'Creating disk': (
-                'workflow.steps.util.volume_provider.NewVolume',
-            )}, {
-            'Waiting VMs': (
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.vm.UpdateOSDescription'
-            )}, {
-            'Configuring database': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.plan.ConfigureLogForNewInfra',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Configuring Cluster': (
-                'workflow.steps.redis.cluster.CreateClusterRedis5',
-                'workflow.steps.redis.cluster.CheckClusterStatusRedis5',
-                'workflow.steps.redis.cluster.CreateClusterRedisAddSlaves',
-                'workflow.steps.redis.cluster.SetInstanceShardTag',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
-            )}, {
-            'Creating Database': (
-                'workflow.steps.util.database.Create',
-            )}, {
-            'Check ACL': (
-                'workflow.steps.util.acl.BindNewInstance',
-            )}, {
-            'Creating monitoring and alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
-            )}, {
-            'Create Extra DNS': (
-                'workflow.steps.util.database.CreateExtraDNS',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
