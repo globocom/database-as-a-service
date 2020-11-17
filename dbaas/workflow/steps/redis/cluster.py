@@ -8,11 +8,14 @@ class BaseClusterStep(PlanStep):
 
     def __init__(self, instance):
         super(BaseClusterStep, self).__init__(instance)
-        self.REDIS4 = 1
-        self.REDIS5 = 2
-        self.current_redis = self.REDIS4
         self._instances_odd = None
         self._instances_even = None
+        self.REDIS4 = 1
+        self.REDIS5 = 2
+        if self.engine.major_version < 5:
+            self.current_redis = self.REDIS4
+        else:
+            self.current_redis = self.REDIS5
 
     @property
     def instances_odd(self):
@@ -73,12 +76,19 @@ class BaseClusterStep(PlanStep):
 
     @property
     def cluster_slave_node_command(self):
-        return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} --slave --master-id {{ MASTER_ID }} {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }}'
+        if self.current_redis == self.REDIS4:
+            return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} --slave --master-id {{ MASTER_ID }} {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }}'
+        elif self.current_redis == self.REDIS5:
+            return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster add-node {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }} --cluster-slave --cluster-master-id {{ MASTER_ID }}'
 
     @property
     def cluster_del_node_command(self):
+        if self.current_redis == self.REDIS4:
+            del_command = '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}'
+        elif self.current_redis == self.REDIS5:
+            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} ;echo $?'
         commands = [
-            '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}',
+            del_command,
             'rm -f /data/data/redis.aof',
             'rm -f /data/data/dump.rdb',
             'rm -f /data/{}'.format(self.node_config_file),
@@ -124,6 +134,10 @@ class CreateCluster(BaseClusterStep):
             'CLUSTER_ADDRESSES': [
                 '{}:{}'.format(instance.hostname.address, instance.port)
                 for instance in instances
+            ],
+            'CLUSTER_MASTER_ADDRESSES': [
+                '{}:{}'.format(instance.hostname.address, instance.port)
+                for instance in self.instances_even
             ]
         }
 
@@ -310,85 +324,7 @@ class RemoveNode(BaseClusterStep):
         add.do()
 
 
-class CreateClusterRedis5(CreateCluster):
-
-    def __init__(self, instance):
-        super(CreateClusterRedis5, self).__init__(instance)
-        self.current_redis = self.REDIS5
-
-    def get_variables_specifics(self):
-        return {
-            'CLUSTER_MASTER_ADDRESSES': [
-                '{}:{}'.format(instance.hostname.address, instance.port)
-                for instance in self.instances_even
-            ]
-        }
-
-    '''
-    def __init__(self, instance):
-        super(CreateClusterRedis5, self).__init__(instance)
-        self._master_nodes = None
-        self._slave_nodes = None
-
-    @property
-    def master_nodes(self):
-        if self._master_nodes:
-            return self._master_nodes
-        instances = self.infra.instances.all()
-        masters = []
-        for i in range(len(instances)):
-            if i % 2 == 0:
-                masters.append(instances[i])
-        self._master_nodes = masters
-        return self._master_nodes
-
-    @property
-    def slave_nodes(self):
-        if self._slave_nodes:
-            return self._slave_nodes
-        instances = self.infra.instances.all()
-        slaves = []
-        for i in range(len(instances)):
-            if i % 2 != 0:
-                slaves.append(instances[i])
-        self._slave_nodes = slaves
-        return self._slave_nodes
-
-
-    def get_variables_specifics(self):
-        instances = self.infra.instances.all()
-        instances_even = []
-        instances_odd = []
-        for i in range(len(instances)):
-            if i % 2 == 0:
-                instances_even.append(instances[i])
-            else:
-                instances_odd.append(instances[i])
-        return {
-            'CLUSTER_MASTER_ADDRESSES': [
-                '{}:{}'.format(instance.hostname.address, instance.port)
-                for instance in self.master_nodes
-            ]
-        }
-
-    @property
-    def cluster_create_command(self):
-        return 'yes yes | /usr/local/redis/src/redis-cli -a {{ PASSWORD }} --cluster create {% for address in CLUSTER_MASTER_ADDRESSES %} {{ address }} {% endfor %} --cluster-replicas 0'
-    '''
-
-class CheckClusterStatusRedis5(CheckClusterStatus):
-
-    def __init__(self, instance):
-        super(CheckClusterStatusRedis5, self).__init__(instance)
-        self.current_redis = self.REDIS5
-
-    '''
-    @property
-    def cluster_check_command(self):
-        return '/usr/local/redis/src/redis-cli -a {{ PASSWORD }} --cluster check  {{ CLUSTER_ADDRESS }}'
-    '''
-
-class CreateClusterRedisAddSlaves(CreateClusterRedis5):
+class CreateClusterRedisAddSlaves(BaseClusterStep):
 
     def __init__(self, instance):
         super(CreateClusterRedisAddSlaves, self).__init__(instance)
@@ -400,7 +336,8 @@ class CreateClusterRedisAddSlaves(CreateClusterRedis5):
 
     @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first()
+        return (self.instance == self.infra.instances.first() and
+                self.current_redis  == self.REDIS5)
 
     def get_add_slave_node_command(
         self, master_id, new_node_address, cluster_address):
