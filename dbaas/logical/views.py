@@ -1134,6 +1134,7 @@ def database_history(request, context, database):
     database_maintenances = [
         "task_schedules",
         "engine_migrations",
+        "upgrades",
         "upgrades_patch",
         "reinstall_vm",
         "resizes",
