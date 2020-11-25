@@ -1638,6 +1638,10 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
+    domain = models.CharField(
+        verbose_name=_("Domain"), max_length=255, blank=True, null=False
+    )
+
     teams = models.ManyToManyField('account.Team', related_name='pools')
 
     def __unicode__(self):
