@@ -1653,6 +1653,7 @@ class Pool(BaseModel):
             "K8S-Token": self.rancher_token,
             "K8S-Endpoint": self.cluster_endpoint,
             "K8S-Project-Id": self.project_id,
+            "K8s-Domain": self.domain,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }
