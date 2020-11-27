@@ -952,10 +952,12 @@ class SetUsersPasswordFromCredentials(DatabaseStep):
         for user, password in users.items():
             self.driver.change_user_password(None, user, password)
 
+
 class SetMongoDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
     @property
     def engine_credentials(self):
         return get_credentials_for(self.environment, CredentialType.MONGODB)
+
 
 class SetMysqlDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
     @property
