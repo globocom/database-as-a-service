@@ -1074,7 +1074,7 @@ class MongoDBSingleK8s(MongoDBSingle):
                 # 'workflow.steps.util.plan.ConfigureForNewInfra',
                 # 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 # 'workflow.steps.util.database.Start',
-                # 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.CheckIsUp',
                 # 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
