@@ -113,9 +113,6 @@ class UpdateHostMetadata(BaseK8SStep):
         host.address = pod_dns
         host.save()
 
-    def undo(self):
-        self.do()
-
 
 class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
     def __unicode__(self):
