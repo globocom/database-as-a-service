@@ -1066,7 +1066,7 @@ class MongoDBSingleK8s(MongoDBSingle):
             )}, {
             'Creating dns': (
                 'workflow.steps.util.k8s.UpdateHostMetadata',
-                'workflow.steps.util.dns.CreateDNS',
+                #'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Configuring database': (
                 # 'workflow.steps.util.volume_provider.MountDataVolume',
@@ -1078,9 +1078,9 @@ class MongoDBSingleK8s(MongoDBSingle):
                 # 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
-             )}, {
+            #'Check DNS': (
+                #'workflow.steps.util.dns.CheckIsReady',
+             #)}, {
              'Creating Database': (
                 'workflow.steps.util.database.SetMongoDBUsersPasswordFromCredentials',
                 'workflow.steps.util.database.Create',

@@ -101,11 +101,15 @@ class UpdateHostMetadata(BaseK8SStep):
 
     def do(self):
         info = self.host_provider.host_info(self.host, refresh=True)
-        self.instance.address = info["address"]
+        #self.instance.address = info["address"]
+        self.instance.address = "{}.{}".format(
+            info["name"], self.pool.domain
+        )
         self.instance.port = self.driver.default_port
         host = self.host
         host.address = self.instance.address
         host.save()
+        self.instance.save()
 
     def undo(self):
         self.do()
