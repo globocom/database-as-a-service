@@ -101,15 +101,20 @@ class UpdateHostMetadata(BaseK8SStep):
 
     def do(self):
         info = self.host_provider.host_info(self.host, refresh=True)
-        self.instance.address = info["address"]
-        self.instance.port = self.driver.default_port
+        pod_dns = "{}.{}".format(info["name"], self.pool.domain)
+
+        instance = self.instance
+        instance.dns = pod_dns
+        instance.address = pod_dns
+        instance.port = self.driver.default_port
+        instance.save()
+
         host = self.host
-        host.address = self.instance.address
+        host.address = pod_dns
         host.save()
 
     def undo(self):
-        self.do()
-
+        pass
 
 class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
     def __unicode__(self):

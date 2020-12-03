@@ -1638,6 +1638,10 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
+    domain = models.CharField(
+        verbose_name=_("Domain"), max_length=255, blank=True, null=False
+    )
+
     teams = models.ManyToManyField('account.Team', related_name='pools')
 
     def __unicode__(self):
@@ -1649,6 +1653,7 @@ class Pool(BaseModel):
             "K8S-Token": self.rancher_token,
             "K8S-Endpoint": self.cluster_endpoint,
             "K8S-Project-Id": self.project_id,
+            "K8S-Domain": self.domain,
             "K8S-Storage-Type": "",
             "K8S-Verify-Ssl": "false",
         }

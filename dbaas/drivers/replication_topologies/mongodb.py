@@ -1027,18 +1027,18 @@ class MongoDBSingleK8s(MongoDBSingle):
             # 'workflow.steps.util.agents.Stop',
             # 'workflow.steps.util.plan.ResizeConfigure',
             # 'workflow.steps.util.plan.ConfigureLog',
-            'workflow.steps.util.dns.CheckIsReady',
-            'workflow.steps.util.dns.UpdateDNS',
+            # 'workflow.steps.util.dns.CheckIsReady',
+            # 'workflow.steps.util.dns.UpdateDNS',
             'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.k8s.UpdateHostMetadata',
+            # 'workflow.steps.util.k8s.UpdateHostMetadata',
             'workflow.steps.util.host_provider.WaitingNewDeployUndo',
             'workflow.steps.util.host_provider.ChangeOffering',
             'workflow.steps.util.host_provider.WaitingNewDeployDo',
-            'workflow.steps.util.k8s.UpdateHostMetadata',
+            # 'workflow.steps.util.k8s.UpdateHostMetadata',
             # 'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.dns.UpdateDNS',
-            'workflow.steps.util.dns.CheckIsReady',
+            # 'workflow.steps.util.dns.UpdateDNS',
+            # 'workflow.steps.util.dns.CheckIsReady',
             'workflow.steps.util.database.WaitForReplication',
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
@@ -1066,7 +1066,7 @@ class MongoDBSingleK8s(MongoDBSingle):
             )}, {
             'Creating dns': (
                 'workflow.steps.util.k8s.UpdateHostMetadata',
-                'workflow.steps.util.dns.CreateDNS',
+                #'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Configuring database': (
                 # 'workflow.steps.util.volume_provider.MountDataVolume',
@@ -1074,13 +1074,13 @@ class MongoDBSingleK8s(MongoDBSingle):
                 # 'workflow.steps.util.plan.ConfigureForNewInfra',
                 # 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 # 'workflow.steps.util.database.Start',
-                # 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.CheckIsUp',
                 # 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
-             )}, {
+            #'Check DNS': (
+                #'workflow.steps.util.dns.CheckIsReady',
+             #)}, {
              'Creating Database': (
                 'workflow.steps.util.database.SetMongoDBUsersPasswordFromCredentials',
                 'workflow.steps.util.database.Create',
