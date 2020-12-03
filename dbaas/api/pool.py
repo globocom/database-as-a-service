@@ -41,6 +41,7 @@ class PoolAPI(viewsets.ModelViewSet):
             "cluster_id",
             "project_id",
             "cluster_endpoint",
+            "domain",
             "rancher_endpoint",
             "rancher_token",
             "dbaas_token",
