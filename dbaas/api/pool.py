@@ -99,7 +99,6 @@ class PoolAPI(viewsets.ModelViewSet):
         cli.create_acl(execute_job=True)
 
     def create(self, request):
-        #vpc = request.DATA.pop('vpc')
         serializer = self.get_serializer(
             data=request.DATA, files=request.FILES)
         data = serializer.init_data
