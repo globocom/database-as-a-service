@@ -46,6 +46,8 @@ class PoolAPI(viewsets.ModelViewSet):
             "rancher_token",
             "dbaas_token",
             "teams",
+            "vpc",
+            "storageclass"
         )
         for field in required_fields:
             if not data.get(field, ''):
@@ -97,7 +99,7 @@ class PoolAPI(viewsets.ModelViewSet):
         cli.create_acl(execute_job=True)
 
     def create(self, request):
-        vpc = request.DATA.pop('vpc')
+        #vpc = request.DATA.pop('vpc')
         serializer = self.get_serializer(
             data=request.DATA, files=request.FILES)
         data = serializer.init_data
@@ -130,6 +132,7 @@ class PoolAPI(viewsets.ModelViewSet):
         for team in teams:
             pool.teams.add(team)
 
+        vpc = data.get('vpc')
         self.create_acl_for(vpc, data['environment'], pool_name)
 
         headers = self.get_success_headers(data)
