@@ -189,7 +189,9 @@ class K8sValidationTestCase(BaseValidationTestCase):
         self.pool = mommy.make(
             'Pool',
             name=self.pool_name,
-            cluster_endpoint=self.pool_endpoint
+            cluster_endpoint=self.pool_endpoint,
+            rancher_token='',
+            dbaas_token=''
         )
         self.pool.teams.add(self.team)
         # self.payload['parameters.pool'] = self.pool_name
