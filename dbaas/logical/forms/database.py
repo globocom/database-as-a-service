@@ -88,7 +88,7 @@ class DatabaseForm(models.ModelForm):
         if backup_hour < 6:
             maintenance_choices.remove(backup_hour)
         maintenance_hour = random.choice(maintenance_choices)
-        maintenance_day = random.randint(1, 7)
+        maintenance_day = random.randint(0, 6)
 
         return backup_hour, maintenance_hour, maintenance_day
 
