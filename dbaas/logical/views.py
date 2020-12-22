@@ -1120,6 +1120,62 @@ def database_resizes(request, context, database):
     )
 
 
+@database_view('history')
+def database_history(request, context, database):
+    context["maintenances"] = []
+    host_maintenances = [
+        "host_maintenance",
+        "migrate",
+        "recreate_slave"
+    ]
+    for related in host_maintenances:
+        for host in database.infra.hosts:
+            context["maintenances"] += getattr(host, related).all()
+    database_maintenances = [
+        "task_schedules",
+        "engine_migrations",
+        "upgrades",
+        "upgrades_patch",
+        "reinstall_vm",
+        "resizes",
+        "change_parameters",
+        "databases_create",
+        "databases_clone",
+        "origin_databases_clone",
+        "databases_destroy",
+        "database_restore",
+        "configure_ssl",
+        "database_migrate",
+        "filer_migrate",
+        "update_ssl_manager",
+        "add_instances_to_database_manager",
+        "remove_instances_database_manager",
+        "restart_database_manager",
+        "change_persistence",
+        "set_require_ssl",
+        "set_not_require_ssl",
+    ]
+    for related in database_maintenances:
+        context["maintenances"] += getattr(database, related).all()
+
+    for maintenance in context["maintenances"]:
+        maintenance.verbose_name = maintenance._meta.verbose_name
+        try:
+            maintenance.url = reverse(
+                'admin:{}_{}_change'.format(maintenance._meta.app_label, maintenance._meta.model_name),
+                args=[maintenance.id]
+            )
+        except:
+            maintenance.url = "#"
+        if hasattr(maintenance, "task"):
+            maintenance.task_url = reverse('admin:notification_taskhistory_change', args=[maintenance.task.id])
+    context["maintenances"].sort(key=lambda x: x.updated_at, reverse=True)
+    return render_to_response(
+        "logical/database/details/history_tab.html",
+        context, RequestContext(request)
+    )
+
+
 class DatabaseMigrateEngineRetry(View):
 
     def get(self, request, *args, **kwargs):

@@ -59,8 +59,8 @@ def team_resources(self, team_id):
         hosts = database.databaseinfra.hosts
         for host in hosts:
             resources['cpu'] += host.offering.cpus
-            resources['memory'] += (host.offering.memory_size_mb / 1024)
-            resources['disk'] += host.root_size_gb
+            resources['memory'] += round((host.offering.memory_size_mb / 1024), 2)
+            resources['disk'] += round(host.root_size_gb, 2)
             resources['vms'] += 1
     response_json = json.dumps(resources)
 

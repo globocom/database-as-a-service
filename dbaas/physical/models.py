@@ -1620,22 +1620,38 @@ class Pool(BaseModel):
 
     cluster_endpoint = models.CharField(
         verbose_name=_("Cluster EndPoint"), max_length=255,
-        blank=True, null=False
+        blank=False, null=False
     )
 
     rancher_endpoint = models.CharField(
         verbose_name=_("Rancher EndPoint"), max_length=255)
 
     rancher_token = EncryptedCharField(
-        verbose_name=_("Rancher Token"), max_length=255, blank=True, null=False
+        verbose_name=_("Rancher Token"),
+        max_length=255, blank=False, null=False
     )
 
     dbaas_token = EncryptedCharField(
-        verbose_name=_("DBaaS Token"), max_length=255, blank=True, null=False
+        verbose_name=_("DBaaS Token"), max_length=255, blank=False, null=False
     )
 
     environment = models.ForeignKey(
         'Environment', related_name='pools'
+    )
+
+    domain = models.CharField(
+        verbose_name=_("Domain"), max_length=255, blank=False, null=False
+    )
+
+    vpc = models.CharField(
+        verbose_name=_("VPC"), max_length=255, blank=False, null=False,
+        help_text=_("VPC used by K8S network")
+    )
+
+    storageclass = models.CharField(
+        verbose_name=_("Storage Class"),
+        max_length=255, blank=False, null=False,
+        help_text=_("K8S Storage class created by dbaas-pool")
     )
 
     teams = models.ManyToManyField('account.Team', related_name='pools')
@@ -1649,7 +1665,8 @@ class Pool(BaseModel):
             "K8S-Token": self.rancher_token,
             "K8S-Endpoint": self.cluster_endpoint,
             "K8S-Project-Id": self.project_id,
-            "K8S-Storage-Type": "",
+            "K8S-Domain": self.domain,
+            "K8S-Storage-Type": self.storageclass,
             "K8S-Verify-Ssl": "false",
         }
 

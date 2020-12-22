@@ -598,6 +598,7 @@ class RedisCluster(BaseRedis):
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
+                'workflow.steps.redis.cluster.CreateClusterRedisAddSlaves',
                 'workflow.steps.redis.cluster.SetInstanceShardTag',
             )}, {
             'Check DNS': (

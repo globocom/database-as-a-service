@@ -80,9 +80,12 @@ class CreateConfigMap(BaseK8SStep, PlanStepNewInfra):
     def do(self):
         if not self.instance.is_database:
             return
+
+        script_variables = self.script_variables
+        script_variables['HOSTADDRESS'] = ""
         configuration = render_to_string(
             'physical/scripts/database_config_files/mongodb_40.conf',
-            self.script_variables
+            script_variables
         )
         self.host_provider.configure(configuration)
 
@@ -98,15 +101,20 @@ class UpdateHostMetadata(BaseK8SStep):
 
     def do(self):
         info = self.host_provider.host_info(self.host, refresh=True)
-        self.instance.address = info["address"]
-        self.instance.port = self.driver.default_port
+        pod_dns = "{}.{}".format(info["name"], self.pool.domain)
+
+        instance = self.instance
+        instance.dns = pod_dns
+        instance.address = pod_dns
+        instance.port = self.driver.default_port
+        instance.save()
+
         host = self.host
-        host.address = self.instance.address
+        host.address = pod_dns
         host.save()
 
     def undo(self):
-        self.do()
-
+        pass
 
 class NewPodK8S(BaseK8SStep, CreateVirtualMachine):
     def __unicode__(self):
@@ -145,6 +153,7 @@ class CreateHostMetadata(BaseK8SStep):
         host.provider = 'k8s'
         host.save()
         self.instance.hostname = host
+        self.instance.address = host.address
         self.instance.save()
 
     def undo(self):
