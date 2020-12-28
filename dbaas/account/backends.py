@@ -126,9 +126,7 @@ class DbaasBackend(ModelBackend):
                 conn = ldap.initialize(server)
                 conn.bind_s(dn, user_pw)
                 dn_ = 'cn=%s,%s' % (username, user_search.base_dn)
-                LOG.info("Changing dn password %s" % dn_)
                 ret = conn.passwd_s(dn_, old_password, new_password)
-                LOG.info("Return: %s" % ret)
             except Exception, e:
                 LOG.error(
                     "Ops... got an error while changing password: %s" % e)
