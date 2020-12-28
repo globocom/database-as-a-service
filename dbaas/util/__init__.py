@@ -98,8 +98,6 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[],
     return_code = None
     output = []
     try:
-        LOG.debug(
-            'Running on path %s command: %s', working_dir, logging_cmdline)
 
         envs_with_path = {'PATH': os.getenv("PATH")}
 
@@ -111,8 +109,6 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[],
         # of output and subprocess.PIPE
         # can lock because this method not consume stdout without script finish
         # execute.
-
-        LOG.info("Args: {}".format(args))
 
         if python_bin:
             exec_script = [python_bin, working_dir + script_name] + args
