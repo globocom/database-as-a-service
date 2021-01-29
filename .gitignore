@@ -17,7 +17,7 @@ dump.rdb
 .ropeproject/
 node_modules/
 .vscode/
-dbaas/settings.py
+dbaas/dbaas/settings.py
 docker-compose.override.yml
 dev/requirements*
 dev/data

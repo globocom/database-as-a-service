@@ -21,6 +21,25 @@ services:
         - DBAAS_DATABASE_HOST=dev_mysqldb57
         - DBAAS_DATABASE_PASSWORD=123
         - TESTS_MONGODB_HOST=dev_mongodb
+  app_celery:
+    image: dbaas_dev
+    volumes:
+      - ..:/code
+    command: /code/run_dev_celery.sh
+    depends_on:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+    links:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+
+    environment:
+        - REDIS_HOST=dev_redisdb
+        - DBAAS_DATABASE_HOST=dev_mysqldb57
+        - DBAAS_DATABASE_PASSWORD=123
+        - TESTS_MONGODB_HOST=dev_mongodb
   dev_redisdb:
         image: redis:3.2
         container_name: dev_redis32
@@ -32,6 +51,8 @@ services:
   dev_mysqldb57:
         image: mysql:5.7
         container_name: dev_mysql57
+        volumes:
+            - ./data/mysql:/var/lib/mysql
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute

@@ -268,7 +268,7 @@ if not DB_ENGINE.endswith('sqlite3'):
 
 # http://django-email-extras.readthedocs.org/en/latest/
 EMAIL_EXTRAS_USE_GNUPG = False
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')   
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
