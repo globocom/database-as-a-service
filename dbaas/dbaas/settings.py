@@ -469,11 +469,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'syslog': {
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'syslog_formatter',
-            'address': SYSLOG_FILE,
-        },
+        # 'syslog': {
+        #     'class': 'logging.handlers.SysLogHandler',
+        #     'formatter': 'syslog_formatter',
+        #     'address': SYSLOG_FILE,
+        # },
         'sentry': {
             'level': 'ERROR',
             'class': ('raven.contrib.django.raven_compat.handlers'
@@ -500,7 +500,7 @@ LOGGING = {
         }
     },
     'root': {
-        'handlers': ['console', 'syslog'],
+        'handlers': ['console'],
         'level': os.getenv('DBAAS_ROOT_LOG_LEVEL', 'DEBUG'),
     }
 }

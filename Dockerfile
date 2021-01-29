@@ -15,5 +15,3 @@ RUN pip install --upgrade pip \
     && pip install ipython==5.1.0 \
     && pip install ipdb==0.10.1 \
     && pip install -r requirements_test.txt
-
-ENTRYPOINT /code/tests.sh

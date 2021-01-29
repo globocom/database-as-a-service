@@ -33,14 +33,23 @@ DBaaS requires the following:
 * and all packages in requirements.txt file (there is a shortcut to install them)
 
 
-Setup docker and docker-compose(optional)
+Setup docker and docker-compose (recomended)
 =========================================
 
 * Install [Docker](https://docs.docker.com/engine/installation/)
 
+```
+
+$ cp dbaas/settings-base.py dbaas/settings.py
+$ cd dev
+$ docker-compose build
+$ docker-compose up
+
+```
+
 Setup your local environment
 ============================
-
+    cp dbaas/settings-base.py dbaas/settings.py
     mkvirtualenv dbaas
     workon dbaas
 

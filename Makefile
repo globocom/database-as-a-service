@@ -118,5 +118,8 @@ dev_mode:
 migrate:
 	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))
 
+dev_docker_build:
+	@cp requirements* dev/. && cd dev && docker build -t dbaas_dev .
+
 %:
 	@:
