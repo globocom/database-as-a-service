@@ -34,7 +34,7 @@ services:
         - dev_mysqldb57
         - dev_mongodb
         - dev_redisdb
-
+    user: python
     environment:
         - REDIS_HOST=dev_redisdb
         - DBAAS_DATABASE_HOST=dev_mysqldb57

@@ -4,7 +4,9 @@ ENV DEBIAN_FRONTEND "noninteractive apt-get install PACKAGE"
 RUN mkdir /code
 WORKDIR /code
 ADD . /code/
-RUN  apt-get update && \
+RUN  useradd -ms /bin/bash python && \
+     chown -R python: /code && \
+     apt-get update && \
      apt-get install -y --no-install-recommends \
              python-pip \
              build-essential \
