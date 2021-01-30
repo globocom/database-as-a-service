@@ -89,7 +89,6 @@ kill_mysql:
 run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))
 
-
 run_celery_debug: # run local celery
 	@cd dbaas && CELERY_RDBSIG=1 celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
 
@@ -129,6 +128,9 @@ dev_docker_migrate:
 
 dev_docker_run:
 	@cd dev && docker-compose up
+
+dev_docker_stop:
+	@cd dev && docker-compose down
 
 %:
 	@:
