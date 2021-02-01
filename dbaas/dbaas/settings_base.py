@@ -32,6 +32,8 @@ SCRIPTS_PATH = syspath + "/drivers/scripts/"
 ENCRYPTED_FIELD_KEYS_DIR = SITE_ROOT + '/keys'
 
 DEBUG = os.getenv('DBAAS_DEBUG', '1') == '1'
+DOCKERIZED = os.getenv('RUNNING_IN_DOCKER', '0') == '1'
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -505,6 +507,10 @@ LOGGING = {
     }
 }
 
+if DOCKERIZED:
+    LOGGING['root']['handlers'].remove('syslog')
+    del LOGGING['handlers']['syslog']
+
 if SENTRY:
     LOGGING['root']['handlers'] += ['sentry']
 
@@ -531,6 +537,7 @@ USER_ROLES = (
 CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
 NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
+
 
 
 def simple_audit_auth():
