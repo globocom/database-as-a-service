@@ -1,4 +1,4 @@
-from settings import *  # noqa
+from settings_base import *  # noqa
 
 # Comment this line for turn on debug on tests
 LOGGING = {}
