@@ -563,7 +563,7 @@ class ServiceRemove(APIView):
             msg = "Database id provided does not exist {} in {}.".format(
                 database_name, env)
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_404_NOT_FOUND
             )
 
         try:
