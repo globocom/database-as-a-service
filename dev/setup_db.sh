@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cp -n ../dbaas/dbaas/settings_base.py ../dbaas/dbaas/settings.py
-
 if [ -z "$1" ]; then
     echo "No argument supplied. No dumps will be restored."
     exit 0

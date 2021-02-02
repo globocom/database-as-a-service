@@ -56,7 +56,6 @@ $make dev_docker_run
 
 ### without docker
 
-    cp -n dbaas/dbaas/settings_base.py dbaas/dbaas/settings.py
     mkvirtualenv dbaas
     workon dbaas
 
