@@ -55,11 +55,13 @@ class Environment(BaseModel):
     CLOUDSTACK = 1
     AWS = 2
     KUBERNETES = 3
+    GCP = 4
 
     PROVISIONER_CHOICES = (
         (CLOUDSTACK, 'Cloud Stack'),
         (AWS, 'AWS'),
         (KUBERNETES, 'Kubernetes'),
+        (GCP, 'GCP')
     )
 
     name = models.CharField(
