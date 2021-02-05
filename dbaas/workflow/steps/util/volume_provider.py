@@ -354,6 +354,12 @@ class NewVolume(VolumeProviderBase):
         self.destroy_volume(volume)
 
     def do(self):
+
+        ## tmp GCP
+        if self.environment.provisioner == self.environment.GCP:
+            return
+        ## end tmp GCP
+
         if not self.instance.is_database:
             return
         snapshot = None
@@ -370,6 +376,11 @@ class NewVolume(VolumeProviderBase):
         )
 
     def undo(self):
+        ## tmp GCP
+        if self.environment.provisioner == self.environment.GCP:
+            return
+        ## end tmp GCP
+
         if not self.instance.is_database or not self.host:
             return
 
@@ -495,6 +506,11 @@ class MountDataVolume(VolumeProviderBase):
         return self.instance.is_database
 
     def do(self):
+        ## tmp GCP
+        if self.environment.provisioner == self.environment.GCP:
+            return
+        ## end tmp GCP
+
         if not self.is_valid:
             return
 
