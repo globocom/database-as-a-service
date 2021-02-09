@@ -17,3 +17,6 @@ dump.rdb
 .ropeproject/
 node_modules/
 .vscode/
+docker-compose.override.yml
+dev/requirements*
+dev/data

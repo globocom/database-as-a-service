@@ -1,0 +1,75 @@
+version: '3'
+networks: 
+  gntw:
+    driver: bridge
+services:
+  app:
+    image: dbaas_dev
+    volumes:
+      - ..:/code
+    command: /code/run_dev.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+    links:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+    environment:
+        - REDIS_HOST=dev_redisdb
+        - DBAAS_DATABASE_HOST=dev_mysqldb57
+        - DBAAS_DATABASE_PASSWORD=123
+        - TESTS_MONGODB_HOST=dev_mongodb
+        - RUNNING_IN_DOCKER=1
+    networks: 
+      - gntw
+  app_celery:
+    image: dbaas_dev
+    volumes:
+      - ..:/code
+    command: /code/run_dev_celery.sh
+    depends_on:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+    links:
+        - dev_mysqldb57
+        - dev_mongodb
+        - dev_redisdb
+    user: python
+    environment:
+        - REDIS_HOST=dev_redisdb
+        - DBAAS_DATABASE_HOST=dev_mysqldb57
+        - DBAAS_DATABASE_PASSWORD=123
+        - TESTS_MONGODB_HOST=dev_mongodb
+        - RUNNING_IN_DOCKER=1
+    networks: 
+      - gntw
+  dev_redisdb:
+        image: redis:3.2
+        container_name: dev_redis32
+        networks: 
+            - gntw
+
+  dev_mongodb:
+        image: mongo:3.4
+        container_name: dev_mongo34
+        networks: 
+          - gntw
+
+  dev_mysqldb57:
+        image: mysql:5.7
+        container_name: dev_mysql57
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=123
+            - MYSQL_USER=rute
+            - MYSQL_PASSWORD=123
+            - MYSQL_DATABASE=dbaas
+        networks: 
+            - gntw
+    

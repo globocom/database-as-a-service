@@ -9,7 +9,7 @@ if sys.getdefaultencoding() != "utf-8":
 endef
 export CHECK_SCRIPT
 
-# Use make -e DBAAS_DATABASE_HOST=another_host to replace default value
+# Use make -e DBAAS_DATABASE_HOST=another_host to replace default value		 
 
 default:
 	@awk -F\: '/^[a-z_]+:/ && !/default/ {printf "- %-20s %s\n", $$1, $$2}' Makefile
@@ -89,7 +89,6 @@ kill_mysql:
 run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))
 
-
 run_celery_debug: # run local celery
 	@cd dbaas && CELERY_RDBSIG=1 celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
 
@@ -117,6 +116,21 @@ dev_mode:
 
 migrate:
 	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))
+
+dev_docker_build:
+	@cp requirements* dev/. && cd dev && docker build -t dbaas_dev .
+
+dev_docker_setup:
+	@cd dev && ./setup_db.sh $(filter-out $@,$(MAKECMDGOALS))
+
+dev_docker_migrate:
+	@cd dev && docker-compose run app /code/dbaas/manage.py migrate
+
+dev_docker_run:
+	@cd dev && docker-compose up
+
+dev_docker_stop:
+	@cd dev && docker-compose down
 
 %:
 	@:
