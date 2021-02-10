@@ -252,7 +252,7 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def repl_timeout(self):
         parameter_name = inspect.stack()[0][3]
-        default = 60
+        default = 3600
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -264,7 +264,12 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def repl_backlog_size(self):
         parameter_name = inspect.stack()[0][3]
-        default = 1048576
+        if self.memory_size_in_gb <= 1:
+            default = 524288000
+        elif self.memory_size_in_gb <= 2:
+            default = 1048576000
+        else:
+            default = 2097152000
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -282,7 +287,14 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def client_output_buffer_limit_slave(self):
         parameter_name = inspect.stack()[0][3]
-        default = "268435456 67108864 60"
+        if self.memory_size_in_gb <= 1:
+            default = "536870912 536870912 3600"
+        elif self.memory_size_in_gb <= 2:
+            default = "1073741824 1073741824 3600"
+        elif self.memory_size_in_gb <= 4:
+            default = "2147483648 2147483648 3600"
+        else:
+            default = "4294967296 4294967296 3600"
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -298,6 +310,28 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def cluster_enabled_true(self):
         return 'yes'
+
+    @property
+    def save(self):
+        parameter_name = inspect.stack()[0][3]
+        default = '7200 1 3600 10 1800 10000'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def save_list(self):
+        save_value = self.save.value
+        save_list = save_value.split()
+        if len(save_list) % 2 != 0:
+            raise Exception(
+                'Invalid argument {} for save parameter.'.format(save_value)
+            )
+        save_list2 = []
+        for i in range(0, len(save_list), 2):
+            item = "{} {}".format(save_list[i], save_list[i + 1])
+            save_list2.append(item)
+        return save_list2
+
+
 
 
 class ConfigurationMySQL(ConfigurationBase):
