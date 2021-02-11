@@ -4,6 +4,7 @@ from time import sleep
 from requests import post, delete, get
 from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
+from workflow.steps.util.base import HostProviderClient
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
 from base import BaseInstanceStep
@@ -58,6 +59,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
         self._credential = None
+        self.host_prov_client = HostProviderClient(self.environment)
 
     @property
     def driver(self):
@@ -96,14 +98,22 @@ class VolumeProviderBase(BaseInstanceStep):
             header = self.pool.as_headers
         header["K8S-Namespace"] = self.infra.name
         return header
+    
+    @property
+    def host_vm(self):
+        return self.host_prov_client.get_vm_by_host(self.host)
+    
 
-    def create_volume(self, group, size_kb, to_address='', snapshot_id=None, is_active=True):
+    def create_volume(self, group, size_kb, to_address='', snapshot_id=None, 
+                      is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
             "size_kb": size_kb,
-            "to_address": to_address,
+            "to_address": to_address,   
             "snapshot_id": snapshot_id,
+            "zone": zone,
+            "vm_name": vm_name
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -354,12 +364,6 @@ class NewVolume(VolumeProviderBase):
         self.destroy_volume(volume)
 
     def do(self):
-
-        ## tmp GCP
-        if self.environment.provisioner == self.environment.GCP:
-            return
-        ## end tmp GCP
-
         if not self.instance.is_database:
             return
         snapshot = None
@@ -367,15 +371,19 @@ class NewVolume(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
-        self.create_volume(
+
+        self.create_volume( 
             self.infra.name,
             self.disk_offering.size_kb,
             self.host.address,
             snapshot_id=snapshot.snapshopt_id if snapshot else None,
-            is_active=self.active_volume
+            is_active=self.active_volume,
+            zone=self.host_vm.zone,
+            vm_name=self.host_vm.name
         )
 
     def undo(self):
+        
         ## tmp GCP
         if self.environment.provisioner == self.environment.GCP:
             return
@@ -506,10 +514,7 @@ class MountDataVolume(VolumeProviderBase):
         return self.instance.is_database
 
     def do(self):
-        ## tmp GCP
-        if self.environment.provisioner == self.environment.GCP:
-            return
-        ## end tmp GCP
+        
 
         if not self.is_valid:
             return
