@@ -264,12 +264,7 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def repl_backlog_size(self):
         parameter_name = inspect.stack()[0][3]
-        if self.memory_size_in_gb <= 1:
-            default = 524288000
-        elif self.memory_size_in_gb <= 2:
-            default = 1048576000
-        else:
-            default = 2097152000
+        default = 1048576
         return self.get_parameter(parameter_name, default)
 
     @property
