@@ -1424,6 +1424,26 @@ class Instance(BaseModel):
 
         self.save(update_fields=['status'])
 
+    @property
+    def static_ip(self):
+        try:
+            return Ip.objects.get(
+                identifier=Ip.identifier_template.format(
+                    self.dns.split(".")[0]
+                )
+            )
+        except Ip.DoesNotExist:
+            return
+
+    @property
+    def has_static_ip_allocated_by_dns(self):
+
+        return Ip.objects.filter(
+            identifier=Ip.identifier_template.format(
+                self.dns.split(".")[0]
+            ).exists()
+        )
+
 
 class DatabaseInfraParameter(BaseModel):
 
@@ -1669,6 +1689,20 @@ class Pool(BaseModel):
             "K8S-Storage-Type": self.storageclass,
             "K8S-Verify-Ssl": "false",
         }
+
+
+class Ip(BaseModel):
+    identifier_template = "{}-static-ip"
+
+    identifier = models.CharField(
+        verbose_name=_("Ip Identifier"),
+        max_length=200,
+        null=True, blank=True
+    )
+    address = models.CharField(
+        verbose_name=_("Ip address"), max_length=200)
+    instance = models.ForeignKey(
+        "Instance", null=True, blank=True, on_delete=models.SET_NULL)
 
 
 ##########################################################################
