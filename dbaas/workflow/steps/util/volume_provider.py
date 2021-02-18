@@ -383,12 +383,6 @@ class NewVolume(VolumeProviderBase):
         )
 
     def undo(self):
-        
-        ## tmp GCP
-        if self.environment.provisioner == self.environment.GCP:
-            return
-        ## end tmp GCP
-
         if not self.instance.is_database or not self.host:
             return
 
