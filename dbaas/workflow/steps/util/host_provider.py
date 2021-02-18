@@ -333,7 +333,10 @@ class Provider(BaseInstanceStep):
 
     def status_host(self, host):
         url = "{}/{}/{}/status/{}".format(
-            self.credential.endpoint, self.provider, self.environment, host.identifier
+            self.credential.endpoint,
+            self.provider,
+            self.environment,
+            host.identifier
         )
         response = self._request(get, url)
         if not response.ok:
@@ -716,7 +719,11 @@ class WaitingBeReady(HostProviderStep):
                 self.host.save()
                 return
             if attempt == self.RETRIES - 1:
-                raise EnvironmentError('Host {} is not ready'.format(self.host))
+                raise EnvironmentError(
+                    'Host {} is not ready'.format(
+                        self.host
+                    )
+                )
             sleep(10)
 
     def undo(self):
@@ -728,12 +735,15 @@ class WaitingNewDeploy(WaitingBeReady):
     def execute(self):
         for attempt in range(self.RETRIES):
             status = self.provider.status_host(self.host)
-            if status["host_status"] == "READY" and self.host.version != status["version_id"]:
+            if (status["host_status"] == "READY" and
+                    self.host.version != status["version_id"]):
                 self.host.version = status["version_id"]
                 self.host.save()
                 return
             if attempt == self.RETRIES - 1:
-                raise EnvironmentError('Host {} is not ready'.format(self.host))
+                raise EnvironmentError(
+                    'Host {} is not ready'.format(self.host)
+                )
             sleep(10)
 
 

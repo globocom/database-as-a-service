@@ -119,7 +119,8 @@ class UpdateDNS(DNSStep):
             self.instance.address, self.host.address
         )
 
-        if self.infra.endpoint and self.instance.address in self.infra.endpoint:
+        if (self.infra.endpoint and
+                self.instance.address in self.infra.endpoint):
             self.infra.endpoint = self.infra.endpoint.replace(
                 self.instance.address, self.host.address
             )
@@ -128,7 +129,6 @@ class UpdateDNS(DNSStep):
 
     def undo(self):
         self.do()
-
 
 
 class ChangeVipEndpoint(DNSStep):
@@ -274,7 +274,10 @@ class CheckIsReady(DNSStep):
             databaseinfra=self.infra.id,
             dns=dns_to_check
         ):
-            if not check_dns(dns.dns, self.credentials.project, ip_to_check=ip_to_check):
+            if not check_dns(
+                    dns.dns,
+                    self.credentials.project,
+                    ip_to_check=ip_to_check):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
 
     @property
@@ -298,4 +301,7 @@ class CheckVipIsReady(CheckIsReady):
     def do(self):
         if not self.must_check:
             return
-        self._check_dns_for(self.infra.endpoint_dns.split(":")[0], self.future_vip.vip_ip)
+        self._check_dns_for(
+            self.infra.endpoint_dns.split(":")[0],
+            self.future_vip.vip_ip
+        )

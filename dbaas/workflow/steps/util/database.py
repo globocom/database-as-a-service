@@ -206,6 +206,7 @@ class Start(DatabaseStep):
     def undo(self):
         self.undo_klass(self.instance).do()
 
+
 class StartCheckOnlyOsProcess(Start):
     def do(self):
         if not self.is_valid:
@@ -931,6 +932,7 @@ class StopNonDatabaseInstanceRollback(Stop):
 
     def undo(self):
         return super(StopNonDatabaseInstanceRollback, self).do()
+
 
 class SetUsersPasswordFromCredentials(DatabaseStep):
 

@@ -620,7 +620,7 @@ class Plan(BaseModel):
         related_name='backwards_persisted_plan',
         help_text=_(("For persisted plans, the equivalent not persisted plan. "
                      "For not persisted plans, the equivalent persisted plan"
-                   ))
+                     ))
     )
 
     @property
@@ -940,7 +940,6 @@ class DatabaseInfra(BaseModel):
     @property
     def set_require_ssl_for_databaseinfra(self):
         return self.get_driver().set_require_ssl_for_databaseinfra
-
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
