@@ -44,6 +44,10 @@ class HostProviderCreateIPException(HostProviderException):
     pass
 
 
+class HostProviderDestroyIPException(HostProviderException):
+    pass
+
+
 class HostProviderDestroyVMException(HostProviderException):
     pass
 
@@ -235,6 +239,16 @@ class Provider(BaseInstanceStep):
             ip.instance = self.instance
             ip.save()
             return ip
+
+    def destroy_static_ip(self, static_ip):
+        url = "{}/{}/{}/ip/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            static_ip.identifier
+        )
+
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyIPException(response.content, response)
 
     def prepare(self):
         url = "{}/{}/{}/prepare".format(
@@ -567,8 +581,9 @@ class AllocateIP(HostProviderStep):
 
     def undo(self):
         self.provider.destroy_static_ip(
-            self.instance.ips.first()
+            self.instance.static_ip
         )
+        self.instance.static_ip.delete()
 
 
 class CreateVirtualMachineMigrate(CreateVirtualMachine):

@@ -1692,6 +1692,7 @@ class Pool(BaseModel):
 
 
 class Ip(BaseModel):
+
     identifier_template = "{}-static-ip"
 
     identifier = models.CharField(
@@ -1703,6 +1704,9 @@ class Ip(BaseModel):
         verbose_name=_("Ip address"), max_length=200)
     instance = models.ForeignKey(
         "Instance", null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __unicode__(self):
+        return self.identifier
 
 
 ##########################################################################
