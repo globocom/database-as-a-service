@@ -586,6 +586,18 @@ class AllocateIP(HostProviderStep):
         self.instance.static_ip.delete()
 
 
+class DeallocateIP(HostProviderStep):
+
+    def __unicode__(self):
+        return "Deallocating new ip..."
+
+    def do(self):
+        AllocateIP(self.instance).undo()
+
+    def undo(self):
+        AllocateIP(self.instance).do()
+
+
 class CreateVirtualMachineMigrate(CreateVirtualMachine):
 
     @property
