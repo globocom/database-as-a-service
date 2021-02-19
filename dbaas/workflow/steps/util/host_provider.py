@@ -6,7 +6,7 @@ from urlparse import urljoin
 from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_credentials.models import CredentialType
-from physical.models import Host, Instance
+from physical.models import Host, Instance, Ip
 from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
@@ -37,6 +37,14 @@ class HostProviderChangeOfferingException(HostProviderException):
 
 
 class HostProviderCreateVMException(HostProviderException):
+    pass
+
+
+class HostProviderCreateIPException(HostProviderException):
+    pass
+
+
+class HostProviderDestroyIPException(HostProviderException):
     pass
 
 
@@ -164,7 +172,8 @@ class Provider(BaseInstanceStep):
 
     def create_host(self, infra, offering, name, team_name, zone=None,
                     database_name='', host_obj=None, port=None,
-                    volume_name=None, init_user=None, init_password=None):
+                    volume_name=None, init_user=None, init_password=None,
+                    static_ip=None):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -175,7 +184,8 @@ class Provider(BaseInstanceStep):
             "memory": offering.memory_size_mb,
             "group": infra.name,
             "team_name": team_name,
-            "database_name": database_name
+            "database_name": database_name,
+            "static_ip_id": static_ip and static_ip.identifier
         }
         if zone:
             data['zone'] = zone
@@ -206,6 +216,39 @@ class Provider(BaseInstanceStep):
         host.offering = offering
         host.save()
         return host
+
+    def create_static_ip(self, infra):
+        url = "{}/{}/{}/ip/".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "engine": self.engine,
+            "name": "{}-static-ip".format(self.instance.dns.split(".")[0]),
+            "group": infra.name,
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderCreateIPException(response.content, response)
+
+        content = response.json()
+        if content:
+            ip = Ip()
+            ip.identifier = content['identifier']
+            ip.address = content['address']
+            ip.instance = self.instance
+            ip.save()
+            return ip
+
+    def destroy_static_ip(self, static_ip):
+        url = "{}/{}/{}/ip/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            static_ip.identifier
+        )
+
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyIPException(response.content, response)
 
     def prepare(self):
         url = "{}/{}/{}/prepare".format(
@@ -290,7 +333,10 @@ class Provider(BaseInstanceStep):
 
     def status_host(self, host):
         url = "{}/{}/{}/status/{}".format(
-            self.credential.endpoint, self.provider, self.environment, host.identifier
+            self.credential.endpoint,
+            self.provider,
+            self.environment,
+            host.identifier
         )
         response = self._request(get, url)
         if not response.ok:
@@ -433,6 +479,12 @@ class CreateVirtualMachine(HostProviderStep):
         self.instance.read_only = self.has_database
         self.instance.save()
 
+    def associate_static_ip_with_instance(self):
+        static_ip = self.instance.static_ip
+        if static_ip:
+            static_ip.instance = self.instance
+            static_ip.save()
+
     def delete_instance(self):
         if self.instance.id:
             self.instance.delete()
@@ -492,13 +544,16 @@ class CreateVirtualMachine(HostProviderStep):
         except Instance.DoesNotExist:
             host = self.provider.create_host(
                 self.infra, self.offering, self.vm_name, self.team, self.zone,
-                database_name=self.database.name if self.database else task_manager.name
+                database_name=(self.database.name if self.database
+                               else task_manager.name),
+                static_ip=self.instance.static_ip
             )
             self.update_databaseinfra_last_vm_created()
         else:
             host = pair.hostname
 
         self.create_instance(host)
+        self.associate_static_ip_with_instance()
 
     def undo(self):
         try:
@@ -514,6 +569,36 @@ class CreateVirtualMachine(HostProviderStep):
         self.delete_instance()
         if host.id:
             host.delete()
+
+
+class AllocateIP(HostProviderStep):
+
+    def __unicode__(self):
+        return "Allocating new ip..."
+
+    def do(self):
+
+        self.provider.create_static_ip(
+            self.infra
+        )
+
+    def undo(self):
+        self.provider.destroy_static_ip(
+            self.instance.static_ip
+        )
+        self.instance.static_ip.delete()
+
+
+class DeallocateIP(HostProviderStep):
+
+    def __unicode__(self):
+        return "Deallocating new ip..."
+
+    def do(self):
+        AllocateIP(self.instance).undo()
+
+    def undo(self):
+        AllocateIP(self.instance).do()
 
 
 class CreateVirtualMachineMigrate(CreateVirtualMachine):
@@ -634,7 +719,11 @@ class WaitingBeReady(HostProviderStep):
                 self.host.save()
                 return
             if attempt == self.RETRIES - 1:
-                raise EnvironmentError('Host {} is not ready'.format(self.host))
+                raise EnvironmentError(
+                    'Host {} is not ready'.format(
+                        self.host
+                    )
+                )
             sleep(10)
 
     def undo(self):
@@ -646,12 +735,15 @@ class WaitingNewDeploy(WaitingBeReady):
     def execute(self):
         for attempt in range(self.RETRIES):
             status = self.provider.status_host(self.host)
-            if status["host_status"] == "READY" and self.host.version != status["version_id"]:
+            if (status["host_status"] == "READY" and
+                    self.host.version != status["version_id"]):
                 self.host.version = status["version_id"]
                 self.host.save()
                 return
             if attempt == self.RETRIES - 1:
-                raise EnvironmentError('Host {} is not ready'.format(self.host))
+                raise EnvironmentError(
+                    'Host {} is not ready'.format(self.host)
+                )
             sleep(10)
 
 

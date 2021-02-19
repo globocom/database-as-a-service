@@ -200,11 +200,7 @@ class K8sValidationTestCase(BaseValidationTestCase):
             'HTTP_X_TSURU_POOL_PROVISIONER': 'kubernetes',
             'HTTP_X_TSURU_CLUSTER_NAME': 'fake cluster name',
             'HTTP_X_TSURU_CLUSTER_PROVISIONER': 'rancher',
-<<<<<<< HEAD
-            'HTTP_X_TSURU_CLUSTER_ADDRESS': self.pool_endpoint
-=======
             'HTTP_X_TSURU_CLUSTER_ADDRESSES': self.pool_endpoint
->>>>>>> elesbom-tsuru-header
         }
 
     def test_pool_not_in_header(self):
@@ -215,15 +211,9 @@ class K8sValidationTestCase(BaseValidationTestCase):
         )
 
     def test_pool_endpoint_not_in_header(self):
-<<<<<<< HEAD
-        self.headers.pop('HTTP_X_TSURU_CLUSTER_ADDRESS')
-        self.do_request_and_assert(
-            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESS> was not found "
-=======
         self.headers.pop('HTTP_X_TSURU_CLUSTER_ADDRESSES')
         self.do_request_and_assert(
             ("the header <HTTP_X_TSURU_CLUSTER_ADDRESSES> was not found "
->>>>>>> elesbom-tsuru-header
              "on headers. Contact tsuru team.")
         )
 
@@ -235,34 +225,20 @@ class K8sValidationTestCase(BaseValidationTestCase):
         )
 
     def test_pool_endoint_header_empty(self):
-<<<<<<< HEAD
-        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS'] = ''
-        self.do_request_and_assert(
-            ("the header <HTTP_X_TSURU_CLUSTER_ADDRESS> was not found "
-=======
         self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES'] = ''
         self.do_request_and_assert(
             ("the header <HTTP_X_TSURU_CLUSTER_ADDRESSES> was not found "
->>>>>>> elesbom-tsuru-header
              "on headers. Contact tsuru team.")
         )
 
     def test_pool_not_found(self):
-<<<<<<< HEAD
-        self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS'] = (
-=======
         self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES'] = (
->>>>>>> elesbom-tsuru-header
             'unexistent pool address'
         )
         self.do_request_and_assert(
             "Pool with name <{}> and endpoint <{}> was not found".format(
                 self.pool_name,
-<<<<<<< HEAD
-                self.headers['HTTP_X_TSURU_CLUSTER_ADDRESS']
-=======
                 self.headers['HTTP_X_TSURU_CLUSTER_ADDRESSES']
->>>>>>> elesbom-tsuru-header
             )
         )
 

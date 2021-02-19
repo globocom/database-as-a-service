@@ -2542,7 +2542,6 @@ class TaskRegister(object):
     @classmethod
     def database_set_ssl_required(cls, database, user, since_step=None):
 
-        infra = database.infra
         task_params = {
             'task_name': 'database_set_ssl_required',
             'arguments': 'Setting database SSL Required {}'.format(database),
@@ -2571,7 +2570,6 @@ class TaskRegister(object):
     @classmethod
     def database_set_ssl_not_required(cls, database, user, since_step=None):
 
-        infra = database.infra
         task_params = {
             'task_name': 'database_set_ssl_not)required',
             'arguments': 'Setting database SSL Not Required {}'.format(

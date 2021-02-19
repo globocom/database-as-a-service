@@ -123,6 +123,9 @@ dev_docker_build:
 dev_docker_setup:
 	@cd dev && ./setup_db.sh $(filter-out $@,$(MAKECMDGOALS))
 
+dev_docker_manage: # execute manage.py commands
+	@cd dev && docker-compose run app /code/dbaas/manage.py $(filter-out $@,$(MAKECMDGOALS))
+
 dev_docker_migrate:
 	@cd dev && docker-compose run app /code/dbaas/manage.py migrate
 

@@ -156,7 +156,7 @@ class AddACLAccess(object):
         if resp.ok:
             LOG.info("ACL {} created with SUCCESS!!".format(payload))
             if execute_job:
-                jobs = resp.json().get('jobs', [])
+                jobs = set(resp.json().get('jobs', []))
                 for job_id in jobs:
                     resp = self._run_job(job_id)
         else:
@@ -249,10 +249,10 @@ class AddACLAccess(object):
             LOG.info("Sending PUT to ACLAPI...")
             self._create_acl(source, port, execute_job=execute_job)
 
-    def create_acl_between_networks(self):
+    def create_acl_between_networks(self, execute_job=True):
         for source in self.networks:
             destination = copy.copy(self.networks)
             destination.remove(source)
             self.sources = [source]
             self.destinations = destination
-            self.create_acl()
+            self.create_acl(execute_job=execute_job)
