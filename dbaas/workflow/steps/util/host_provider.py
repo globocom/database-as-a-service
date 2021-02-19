@@ -228,7 +228,7 @@ class Provider(BaseInstanceStep):
         }
 
         response = self._request(post, url, json=data, timeout=600)
-        if response.status_code != 201:
+        if not response.ok:
             raise HostProviderCreateIPException(response.content, response)
 
         content = response.json()
