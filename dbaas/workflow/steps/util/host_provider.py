@@ -583,10 +583,9 @@ class AllocateIP(HostProviderStep):
         )
 
     def undo(self):
-        self.provider.destroy_static_ip(
-            self.instance.static_ip
-        )
-        self.instance.static_ip.delete()
+        if self.instance.static_ip:
+            self.provider.destroy_static_ip(self.instance.static_ip)
+            self.instance.static_ip.delete()
 
 
 class DeallocateIP(HostProviderStep):
