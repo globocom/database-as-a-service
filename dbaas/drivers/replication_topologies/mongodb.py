@@ -615,6 +615,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
