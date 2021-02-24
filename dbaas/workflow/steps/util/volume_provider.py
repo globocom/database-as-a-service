@@ -76,6 +76,10 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def volume(self):
         return self.host.volumes.get(is_active=True)
+    
+    @property
+    def inactive_volume(self):
+        return self.host.volumes.filter(is_active=False).last() or None
 
     @property
     def volume_migrate(self):
@@ -134,6 +138,16 @@ class VolumeProviderBase(BaseInstanceStep):
         if not response.ok:
             raise IndexError(response.content, response)
         volume.delete()
+
+    def destroy_old_volume(self, volume):
+        url = "{}remove-old-volume/{}".format(self.base_url, volume.identifier)
+        response = delete(url, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+        
+        volume.delete()
+        return response.json()
 
     def get_volume(self, volume):
         url = "{}volume/{}".format(self.base_url, volume.identifier)
@@ -1373,6 +1387,24 @@ class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
             id=master_instance.id
         ).first().hostname
 
+class RemoveOldVolume(VolumeProviderBase):
+    def __unicode__(self):
+        return "Removing old disk..."
+
+    @property
+    def group(self):
+        return self.restore.new_group
+
+    def _destroy_old_volume(self, volume):
+        if not volume:
+            return
+        return self.destroy_old_volume(volume)
+
+    def do(self):
+        self._destroy_old_volume(self.inactive_volume)
+
+    def undo(self):
+        pass
 
 class TakeSnapshot(VolumeProviderBase):
     def __unicode__(self):
