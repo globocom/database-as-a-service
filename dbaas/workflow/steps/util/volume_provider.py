@@ -282,7 +282,9 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}commands/{}/mount".format(self.base_url, volume.identifier)
         data = {
             'with_fstab': fstab,
-            'data_directory': data_directory
+            'data_directory': data_directory,
+            'host_vm': self.host_vm.name,
+            'host_zone': self.host_vm.zone
         }
         response = post(url, json=data, headers=self.headers)
         if not response.ok:
@@ -522,8 +524,6 @@ class MountDataVolume(VolumeProviderBase):
         return self.instance.is_database
 
     def do(self):
-        
-
         if not self.is_valid:
             return
 
@@ -1067,6 +1067,7 @@ class MountDataVolumeRestored(MountDataVolume):
     def is_valid(self):
         if not super(MountDataVolumeRestored, self).is_valid:
             return False
+
         return self.restore.is_master(self.instance)
 
     @property
