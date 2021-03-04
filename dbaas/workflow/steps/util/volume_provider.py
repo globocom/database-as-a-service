@@ -1545,5 +1545,12 @@ class DetachDisk(VolumeProviderBase):
     def __unicode__(self):
         return "Detaching disk from VM..."
 
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
     def do(self):
+        if not self.is_valid:
+            return
+
         self.detach_disk(self.volume)
