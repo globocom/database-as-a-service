@@ -76,7 +76,7 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def volume(self):
         return self.host.volumes.get(is_active=True)
-    
+
     @property
     def inactive_volume(self):
         return self.host.volumes.filter(is_active=False).last() or None
@@ -102,19 +102,18 @@ class VolumeProviderBase(BaseInstanceStep):
             header = self.pool.as_headers
         header["K8S-Namespace"] = self.infra.name
         return header
-    
+
     @property
     def host_vm(self):
         return self.host_prov_client.get_vm_by_host(self.host)
-    
 
-    def create_volume(self, group, size_kb, to_address='', snapshot_id=None, 
+    def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
             "size_kb": size_kb,
-            "to_address": to_address,   
+            "to_address": to_address,
             "snapshot_id": snapshot_id,
             "zone": zone,
             "vm_name": vm_name
@@ -145,8 +144,17 @@ class VolumeProviderBase(BaseInstanceStep):
 
         if not response.ok:
             raise IndexError(response.content, response)
-        
+
         volume.delete()
+        return response.json()
+
+    def detach_disk(self, volume):
+        url = "{}detach-disk/{}".format(self.base_url, volume.identifier)
+        response = post(url, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+
         return response.json()
 
     def get_volume(self, volume):
@@ -388,7 +396,7 @@ class NewVolume(VolumeProviderBase):
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
 
-        self.create_volume( 
+        self.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
             self.host.address,
@@ -1532,3 +1540,10 @@ class DestroyOldEnvironment(VolumeProviderBase):
 
     def undo(self):
         raise NotImplementedError
+
+class DetachDisk(VolumeProviderBase):
+    def __unicode__(self):
+        return "Detaching disk from VM..."
+
+    def do(self):
+        self.detach_disk(self.volume)

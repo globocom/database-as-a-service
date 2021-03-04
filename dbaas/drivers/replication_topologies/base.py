@@ -313,6 +313,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
