@@ -78,6 +78,10 @@ class VolumeProviderBase(BaseInstanceStep):
         return self.host.volumes.get(is_active=True)
 
     @property
+    def inactive_volume(self):
+        return self.host.volumes.filter(is_active=False).last() or None
+
+    @property
     def volume_migrate(self):
         return self.host_migrate.host.volumes.get(is_active=True)
 
@@ -98,19 +102,18 @@ class VolumeProviderBase(BaseInstanceStep):
             header = self.pool.as_headers
         header["K8S-Namespace"] = self.infra.name
         return header
-    
+
     @property
     def host_vm(self):
         return self.host_prov_client.get_vm_by_host(self.host)
-    
 
-    def create_volume(self, group, size_kb, to_address='', snapshot_id=None, 
+    def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
             "size_kb": size_kb,
-            "to_address": to_address,   
+            "to_address": to_address,
             "snapshot_id": snapshot_id,
             "zone": zone,
             "vm_name": vm_name
@@ -134,6 +137,25 @@ class VolumeProviderBase(BaseInstanceStep):
         if not response.ok:
             raise IndexError(response.content, response)
         volume.delete()
+
+    def destroy_old_volume(self, volume):
+        url = "{}remove-old-volume/{}".format(self.base_url, volume.identifier)
+        response = delete(url, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+
+        volume.delete()
+        return response.json()
+
+    def detach_disk(self, volume):
+        url = "{}detach-disk/{}".format(self.base_url, volume.identifier)
+        response = post(url, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+
+        return response.json()
 
     def get_volume(self, volume):
         url = "{}volume/{}".format(self.base_url, volume.identifier)
@@ -268,7 +290,9 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}commands/{}/mount".format(self.base_url, volume.identifier)
         data = {
             'with_fstab': fstab,
-            'data_directory': data_directory
+            'data_directory': data_directory,
+            'host_vm': self.host_vm.name,
+            'host_zone': self.host_vm.zone
         }
         response = post(url, json=data, headers=self.headers)
         if not response.ok:
@@ -372,7 +396,7 @@ class NewVolume(VolumeProviderBase):
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
 
-        self.create_volume( 
+        self.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
             self.host.address,
@@ -508,8 +532,6 @@ class MountDataVolume(VolumeProviderBase):
         return self.instance.is_database
 
     def do(self):
-        
-
         if not self.is_valid:
             return
 
@@ -1053,6 +1075,7 @@ class MountDataVolumeRestored(MountDataVolume):
     def is_valid(self):
         if not super(MountDataVolumeRestored, self).is_valid:
             return False
+
         return self.restore.is_master(self.instance)
 
     @property
@@ -1373,6 +1396,24 @@ class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
             id=master_instance.id
         ).first().hostname
 
+class RemoveOldVolume(VolumeProviderBase):
+    def __unicode__(self):
+        return "Removing old disk..."
+
+    @property
+    def group(self):
+        return self.restore.new_group
+
+    def _destroy_old_volume(self, volume):
+        if not volume:
+            return
+        return self.destroy_old_volume(volume)
+
+    def do(self):
+        self._destroy_old_volume(self.inactive_volume)
+
+    def undo(self):
+        pass
 
 class TakeSnapshot(VolumeProviderBase):
     def __unicode__(self):
@@ -1499,3 +1540,17 @@ class DestroyOldEnvironment(VolumeProviderBase):
 
     def undo(self):
         raise NotImplementedError
+
+class DetachDisk(VolumeProviderBase):
+    def __unicode__(self):
+        return "Detaching disk from VM..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.detach_disk(self.volume)

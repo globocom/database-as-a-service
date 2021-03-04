@@ -71,12 +71,17 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         patch_path = self.target_patch.patch_path
         dir_name = os.path.splitext(os.path.basename(patch_path))[0]
 
+        if self.target_patch.patch_path.startswith('https'):
+            download_script = 'curl {} | tar -xz'.format(patch_path)
+        else:
+            download_script = 'tar -xvf {}'.format(patch_path)
+
         script = """cd /usr/local/
-        tar -xvf {patch_path}
+        {download_script}
         rm -f mongodb
         ln -s {dir_name} mongodb
         chown -R mongodb:mongodb mongodb/
-        """.format(patch_path=patch_path, dir_name=dir_name)
+        """.format(download_script=download_script, dir_name=dir_name)
 
         self.execute_script(script)
 
@@ -91,15 +96,20 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         path, file_name = os.path.split(patch_path)
         dir_name = file_name.rsplit('.', 2)[0]
 
+        if self.target_patch.patch_path.startswith('https'):
+            download_script = 'curl {} | tar -xz'.format(patch_path)
+        else:
+            download_script = 'tar -xvf {}'.format(patch_path)
+
         script = """cd /usr/local/
-        tar -xvf {patch_path}
+        {download_script}
         rm -f redis
         ln -s {dir_name} redis
         cd redis && make
         cp /mnt/software/db/redis/redis-trib-gcom.rb /usr/local/redis/src/redis-trib-gcom.rb
         cd ..
         chown -R redis:redis redis/
-        """.format(patch_path=patch_path, dir_name=dir_name)
+        """.format(download_script=download_script, dir_name=dir_name)
 
         self.execute_script(script)
 
