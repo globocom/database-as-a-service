@@ -763,7 +763,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.host_provider.ReinstallTemplate',
+                'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
