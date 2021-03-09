@@ -251,6 +251,7 @@ class CreateHostTestCase(BaseProviderTestCase):
         expected_json = {
             'engine': u'fake_1_2_1',
             'name': 'fake_host01',
+            'static_ip_id': None,
             'cpu': 2,
             'memory': 999,
             'group': self.infra.name,

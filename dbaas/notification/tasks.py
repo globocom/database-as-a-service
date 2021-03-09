@@ -468,7 +468,7 @@ def update_database_status(self):
 
 
 @app.task(bind=True)
-@only_one(key='check_database_status')
+@only_one(key="check_database_status")
 def check_databases_status(self):
     LOG.info("Checking all databases")
     worker_name = get_worker_name()
