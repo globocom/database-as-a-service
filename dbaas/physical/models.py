@@ -55,11 +55,13 @@ class Environment(BaseModel):
     CLOUDSTACK = 1
     AWS = 2
     KUBERNETES = 3
+    GCP = 4
 
     PROVISIONER_CHOICES = (
         (CLOUDSTACK, 'Cloud Stack'),
         (AWS, 'AWS'),
         (KUBERNETES, 'Kubernetes'),
+        (GCP, 'GCP')
     )
 
     name = models.CharField(
@@ -552,12 +554,10 @@ class Plan(BaseModel):
 
     PREPROVISIONED = 0
     CLOUDSTACK = 1
-    AMAZON = 2
 
     PROVIDER_CHOICES = (
         (PREPROVISIONED, 'Pre Provisioned'),
-        (CLOUDSTACK, 'Cloud Stack'),
-        (AMAZON, 'Amazon'),
+        (CLOUDSTACK, 'Cloud Stack')
     )
 
     name = models.CharField(
@@ -620,7 +620,7 @@ class Plan(BaseModel):
         related_name='backwards_persisted_plan',
         help_text=_(("For persisted plans, the equivalent not persisted plan. "
                      "For not persisted plans, the equivalent persisted plan"
-                   ))
+                     ))
     )
 
     @property
@@ -940,7 +940,6 @@ class DatabaseInfra(BaseModel):
     @property
     def set_require_ssl_for_databaseinfra(self):
         return self.get_driver().set_require_ssl_for_databaseinfra
-
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
@@ -1424,6 +1423,26 @@ class Instance(BaseModel):
 
         self.save(update_fields=['status'])
 
+    @property
+    def static_ip(self):
+        try:
+            return Ip.objects.get(
+                identifier=Ip.identifier_template.format(
+                    self.dns.split(".")[0]
+                )
+            )
+        except Ip.DoesNotExist:
+            return
+
+    @property
+    def has_static_ip_allocated_by_dns(self):
+
+        return Ip.objects.filter(
+            identifier=Ip.identifier_template.format(
+                self.dns.split(".")[0]
+            ).exists()
+        )
+
 
 class DatabaseInfraParameter(BaseModel):
 
@@ -1669,6 +1688,24 @@ class Pool(BaseModel):
             "K8S-Storage-Type": self.storageclass,
             "K8S-Verify-Ssl": "false",
         }
+
+
+class Ip(BaseModel):
+
+    identifier_template = "{}-static-ip"
+
+    identifier = models.CharField(
+        verbose_name=_("Ip Identifier"),
+        max_length=200,
+        null=True, blank=True
+    )
+    address = models.CharField(
+        verbose_name=_("Ip address"), max_length=200)
+    instance = models.ForeignKey(
+        "Instance", null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __unicode__(self):
+        return self.identifier
 
 
 ##########################################################################

@@ -190,6 +190,7 @@ class MongoDBSingle(BaseMongoDB):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -448,6 +449,7 @@ class MongoDBSingle(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -614,6 +616,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -792,6 +795,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',

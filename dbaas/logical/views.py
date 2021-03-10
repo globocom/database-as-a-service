@@ -2233,9 +2233,21 @@ def database_migrate(request, context, database):
     context['zones'] = sorted(zones)
 
     context["environments"] = set()
-    for group in environment.groups.all():
-        for env in group.environments.all():
-            context["environments"].add(env)
+    environment_groups = environment.groups.all()
+
+    if not environment_groups:
+        messages.add_message(
+            request,
+            messages.WARNING,
+            "The environment %(env)s is not in any group" % {
+                'env':  environment.name
+            }
+        )
+    else:
+        for group in environment_groups:
+            for env in group.environments.all():
+                context["environments"].add(env)
+
     context["current_environment"] = environment
     context["current_offering"] = database.infra.offering
 

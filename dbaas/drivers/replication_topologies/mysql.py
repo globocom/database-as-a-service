@@ -310,6 +310,7 @@ class MySQLSingle(BaseMysql):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -705,6 +706,7 @@ class MySQLFoxHA(MySQLSingle):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -761,6 +763,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -809,6 +812,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -847,6 +851,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',

@@ -464,6 +464,14 @@ class ServiceAdd(APIView):
                 return log_and_response(
                     msg=msg, http_status=status.HTTP_400_BAD_REQUEST
                 )
+            if not self.pool_endpoint_param:
+                msg = (
+                    "the header <HTTP_X_TSURU_CLUSTER_ADDRESS> "
+                    "was not found on headers. Contact tsuru team."
+                )
+                return log_and_response(
+                    msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+                )
             try:
                 self.dbaas_pool
             except Pool.DoesNotExist:

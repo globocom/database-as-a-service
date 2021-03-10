@@ -260,6 +260,7 @@ class RedisSingle(BaseRedis):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -371,6 +372,7 @@ class RedisSentinel(BaseRedis):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Check ACL': (
                 'workflow.steps.util.acl.BindNewInstance',
