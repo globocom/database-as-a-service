@@ -12,6 +12,7 @@ from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
 
+
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
@@ -38,7 +39,6 @@ class HostProviderChangeOfferingException(HostProviderException):
 
 class HostProviderCreateVMException(HostProviderException):
     pass
-
 
 class HostProviderCreateIPException(HostProviderException):
     pass
@@ -626,7 +626,9 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
             sleep(240)
 
         host = self.provider.create_host(
-            self.infra, self.offering, self.vm_name, self.team, self.zone
+            self.infra, self.offering, self.vm_name, 
+            self.team, self.zone,
+            static_ip=self.instance.static_ip
         )
         self.host.future_host = host
         self.host.save()
@@ -762,3 +764,31 @@ class WaitingNewDeployUndo(WaitingNewDeploy):
 
     def undo(self):
         self.execute()
+
+class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
+
+    def __unicode__(self):
+        return "Destroy VM from previous zone..."
+
+    def do(self):
+        self.provider.destroy_host(self.host)
+
+    def undo(self):
+        pass
+
+class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
+
+    def __unicode__(self):
+        return "Recreating virtual machine in new zone..."
+
+    def do(self):
+        self.provider.create_host(
+            self.infra, self.offering, self.vm_name, 
+            self.team, self.zone,
+            static_ip=self.instance.static_ip,
+            host_obj=self.host
+        )
+        self.host.save()
+
+    def undo(self):
+        pass

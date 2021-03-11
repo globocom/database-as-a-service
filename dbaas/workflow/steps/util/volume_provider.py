@@ -1554,3 +1554,6 @@ class DetachDisk(VolumeProviderBase):
             return
 
         self.detach_disk(self.volume)
+    
+    def undo(self):
+        pass

@@ -153,7 +153,6 @@ class BaseMongoDB(BaseTopology):
             ),
         }]
 
-
 class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
@@ -1104,3 +1103,19 @@ class MongoDBSingleK8s(MongoDBSingle):
             # )
             )
         }]
+class MongoGCE(MongoDBSingle):
+    def get_host_migrate_steps(self):
+        return [{
+            'Remove previous VM': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )},{
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.database.Start',
+            )}
+        ]
