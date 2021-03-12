@@ -185,12 +185,14 @@
 
     var hostId;
     var newZone;
+    var zoneOrigin;
     $(".host-zone-btn").click(function() {
       var $hostBtn = $(this);
       hostId = $hostBtn.data('hostId');
       var hostName = $hostBtn.data('hostName');
       var $select = $("#migrate_zone_" + hostId);
       var currentZone = $select.data('currentZone');
+      zoneOrigin = currentZone;
       newZone = $select.find(":selected").val()
       $("#migrate_host_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>' + hostName + '</u> from <u>' + currentZone + '</u> to <u>' + newZone + '</u>?</label>');
     });
@@ -200,7 +202,7 @@
       $("#migrate_host_btn_modal").css({
         "pointer-events": "none"
       });
-      window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
+      window.MigrateManager.migrate_host({{database.id}}, hostId, newZone, zoneOrigin);
     });
 
     $(".host-zone-btn").click(function() {

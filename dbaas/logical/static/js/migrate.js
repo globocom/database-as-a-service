@@ -34,12 +34,16 @@
             /**
             * Run host migrate
             */
-            migrate_host: function(database_id, host_id, new_zone) {
+            migrate_host: function(database_id, hostId, newZone, zoneOrigin) {
                 var self = this;
                 $.ajax({
                     "url": "/admin/logical/database/" + database_id + "/migrate/",
                     "type": "POST",
-                    "data": { "host_id": host_id, "new_zone": new_zone},
+                    "data": { 
+                                "host_id": hostId,
+                                "new_zone": newZone,
+                                "zone_origin": zoneOrigin
+                            },
                 }).complete(function() {
                     location.reload();
                 });
