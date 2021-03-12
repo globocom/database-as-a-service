@@ -106,10 +106,6 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def host_vm(self):
         return self.host_prov_client.get_vm_by_host(self.host)
-    
-    @property
-    def host_vm_migrate(self):
-        return self.host_prov_client.get_vm_by_host(self.host_migrate.host)
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
@@ -1586,9 +1582,9 @@ class MoveDisk(VolumeProviderBase):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.host_vm_migrate.zone)
+        self.move_disk(self.volume_migrate, self.host_migrate.zone)
     
     def undo(self):
-        pass
+        self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
 
     
