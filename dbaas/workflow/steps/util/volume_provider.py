@@ -106,6 +106,10 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def host_vm(self):
         return self.host_prov_client.get_vm_by_host(self.host)
+    
+    @property
+    def host_vm_migrate(self):
+        return self.host_prov_client.get_vm_by_host(self.host_migrate.host)
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
@@ -146,6 +150,18 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
 
         volume.delete()
+        return response.json()
+
+    def move_disk(self, volume, zone):
+        url = "{}move/{}".format(self.base_url, volume.identifier)
+        data = {
+            'zone': zone
+        }
+        response = post(url, json=data, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+
         return response.json()
 
     def detach_disk(self, volume):
@@ -1557,3 +1573,22 @@ class DetachDisk(VolumeProviderBase):
     
     def undo(self):
         pass
+
+class MoveDisk(VolumeProviderBase):
+    def __unicode__(self):
+        return "Moving disk..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.move_disk(self.volume_migrate, self.host_vm_migrate.zone)
+    
+    def undo(self):
+        pass
+
+    
