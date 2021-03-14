@@ -769,14 +769,38 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def __unicode__(self):
         return "Destroy VM from previous zone..."
+    
+    @property
+    def host_migrating(self):
+        return self.host_migrate.host
+    
+    @property
+    def team(self):
+        if self.has_database:
+            return self.database.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
+    
+    @property
+    def vm_name(self):
+        return self.host_migrating.hostname.split('.')[0]
 
     def do(self):
         self.provider.destroy_host(self.host)
 
     def undo(self):
-        pass
+        self.provider.create_host(
+            self.infra, self.host_migrating.offering, self.vm_name, 
+            self.team, self.host_migrate.zone_origin,
+            static_ip=self.instance.static_ip,
+            host_obj=self.host
+        )
+        self.host.save()
 
-class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
+class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):   
 
     def __unicode__(self):
         return "Recreating virtual machine in new zone..."
@@ -791,4 +815,4 @@ class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
         self.host.save()
 
     def undo(self):
-        pass
+        self.provider.destroy_host(self.host_migrate.host)

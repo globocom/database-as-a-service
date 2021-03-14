@@ -1568,7 +1568,10 @@ class DetachDisk(VolumeProviderBase):
         self.detach_disk(self.volume)
     
     def undo(self):
-        pass
+        if hasattr(self, 'host_migrate'):
+            sleep(30) # waiting server start
+            script = self.get_mount_command(self.volume)
+            self.run_script(script)
 
 class MoveDisk(VolumeProviderBase):
     def __unicode__(self):
