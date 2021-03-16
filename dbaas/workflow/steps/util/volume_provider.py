@@ -1568,6 +1568,9 @@ class DetachDisk(VolumeProviderBase):
         self.detach_disk(self.volume)
     
     def undo(self):
+        if not self.is_valid:
+            return
+
         if hasattr(self, 'host_migrate'):
             sleep(30) # waiting server start
             script = self.get_mount_command(self.volume)
@@ -1588,6 +1591,16 @@ class MoveDisk(VolumeProviderBase):
         self.move_disk(self.volume_migrate, self.host_migrate.zone)
     
     def undo(self):
+        if not self.is_valid:
+            return
+
         self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
 
+class MountDataVolumeWithUndo(MountDataVolume):
     
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        self.detach_disk(self.volume)
+        
