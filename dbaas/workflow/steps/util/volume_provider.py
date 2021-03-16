@@ -679,7 +679,7 @@ class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
 
 class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
     def __unicode__(self):
-        return "Mounting new volume for scp...".format(self.directory)
+        return "Mounting new volume for scp {}...".format(self.directory)
 
     @property
     def host(self):
@@ -724,7 +724,7 @@ class MountDataVolumeOnSlaveFirstNode(VolumeProviderBase):
 
 class UmountDataVolumeDatabaseMigrate(MountDataVolumeDatabaseMigrate):
     def __unicode__(self):
-        return "Umounting new volume for scp...".format(self.directory)
+        return "Umounting new volume for scp {}...".format(self.directory)
 
     def do(self):
         return super(UmountDataVolumeDatabaseMigrate, self).undo()
@@ -1572,7 +1572,6 @@ class DetachDisk(VolumeProviderBase):
             return
 
         if hasattr(self, 'host_migrate'):
-            sleep(30) # waiting server start
             script = self.get_mount_command(self.volume)
             self.run_script(script)
 

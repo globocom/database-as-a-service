@@ -386,7 +386,6 @@ class CheckIsUp(DatabaseStep):
 
         if not self.is_up():
             raise EnvironmentError('Database is down, should be up')
-        
 
 
 class CheckIfSwitchMaster(DatabaseStep):

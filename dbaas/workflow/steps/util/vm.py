@@ -51,6 +51,19 @@ class WaitingBeReady(VmStep):
         if not host_ready:
             raise EnvironmentError('VM is not ready')
 
+class WaitingBeReadyRollback(VmStep):
+
+    def __unicode__(self):
+        return "Waiting for VM be ready if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        host_ready = check_ssh(self.host, wait=5, interval=10)
+        if not host_ready:
+            raise EnvironmentError('VM is not ready')
+
 
 class UpdateOSDescription(VmStep):
 
