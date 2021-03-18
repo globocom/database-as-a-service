@@ -294,7 +294,12 @@ class ConfigureLog(Configure):
 
     @property
     def extra_variables(self):
-        return {'LOG_ENDPOINT': self.get_log_endpoint()}
+        return {
+            'LOG_ENDPOINT': self.get_log_endpoint(),
+            'RSYSLOG_RESTART_COMMAND': self.host.commands.rsyslog(
+                action='restart'
+            )
+        }
 
     def do(self):
         if self.is_valid:
@@ -335,7 +340,21 @@ class ConfigureSentinelFile(ConfigureForNewInfraSentinel):
     def extra_variables(self):
         return {
             'ONLY_SENTINEL': True,
-            'CONFIG_FILE_PATH': '/tmp/sentinel_configuration_file'
+            'CONFIG_FILE_PATH': '/tmp/sentinel_configuration_file',
+            'DATABASE_START_COMMAND': self.host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': self.host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': self.host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': self.host.commands.secondary_service(
+                action='start'
+            )
         }
 
 
