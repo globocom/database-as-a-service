@@ -500,6 +500,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIsUp',
+
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -1312,6 +1314,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
