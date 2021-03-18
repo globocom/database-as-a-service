@@ -412,9 +412,6 @@ class MySQL(BaseDriver):
 
         return False
 
-    def initialization_script_path(self, host=None):
-        return "/etc/init.d/mysql {option}"
-
     def deprecated_files(self,):
         return ['*.pid', "*.err", "auto.cnf"]
 
