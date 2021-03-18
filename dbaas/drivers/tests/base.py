@@ -78,7 +78,9 @@ class BaseDriverTest(object):
             instance_type=self.instance_type, hostname=hostname
         )
         self.instance = self.instances[0]
-        self.instance_endpoint = "{}:{}".format(self.instance.address, self.instance.port)
+        self.instance_endpoint = "{}:{}".format(
+            self.instance.address, self.instance.port
+        )
         self.driver = self.driver_class(databaseinfra=self.databaseinfra)
         self._driver_client = None
 
