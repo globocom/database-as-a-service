@@ -17,10 +17,3 @@ def test_bash_script_error():
                 exit $err
             fi
       }"""
-
-
-def monit_script(option='start'):
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Monit"
-        /etc/init.d/monit {}
-        """.format(option)

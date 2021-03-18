@@ -7,7 +7,7 @@ from logical.models import Database
 from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
-from workflow.steps.util import test_bash_script_error, monit_script
+from workflow.steps.util import test_bash_script_error
 from workflow.steps.util.ssl import InfraSSLBaseName
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
@@ -48,9 +48,9 @@ class DatabaseStep(BaseInstanceStep):
 
     def _execute_init_script(self, command):
         base_host = self.instance.hostname if self.host_migrate else self.host
-        script = self.driver.initialization_script_path(base_host)
-        script = script.format(option=command)
-        script += ' > /dev/null'
+        script = base_host.commands.init_database_script(
+            action=command
+        )
 
         return self.run_script(script)
 
@@ -228,7 +228,9 @@ class StartRsyslog(DatabaseStep):
         return "Starting rsyslog..."
 
     def _exec_command(self, action):
-        script = "/etc/init.d/rsyslog {} > /dev/null".format(action)
+        script = self.host.commands.rsyslog(
+            action=action
+        )
         return_code, output = self.run_script(script)
         if return_code != 0:
             raise EnvironmentError(
@@ -666,8 +668,9 @@ class StartMonit(DatabaseStep):
     def do(self):
         LOG.info("Start monit on host {}".format(self.host))
         script = test_bash_script_error()
-        action = 'start'
-        script += monit_script(action)
+        script += self.host.commands.monit_script(
+            action='start'
+        )
 
         LOG.info(script)
         output = {}

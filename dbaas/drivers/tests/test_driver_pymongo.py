@@ -15,14 +15,20 @@ from physical.models import Instance
 
 
 @patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
-@patch('physical.models.DiskOffering.size_bytes', new=MagicMock(return_value=90))
-class MongoSingleUpdateSizesTestCase(BaseSingleInstanceUpdateSizesTest, BaseMongoDriverTestCase):
+@patch('physical.models.DiskOffering.size_bytes',
+       new=MagicMock(return_value=90))
+class MongoSingleUpdateSizesTestCase(
+        BaseSingleInstanceUpdateSizesTest,
+        BaseMongoDriverTestCase):
     pass
 
 
 @patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
-@patch('physical.models.DiskOffering.size_bytes', new=MagicMock(return_value=90))
-class MongoReplicaSetUpdateSizesTestCase(BaseMongoDriverTestCase, BaseHAInstanceUpdateSizesTest):
+@patch('physical.models.DiskOffering.size_bytes',
+       new=MagicMock(return_value=90))
+class MongoReplicaSetUpdateSizesTestCase(
+        BaseMongoDriverTestCase,
+        BaseHAInstanceUpdateSizesTest):
 
     driver_class = MongoDBReplicaSet
     secondary_instance_quantity = 2
@@ -45,7 +51,10 @@ class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase):
         self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
         expected_total_size_in_gb = 105 * self.GB_FACTOR
-        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), expected_total_size_in_gb)
+        self.assertEqual(
+            self.driver.get_master_instance_total_size_in_gb(),
+            expected_total_size_in_gb
+        )
         self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
 
     def test_masters_replicaset_instance(self):
@@ -67,7 +76,10 @@ class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase):
         self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
         expected_total_size_in_gb = 35 * self.GB_FACTOR
-        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), expected_total_size_in_gb)
+        self.assertEqual(
+            self.driver.get_master_instance_total_size_in_gb(),
+            expected_total_size_in_gb
+        )
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 
@@ -79,7 +91,9 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     def test_mongodb_app_installed(self):
         self.assertTrue(DriverFactory.is_driver_available("mongodb_single"))
-        self.assertTrue(DriverFactory.is_driver_available("mongodb_replica_set"))
+        self.assertTrue(
+            DriverFactory.is_driver_available("mongodb_replica_set")
+        )
 
     # test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
@@ -88,7 +102,10 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mongodb://<user>:<password>@{}".format(self.instance_endpoint), self.driver.get_connection())
+            "mongodb://<user>:<password>@{}".format(
+                self.instance_endpoint),
+            self.driver.get_connection()
+        )
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -107,8 +124,8 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
         get_replica_name.return_value = 'my_repl'
 
         expected_conn = ("mongodb://<user>:<password>"
-                          "@{},127.0.0.2:27018"
-                          "?replicaSet=my_repl").format(self.instance_endpoint)
+                         "@{},127.0.0.2:27018"
+                         "?replicaSet=my_repl").format(self.instance_endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection())
 
@@ -119,7 +136,10 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
         expected_conn = ("mongodb://<user>:<password>"
                          "@{}/my_db_url_name").format(self.instance_endpoint)
 
-        self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
+        self.assertEqual(
+            expected_conn,
+            self.driver.get_connection(database=self.database)
+        )
 
     @patch.object(MongoDB, 'get_replica_name')
     def test_connection_with_database_and_replica(self, get_replica_name):
@@ -133,7 +153,10 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
                          "@{},127.0.0.2:27018/my_db_url_name"
                          "?replicaSet=my_repl").format(self.instance_endpoint)
 
-        self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
+        self.assertEqual(
+            expected_conn,
+            self.driver.get_connection(database=self.database)
+        )
 
 
 class ManageDatabaseMongoDBTestCase(BaseMongoDriverTestCase):
@@ -194,13 +217,23 @@ class ManageCredentialsMongoDBTestCase(BaseMongoDriverTestCase):
     def __find_user__(self, credential):
         v = self.driver_client.server_info()['version']
         if v < '2.6':
-            return getattr(self.driver_client, credential.database.name).system.users.find_one({"user": credential.user})
+            return getattr(
+                self.driver_client,
+                credential.database.name
+            ).system.users.find_one({"user": credential.user})
         else:
-            return getattr(self.driver_client, "admin").system.users.find_one({"user": credential.user, "db": credential.database.name})
+            return getattr(
+                self.driver_client,
+                "admin"
+            ).system.users.find_one(
+                {"user": credential.user, "db": credential.database.name}
+            )
 
     def test_mongodb_create_credential(self):
-        self.assertIsNone(self.__find_user__(
-            self.credential), "User %s already exists. Invalid test" % self.credential)
+        self.assertIsNone(
+            self.__find_user__(self.credential),
+            "User %s already exists. Invalid test" % self.credential
+        )
         self.driver.create_user(self.credential)
         user = self.__find_user__(self.credential)
         self.assertIsNotNone(user)
@@ -209,7 +242,9 @@ class ManageCredentialsMongoDBTestCase(BaseMongoDriverTestCase):
 
     def test_mongodb_remove_credential(self):
         self.driver.create_user(self.credential)
-        self.assertIsNotNone(self.__find_user__(
-            self.credential), "Error creating user %s. Invalid test" % self.credential)
+        self.assertIsNotNone(
+            self.__find_user__(self.credential),
+            "Error creating user %s. Invalid test" % self.credential
+        )
         self.driver.remove_user(self.credential)
         self.assertIsNone(self.__find_user__(self.credential))

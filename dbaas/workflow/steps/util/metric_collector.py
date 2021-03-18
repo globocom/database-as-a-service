@@ -4,7 +4,6 @@ from util import get_credentials_for
 from util import build_context_script
 from util import exec_remote_command_host
 import logging
-from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
@@ -104,7 +103,9 @@ class RestartTelegraf(MetricsCollector):
     def do(self):
         if not self.is_valid:
             return
-        script = "/etc/init.d/telegraf restart"
+        script = self.host.commands.telegraf(
+            action='restart'
+        )
         self.exec_script(script)
 
 
@@ -115,7 +116,9 @@ class StopTelegraf(MetricsCollector):
     def do(self):
         if not self.is_valid:
             return
-        script = "/etc/init.d/telegraf stop"
+        script = self.host.commands.telegraf(
+            action='stop'
+        )
         self.exec_script(script)
 
 

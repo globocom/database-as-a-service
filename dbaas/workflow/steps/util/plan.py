@@ -40,7 +40,8 @@ class PlanStep(BaseInstanceStep):
             ),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
             # TODO: Remove that when VP is ready
-            'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
+            'DISK_SIZE_IN_GB': (self.disk_offering.size_gb()
+                                if self.disk_offering else 8),
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
@@ -171,7 +172,8 @@ class PlanStepRestore(PlanStep):
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
         base = super(PlanStepRestore, self).get_variables_specifics()
-        if self.restore.is_master(self.instance) or self.restore.is_slave(self.instance):
+        if (self.restore.is_master(self.instance) or
+                self.restore.is_slave(self.instance)):
             base.update(driver.master_parameters(
                 self.instance, self.restore.master_for(self.instance)
             ))
@@ -219,7 +221,10 @@ class Configure(PlanStep):
 
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
-        return driver.configuration_parameters(self.instance, **self.extra_variables)
+        return driver.configuration_parameters(
+            self.instance,
+            **self.extra_variables
+        )
 
     def do(self):
         if self.is_valid:
@@ -294,7 +299,12 @@ class ConfigureLog(Configure):
 
     @property
     def extra_variables(self):
-        return {'LOG_ENDPOINT': self.get_log_endpoint()}
+        return {
+            'LOG_ENDPOINT': self.get_log_endpoint(),
+            'RSYSLOG_RESTART_COMMAND': self.host.commands.rsyslog(
+                action='restart'
+            )
+        }
 
     def do(self):
         if self.is_valid:
@@ -335,7 +345,23 @@ class ConfigureSentinelFile(ConfigureForNewInfraSentinel):
     def extra_variables(self):
         return {
             'ONLY_SENTINEL': True,
-            'CONFIG_FILE_PATH': '/tmp/sentinel_configuration_file'
+            'CONFIG_FILE_PATH': '/tmp/sentinel_configuration_file',
+            'DATABASE_START_COMMAND': self.host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': self.host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': self.host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': (
+                self.host.commands.secondary_service(
+                    action='start'
+                )
+            )
         }
 
 
@@ -389,7 +415,8 @@ class ConfigureRestore(PlanStepRestore, Configure):
 
         driver = self.infra.get_driver()
 
-        if self.restore.is_master(self.instance) or self.restore.is_slave(self.instance):
+        if (self.restore.is_master(self.instance) or
+                self.restore.is_slave(self.instance)):
             base.update(driver.master_parameters(
                 self.instance, self.restore.master_for(self.instance)
             ))
@@ -404,7 +431,9 @@ class ConfigureOnlyDBConfigFile(Configure):
         return base
 
 
-class ConfigureForUpgradeOnlyDBConfigFile(ConfigureOnlyDBConfigFile, PlanStepUpgrade):
+class ConfigureForUpgradeOnlyDBConfigFile(
+        ConfigureOnlyDBConfigFile,
+        PlanStepUpgrade):
     pass
 
 
@@ -417,6 +446,7 @@ class ResizeConfigure(ConfigureOnlyDBConfigFile):
     def undo(self):
         self._pack = self.resize.source_offer
         super(ResizeConfigure, self).undo()
+
 
 class ConfigureForChangePersistence(ConfigureOnlyDBConfigFile):
 

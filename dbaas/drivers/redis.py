@@ -268,20 +268,6 @@ class Redis(BaseDriver):
     def check_instance_is_master(self, instance, default_timeout=False):
         return True
 
-    def initialization_script_path(self, host=None):
-        if not host:
-            return '/etc/init.d/redis {option}'
-
-        script = ''
-        for instance in host.instances.all():
-            if instance.is_redis:
-                script += "/etc/init.d/redis {option}; "
-
-            if instance.is_sentinel:
-                script += "/etc/init.d/sentinel {option}; "
-
-        return script
-
     def deprecated_files(self,):
         return ["*.pid", ]
 
@@ -356,6 +342,20 @@ class Redis(BaseDriver):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'DATABASE_START_COMMAND': host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': host.commands.secondary_service(
+                action='start'
+            )
         }
 
     def configuration_parameters_migration(self, instance):
@@ -581,6 +581,20 @@ class RedisSentinel(Redis):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'DATABASE_START_COMMAND': host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': host.commands.secondary_service(
+                action='start'
+            )
         }
 
     def master_parameters(self, instance, master):

@@ -41,21 +41,6 @@ def build_server_id_conf_script():
     """
 
 
-def build_start_database_script():
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
-        /etc/init.d/mysql start > /dev/null
-        die_if_error "Error starting database"
-    """
-
-
-def build_stop_database_script():
-    return """
-        /etc/init.d/mysql stop
-        rm -rf /data/*
-    """
-
-
 def build_mount_snapshot_volume_script():
     return """
         mkdir /data2
@@ -136,13 +121,6 @@ def change_master_to(instance, master_host, bin_log_file, bin_log_position):
     client.query(sql_command)
 
     client.query('start slave')
-
-
-def build_mk_heartbeat_daemon_script(option='start'):
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mk-heartbeat-daemon"
-        /etc/init.d/mk-heartbeat-daemon {} > /dev/null
-        """.format(option)
 
 
 def get_replication_information_from_file(host,):

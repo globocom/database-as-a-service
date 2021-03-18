@@ -20,6 +20,7 @@ from slugify import slugify
 from drivers import DatabaseInfraStatus
 from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
+from physical.commands import HostCommands
 from system.models import Configuration
 from util.models import BaseModel
 
@@ -1218,6 +1219,26 @@ class Host(BaseModel):
     @property
     def is_database(self):
         return self.database_instance() is not None
+
+    @property
+    def infra(self):
+        return self.instances.first().databaseinfra
+
+    @property
+    def driver(self):
+        return self.infra.get_driver()
+
+    @property
+    def commands(self):
+        return HostCommands(self)
+
+    @property
+    def is_ol6(self):
+        return ' 6.' in self.os_description
+
+    @property
+    def is_ol7(self):
+        return ' 7.' in self.os_description
 
 
 class Volume(BaseModel):

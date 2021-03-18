@@ -500,6 +500,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIsUp',
+
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -758,7 +760,8 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Reinstall VM': (
-                'workflow.steps.util.database.checkAndFixMySQLReplicationIfRunning',
+                ('workflow.steps.util.database.'
+                 'checkAndFixMySQLReplicationIfRunning'),
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
@@ -852,7 +855,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDisk',
-                'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
+                ('workflow.steps.util.host_provider.'
+                 'InstallMigrateEngineTemplate'),
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
@@ -951,7 +955,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
-                'workflow.steps.util.database.checkAndFixMySQLReplicationRollback',
+                ('workflow.steps.util.database.'
+                 'checkAndFixMySQLReplicationRollback'),
             ),
         }] + [{
             'Configure Replication User': (
@@ -999,7 +1004,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
-                'workflow.steps.util.database.checkAndFixMySQLReplicationRollback',
+                ('workflow.steps.util.database.'
+                 'checkAndFixMySQLReplicationRollback'),
             ),
         }] + [{
             'Enable SSL': (
@@ -1312,6 +1318,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',

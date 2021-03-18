@@ -73,7 +73,7 @@ class MongoDB(BaseDriver):
             with self.pymongo() as client:
                 repl_status = client.admin.command('replSetGetStatus')
                 repl_name = repl_status.get('set', None)
-        except (TypeError, ConnectionError) as err:
+        except (TypeError, ConnectionError):
             pass
 
         return repl_name
@@ -501,9 +501,6 @@ class MongoDB(BaseDriver):
             return True
 
         return False
-
-    def initialization_script_path(self, host=None):
-        return "/etc/init.d/mongodb {option}"
 
     def deprecated_files(self,):
         return ['mongod.lock', 'mongod.running']

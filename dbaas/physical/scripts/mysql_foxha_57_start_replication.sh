@@ -37,7 +37,7 @@ EOF_DBAAS
 startheartbeatdaemon()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Starting heartbeat daemon"
-    /etc/init.d/pt-heartbeat start
+    {{ HEARTBEAT_START_COMMAND }}
     #die_if_error "Error starting heartbeat"
 }
 

@@ -3,23 +3,23 @@
 startdatabase()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
-    /etc/init.d/redis start
+    {{ DATABASE_START_COMMAND }}
     die_if_error "Error starting database"
 }
 
 restart_http()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Restarting httpd"
-    /etc/init.d/httpd stop > /dev/null
+    {{ HTTPD_STOP_COMMAND_NO_OUTPUT }}
     die_if_error "Error stoping httpd"
-    /etc/init.d/httpd start > /dev/null
+    {{ HTTPD_START_COMMAND_NO_OUTPUT }}
     die_if_error "Error starting http"
 }
 
 startsentinel()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Starting sentinel"
-    /etc/init.d/sentinel start
+    {{ SECONDARY_SERVICE_START_COMMAND }}
     die_if_error "Error starting sentinel"
 }
 

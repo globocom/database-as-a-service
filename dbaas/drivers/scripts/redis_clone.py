@@ -36,8 +36,14 @@ class RedisDriver(object):
             return_value = client
             yield return_value
         except Exception, e:
-            click.echo('Error connecting to database {} {} {}. {}'.format(self.address,
-                                                                          self.password, self.port, e))
+            click.echo(
+                'Error connecting to database {} {} {}. {}'.format(
+                    self.address,
+                    self.password,
+                    self.port,
+                    e
+                )
+            )
 
 
 def exec_remote_command(server, username, password, command, output={}):
@@ -118,13 +124,16 @@ def dump_src_database(host, redis_port, redis_pass,
         return False
 
 
-def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_pass, remote_path, redis_time_out):
+def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
+                         sys_pass, remote_path, redis_time_out):
 
     click.echo("Restoring target database...")
     exec_remote_command(server=host,
                         username=sys_user,
                         password=sys_pass,
-                        command='/etc/init.d/redis stop')
+                        command=host.commands.database(
+                            action='stop'
+                        ))
 
     try:
         transport = paramiko.Transport((host, 22))
@@ -139,20 +148,26 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
 
-    exec_remote_command(server=host,
-                        username=sys_user,
-                        password=sys_pass,
-                        command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf")
+    exec_remote_command(
+        server=host,
+        username=sys_user,
+        password=sys_pass,
+        command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
+    )
 
-    exec_remote_command(server=host,
-                        username=sys_user,
-                        password=sys_pass,
-                        command='/etc/init.d/redis start')
+    exec_remote_command(
+        server=host,
+        username=sys_user,
+        password=sys_pass,
+        command=host.commands.database(action='start')
+    )
 
-    exec_remote_command(server=host,
-                        username=sys_user,
-                        password=sys_pass,
-                        command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf")
+    exec_remote_command(
+        server=host,
+        username=sys_user,
+        password=sys_pass,
+        command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
+    )
 
     driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
 
@@ -182,7 +197,9 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
         exec_remote_command(server=host,
                             username=sys_user,
                             password=sys_pass,
-                            command='/etc/init.d/redis stop')
+                            command=host.commands.database(
+                                action='stop'
+                            ))
 
     for instance_info in cluster_info:
         sys_user = instance_info['sys_user']
@@ -205,20 +222,28 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
             click.echo('ERROR while transporting dump file: {}'.format(e))
             return False
 
-        exec_remote_command(server=host,
-                            username=sys_user,
-                            password=sys_pass,
-                            command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf")
+        exec_remote_command(
+            server=host,
+            username=sys_user,
+            password=sys_pass,
+            command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
+        )
 
-        exec_remote_command(server=host,
-                            username=sys_user,
-                            password=sys_pass,
-                            command='/etc/init.d/redis start')
+        exec_remote_command(
+            server=host,
+            username=sys_user,
+            password=sys_pass,
+            command=host.commands.database(
+                action='start'
+            )
+        )
 
-        exec_remote_command(server=host,
-                            username=sys_user,
-                            password=sys_pass,
-                            command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf")
+        exec_remote_command(
+            server=host,
+            username=sys_user,
+            password=sys_pass,
+            command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
+        )
 
         driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
 
@@ -248,7 +273,9 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
 @click.argument('dst_sys_user', default="root")
 @click.argument('dst_sys_pass')
 @click.argument('dst_dump_path', type=click.Path(exists=False))
-@click.argument('local_dump_path', default="/tmp/dump.rdb", type=click.Path(exists=False))
+@click.argument('local_dump_path',
+                default="/tmp/dump.rdb",
+                type=click.Path(exists=False))
 @click.option('--cluster_info',)
 @click.option('--verbose', is_flag=True)
 @click.option('--remove_dump', is_flag=True)
@@ -274,12 +301,16 @@ def main(redis_time_out, src_pass, src_host,
     if cluster_info:
         cluster_info = ast.literal_eval(cluster_info)
 
-        if not restore_dst_cluster(local_dump_path, cluster_info, redis_time_out):
+        if not restore_dst_cluster(
+                local_dump_path,
+                cluster_info,
+                redis_time_out):
             click.echo("Restore unsuccessful! :(")
             return 1
     else:
-        if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass,
-                                    dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
+        if not restore_dst_database(local_dump_path, dst_host, dst_port,
+                                    dst_pass, dst_sys_user, dst_sys_pass,
+                                    dst_dump_path, redis_time_out):
             click.echo("Restore unsuccessful! :(")
             return 1
 

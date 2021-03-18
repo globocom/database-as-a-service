@@ -11,21 +11,6 @@ def build_mongodb_instance_connect_string(instance):
         databaseinfra.user, databaseinfra.password)
 
 
-def build_permission_script():
-
-    return """
-        mkdir /data/data
-        die_if_error "Error creating data dir"
-
-        chown mongodb:mongodb /data
-        die_if_error "Error changing datadir permission"
-        chown -R mongodb:mongodb /data/*
-        die_if_error "Error changing datadir permission"
-
-        chmod 600 /data/mongodb.key
-        die_if_error "Error changing mongodb key file permission"
-        """
-
 def build_change_release_alias_script():
     return """
         cd {{TARGET_PATH}}
@@ -37,38 +22,6 @@ def build_change_release_alias_script():
         ln -s {{MONGODB_RELEASE_FOLDER}} mongodb
         die_if_error "Error creating mongodb alias"
     """
-
-
-
-def build_start_database_script(wait_time=0):
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
-        /etc/init.d/mongodb start > /dev/null
-        die_if_error "Error starting database"
-        sleep {}
-    """.format(wait_time)
-
-
-def build_stop_database_script(clean_data=True):
-    script = """
-        /etc/init.d/mongodb stop
-        sleep 5
-    """
-    if clean_data:
-        script += """
-            rm -rf /data/*
-        """
-    return script
-
-
-def build_create_data_dir_script():
-    return """
-        mkdir /data/data
-        die_if_error "Error creating data dir"
-
-        chown -R mongodb:mongodb /data/data
-        die_if_error "Error changing datadir permission"
-        """
 
 
 def build_add_replica_set_member_script(mongodb_version, readonly, arbiter):

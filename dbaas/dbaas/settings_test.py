@@ -9,10 +9,10 @@ NOSE_ARGS = [
     '--no-byte-compile',
     '--debug-log=error_test.log',
     '-l',
-    '-s',
+    '-s',  # comment this line to use pdb
     # '-x',
     '--nologcapture',
-    #'--collect-only'
+    # '--collect-only'
 ]
 
 if CI:

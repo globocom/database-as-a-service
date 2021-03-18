@@ -412,9 +412,6 @@ class MySQL(BaseDriver):
 
         return False
 
-    def initialization_script_path(self, host=None):
-        return "/etc/init.d/mysql {option}"
-
     def deprecated_files(self,):
         return ['*.pid', "*.err", "auto.cnf"]
 
@@ -552,6 +549,9 @@ class MySQLFOXHA(MySQL):
         hosts = set(self.databaseinfra.hosts)
         hosts.discard(instance.hostname)
         base['IPMASTER'] = hosts.pop().address
+        base['HEARTBEAT_START_COMMAND'] = instance.hostname.commands.heartbeat(
+            action='start'
+        )
 
         return base
 
