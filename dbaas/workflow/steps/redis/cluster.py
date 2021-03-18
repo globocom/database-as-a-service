@@ -92,7 +92,9 @@ class BaseClusterStep(PlanStep):
             'rm -f /data/data/redis.aof',
             'rm -f /data/data/dump.rdb',
             'rm -f /data/{}'.format(self.node_config_file),
-            '/etc/init.d/redis start'
+            self.host.commands.database(
+                action='start'
+            )
         ]
         return ' && '.join(commands)
 
