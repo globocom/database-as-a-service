@@ -302,7 +302,10 @@ class BaseDriver(object):
         from util import exec_remote_command_host
 
         for agent in self.get_database_agents():
-            script = '/etc/init.d/{} {}'.format(agent, command)
+            script = host.commands.exec_service_command(
+                service_name=agent,
+                action=command
+            )
             output = {}
             return_code = exec_remote_command_host(host, script, output)
             LOG.info(
