@@ -12,7 +12,7 @@ die_if_error()
 startdatabase()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
-    /etc/init.d/mongodb start > /dev/null
+    /etc/init.d/mongodbxxxxx start > /dev/null
     die_if_error "Error starting database"
     sleep 10
 }

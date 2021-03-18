@@ -12,7 +12,7 @@ die_if_error()
 startdatabase()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
-    /etc/init.d/mysql start
+    /etc/init.d/mysqlxxxxx start
     die_if_error "Error starting database"
 }
 
