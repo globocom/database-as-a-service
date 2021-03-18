@@ -549,6 +549,9 @@ class MySQLFOXHA(MySQL):
         hosts = set(self.databaseinfra.hosts)
         hosts.discard(instance.hostname)
         base['IPMASTER'] = hosts.pop().address
+        base['HEARTBEAT_START_COMMAND'] = instance.hostname.commands.heartbeat(
+            action='start'
+        )
 
         return base
 
