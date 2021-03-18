@@ -12,7 +12,7 @@ NOSE_ARGS = [
     '-s',  # comment this line to use pdb
     # '-x',
     '--nologcapture',
-    #'--collect-only'
+    # '--collect-only'
 ]
 
 if CI:

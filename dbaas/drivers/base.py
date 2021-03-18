@@ -101,10 +101,11 @@ class BaseDriver(object):
             pass
         except Exception as e:
             error = e.message
-            if len(error) >= 2 and error[0] == 2002 and "Can't connect to " in error[1]:
+            if (len(error) >= 2 and
+                    error[0] == 2002 and
+                    "Can't connect to " in error[1]):
                 return
             raise e
-
 
     def try_remove_database(self, database):
         self._pass_if_connection_error(self.remove_database, database)
