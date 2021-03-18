@@ -1113,10 +1113,23 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
-            'Remove previous VM': (
+            'Stop pevious database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+                'workflow.steps.util.plan.InitializationMigrateRollback',
+            )}, {
+            'Remove previous VM': (
                 'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
@@ -1154,10 +1167,22 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
-            'Remove previous VM': (
+            'Stop previous database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+            )}, {
+            'Remove previous VM': (
                 'workflow.steps.util.volume_provider.DetachDisk',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
@@ -1190,6 +1215,11 @@ class MongoGenericGCE(object):
     def get_change_binaries_upgrade_patch_steps(self):
         return (
             'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
+    
+    def get_change_binaries_upgrade_patch_steps_rollback(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepRollback',
         )
 
 

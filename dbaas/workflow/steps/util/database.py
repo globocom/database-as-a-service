@@ -388,6 +388,18 @@ class CheckIsUp(DatabaseStep):
             raise EnvironmentError('Database is down, should be up')
 
 
+class CheckIsUpRollback(CheckIsUp):
+
+    def __unicode__(self):
+        return "Checking database is up if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(CheckIsUpRollback, self).do()
+
+
 class CheckIfSwitchMaster(DatabaseStep):
     def __unicode__(self):
         return "Checking if master was switched..."
