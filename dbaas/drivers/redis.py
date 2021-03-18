@@ -342,6 +342,20 @@ class Redis(BaseDriver):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'DATABASE_START_COMMAND': host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': host.commands.secondary_service(
+                action='start'
+            )
         }
 
     def configuration_parameters_migration(self, instance):
@@ -567,6 +581,20 @@ class RedisSentinel(Redis):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'DATABASE_START_COMMAND': host.commands.database(
+                action='start'
+            ),
+            'HTTPD_STOP_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='stop',
+                no_output=True
+            ),
+            'HTTPD_START_COMMAND_NO_OUTPUT': host.commands.httpd(
+                action='start',
+                no_output=True
+            ),
+            'SECONDARY_SERVICE_START_COMMAND': host.commands.secondary_service(
+                action='start'
+            )
         }
 
     def master_parameters(self, instance, master):
