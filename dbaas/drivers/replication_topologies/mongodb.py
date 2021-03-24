@@ -449,7 +449,6 @@ class MongoDBSingle(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
-                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -795,7 +794,6 @@ class MongoDBReplicaset(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
-                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
