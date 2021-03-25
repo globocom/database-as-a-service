@@ -506,7 +506,7 @@ class MongoDB(BaseDriver):
         return "/etc/init.d/mongodb {option}"
 
     def deprecated_files(self,):
-        return ['mongod.lock', 'mongod.running']
+        return ['*.lock', 'mongod.running', '*.backup']
 
     def data_dir(self, ):
         return '/data/data/'

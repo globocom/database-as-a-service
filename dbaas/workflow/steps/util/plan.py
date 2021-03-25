@@ -417,7 +417,6 @@ class ConfigureRestore(PlanStepRestore, Configure):
         base.update(self.kwargs)
         base['CONFIGFILE_ONLY'] = True
         base['CREATE_SENTINEL_CONFIG'] = True
-        base['REMOVE_LOCK_FILES'] = True
 
         driver = self.infra.get_driver()
 
