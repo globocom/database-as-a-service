@@ -148,6 +148,16 @@ EOF_DBAAS
 
 }
 
+removelockfiles()
+{
+    find /data -name "*.lock" -type f -delete
+    find /data -name "*.backup" -type f -delete
+}
+
+{% if  REMOVE_LOCK_FILES %}
+    removelockfiles
+{% endif %}
+
 {% if CONFIGFILE_ONLY %}
     createconfigdbfile
 {% else %}
