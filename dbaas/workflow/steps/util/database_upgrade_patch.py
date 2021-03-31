@@ -62,6 +62,7 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
     def undo(self):
         pass
 
+
 class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
 
     def do(self):
@@ -84,6 +85,15 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         """.format(download_script=download_script, dir_name=dir_name)
 
         self.execute_script(script)
+
+
+class MongoDBCHGBinStepRollback(MongoDBCHGBinStep):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(MongoDBCHGBinStepRollback, self).do()
 
 
 class RedisCHGBinStep(DatabaseUpgradePatchStep):

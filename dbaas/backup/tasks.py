@@ -139,17 +139,18 @@ def make_instance_snapshot_backup(instance, error, group,
     finally:
         unlock_instance(driver, instance, client)
 
-    output = {}
-    command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
-        snapshot.snapshot_name
-    )
-    try:
-        exec_remote_command_host(instance.hostname, command, output)
-        size = int(output['stdout'][0])
-        snapshot.size = size
-    except Exception as e:
-        snapshot.size = 0
-        LOG.error("Error exec remote command {}".format(e))
+    if not snapshot.size:
+        output = {}
+        command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
+            snapshot.snapshot_name
+        )
+        try:
+            exec_remote_command_host(instance.hostname, command, output)
+            size = int(output['stdout'][0])
+            snapshot.size = size
+        except Exception as e:
+            snapshot.size = 0
+            LOG.error("Error exec remote command {}".format(e))
 
     backup_path = database.backup_path
     if backup_path:

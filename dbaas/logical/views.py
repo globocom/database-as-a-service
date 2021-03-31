@@ -286,7 +286,7 @@ def database_credentials(request, context, database):
 
     infra = database.infra
 
-    print request.POST
+    print(request.POST)
 
     context['can_setup_ssl'] = \
         (not infra.ssl_configured) and \
@@ -866,7 +866,7 @@ def database_metrics(request, context, database):
 
     context['grafana_url_zabbix'] = grafana_url_zabbix
 
-    print "grafana_url_zabbix:{}", grafana_url_zabbix
+    print("grafana_url_zabbix:{}", grafana_url_zabbix)
 
     dashboard = credential.get_parameter_by_name(
                 'sofia_dbaas_database_dashboard'
@@ -2179,8 +2179,11 @@ def database_migrate(request, context, database):
         elif 'host_id' in request.POST:
             host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
+            zone_origin = request.POST.get("zone_origin")
+
             TaskRegister.host_migrate(
-                host, zone, environment, request.user, database
+                host, zone, environment, request.user, database, 
+                zone_origin=zone_origin
             )
         elif 'new_environment' in request.POST:
             environment = get_object_or_404(

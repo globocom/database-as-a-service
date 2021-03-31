@@ -130,7 +130,7 @@ dev_docker_migrate:
 	@cd dev && docker-compose run app /code/dbaas/manage.py migrate
 
 dev_docker_mysql_shell:
-	@cd dev && docker-compose exec dev_mysqldb57 bash -c "mysql -u root -p123"
+	@cd dev && docker-compose exec dev_mysqldb57 bash -c "mysql dbaas -u root -p123"
 
 dev_docker_run:
 	@cd dev && docker-compose up

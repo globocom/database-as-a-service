@@ -52,6 +52,18 @@ class WaitingBeReady(VmStep):
             raise EnvironmentError('VM is not ready')
 
 
+class WaitingBeReadyRollback(WaitingBeReady):
+
+    def __unicode__(self):
+        return "Waiting for VM be ready if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(WaitingBeReadyRollback, self).do()
+
+
 class UpdateOSDescription(VmStep):
 
     def __unicode__(self):

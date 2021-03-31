@@ -113,8 +113,15 @@ class PlanStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, plan_script):
-        script = build_context_script(self.script_variables, plan_script)
+    def run_script(self, plan_script, replace_variables={}):
+        variables = self.script_variables
+        if replace_variables:
+            variables.update(replace_variables)
+
+        script = build_context_script(
+            variables,
+            plan_script,
+        )
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
@@ -231,6 +238,18 @@ class Configure(PlanStep):
             self.run_script(self.plan.script.configuration_template)
 
 
+class ConfigureRollback(Configure):
+
+    def __unicode__(self):
+        return "Executing plan configure script if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureRollback, self).do()
+
+
 class ConfigureDatabaseFile(Configure):
 
     @property
@@ -309,6 +328,18 @@ class ConfigureLog(Configure):
     def do(self):
         if self.is_valid:
             self.run_script(self.plan.script.configure_log_template)
+
+
+class ConfigureLogRollback(ConfigureLog):
+
+    def __unicode__(self):
+        return "Configuring Log if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureLogRollback, self).do()
 
 
 class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
@@ -410,7 +441,7 @@ class ConfigureRestore(PlanStepRestore, Configure):
         base = super(ConfigureRestore, self).get_variables_specifics()
 
         base.update(self.kwargs)
-        base['CONFIGFILE_ONLY'] = True,
+        base['CONFIGFILE_ONLY'] = True
         base['CREATE_SENTINEL_CONFIG'] = True
 
         driver = self.infra.get_driver()
@@ -481,3 +512,31 @@ class ConfigureWithoutSSL(Configure):
         base['SSL_MODE_PREFER'] = False
         base['SSL_MODE_REQUIRE'] = False
         return base
+
+
+class InitializationMigrate(Initialization):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate..."
+
+    def do(self):
+        replace = {
+            'MOVE_DATA': True
+        }
+        if self.is_valid:
+            self.run_script(
+                self.plan.script.initialization_template,
+                replace_variables=replace
+            )
+
+
+class InitializationMigrateRollback(InitializationMigrate):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(InitializationMigrateRollback, self).do()

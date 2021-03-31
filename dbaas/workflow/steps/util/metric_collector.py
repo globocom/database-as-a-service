@@ -85,6 +85,17 @@ class ConfigureTelegraf(MetricsCollector):
         return self.exec_script(script)
 
 
+class ConfigureTelegrafRollback(ConfigureTelegraf):
+    def __unicode__(self):
+        return "Configuring Telegraf if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureTelegrafRollback, self).do()
+
+
 class InstallTelegraf(MetricsCollector):
     def __unicode__(self):
         return "Installing Telegraf..."
@@ -107,6 +118,17 @@ class RestartTelegraf(MetricsCollector):
             action='restart'
         )
         self.exec_script(script)
+
+
+class RestartTelegrafRollback(RestartTelegraf):
+    def __unicode__(self):
+        return "Restarting Telegraf if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(RestartTelegrafRollback, self).do()
 
 
 class StopTelegraf(MetricsCollector):

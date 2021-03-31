@@ -138,14 +138,16 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         volume.delete()
 
-    def destroy_old_volume(self, volume):
-        url = "{}remove-old-volume/{}".format(self.base_url, volume.identifier)
-        response = delete(url, headers=self.headers)
+    def move_disk(self, volume, zone):
+        url = "{}move/{}".format(self.base_url, volume.identifier)
+        data = {
+            'zone': zone
+        }
+        response = post(url, json=data, headers=self.headers)
 
         if not response.ok:
             raise IndexError(response.content, response)
 
-        volume.delete()
         return response.json()
 
     def detach_disk(self, volume):
@@ -667,7 +669,7 @@ class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
 
 class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
     def __unicode__(self):
-        return "Mounting new volume for scp...".format(self.directory)
+        return "Mounting new volume for scp {}...".format(self.directory)
 
     @property
     def host(self):
@@ -712,7 +714,7 @@ class MountDataVolumeOnSlaveFirstNode(VolumeProviderBase):
 
 class UmountDataVolumeDatabaseMigrate(MountDataVolumeDatabaseMigrate):
     def __unicode__(self):
-        return "Umounting new volume for scp...".format(self.directory)
+        return "Umounting new volume for scp {}...".format(self.directory)
 
     def do(self):
         return super(UmountDataVolumeDatabaseMigrate, self).undo()
@@ -1396,24 +1398,6 @@ class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
             id=master_instance.id
         ).first().hostname
 
-class RemoveOldVolume(VolumeProviderBase):
-    def __unicode__(self):
-        return "Removing old disk..."
-
-    @property
-    def group(self):
-        return self.restore.new_group
-
-    def _destroy_old_volume(self, volume):
-        if not volume:
-            return
-        return self.destroy_old_volume(volume)
-
-    def do(self):
-        self._destroy_old_volume(self.inactive_volume)
-
-    def undo(self):
-        pass
 
 class TakeSnapshot(VolumeProviderBase):
     def __unicode__(self):
@@ -1541,6 +1525,7 @@ class DestroyOldEnvironment(VolumeProviderBase):
     def undo(self):
         raise NotImplementedError
 
+
 class DetachDisk(VolumeProviderBase):
     def __unicode__(self):
         return "Detaching disk from VM..."
@@ -1554,3 +1539,40 @@ class DetachDisk(VolumeProviderBase):
             return
 
         self.detach_disk(self.volume)
+    
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        if hasattr(self, 'host_migrate'):
+            script = self.get_mount_command(self.volume)
+            self.run_script(script)
+
+class MoveDisk(VolumeProviderBase):
+    def __unicode__(self):
+        return "Moving disk..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.move_disk(self.volume_migrate, self.host_migrate.zone)
+    
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
+
+class MountDataVolumeWithUndo(MountDataVolume):
+    
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        self.detach_disk(self.volume)
+        
