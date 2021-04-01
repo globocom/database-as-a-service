@@ -32,6 +32,9 @@ class MetricsCollector(BaseInstanceStep):
         if self.instance.instance_type == self.instance.REDIS_SENTINEL:
             if len(self.host.instances.all()) > 1:
                 create_telegraf_config = False
+        create_telegraf_init = create_telegraf_config
+        if self.host.is_ol7:
+            create_telegraf_init = False
         create_default_file = self.instance.instance_type in (
             self.instance.MYSQL, self.instance.MONGODB, self.instance.REDIS,
             self.instance.MYSQL_PERCONA)
@@ -50,6 +53,7 @@ class MetricsCollector(BaseInstanceStep):
             'MONGODB': self.instance.instance_type == self.instance.MONGODB,
             'REDIS': self.instance.instance_type == self.instance.REDIS,
             'CREATE_TELEGRAF_CONFIG': create_telegraf_config,
+            'CREATE_TELEGRAF_INIT': create_telegraf_init,
             'CREATE_DEFAULT_FILE': create_default_file,
             'KAFKA_ENDPOINT': self.credential.endpoint,
             'KAFKA_TOPIC': self.kafka_topic,

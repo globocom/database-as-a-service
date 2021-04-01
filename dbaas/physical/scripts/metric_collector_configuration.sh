@@ -458,8 +458,11 @@ EOF_METRIC_DBAAS
 
 
 {% if CREATE_TELEGRAF_CONFIG %}
-  create_telegraf_init
   create_telegraf_config
+{% endif %}
+
+{% if CREATE_TELEGRAF_INIT %}
+  create_telegraf_init
 {% endif %}
 
 {% if CREATE_DEFAULT_FILE %}
