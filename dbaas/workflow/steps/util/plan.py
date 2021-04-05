@@ -117,15 +117,9 @@ class PlanStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, plan_script, replace_variables=None,
-                   build_script=True):
-        if replace_variables is None:
-            replace_variables = {}
-        variables = self.script_variables
-        if replace_variables:
-            variables.update(replace_variables)
+    def run_script(self, plan_script, build_script=True):
         if build_script:
-            script = build_context_script(variables, plan_script)
+            script = build_context_script(self.script_variables, plan_script)
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
@@ -260,16 +254,6 @@ class InitializationMigrate(Initialization):
 
     def __unicode__(self):
         return "Executing plan initial script migrate..."
-
-    # def do(self):
-    #     replace = {
-    #         'MOVE_DATA': True
-    #     }
-    #     if self.is_valid:
-    #         self.run_script(
-    #             self.plan.script.initialization_template,
-    #             replace_variables=replace
-    #         )
 
     def do(self):
         if self.is_valid:
