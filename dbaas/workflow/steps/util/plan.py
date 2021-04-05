@@ -369,7 +369,7 @@ class InitializationForNewInfraSentinel(PlanStepNewInfraSentinel):
 class InitializationMigration(BaseInstanceStepMigration):
 
     def __unicode__(self):
-        return "Executing plan initial script...5"
+        return "Executing plan initial script..."
 
     # def get_variables_specifics(self):
     #     driver = self.infra.get_driver()
