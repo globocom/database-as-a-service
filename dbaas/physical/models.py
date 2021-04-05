@@ -1222,8 +1222,15 @@ class Host(BaseModel):
         return self.database_instance() is not None
 
     @property
+    def past_host(self):
+        return self.host_set.first()
+
+    @property
     def infra(self):
-        return self.instances.first().databaseinfra
+        instance = self.instances.first()
+        if not instance:
+            instance = self.past_host.instances.first()
+        return instance.databaseinfra
 
     @property
     def driver(self):
