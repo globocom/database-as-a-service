@@ -424,6 +424,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
@@ -449,7 +450,6 @@ class MongoDBSingle(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
-                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -763,6 +763,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -795,7 +796,6 @@ class MongoDBReplicaset(BaseMongoDB):
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
-                'workflow.steps.util.volume_provider.RemoveOldVolume',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -1104,3 +1104,145 @@ class MongoDBSingleK8s(MongoDBSingle):
             # )
             )
         }]
+
+
+class MongoGenericGCE(object):
+    def get_replica_migration_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop pevious database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+                'workflow.steps.util.plan.InitializationMigrateRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.plan.InitializationMigrate',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+
+    def get_single_migration_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop previous database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
+    
+    def get_change_binaries_upgrade_patch_steps_rollback(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepRollback',
+        )
+
+
+class MongoDBSingle42GCE(MongoDBSingle42, MongoGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_single_migration_steps()
+
+
+class MongoDBSingleGCE(MongoDBSingle, MongoGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_single_migration_steps()
+
+
+class MongoDBReplicaset42GCE(MongoDBReplicaset42, MongoGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_replica_migration_steps()
+
+
+class MongoDBReplicaset40GCE(MongoDBReplicaset40, MongoGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_replica_migration_steps()
+
+
+class MongoDBReplicasetGCE(MongoDBReplicaset, MongoGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_replica_migration_steps()

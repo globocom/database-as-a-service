@@ -1001,6 +1001,7 @@ class HostMigrate(DatabaseMaintenanceTask):
     environment = models.ForeignKey(
         Environment, null=False, related_name="host_migrate"
     )
+    zone_origin = models.CharField(max_length=50, null=True, default=None)
     zone = models.CharField(max_length=50, null=False)
     database_migrate = models.ForeignKey(
         DatabaseMigrate, null=True, blank=True, related_name="hosts"

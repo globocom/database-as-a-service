@@ -114,13 +114,13 @@ class HostCommandOL6(HostBaseCommands):
 
 class HostCommandOL7(HostBaseCommands):
     PRIMARY_SERVICE_NAME_BY_ENGINE = {
-        'mongodb': 'mongod',
+        'mongodb': 'mongodb',
         'redis': 'redis',
         'mysql': 'mysql',
         'mysql_percona': 'mysql'
     }
     PRIMARY_SERVICE_NAME_BY_ENGINE = {
-        'mongodb': 'mongod',
+        'mongodb': 'mongodb',
         'redis': 'sentinel',
         'mysql': '',
         'mysql_percona': ''

@@ -5,6 +5,7 @@ from dbaas_zabbix import factory_for
 from workflow.steps.util.base import BaseInstanceStep
 import copy
 
+
 class ZabbixStep(BaseInstanceStep):
 
     def __init__(self, instance):

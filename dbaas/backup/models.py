@@ -123,3 +123,4 @@ class Snapshot(BackupInfo):
         self.snapshopt_id = response['identifier']
         self.snapshot_name = response['description']
         self.volume_path = response['volume_path']
+        self.size = response['size']

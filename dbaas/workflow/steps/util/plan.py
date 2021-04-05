@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from util import build_context_script, exec_remote_command_host, \
-    get_credentials_for
+from util import (build_context_script,
+                  exec_remote_command_host,
+                  get_credentials_for)
 from dbaas_credentials.models import CredentialType
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
@@ -26,6 +27,14 @@ class PlanStep(BaseInstanceStep):
             return None
 
     @property
+    def need_move_data(self):
+        return (
+            bool(self.upgrade)
+            or bool(self.reinstall_vm)
+            or bool(self.engine_migration)
+        )
+
+    @property
     def script_variables(self):
         variables = {
             'DATABASENAME': self.database.name,
@@ -33,13 +42,8 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'HOSTADDRESS': self.instance.address,
             'ENGINE': self.plan.engine.engine_type.name,
-            'MOVE_DATA': (
-                bool(self.upgrade) or
-                bool(self.reinstall_vm) or
-                bool(self.engine_migration)
-            ),
+            'MOVE_DATA': self.need_move_data,
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            # TODO: Remove that when VP is ready
             'DISK_SIZE_IN_GB': (self.disk_offering.size_gb()
                                 if self.disk_offering else 8),
             'ENVIRONMENT': self.environment,
@@ -113,8 +117,9 @@ class PlanStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, plan_script):
-        script = build_context_script(self.script_variables, plan_script)
+    def run_script(self, plan_script, build_script=True):
+        if build_script:
+            script = build_context_script(self.script_variables, plan_script)
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
@@ -125,8 +130,6 @@ class PlanStep(BaseInstanceStep):
                     return_code, output
                 )
             )
-
-        return output
 
 
 class PlanStepNewInfra(PlanStep):
@@ -149,13 +152,13 @@ class PlanStepNewInfraSentinel(PlanStepNewInfra):
     def is_valid(self):
         return self.instance.is_sentinel
 
-    def get_variables_specifics(self):
-        driver = self.infra.get_driver()
-        base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
-        base.update(driver.master_parameters(
-            self.instance, self.infra.instances.first()
-        ))
-        return base
+    # def get_variables_specifics(self):
+    #     driver = self.infra.get_driver()
+    #     base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
+    #     base.update(driver.master_parameters(
+    #         self.instance, self.infra.instances.first()
+    #     ))
+    #     return base
 
 
 class PlanStepRestore(PlanStep):
@@ -201,13 +204,199 @@ class Initialization(PlanStep):
     def __unicode__(self):
         return "Executing plan initial script..."
 
-    def get_variables_specifics(self):
-        driver = self.infra.get_driver()
-        return driver.initialization_parameters(self.instance)
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
+
+
+# class InitializationForUpgrade(Initialization, PlanStepUpgrade):
+#     pass
+
+
+class InitializationForUpgrade(PlanStepUpgrade):
+    def __unicode__(self):
+        return "Executing plan initial script..."
 
     def do(self):
         if self.is_valid:
-            self.run_script(self.plan.script.initialization_template)
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
+
+
+class InitializationMigrate(Initialization):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate..."
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=True
+                ),
+                build_script=False
+            )
+
+
+class InitializationMigrateRollback(InitializationMigrate):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(InitializationMigrateRollback, self).do()
+
+
+# class InitializationForMigrateEngine(Initialization, PlanStepMigrateEngine):
+#     pass
+
+class InitializationForMigrateEngine(PlanStepMigrateEngine):
+    def __unicode__(self):
+        return "Executing plan initial script..."
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
+
+
+# class InitializationForNewInfra(Initialization, PlanStepNewInfra):
+#     pass
+
+class InitializationForNewInfra(PlanStepNewInfra):
+    def __unicode__(self):
+        return "Executing plan initial script..."
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
+
+# class InitializationForNewInfraSentinel(
+#     PlanStepNewInfraSentinel, Initialization
+# ):
+#     pass
+
+
+class InitializationForNewInfraSentinel(PlanStepNewInfraSentinel):
+    def __unicode__(self):
+        return "Executing plan initial script..."
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=True,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
+
+
+class InitializationMigration(BaseInstanceStepMigration):
+
+    def __unicode__(self):
+        return "Executing plan initial script..."
+
+    # def get_variables_specifics(self):
+    #     driver = self.infra.get_driver()
+    #     return driver.initialization_parameters(self.instance.future_instance)
+
+    @property
+    def offering(self):
+        offering_base = self.infra.cs_dbinfra_offering.get().offering
+        return offering_base.equivalent_offering
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance.future_instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=self.need_move_data
+                ),
+                build_script=False
+            )
 
 
 class Configure(PlanStep):
@@ -231,112 +420,14 @@ class Configure(PlanStep):
             self.run_script(self.plan.script.configuration_template)
 
 
-class ConfigureDatabaseFile(Configure):
-
-    @property
-    def extra_variables(self):
-        return {
-            'CONFIGFILE_ONLY': True,
-            'CONFIG_FILE_PATH': '/tmp/database_configuration_file'
-        }
-
-
-class StartReplication(PlanStep):
-
-    def __unicode__(self):
-        return "Executing replication start script..."
-
+class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
-        return driver.start_replication_parameters(self.instance)
-
-    def do(self):
-        if self.is_valid:
-            self.run_script(self.plan.script.start_replication_template)
-
-
-class StartReplicationFirstNode(StartReplication):
-
-    @property
-    def is_valid(self):
-        base = super(StartReplication, self).is_valid
-        if not base:
-            return base
-
-        return self.instance == self.infra.instances.first()
-
-
-class InitializationForUpgrade(Initialization, PlanStepUpgrade):
-    pass
-
-
-class InitializationForMigrateEngine(Initialization, PlanStepMigrateEngine):
-    pass
-
-
-class ConfigureForUpgrade(Configure, PlanStepUpgrade):
-    @property
-    def extra_variables(self):
-        return {'need_master': True}
-
-
-class ConfigureForMigrateEngine(Configure, PlanStepMigrateEngine):
-    pass
-
-
-class InitializationForNewInfra(Initialization, PlanStepNewInfra):
-    pass
-
-
-class ConfigureForNewInfra(Configure, PlanStepNewInfra):
-    pass
-
-
-class ConfigureLog(Configure):
-
-    def __unicode__(self):
-        return "Configuring Log..."
-
-    @property
-    def extra_variables(self):
-        return {
-            'LOG_ENDPOINT': self.get_log_endpoint(),
-            'RSYSLOG_RESTART_COMMAND': self.host.commands.rsyslog(
-                action='restart'
-            )
-        }
-
-    def do(self):
-        if self.is_valid:
-            self.run_script(self.plan.script.configure_log_template)
-
-
-class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
-    pass
-
-
-class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
-    pass
-
-
-class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
-    pass
-
-
-class StartReplicationFirstNodeNewInfra(
-    StartReplicationFirstNode, PlanStepNewInfra
-):
-    pass
-
-
-class InitializationForNewInfraSentinel(
-    PlanStepNewInfraSentinel, Initialization
-):
-    pass
-
-
-class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
-    pass
+        base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
+        base.update(driver.master_parameters(
+            self.instance, self.infra.instances.first()
+        ))
+        return base
 
 
 class ConfigureSentinelFile(ConfigureForNewInfraSentinel):
@@ -365,27 +456,6 @@ class ConfigureSentinelFile(ConfigureForNewInfraSentinel):
         }
 
 
-class ConfigureForResizeLog(Configure):
-
-    def get_variables_specifics(self):
-        driver = self.infra.get_driver()
-        base = driver.configuration_parameters_for_log_resize(self.instance)
-        base.update({'CONFIGFILE_ONLY': True})
-        return base
-
-
-class InitializationMigration(Initialization, BaseInstanceStepMigration):
-
-    def get_variables_specifics(self):
-        driver = self.infra.get_driver()
-        return driver.initialization_parameters(self.instance.future_instance)
-
-    @property
-    def offering(self):
-        offering_base = self.infra.cs_dbinfra_offering.get().offering
-        return offering_base.equivalent_offering
-
-
 class ConfigureMigration(Configure, BaseInstanceStepMigration):
 
     def get_variables_specifics(self):
@@ -410,7 +480,7 @@ class ConfigureRestore(PlanStepRestore, Configure):
         base = super(ConfigureRestore, self).get_variables_specifics()
 
         base.update(self.kwargs)
-        base['CONFIGFILE_ONLY'] = True,
+        base['CONFIGFILE_ONLY'] = True
         base['CREATE_SENTINEL_CONFIG'] = True
 
         driver = self.infra.get_driver()
@@ -481,3 +551,122 @@ class ConfigureWithoutSSL(Configure):
         base['SSL_MODE_PREFER'] = False
         base['SSL_MODE_REQUIRE'] = False
         return base
+
+
+class ConfigureLog(Configure):
+
+    def __unicode__(self):
+        return "Configuring Log..."
+
+    @property
+    def extra_variables(self):
+        return {
+            'LOG_ENDPOINT': self.get_log_endpoint(),
+            'RSYSLOG_RESTART_COMMAND': self.host.commands.rsyslog(
+                action='restart'
+            )
+        }
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.configure_log_template)
+
+
+class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
+    pass
+
+
+class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
+    pass
+
+
+class ConfigureRollback(Configure):
+
+    def __unicode__(self):
+        return "Executing plan configure script if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureRollback, self).do()
+
+
+class ConfigureLogRollback(ConfigureLog):
+
+    def __unicode__(self):
+        return "Configuring Log if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureLogRollback, self).do()
+
+
+class StartReplication(PlanStep):
+
+    def __unicode__(self):
+        return "Executing replication start script..."
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.start_replication_parameters(self.instance)
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.start_replication_template)
+
+
+class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
+    pass
+
+
+class StartReplicationFirstNode(StartReplication):
+
+    @property
+    def is_valid(self):
+        base = super(StartReplication, self).is_valid
+        if not base:
+            return base
+
+        return self.instance == self.infra.instances.first()
+
+
+class StartReplicationFirstNodeNewInfra(
+    StartReplicationFirstNode, PlanStepNewInfra
+):
+    pass
+
+
+class ConfigureForNewInfra(Configure, PlanStepNewInfra):
+    pass
+
+
+class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    @property
+    def extra_variables(self):
+        return {'need_master': True}
+
+
+class ConfigureForMigrateEngine(Configure, PlanStepMigrateEngine):
+    pass
+
+
+class ConfigureForResizeLog(Configure):
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        base = driver.configuration_parameters_for_log_resize(self.instance)
+        base.update({'CONFIGFILE_ONLY': True})
+        return base
+
+
+class ConfigureDatabaseFile(Configure):
+
+    @property
+    def extra_variables(self):
+        return {
+            'CONFIGFILE_ONLY': True,
+            'CONFIG_FILE_PATH': '/tmp/database_configuration_file'
+        }
