@@ -117,9 +117,9 @@ class PlanStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, plan_script, build_script=True):
+    def run_script(self, script, build_script=True):
         if build_script:
-            script = build_context_script(self.script_variables, plan_script)
+            script = build_context_script(self.script_variables, script)
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
