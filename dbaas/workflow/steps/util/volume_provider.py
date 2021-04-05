@@ -277,6 +277,13 @@ class VolumeProviderBase(BaseInstanceStep):
             VolumeProviderRemoveHostAllowCommand
         )
 
+    def get_resize2fs_command(self, volume):
+        url = "{}commands/{}/resize2fs".format(self.base_url, volume.identifier)
+        response = post(url, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()['command']
+
     def remove_access(self, volume, host):
         url = "{}access/{}/{}".format(
             self.base_url,
@@ -1539,7 +1546,7 @@ class DetachDisk(VolumeProviderBase):
             return
 
         self.detach_disk(self.volume)
-    
+
     def undo(self):
         if not self.is_valid:
             return
@@ -1547,6 +1554,7 @@ class DetachDisk(VolumeProviderBase):
         if hasattr(self, 'host_migrate'):
             script = self.get_mount_command(self.volume)
             self.run_script(script)
+
 
 class MoveDisk(VolumeProviderBase):
     def __unicode__(self):
@@ -1561,18 +1569,34 @@ class MoveDisk(VolumeProviderBase):
             return
 
         self.move_disk(self.volume_migrate, self.host_migrate.zone)
-    
+
     def undo(self):
         if not self.is_valid:
             return
 
         self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
 
+
 class MountDataVolumeWithUndo(MountDataVolume):
-    
+
     def undo(self):
         if not self.is_valid:
             return
 
         self.detach_disk(self.volume)
-        
+
+
+class Resize2fs(VolumeProviderBase):
+    def __unicode__(self):
+        return "Resizing data volume to file system..."
+
+    def do(self):
+        if not self.instance.is_database:
+            return
+
+        script = self.get_resize2fs_command(self.volume)
+        if script:
+            self.run_script(script)
+
+    def undo(self):
+        pass

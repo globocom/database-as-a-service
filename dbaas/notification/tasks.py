@@ -854,7 +854,7 @@ def handle_zabbix_alarms(database):
 
 @app.task(bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
-    from workflow.steps.util.volume_provider import ResizeVolume
+    from workflow.steps.util.volume_provider import ResizeVolume, Resize2fs
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
@@ -889,6 +889,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                         'NFS {}'.format(instance, disk_offering)
             )
             ResizeVolume(instance).do()
+            Resize2fs(instance).do()
             resized.append(instance)
 
         task_history.update_details(
@@ -2329,7 +2330,7 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
         return maintenace_tasks.node_zone_migrate.delay(
-            host=host, zone=zone, new_environment=new_environment, 
+            host=host, zone=zone, new_environment=new_environment,
             task=task, since_step=since_step,
             step_manager=step_manager, zone_origin=zone_origin
         )
