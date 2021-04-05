@@ -117,9 +117,15 @@ class PlanStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, script, build_script=True):
+    def run_script(self, plan_script, replace_variables=None,
+                   build_script=True):
+        if replace_variables is None:
+            replace_variables = {}
+        variables = self.script_variables
+        if replace_variables:
+            variables.update(replace_variables)
         if build_script:
-            script = build_context_script(self.script_variables, script)
+            script = build_context_script(variables, plan_script)
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
@@ -248,6 +254,52 @@ class InitializationForUpgrade(PlanStepUpgrade):
                 ),
                 build_script=False
             )
+
+
+class InitializationMigrate(Initialization):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate..."
+
+    # def do(self):
+    #     replace = {
+    #         'MOVE_DATA': True
+    #     }
+    #     if self.is_valid:
+    #         self.run_script(
+    #             self.plan.script.initialization_template,
+    #             replace_variables=replace
+    #         )
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(
+                self.instance.scripts.init_database(
+                    environment=self.environment,
+                    instance=self.instance,
+                    host=self.host,
+                    infra=self.infra,
+                    plan=self.plan,
+                    database=self.database,
+                    offering=self.offering,
+                    disk_offering=self.disk_offering,
+                    need_master_variables=False,
+                    need_move_data=True
+                ),
+                build_script=False
+            )
+
+
+class InitializationMigrateRollback(InitializationMigrate):
+
+    def __unicode__(self):
+        return "Executing plan initial script migrate if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(InitializationMigrateRollback, self).do()
 
 
 # class InitializationForMigrateEngine(Initialization, PlanStepMigrateEngine):
@@ -542,6 +594,30 @@ class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
 
 class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
     pass
+
+
+class ConfigureRollback(Configure):
+
+    def __unicode__(self):
+        return "Executing plan configure script if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureRollback, self).do()
+
+
+class ConfigureLogRollback(ConfigureLog):
+
+    def __unicode__(self):
+        return "Configuring Log if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(ConfigureLogRollback, self).do()
 
 
 class StartReplication(PlanStep):
