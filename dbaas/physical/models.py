@@ -21,6 +21,7 @@ from drivers import DatabaseInfraStatus
 from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
 from physical.commands import HostCommands
+from physical.database_scripts import DatabaseScript
 from system.models import Configuration
 from util.models import BaseModel
 
@@ -1317,6 +1318,14 @@ class Instance(BaseModel):
         permissions = (
             ("view_instance", "Can view instances"),
         )
+
+    @property
+    def initialization_variables(self):
+        return self.databaseinfra.get_driver().initialization_parameters(self)
+
+    @property
+    def scripts(self):
+        return DatabaseScript(self)
 
     @property
     def is_alive(self):
