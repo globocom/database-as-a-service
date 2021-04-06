@@ -871,7 +871,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Check access between instances': (
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
@@ -1216,7 +1216,7 @@ class MongoGenericGCE(object):
         return (
             'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
         )
-    
+
     def get_change_binaries_upgrade_patch_steps_rollback(self):
         return (
             'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepRollback',
