@@ -23,6 +23,7 @@ class EnginePatchForm(forms.ModelForm):
 
         is_initial_patch = self.cleaned_data.get('is_initial_patch')
         patch_path = self.cleaned_data.get('patch_path')
+        patch_path_ol7 = self.cleaned_data.get('patch_path_ol7')
         required_disk_size_gb = self.cleaned_data.get('required_disk_size_gb')
         is_delete = self.cleaned_data.get('DELETE')
 
@@ -47,7 +48,7 @@ class EnginePatchForm(forms.ModelForm):
     class Meta:
         model = EnginePatch
         fields = ('patch_version', 'is_initial_patch',
-                  'patch_path', 'required_disk_size_gb')
+                  'patch_path', 'patch_path_ol7','required_disk_size_gb')
 
 
 class EnginePatchFormset(BaseInlineFormSet):
