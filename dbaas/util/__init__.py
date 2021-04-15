@@ -218,10 +218,11 @@ def scp_get_file(server, username, password, localpath, remotepath):
 def get_remote_file_content(file_path, host):
     output = {}
     script = 'cat {}'.format(file_path)
-    return_code = exec_remote_command_host(host, script, output)
+    # return_code = exec_remote_command_host(host, script, output)
 
-    if return_code != 0:
-        raise Exception(str(output))
+    # if return_code != 0:
+    #     raise Exception(str(output))
+    output = host.ssh.run_script(script)
 
     return output['stdout'][0].strip()
 

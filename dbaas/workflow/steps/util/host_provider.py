@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance, Ip
-from util import get_credentials_for, exec_remote_command_host
+from util import get_credentials_for
 from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
@@ -358,6 +358,7 @@ class HostProviderStep(BaseInstanceStep):
         return self._provider
 
     def execute_script(self, script):
+        raise Exception("O_O")
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -689,7 +690,8 @@ class UpdateHostRootVolumeSize(HostProviderStep):
         script = """echo $(($(free | grep Swap | awk '{print $2}')\
         + $(df -l --total | tail -n1 | awk '{print $2}')))
         """
-        output = self.execute_script(script)
+        # output = self.execute_script(script)
+        output = self.host.ssh.run_script(script)
         disk_size_kb = float(output['stdout'][0])
         disk_size_gb = (disk_size_kb / 1024.0) / 1024.0
 

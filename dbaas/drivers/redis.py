@@ -11,7 +11,7 @@ from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import ConnectionError
 from system.models import Configuration
 from physical.models import Instance
-from util import exec_remote_command_host, build_context_script, \
+from util import build_context_script, \
     make_db_random_password
 
 
@@ -533,11 +533,12 @@ class RedisSentinel(Redis):
         )
 
         script = build_context_script({}, script)
-        output = {}
-        return_code = exec_remote_command_host(host, script, output)
-        LOG.info(output)
-        if return_code != 0:
-            raise Exception(str(output))
+        # output = {}
+        # return_code = exec_remote_command_host(host, script, output)
+        host.ssh.run_script(script)
+        # LOG.info(output)
+        # if return_code != 0:
+        #     raise Exception(str(output))
 
     def configuration_parameters(self, instance, **kw):
         variables = {}
@@ -747,11 +748,12 @@ class RedisCluster(Redis):
 
         script = build_context_script({}, script)
 
-        output = {}
-        return_code = exec_remote_command_host(host, script, output)
-        LOG.info(output)
-        if return_code != 0:
-            raise Exception(str(output))
+        # output = {}
+        # return_code = exec_remote_command_host(host, script, output)
+        host.ssh.run_script(script)
+        # LOG.info(output)
+        # if return_code != 0:
+        #     raise Exception(str(output))
 
     def get_master_instance(self):
         masters = []

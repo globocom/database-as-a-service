@@ -2,7 +2,6 @@ from base import BaseInstanceStep
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from util import build_context_script
-from util import exec_remote_command_host
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -69,6 +68,7 @@ class MetricsCollector(BaseInstanceStep):
         pass
 
     def exec_script(self, script):
+        raise Exception("O_O")
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -86,7 +86,7 @@ class ConfigureTelegraf(MetricsCollector):
             return
         template_script = self.plan.script.metric_collector_template
         script = build_context_script(self.script_variables, template_script)
-        return self.exec_script(script)
+        return self.host.ssh.run_script(script)
 
 
 class ConfigureTelegrafRollback(ConfigureTelegraf):
@@ -108,7 +108,7 @@ class InstallTelegraf(MetricsCollector):
         if not self.is_valid:
             return
         script = "yum install telegraf -y"
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class RestartTelegraf(MetricsCollector):
@@ -121,7 +121,7 @@ class RestartTelegraf(MetricsCollector):
         script = self.host.commands.telegraf(
             action='restart'
         )
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class RestartTelegrafRollback(RestartTelegraf):
@@ -145,7 +145,7 @@ class StopTelegraf(MetricsCollector):
         script = self.host.commands.telegraf(
             action='stop'
         )
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class CreateMetricCollectorDatabaseUser(MetricsCollector):

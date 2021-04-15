@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 from time import sleep
-from util import exec_remote_command_host
 
 LOG = logging.getLogger(__name__)
 
@@ -125,10 +124,11 @@ def change_master_to(instance, master_host, bin_log_file, bin_log_position):
 
 def get_replication_information_from_file(host,):
     command = 'cat /data/data/mysql_binlog_master_file_pos'
-    output = {}
-    return_code = exec_remote_command_host(host, command, output)
-    if return_code != 0:
-        raise Exception("Could not read file: {}".format(output))
+    # output = {}
+    # return_code = exec_remote_command_host(host, command, output)
+    # if return_code != 0:
+    #     raise Exception("Could not read file: {}".format(output))
+    output = host.ssh.run_script(command)
 
     replication_file, replication_position = parse_replication_info(
         output['stdout'][0])

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from util import (build_context_script,
-                  exec_remote_command_host,
                   get_credentials_for)
 from dbaas_credentials.models import CredentialType
 from base import BaseInstanceStep, BaseInstanceStepMigration
@@ -118,6 +117,7 @@ class PlanStep(BaseInstanceStep):
         pass
 
     def run_script(self, script, build_script=True):
+        raise Exception("O_O")
         if build_script:
             script = build_context_script(self.script_variables, script)
         output = {}
@@ -130,6 +130,10 @@ class PlanStep(BaseInstanceStep):
                     return_code, output
                 )
             )
+
+    def make_script(self, plan_script):
+
+        return build_context_script(self.script_variables, plan_script)
 
 
 class PlanStepNewInfra(PlanStep):
@@ -206,7 +210,7 @@ class Initialization(PlanStep):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -218,8 +222,7 @@ class Initialization(PlanStep):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 
@@ -233,7 +236,7 @@ class InitializationForUpgrade(PlanStepUpgrade):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -245,8 +248,7 @@ class InitializationForUpgrade(PlanStepUpgrade):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 
@@ -257,7 +259,7 @@ class InitializationMigrate(Initialization):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -269,8 +271,7 @@ class InitializationMigrate(Initialization):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=True
-                ),
-                build_script=False
+                )
             )
 
 
@@ -295,7 +296,7 @@ class InitializationForMigrateEngine(PlanStepMigrateEngine):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -307,8 +308,7 @@ class InitializationForMigrateEngine(PlanStepMigrateEngine):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 
@@ -321,7 +321,7 @@ class InitializationForNewInfra(PlanStepNewInfra):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -333,8 +333,7 @@ class InitializationForNewInfra(PlanStepNewInfra):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 # class InitializationForNewInfraSentinel(
@@ -349,7 +348,7 @@ class InitializationForNewInfraSentinel(PlanStepNewInfraSentinel):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance,
@@ -361,8 +360,7 @@ class InitializationForNewInfraSentinel(PlanStepNewInfraSentinel):
                     disk_offering=self.disk_offering,
                     need_master_variables=True,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 
@@ -382,7 +380,7 @@ class InitializationMigration(BaseInstanceStepMigration):
 
     def do(self):
         if self.is_valid:
-            self.run_script(
+            self.run_script_host.ssh.run_script(
                 self.instance.scripts.init_database(
                     environment=self.environment,
                     instance=self.instance.future_instance,
@@ -394,8 +392,7 @@ class InitializationMigration(BaseInstanceStepMigration):
                     disk_offering=self.disk_offering,
                     need_master_variables=False,
                     need_move_data=self.need_move_data
-                ),
-                build_script=False
+                )
             )
 
 
@@ -417,7 +414,10 @@ class Configure(PlanStep):
 
     def do(self):
         if self.is_valid:
-            self.run_script(self.plan.script.configuration_template)
+            # self.run_script(self.plan.script.configuration_template)
+            self.run_script_host.ssh.run_script(
+                self.make_script(self.plan.script.configuration_template)
+            )
 
 
 class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
@@ -569,7 +569,9 @@ class ConfigureLog(Configure):
 
     def do(self):
         if self.is_valid:
-            self.run_script(self.plan.script.configure_log_template)
+            self.run_script_host.ssh.run_script(
+                self.make_script(self.plan.script.configure_log_template)
+            )
 
 
 class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):
@@ -615,7 +617,9 @@ class StartReplication(PlanStep):
 
     def do(self):
         if self.is_valid:
-            self.run_script(self.plan.script.start_replication_template)
+            self.run_script_host.ssh.run_script(
+                self.make_script(self.plan.script.start_replication_template)
+            )
 
 
 class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):

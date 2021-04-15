@@ -1,4 +1,3 @@
-from util import exec_remote_command_host
 from base import BaseInstanceStep
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
@@ -132,6 +131,7 @@ class SSL(BaseInstanceStep):
         pass
 
     def exec_script(self, script):
+        raise Exception("O_O")
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -162,7 +162,7 @@ class UpdateOpenSSlLib(SSL):
             yum update -y openssl
         fi
         """
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
@@ -180,7 +180,7 @@ class MongoDBUpdateCertificates(SSL):
         script = """yum update globoi-ca-certificates
         yum update ca-certificates
         """
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class MongoDBUpdateCertificatesIfConfigured(MongoDBUpdateCertificates,
@@ -197,7 +197,7 @@ class CreateSSLFolder(SSL):
         if not self.is_valid:
             return
         script = "mkdir -p {}".format(self.ssl_path)
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -277,7 +277,7 @@ DNS.1 = {dns}
 EOF_SSL
 ) > {file_path}""".format(dns=self.ssl_dns, file_path=self.conf_file_path)
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -318,7 +318,7 @@ EOF_SSL
         ip=self.host.address
     )
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -402,7 +402,7 @@ class RequestSSL(SSL):
             ssl_path=self.ssl_path, csr=self.csr_file,
             key=self.key_file, conf=self.conf_file)
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -439,7 +439,7 @@ class UpdateSSLForInfra(RequestSSLForInfra):
             ssl_path=self.ssl_path, csr=self.csr_file,
             key=self.key_file, conf=self.conf_file)
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class UpdateSSLForInstance(RequestSSLForInstance):
@@ -452,7 +452,7 @@ class UpdateSSLForInstance(RequestSSLForInstance):
             ssl_path=self.ssl_path, csr=self.csr_file,
             key=self.key_file, conf=self.conf_file)
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
 
 class CreateJsonRequestFile(SSL):
@@ -462,7 +462,7 @@ class CreateJsonRequestFile(SSL):
 
     def read_csr_file(self):
         script = "cat {}".format(self.csr_file_path)
-        output = self.exec_script(script)
+        output = self.host.ssh.run_script(script)
         csr_content = ''
         for line in output['stdout']:
             csr_content += line
@@ -481,7 +481,7 @@ EOF_SSL
         script = script.format(
             csr_content=csr_content, file_path=self.json_file_path)
 
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -523,13 +523,13 @@ class CreateCertificate(SSL):
 
     def save_certificate_file(self, certificate, filepath):
         script = "echo '{}' > {}".format(certificate, filepath)
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
             return
         script = self.create_certificate_script()
-        output = self.exec_script(script)
+        output = self.host.ssh.run_script(script)
         certificates = json.loads(output['stdout'][0])
 
         ca_chain = certificates['ca_chain'][0]
@@ -550,14 +550,14 @@ class CreateCertificateMongoDB(CreateCertificate):
             ca_file=ca_file,
             cert_file=cert_file
         )
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
             return
 
         script = self.create_certificate_script()
-        output = self.exec_script(script)
+        output = self.host.ssh.run_script(script)
         certificates = json.loads(output['stdout'][0])
 
         ca_chain = certificates['ca_chain'][0]
@@ -616,7 +616,7 @@ class SetSSLFilesAccessMySQL(SSL):
         script += "chmod 400 *key*.pem\n"
         script += "chmod 444 *cert*.pem\n"
         script += "chmod 755 ."
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -637,7 +637,7 @@ class SetSSLFilesAccessMongoDB(SSL):
         script = "cd {}\n".format(self.ssl_path)
         script += "chown mongodb:mongodb *.pem\n"
         script += "chmod 755 ."
-        self.exec_script(script)
+        self.host.ssh.run_script(script)
 
     def do(self):
         if not self.is_valid:
@@ -716,7 +716,7 @@ class UpdateExpireAtDate(SSL):
     def do(self):
         if not self.is_valid:
             return
-        output = self.exec_script(
+        output = self.host.ssh.run_script(
             ('date --date="$(openssl x509 -in /data/ssl/{}-cert.pem '
              '-noout -enddate | cut -d= -f 2)" --iso-8601'.format(
                 self.infra.name))

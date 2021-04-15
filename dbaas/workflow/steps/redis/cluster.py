@@ -150,7 +150,10 @@ class CreateCluster(BaseClusterStep):
     def do(self):
         if not self.is_valid:
             return
-        self.run_script(self.cluster_create_command)
+        # self.run_script(self.cluster_create_command)
+        self.run_script_host.ssh.run_script(
+            self.make_script(self.cluster_create_command)
+        )
 
 
 class CheckClusterStatus(BaseClusterStep):
@@ -166,7 +169,11 @@ class CheckClusterStatus(BaseClusterStep):
         }
 
     def do(self):
-        output = self.run_script(self.cluster_check_command)
+        # output = self.run_script(self.cluster_check_command)
+
+        output = self.run_script_host.ssh.run_script(
+            self.make_script(self.cluster_check_command)
+        )
         self.check_response(
             '[OK] All nodes agree about slots configuration.', output['stdout']
         )
@@ -179,7 +186,10 @@ class SaveNodeConfig(BaseClusterStep):
         return "Saving node config..."
 
     def do(self):
-        self.run_script('cp /data/{} /tmp/'.format(self.node_config_file))
+        # self.run_script('cp /data/{} /tmp/'.format(self.node_config_file))
+        self.run_script_host.ssh.run_script(
+            'cp /data/{} /tmp/'.format(self.node_config_file)
+        )
 
 
 class RestoreNodeConfig(BaseClusterStep):
@@ -188,7 +198,10 @@ class RestoreNodeConfig(BaseClusterStep):
         return "Restoring node config..."
 
     def do(self):
-        self.run_script('cp /tmp/{} /data/'.format(self.node_config_file))
+        # self.run_script('cp /tmp/{} /data/'.format(self.node_config_file))
+        self.run_script_host.ssh.run_script(
+            'cp /tmp/{} /data/'.format(self.node_config_file)
+        )
 
 
 class SetInstanceShardTag(BaseClusterStep):
@@ -280,7 +293,10 @@ class AddSlaveNode(BaseClusterStep):
         }
 
     def do(self):
-        output = self.run_script(self.cluster_slave_node_command)
+        # output = self.run_script(self.cluster_slave_node_command)
+        output = self.run_script_host.ssh.run_script(
+            self.make_script(self.cluster_slave_node_command)
+        )
         self.check_response(
             '[OK] New node added correctly.', output['stdout']
         )
@@ -313,7 +329,10 @@ class RemoveNode(BaseClusterStep):
         }
 
     def do(self):
-        output = self.run_script(self.cluster_del_node_command)
+        # output = self.run_script(self.cluster_del_node_command)
+        output = self.run_script_host.ssh.run_script(
+            self.make_script(self.cluster_del_node_command)
+        )
         self.check_response(
             'SHUTDOWN the node', output['stdout']
         )
@@ -371,7 +390,10 @@ class CreateClusterRedisAddSlaves(BaseClusterStep):
             script = self.get_add_slave_node_command(
                 master_id, new_node_address, cluster_address
             )
-            output = self.run_script(script)
+            # output = self.run_script(script)
+            output = self.run_script_host.ssh.run_script(
+                self.make_script(script)
+            )
             self.check_response(
                 '[OK] New node added correctly.', output['stdout']
             )

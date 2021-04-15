@@ -119,7 +119,7 @@ class HostCommandOL7(HostBaseCommands):
         'mysql': 'mysql',
         'mysql_percona': 'mysql'
     }
-    PRIMARY_SERVICE_NAME_BY_ENGINE = {
+    SECONDARY_SERVICE_NAME_BY_ENGINE = {
         'mongodb': 'mongodb',
         'redis': 'sentinel',
         'mysql': '',

@@ -11,8 +11,7 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
-from util import (exec_remote_command_host, get_worker_name,
-                  get_credentials_for)
+from util import get_worker_name, get_credentials_for
 
 LOG = getLogger(__name__)
 
@@ -52,13 +51,14 @@ def mysql_binlog_save(client, instance):
         row = r.fetch_row(maxrows=0, how=1)
         datadir = row[0]['Value']
 
-        output = {}
+        # output = {}
         command = ('echo "master=%s;position=%s" > '
                    '%smysql_binlog_master_file_pos && sync') % (
             binlog_file, binlog_pos, datadir
         )
 
-        exec_remote_command_host(instance.hostname, command, output)
+        # exec_remote_command_host(instance.hostname, command, output)
+        instance.hostname.ssh.run_script(command)
     except Exception as e:
         LOG.error(
             "Error saving mysql master binlog file and position: {}".format(e))
@@ -140,12 +140,13 @@ def make_instance_snapshot_backup(instance, error, group,
         unlock_instance(driver, instance, client)
 
     if not snapshot.size:
-        output = {}
+        # output = {}
         command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
             snapshot.snapshot_name
         )
         try:
-            exec_remote_command_host(instance.hostname, command, output)
+            # exec_remote_command_host(instance.hostname, command, output)
+            output = instance.hostname.ssh.run_script(command)
             size = int(output['stdout'][0])
             snapshot.size = size
         except Exception as e:
@@ -165,7 +166,7 @@ def make_instance_snapshot_backup(instance, error, group,
         snapshot_path = "/data/.snapshot/{}/data/".format(
             snapshot.snapshot_name
         )
-        output = {}
+        # output = {}
         command = """
         if [ -d "{backup_path}" ]
         then
@@ -177,7 +178,8 @@ def make_instance_snapshot_backup(instance, error, group,
                    target_path=target_path,
                    snapshot_path=snapshot_path)
         try:
-            exec_remote_command_host(instance.hostname, command, output)
+            # exec_remote_command_host(instance.hostname, command, output)
+            instance.hostname.ssh.run_script(command)
         except Exception as e:
             LOG.error("Error exec remote command {}".format(e))
 

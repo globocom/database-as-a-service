@@ -3,7 +3,7 @@ from dbaas.celery import app
 import models
 import logging
 from notification.models import TaskHistory
-from util import exec_remote_command_host, get_worker_name, \
+from util import get_worker_name, \
     build_context_script, get_dict_lines
 from registered_functions.functools import get_function
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
@@ -36,7 +36,7 @@ def execute_scheduled_maintenance(self, maintenance_id):
         persist=True, details="Executing Maintenance: {}".format(maintenance)
     )
     for hm in models.HostMaintenance.objects.filter(maintenance=maintenance):
-        main_output = {}
+        # main_output = {}
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
         hm.save()
@@ -61,25 +61,32 @@ def execute_scheduled_maintenance(self, maintenance_id):
             param_dict[param.parameter_name] = param_function(host.id)
 
         main_script = build_context_script(param_dict, maintenance.main_script)
-        exit_status = exec_remote_command_host(host, main_script, main_output)
+        # exit_status = exec_remote_command_host(host, main_script, main_output)
+        main_output = host.ssh.run_script(
+            script=main_script,
+            raise_if_error=False
+        )
 
-        if exit_status == 0:
+        if main_output['exit_code'] == 0:
             hm.status = hm.SUCCESS
         else:
-
             if maintenance.rollback_script:
-                rollback_output = {}
+                # rollback_output = {}
                 hm.status = hm.ROLLBACK
                 hm.save()
 
                 rollback_script = build_context_script(
                     param_dict, maintenance.rollback_script
                 )
-                exit_status = exec_remote_command_host(
-                    host, rollback_script, rollback_output
+                # exit_status = exec_remote_command_host(
+                #     host, rollback_script, rollback_output
+                # )
+                rollback_output = host.ssh.run_script(
+                    script=rollback_script,
+                    raise_if_error=False
                 )
 
-                if exit_status == 0:
+                if rollback_output['exit_code'] == 0:
                     hm.status = hm.ROLLBACK_SUCCESS
                 else:
                     hm.status = hm.ROLLBACK_ERROR

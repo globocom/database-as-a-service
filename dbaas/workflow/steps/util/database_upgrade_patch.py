@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from workflow.steps.util.base import BaseInstanceStep
-from util import exec_remote_command_host
 import os
 import logging
 
@@ -52,6 +51,7 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
         return True
 
     def execute_script(self, script):
+        raise Exception("O_O")
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -84,7 +84,8 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         chown -R mongodb:mongodb mongodb/
         """.format(download_script=download_script, dir_name=dir_name)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)
 
 
 class MongoDBCHGBinStepRollback(MongoDBCHGBinStep):
@@ -121,7 +122,8 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         chown -R redis:redis redis/
         """.format(download_script=download_script, dir_name=dir_name)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)
 
 
 class MySQLCHGBinStep(DatabaseUpgradePatchStep):
@@ -136,4 +138,5 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
         yum -y localinstall --nogpgcheck *.rpm
         """.format(patch_path=patch_path)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)

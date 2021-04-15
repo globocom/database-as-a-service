@@ -13,7 +13,8 @@ from logical.errors import BusyDatabaseError
 from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
-from util import email_notifications, exec_remote_command_host
+from util import email_notifications
+from physical.ssh import ScriptFailedException
 
 
 def zabbix_collect_used_disk(task):
@@ -215,19 +216,20 @@ def disk_auto_resize(database, current_size, usage_percentage):
 def host_mount_data_percentage(address, task):
     host = Host.objects.filter(address=address).first()
 
-    output_message = {}
-    command_status = exec_remote_command_host(
-        host, 'df -hk | grep /data', output_message
-    )
-
-    if command_status != 0:
+    # output_message = {}
+    # command_status = exec_remote_command_host(
+    #     host, 'df -hk | grep /data', output_message
+    # )
+    try:
+        output = host.ssh.run_script('df -hk | grep /data')
+    except ScriptFailedException as err:
         task.add_detail(
-            message='Could not load mount size: {}'.format(output_message),
+            message='Could not load mount size: {}'.format(str(err)),
             level=4
         )
         return None, None, None
 
-    values = output_message['stdout'][0].strip().split()
+    values = output['stdout'][0].strip().split()
     values = {
         'total': int(values[0]),
         'used': int(values[1]),

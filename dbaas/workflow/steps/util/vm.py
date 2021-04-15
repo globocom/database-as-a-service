@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 from dbaas_credentials.models import CredentialType
-from util import exec_remote_command_host, check_ssh, get_credentials_for
+from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep
 
 CHANGE_MASTER_ATTEMPS = 30
@@ -159,11 +159,12 @@ class CheckHostName(VmStep):
 
     @property
     def is_hostname_valid(self):
-        output = {}
+        # output = {}
         script = "hostname | grep 'localhost.localdomain' | wc -l"
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(str(output))
+        # return_code = exec_remote_command_host(self.host, script, output)
+        # if return_code != 0:
+        #     raise EnvironmentError(str(output))
+        output = self.host.ssh.run_script(script)
 
         return int(output['stdout'][0]) < 1
 
@@ -180,7 +181,8 @@ class CheckHostNameAndReboot(CheckHostName):
     def do(self):
         if not self.is_hostname_valid:
             script = '/sbin/reboot -f > /dev/null 2>&1 &'
-            exec_remote_command_host(self.host, script)
+            # exec_remote_command_host(self.host, script)
+            self.host.ssh.run_script(script)
 
 
 class CheckAccessToMaster(VmStep):
@@ -197,11 +199,13 @@ class CheckAccessToMaster(VmStep):
         if origin == destiny:
             return
 
-        output = {}
+        # output = {}
         script = "(echo >/dev/tcp/{}/{}) &>/dev/null && exit 0 || exit 1"
         script = script.format(destiny.address, port)
-        return_code = exec_remote_command_host(origin, script, output)
-        if return_code != 0:
+        # return_code = exec_remote_command_host(origin, script, output)
+        try:
+            output = origin.ssh.run_script(script)
+        except origin.shh.ScriptFailedException:
             raise EnvironmentError(
                 'Could not connect from {} to {}:{} - Error: {}'.format(
                     origin.address, destiny.address, port, str(output)
