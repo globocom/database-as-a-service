@@ -21,6 +21,7 @@ from drivers import DatabaseInfraStatus
 from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
 from physical.commands import HostCommands
+from physical.ssh import HostSSH
 from physical.database_scripts import DatabaseScript
 from system.models import Configuration
 from util.models import BaseModel
@@ -1239,6 +1240,24 @@ class Host(BaseModel):
     @property
     def commands(self):
         return HostCommands(self)
+
+    @property
+    def ssh(self):
+        return HostSSH(
+            address=self.address,
+            username=self.user,
+            password=self.password
+        )
+
+    @staticmethod
+    def run_script(address, username, script,
+                   password=None, key=None):
+        return HostSSH(
+            address=address,
+            username=username,
+            password=password,
+            key=key
+        ).run_script(script)
 
     @property
     def is_ol6(self):
