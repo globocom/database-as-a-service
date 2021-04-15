@@ -270,6 +270,13 @@ class EnginePatch(BaseModel):
         blank=True, null=True, default='',
         max_length=200,
     )
+
+    patch_path_ol7 = models.CharField(
+        verbose_name=_("Path of installation file in OL7"),
+        blank=True, null=True, default='',
+        max_length=200,
+    )
+
     required_disk_size_gb = models.FloatField(
         verbose_name=_("Required Disk Size (GB)"),
         null=True, blank=True

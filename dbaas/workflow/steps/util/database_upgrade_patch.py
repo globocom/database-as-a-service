@@ -26,6 +26,14 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
         return "Changing database binaries..."
 
     @property
+    def patch_path_by_os(self):
+        pp = self.target_patch.patch_path
+        if self.host.is_ol7:
+            pp = self.target_patch.patch_path_ol7 or pp
+
+        return pp
+
+    @property
     def is_valid(self):
 
         if self.source_patch == self.target_patch:
@@ -44,7 +52,7 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
                 self.source_patch, self.target_patch)
             raise CantUpgradePatch(error)
 
-        if not self.target_patch.patch_path:
+        if not self.patch_path_by_os:
             error = "Patch path can not be empty."
             raise CantUpgradePatch(error)
 
@@ -69,10 +77,10 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         if not self.is_valid:
             return
 
-        patch_path = self.target_patch.patch_path
+        patch_path = self.patch_path_by_os
         dir_name = os.path.splitext(os.path.basename(patch_path))[0]
 
-        if self.target_patch.patch_path.startswith('https'):
+        if self.patch_path_by_os.startswith('https'):
             download_script = 'curl {} | tar -xz'.format(patch_path)
         else:
             download_script = 'tar -xvf {}'.format(patch_path)
@@ -103,11 +111,11 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         if not self.is_valid:
             return
 
-        patch_path = self.target_patch.patch_path
-        path, file_name = os.path.split(patch_path)
+        patch_path = self.patch_path_by_os
+        _, file_name = os.path.split(patch_path)
         dir_name = file_name.rsplit('.', 2)[0]
 
-        if self.target_patch.patch_path.startswith('https'):
+        if self.patch_path_by_os.startswith('https'):
             download_script = 'curl {} | tar -xz'.format(patch_path)
         else:
             download_script = 'tar -xvf {}'.format(patch_path)
@@ -132,7 +140,7 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
         if not self.is_valid:
             return
 
-        patch_path = self.target_patch.patch_path
+        patch_path = self.patch_path_by_os
 
         script = """cd {patch_path}
         yum -y localinstall --nogpgcheck *.rpm

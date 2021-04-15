@@ -11,11 +11,18 @@ class ChangeBinaryBase(VmStep):
     def __script(self):
         return test_bash_script_error() + build_change_release_alias_script()
 
+    @property
+    def so_version(self):
+        version = "rhel62"
+        if self.host.is_ol7:
+            version = "rhel70"
+        return version
 
     def change_binary(self, release):
         context_dict = {
             'TARGET_PATH': '/usr/local/',
-            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-rhel62-{}'.format(
+            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-{}-{}'.format(
+                self.so_version,
                 release
             ),
         }
@@ -72,4 +79,3 @@ class ChangeBinaryTo40(ChangeBinaryBase):
 
     def do(self):
         self.change_binary('4.0.3')
-
