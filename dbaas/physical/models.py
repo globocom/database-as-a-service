@@ -1193,16 +1193,9 @@ class Host(BaseModel):
 
     def update_os_description(self, ):
         from util import get_host_os_description
-
-        try:
-            os = get_host_os_description(self)
-        except Exception as e:
-            error = "Could not get os description for host {}. Error: {}"
-            error = error.format(self, e)
-            LOG.error(error)
-        else:
-            self.os_description = os
-            self.save()
+        os = get_host_os_description(self)
+        self.os_description = os
+        self.save()
 
     def database_instance(self):
         for instance in self.instances.all():
