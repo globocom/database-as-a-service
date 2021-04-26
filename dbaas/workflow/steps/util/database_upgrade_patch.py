@@ -125,13 +125,22 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         rm -f redis
         ln -s {dir_name} redis
         cd redis && make
-        cp /mnt/software/db/redis/redis-trib-gcom.rb /usr/local/redis/src/redis-trib-gcom.rb
+        wget -P /usr/local/redis/src/ https://artifactory.globoi.com/artifactory/generic-local/db/redis/redis-trib-gcom.rb
         cd ..
         chown -R redis:redis redis/
         """.format(download_script=download_script, dir_name=dir_name)
 
         # self.execute_script(script)
         self.host.ssh.run_script(script)
+
+class RedisCHGBinStepRollback(RedisCHGBinStep):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(RedisCHGBinStepRollback, self).do()
+
 
 
 class MySQLCHGBinStep(DatabaseUpgradePatchStep):

@@ -902,10 +902,15 @@ die_if_error "Error setting redis write config file"
 register_init_redis_service()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Register init redis service"
-    chkconfig --add redis
-    die_if_error "Error add redis service"
-    chkconfig redis on
-    die_if_error "Error setting redis service"
+    {% if IS_OL6  %}
+        chkconfig --add redis
+        die_if_error "Error add redis service"
+        chkconfig redis on
+        die_if_error "Error setting redis service"
+    {% else %}
+        systemctl enable redis.service
+        die_if_error "Error enable redis service"
+    {% endif %}
 }
 
 createinitsentinelfile()
@@ -989,10 +994,15 @@ die_if_error "Error setting init sentinel file"
 register_init_sentinel_service()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Register init sentinel service"
-    chkconfig --add sentinel
-    die_if_error "Error add sentinel service"
-    chkconfig sentinel on
-    die_if_error "Error setting sentinel service"
+    {% if IS_OL6  %}
+        chkconfig --add sentinel
+        die_if_error "Error add sentinel service"
+        chkconfig sentinel on
+        die_if_error "Error setting sentinel service"
+    {% else %}
+        systemctl enable sentinel.service
+        die_if_error "Error enable sentinel service"
+    {% endif %}
 }
 
 createconfigsentinelfile()
@@ -1228,19 +1238,25 @@ EOF_DBAAS_CONFIGSENTINELFILE
 
     {% if ONLY_SENTINEL %}
 
-        createinitsentinelfile
         createconfigsentinelfile
+        {% if IS_OL6  %}
+            createinitsentinelfile
+        {% endif %}
         register_init_sentinel_service
 
     {% else %}
 
-        createinitdbfile
         createconfigdbfile
+        {% if IS_OL6  %}
+            createinitdbfile
+        {% endif %}
         register_init_redis_service
 
         {% if 'redis_sentinel' in DRIVER_NAME %}
-            createinitsentinelfile
             createconfigsentinelfile
+            {% if IS_OL6  %}
+                createinitsentinelfile
+            {% endif %}
             register_init_sentinel_service
         {% endif %}
 

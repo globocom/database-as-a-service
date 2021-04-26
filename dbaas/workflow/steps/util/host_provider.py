@@ -578,10 +578,8 @@ class AllocateIP(HostProviderStep):
         return "Allocating new ip..."
 
     def do(self):
-
-        self.provider.create_static_ip(
-            self.infra
-        )
+        if self.instance.static_ip is None:
+            self.provider.create_static_ip(self.infra)
 
     def undo(self):
         if self.instance.static_ip:
@@ -627,7 +625,7 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
             sleep(240)
 
         host = self.provider.create_host(
-            self.infra, self.offering, self.vm_name, 
+            self.infra, self.offering, self.vm_name,
             self.team, self.zone,
             static_ip=self.instance.static_ip
         )
@@ -771,11 +769,11 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def __unicode__(self):
         return "Destroy VM from previous zone..."
-    
+
     @property
     def host_migrating(self):
         return self.host_migrate.host
-    
+
     @property
     def team(self):
         if self.has_database:
@@ -785,7 +783,7 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
         elif (self.step_manager
               and hasattr(self.step_manager, 'origin_database')):
             return self.step_manager.origin_database.team.name
-    
+
     @property
     def vm_name(self):
         return self.host_migrating.hostname.split('.')[0]
@@ -795,21 +793,21 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def undo(self):
         self.provider.create_host(
-            self.infra, self.host_migrating.offering, self.vm_name, 
+            self.infra, self.host_migrating.offering, self.vm_name,
             self.team, self.host_migrate.zone_origin,
             static_ip=self.instance.static_ip,
             host_obj=self.host
         )
         self.host.save()
 
-class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):   
+class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def __unicode__(self):
         return "Recreating virtual machine in new zone..."
 
     def do(self):
         self.provider.create_host(
-            self.infra, self.offering, self.vm_name, 
+            self.infra, self.offering, self.vm_name,
             self.team, self.zone,
             static_ip=self.instance.static_ip,
             host_obj=self.host

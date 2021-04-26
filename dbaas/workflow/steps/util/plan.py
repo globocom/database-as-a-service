@@ -52,6 +52,8 @@ class PlanStep(BaseInstanceStep):
             'SSL_MODE_ALLOW': self.infra.ssl_mode == self.infra.ALLOWTLS,
             'SSL_MODE_PREFER': self.infra.ssl_mode == self.infra.PREFERTLS,
             'SSL_MODE_REQUIRE': self.infra.ssl_mode == self.infra.REQUIRETLS,
+            'IS_OL6': self.host.is_ol6,
+            'IS_OL7': self.host.is_ol7,
         }
 
         if self.infra.ssl_configured:
