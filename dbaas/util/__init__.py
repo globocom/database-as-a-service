@@ -2,8 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 from time import sleep
 import paramiko
-import socket
-import re
 from slugify import slugify as slugify_function
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -147,7 +145,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[],
             return return_code, [s.strip() for s in output.splitlines()]
         else:
             return return_code, output
-    except:
+    except Exception:
         # if any error happen, log cmdline to error
         LOG.error("Error running cmdline (exit code %s): %s",
                   return_code, logging_cmdline, exc_info=True)
@@ -176,7 +174,8 @@ def check_dns(dns_to_check, dns_server, retries=90, wait=10, ip_to_check=None):
             ips = map(str, answer)
             LOG.info("CHECK DNS: ips {}".format(ips))
             LOG.info("CHECK DNS: ip to check {}".format(ip_to_check))
-            if (ip_to_check and ip_to_check in ips) or (not ip_to_check and ips):
+            if ((ip_to_check and ip_to_check in ips) or
+                    (not ip_to_check and ips)):
                 return True
 
         sleep(wait)
@@ -338,6 +337,7 @@ def get_worker_name():
 def get_now():
     import datetime
     return datetime.datetime.now()
+
 
 def get_dict_lines(my_dict={}):
     final_str = ''
