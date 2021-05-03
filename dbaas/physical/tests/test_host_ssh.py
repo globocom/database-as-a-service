@@ -69,7 +69,7 @@ class DecoratorConnectHostTestCase(TestCase):
         self.assertFalse(self.fake_func.called)
         self.assertEqual(output['stdout'], '')
         self.assertIn(
-            "Host key for server 'fake_hostname' does not match",
+            "fake_hostname",
             output['exception']
         )
 
