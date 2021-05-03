@@ -312,25 +312,6 @@ CACHES = {
     }
 }
 
-TEST_DISCOVER_ROOT = os.path.abspath(os.path.join(__file__, '../..'))
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = [
-    '--verbosity=0',
-    '--no-byte-compile',
-    '--debug-log=error_test.log',
-    '--nologcapture',
-    '-s'
-]
-if CI:
-    NOSE_ARGS += [
-        '--with-coverage',
-        '--cover-package=application',
-        '--with-xunit',
-        '--xunit-file=test-report.xml',
-        '--cover-xml',
-        '--cover-xml-file=coverage.xml'
-    ]
-
 # AUTHENTICATION_BACKENDS = (
 #   'django_auth_ldap.backend.LDAPBackend',
 #   'account.backends.DbaasBackend',
@@ -537,7 +518,6 @@ USER_ROLES = (
 CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
 NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
-
 
 
 def simple_audit_auth():
