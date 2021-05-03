@@ -125,4 +125,4 @@ class HostCommandOL7(HostBaseCommands):
         'mysql': '',
         'mysql_percona': ''
     }
-    command_tmpl = 'systemctl {action} {service_name}.service'
+    command_tmpl = 'sudo systemctl {action} {service_name}.service'
