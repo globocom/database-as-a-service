@@ -14,7 +14,8 @@ from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields.encrypted import EncryptedCharField
+from django_extensions.db.fields.encrypted import (EncryptedCharField,
+                                                   EncryptedTextField)
 from slugify import slugify
 
 from drivers import DatabaseInfraStatus
@@ -1176,6 +1177,9 @@ class Host(BaseModel):
     offering = models.ForeignKey(Offering, null=True)
     user = models.CharField(max_length=255, blank=True, null=True)
     password = EncryptedCharField(max_length=255, blank=True, null=True)
+    private_key = EncryptedTextField(
+        verbose_name="Private Key", blank=True, null=True
+    )
     identifier = models.CharField(
         verbose_name=_("Identifier"),
         max_length=255, default=''
@@ -1246,17 +1250,18 @@ class Host(BaseModel):
         return HostSSH(
             address=self.address,
             username=self.user,
-            password=self.password
+            password=self.password,
+            private_key=self.private_key
         )
 
     @staticmethod
     def run_script(address, username, script,
-                   password=None, key=None):
+                   password=None, private_key=None):
         return HostSSH(
             address=address,
             username=username,
             password=password,
-            key=key
+            private_key=private_key
         ).run_script(script)
 
     @property
