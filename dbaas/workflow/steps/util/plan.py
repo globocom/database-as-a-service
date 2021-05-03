@@ -133,9 +133,12 @@ class PlanStep(BaseInstanceStep):
                 )
             )
 
-    def make_script(self, plan_script):
+    def make_script(self, plan_script, script_variables=None):
 
-        return build_context_script(self.script_variables, plan_script)
+        return build_context_script(
+            script_variables or self.script_variables,
+            plan_script
+        )
 
 
 class PlanStepNewInfra(PlanStep):
@@ -418,7 +421,10 @@ class Configure(PlanStep):
         if self.is_valid:
             # self.run_script(self.plan.script.configuration_template)
             self.run_script_host.ssh.run_script(
-                self.make_script(self.plan.script.configuration_template)
+                self.make_script(
+                    self.plan.script.configuration_template,
+                    script_variables=self.script_variables
+                )
             )
 
 
@@ -572,7 +578,10 @@ class ConfigureLog(Configure):
     def do(self):
         if self.is_valid:
             self.run_script_host.ssh.run_script(
-                self.make_script(self.plan.script.configure_log_template)
+                self.make_script(
+                    self.plan.script.configure_log_template,
+                    script_variables=self.script_variables
+                )
             )
 
 
@@ -620,7 +629,10 @@ class StartReplication(PlanStep):
     def do(self):
         if self.is_valid:
             self.run_script_host.ssh.run_script(
-                self.make_script(self.plan.script.start_replication_template)
+                self.make_script(
+                    self.plan.script.start_replication_template,
+                    script_variables=self.script_variables
+                )
             )
 
 

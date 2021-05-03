@@ -152,7 +152,10 @@ class CreateCluster(BaseClusterStep):
             return
         # self.run_script(self.cluster_create_command)
         self.run_script_host.ssh.run_script(
-            self.make_script(self.cluster_create_command)
+            self.make_script(
+                self.cluster_create_command,
+                script_variables=self.script_variables
+            )
         )
 
 
@@ -172,7 +175,10 @@ class CheckClusterStatus(BaseClusterStep):
         # output = self.run_script(self.cluster_check_command)
 
         output = self.run_script_host.ssh.run_script(
-            self.make_script(self.cluster_check_command)
+            self.make_script(
+                self.cluster_check_command,
+                script_variables=self.script_variables
+            )
         )
         self.check_response(
             '[OK] All nodes agree about slots configuration.', output['stdout']
@@ -295,7 +301,10 @@ class AddSlaveNode(BaseClusterStep):
     def do(self):
         # output = self.run_script(self.cluster_slave_node_command)
         output = self.run_script_host.ssh.run_script(
-            self.make_script(self.cluster_slave_node_command)
+            self.make_script(
+                self.cluster_slave_node_command,
+                script_variables=self.script_variables
+            )
         )
         self.check_response(
             '[OK] New node added correctly.', output['stdout']
@@ -331,7 +340,10 @@ class RemoveNode(BaseClusterStep):
     def do(self):
         # output = self.run_script(self.cluster_del_node_command)
         output = self.run_script_host.ssh.run_script(
-            self.make_script(self.cluster_del_node_command)
+            self.make_script(
+                self.cluster_del_node_command,
+                script_variables=self.script_variables
+            )
         )
         self.check_response(
             'SHUTDOWN the node', output['stdout']
@@ -392,7 +404,10 @@ class CreateClusterRedisAddSlaves(BaseClusterStep):
             )
             # output = self.run_script(script)
             output = self.run_script_host.ssh.run_script(
-                self.make_script(script)
+                self.make_script(
+                    script,
+                    script_variables=self.script_variables
+                )
             )
             self.check_response(
                 '[OK] New node added correctly.', output['stdout']
