@@ -14,15 +14,7 @@ LOG = logging.getLogger(__name__)
 def connect_host(func):
     def wrapper(self, *args, **kw):
         try:
-            self.client = paramiko.SSHClient()
-            self.client.load_system_host_keys()
-            self.client.set_missing_host_key_policy(
-                paramiko.AutoAddPolicy()
-            )
-            self.client.connect(
-                self.address,
-                **self.auth
-            )
+            self.connect()
             return func(self, *args, **kw)
         except (paramiko.ssh_exception.BadHostKeyException,
                 paramiko.ssh_exception.AuthenticationException,
@@ -40,19 +32,28 @@ class ScriptFailedException(Exception):
     pass
 
 
+class PassAndPkeyEmptyException(Exception):
+    pass
+
+
 class HostSSH(object):
     ScriptFailedException = ScriptFailedException
 
-    def __init__(self, address, username, password=None, key=None):
+    def __init__(self, address, username, password=None, private_key=None):
         self.address = address
-        self.key = key.replace('\\n', '\n') if key else None
-        if not any([password, key]):
-            raise Exception("You need set password or key")
+        self.private_key = private_key
+        if self.private_key:
+            self.private_key = self.private_key.replace('\\n', '\n')
+        if not any([password, private_key]):
+            raise PassAndPkeyEmptyException(
+                "You need set password or private key"
+            )
         self.auth = {'username': username}
         if password:
             self.auth['password'] = password
         else:
             self.auth['pkey'] = self.pkey
+
         self.stdout = ''
         self.stdin = ''
         self.stderr = ''
@@ -61,11 +62,26 @@ class HostSSH(object):
             'stderr': self.stderr,
             'exeption': '',
         }
+        self.script_file_dir = ''
+        self.script_file_name = ''
+        self.script_file_full_path = ''
+
+    def connect(self, timeout=None):
+        self.client = paramiko.SSHClient()
+        self.client.load_system_host_keys()
+        self.client.set_missing_host_key_policy(
+            paramiko.AutoAddPolicy()
+        )
+        self.client.connect(
+            self.address,
+            timeout=timeout,
+            **self.auth
+        )
 
     @property
     def pkey(self):
         return paramiko.RSAKey.from_private_key(
-            StringIO(self.key)
+            StringIO(self.private_key)
         )
 
     def handle_command_output(self, command_output):
@@ -80,28 +96,50 @@ class HostSSH(object):
             'exit_code': self.script_exit_code
         })
 
+    def clean_script_files(self):
+        if self.script_file_full_path:
+            ftp = self.client.open_sftp()
+            try:
+                ftp.remove(self.script_file_full_path)
+            except IOError:
+                pass
+            ftp.close()
+
+    def set_script_file_variables(self):
+        self.script_file_name = '{}.sh'.format(uuid4())
+        self.script_file_dir = '/tmp'
+        self.script_file_full_path = '{}/{}'.format(
+            self.script_file_dir,
+            self.script_file_name
+        )
+
+    def create_script_file(self, script):
+        self.set_script_file_variables()
+        ftp = self.client.open_sftp()
+        ftp.putfo(BytesIO(script.encode()), self.script_file_full_path)
+        ftp.close()
+
+    @property
+    def run_script_file_command(self):
+        return 'sudo sh {}'.format(
+            self.script_file_full_path
+        )
+
     @connect_host
     def run_script(self, script, get_pty=False, raise_if_error=True,
                    retry=False):
+        self.create_script_file(script)
         LOG.info(
             "Executing command [{}] on remote server {}".format(
                 script, self.address
             )
         )
-        try:
-            command_output = self.client.exec_command(
-                script,
-                get_pty=get_pty
-            )
-        except (paramiko.ssh_exception.BadHostKeyException,
-                paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException,
-                socket.error) as e:
-            msg = "We caught an exception: {}.".format(e)
-            LOG.warning(msg)
-            self.output['exception'] = str(e)
-            return self.output
+        command_output = self.client.exec_command(
+            self.run_script_file_command,
+            get_pty=get_pty
+        )
         self.handle_command_output(command_output)
+        self.clean_script_files()
         if self.script_exit_code != 0:
             if retry:
                 return self.run_script(
