@@ -55,38 +55,38 @@ class DeleteHostFQDNTestCase(StepBaseTestCase):
            new=MagicMock(return_value=FAKE_VM_PROPERTIES))
     @patch('workflow.steps.util.foreman.HostStatus.is_up',
            new=MagicMock(return_value=True))
-    @patch('workflow.steps.util.foreman.exec_command_on_host',
-           return_value=({'stdout': ['fake_fqdn.globo.com']}, 0,))
-    def test_get_fqdn_from_vm(self, exec_remote_cmd_mock):
+    @patch('physical.models.HostSSH.run_script',
+           return_value={'stdout': ['fake_fqdn.globo.com']})
+    def test_get_fqdn_from_vm(self, run_script_mock):
         fqdn = self.step.fqdn
-        self.assertTrue(exec_remote_cmd_mock.called)
+        self.assertTrue(run_script_mock.called)
         self.assertEqual(fqdn, 'fake_fqdn.globo.com')
 
     @patch('workflow.steps.util.foreman.HostProviderClient.get_vm_by_host',
            new=MagicMock(return_value=FAKE_VM_PROPERTIES))
     @patch('workflow.steps.util.foreman.HostStatus.is_up',
            new=MagicMock(return_value=False))
-    @patch('workflow.steps.util.foreman.exec_command_on_host')
-    def test_get_fqdn_from_host_provider_api(self, exec_remote_cmd_mock):
+    @patch('physical.models.HostSSH.run_script')
+    def test_get_fqdn_from_host_provider_api(self, run_script_mock):
         fqdn = self.step.fqdn
-        self.assertFalse(exec_remote_cmd_mock.called)
+        self.assertFalse(run_script_mock.called)
         self.assertEqual('fake_fqdn.globoi.com', fqdn)
 
     @patch('workflow.steps.util.foreman.HostProviderClient.get_vm_by_host',
            new=MagicMock(return_value=None))
     @patch('workflow.steps.util.foreman.HostStatus.is_up',
            new=MagicMock(return_value=False))
-    @patch('workflow.steps.util.foreman.exec_command_on_host')
-    def test_vm_properties_none(self, exec_remote_cmd_mock):
+    @patch('physical.models.HostSSH.run_script')
+    def test_vm_properties_none(self, run_script_mock):
         with self.assertRaises(FqdnNotFoundExepition):
             self.step.fqdn
 
     @patch('workflow.steps.util.foreman.HostStatus.is_up',
            new=MagicMock(return_value=False))
-    @patch('workflow.steps.util.foreman.exec_command_on_host')
+    @patch('physical.models.HostSSH.run_script')
     @patch('workflow.steps.util.foreman.HostProviderClient.get_vm_by_host')
     def test_get_fqdn_empty_from_host_provider_api(self, get_vm_by_host_mock,
-                                                   exec_remote_cmd_mock):
+                                                   run_script_mock):
         fake_vm_properties = namedtuple('FakeVmProperties', 'id fqdn')(
             'fake_id', ''
         )
