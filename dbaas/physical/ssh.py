@@ -1,6 +1,9 @@
 import socket
 import logging
+from time import sleep
 from StringIO import StringIO
+from uuid import uuid4
+from io import BytesIO
 
 import paramiko
 
@@ -115,3 +118,37 @@ class HostSSH(object):
                 )
 
         return self.output
+
+    def check(self, retries=30, wait=30, interval=40, timeout=None):
+        LOG.info(
+            "Waiting {} seconds to check {} ssh connection...".format(
+                wait, self.address
+            )
+        )
+        sleep(wait)
+
+        for attempt in range(retries):
+            try:
+
+                LOG.info(
+                    "Login attempt number {} on {} ".format(
+                        attempt + 1, self.address
+                    )
+                )
+
+                self.connect(timeout=timeout)
+                return True
+
+            except (paramiko.ssh_exception.BadHostKeyException,
+                    paramiko.ssh_exception.AuthenticationException,
+                    paramiko.ssh_exception.SSHException,
+                    socket.error) as err:
+
+                if attempt == retries - 1:
+                    LOG.error(
+                        "Maximum number of login attempts : {} .".format(err)
+                    )
+                    return False
+
+                LOG.warning("We caught an exception: {} .".format(err))
+                sleep(interval)
