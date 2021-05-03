@@ -148,7 +148,6 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
 
         sftp.close()
         transport.close()
-        #XXX perguntar o que é isso
     except Exception, e:
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
