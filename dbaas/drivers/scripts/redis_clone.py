@@ -130,12 +130,6 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
                          sys_pass, remote_path, redis_time_out):
 
     click.echo("Restoring target database...")
-    # exec_remote_command(server=host,
-    #                     username=sys_user,
-    #                     password=sys_pass,
-    #                     command=host.commands.database(
-    #                         action='stop'
-    #                     ))
     Host.run_script(
         address=host.address,
         username=sys_user,
@@ -158,27 +152,6 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
     except Exception, e:
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
-
-    # exec_remote_command(
-    #     server=host,
-    #     username=sys_user,
-    #     password=sys_pass,
-    #     command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
-    # )
-
-    # exec_remote_command(
-    #     server=host,
-    #     username=sys_user,
-    #     password=sys_pass,
-    #     command=host.commands.database(action='start')
-    # )
-
-    # exec_remote_command(
-    #     server=host,
-    #     username=sys_user,
-    #     password=sys_pass,
-    #     command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
-    # )
 
     Host.run_script(
         address=host.address,
@@ -224,12 +197,6 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
         host = instance_info['host']
 
         click.echo("Restoring target database...")
-        # exec_remote_command(server=host,
-        #                     username=sys_user,
-        #                     password=sys_pass,
-        #                     command=host.commands.database(
-        #                         action='stop'
-        #                     ))
         Host.run_script(
             address=host.address,
             username=sys_user,
@@ -260,28 +227,6 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
             click.echo('ERROR while transporting dump file: {}'.format(e))
             return False
 
-        # exec_remote_command(
-        #     server=host,
-        #     username=sys_user,
-        #     password=sys_pass,
-        #     command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
-        # )
-
-        # exec_remote_command(
-        #     server=host,
-        #     username=sys_user,
-        #     password=sys_pass,
-        #     command=host.commands.database(
-        #         action='start'
-        #     )
-        # )
-
-        # exec_remote_command(
-        #     server=host,
-        #     username=sys_user,
-        #     password=sys_pass,
-        #     command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
-        # )
         Host.run_script(
             address=host.address,
             username=sys_user,

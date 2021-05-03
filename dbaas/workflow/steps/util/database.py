@@ -4,7 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
-from util import build_context_script, check_ssh
+from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
@@ -37,14 +37,6 @@ class DatabaseStep(BaseInstanceStep):
         pass
 
     def run_script(self, script):
-        # output = {}
-        # return_code = exec_remote_command_host(
-        #     host=self.host,
-        #     command=script,
-        #     output=output,
-        #     retry=False,
-        #     get_pty=self.driver.get_start_pty_default())
-        # return return_code, output
         output = self.host.ssh.run_script(
             script=script,
             get_pty=self.driver.get_start_pty_default()
@@ -82,8 +74,7 @@ class DatabaseStep(BaseInstanceStep):
         return False
 
     def vm_is_up(self, attempts=2, wait=5, interval=10):
-        return check_ssh(
-            self.host,
+        return self.host.ssh.check(
             retries=attempts,
             wait=wait,
             interval=interval
@@ -99,15 +90,6 @@ class DatabaseStep(BaseInstanceStep):
         final_script = build_context_script(
             script_variables, script
         )
-
-        # output = {}
-        # return_code = exec_remote_command_host(self.host, final_script, output)
-        # if return_code != 0:
-        #     raise EnvironmentError(
-        #         'Could not execute replica script {}: {}'.format(
-        #             return_code, output
-        #         )
-        #     )
         self.host.ssh.run_script(final_script)
 
     @property
@@ -120,10 +102,6 @@ class DatabaseStep(BaseInstanceStep):
         )
 
         for _ in range(CHECK_ATTEMPTS):
-            # output = {}
-            # return_code = exec_remote_command_host(self.host, script, output)
-            # if return_code != 0:
-            #     raise Exception(str(output))
             output = self.host.ssh.run_script(script)
             processes = int(output['stdout'][0])
             if processes == 0:
@@ -575,10 +553,6 @@ class ResizeOpLogSize(DatabaseStep):
             parameter__name='oplogSize')
         script = build_change_oplogsize_script(
             instance=self.instance, oplogsize=oplogsize.value)
-        # output = {}
-        # return_code = exec_remote_command_host(self.host, script, output)
-        # if return_code != 0:
-        #     raise Exception(str(output))
         self.host.ssh.run_script(script)
         self.instance.port = self.instance.old_port
 
@@ -694,12 +668,6 @@ class StartMonit(DatabaseStep):
         )
 
         LOG.info(script)
-        # output = {}
-        # return_code = exec_remote_command_host(self.host, script, output)
-        # LOG.info(output)
-        # if return_code != 0:
-        #     LOG.error("Error starting monit")
-        #     LOG.error(str(output))
         self.host.ssh.run_script(script)
 
     def undo(self):

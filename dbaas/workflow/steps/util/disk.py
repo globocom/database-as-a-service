@@ -29,12 +29,6 @@ class DiskCommand(Disk):
             return
 
         for message, script in self.scripts.items():
-            # output = {}
-            # return_code = exec_remote_command_host(self.host, script, output)
-            # if return_code != 0:
-            #     raise EnvironmentError(
-            #         '{} - {}: {}'.format(message, return_code, output)
-            #     )
             self.host.ssh.run_script(script)
 
     def undo(self):

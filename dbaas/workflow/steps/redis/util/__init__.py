@@ -13,11 +13,6 @@ def change_slave_priority_file(host, original_value, final_value):
     """.format(original_value, final_value)
     script = build_context_script({}, script)
     host.ssh.run_script(script)
-    # output = {}
-    # return_code = exec_remote_command_host(host, script, output)
-    # LOG.info(output)
-    # if return_code != 0:
-    #     raise Exception(str(output))
 
 
 def change_slave_priority_instance(instance, final_value):
@@ -36,11 +31,6 @@ def reset_sentinel(host, sentinel_host, sentinel_port, service_name):
         die_if_error "Error reseting sentinel"
     """.format(sentinel_host, sentinel_port, service_name)
     script = build_context_script({}, script)
-    # output = {}
-    # return_code = exec_remote_command_host(host, script, output)
-    # LOG.info(output)
-    # if return_code != 0:
-    #     raise Exception(str(output))
     host.ssh.run_script(script)
 
 
@@ -55,9 +45,4 @@ def failover_sentinel(host, sentinel_host, sentinel_port, service_name):
         die_if_error "Error reseting sentinel"
     """.format(sentinel_host, sentinel_port, service_name)
     script = build_context_script({}, script)
-    # output = {}
-    # return_code = exec_remote_command_host(host, script, output)
-    # LOG.info(output)
-    # if return_code != 0:
-    #     raise Exception(str(output))
     host.ssh.run_script(script)

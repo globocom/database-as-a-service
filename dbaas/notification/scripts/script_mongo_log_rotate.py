@@ -105,40 +105,28 @@ def execute(task, mongodb_restarted_hosts):
         script_mongodb_rotate_formated = script_mongodb_rotate % (
             ssl_connect, ssl_connect, ssl_connect
             )
-
-        # output = {}
-        # return_code = exec_remote_command_host(host, script_is_syslog, output)
         output = host.ssh.run_script(
             script=script_is_syslog,
             raise_if_error=False
         )
-        # if return_code == 0:
         if output['exit_code'] == 0:
             msg = '\nHost {}: SYSLOG'.format(host)
             LOG.info(msg)
             task.update_details(msg, persist=True)
         else:
-            # return_code = exec_remote_command_host(
-            #     host, script_is_datalog_empty, output
-            # )
             output = host.ssh.run_script(
                 script=script_is_datalog_empty,
                 raise_if_error=False
             )
-            # if return_code == 0:
             if output['exit_code'] == 0:
                 msg = '\nHost {}: Writing to filer, but it needs restart.'.format(host)
                 LOG.info(msg)
                 task.update_details(msg, persist=True)
             else:
-                # return_code = exec_remote_command_host(
-                #     host, script_rotate_already_executed, output
-                # )
                 output = host.ssh.run_script(
                     script=script_rotate_already_executed,
                     raise_if_error=False
                 )
-                # if return_code == 0:
                 if output['exit_code'] == 0:
                     msg = '\nHost {}: Rotate already updated.'.format(host)
                     LOG.info(msg)
@@ -151,24 +139,11 @@ def execute(task, mongodb_restarted_hosts):
                     msg = '\nRemoving old rotate file.'
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
-                    # exec_remote_command_host(host, remove_log_rotate_file, output)
                     host.ssh.run_script(remove_log_rotate_file)
 
                     msg = '\nCreating new rotate scripts.'
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
-                    # exec_remote_command_host(
-                    #     host, create_mongodb_rotate_script, output
-                    # )
-                    # exec_remote_command_host(
-                    #     host, create_log_params_script, output
-                    # )
-                    # exec_remote_command_host(
-                    #     host, script_mongodb_rotate_formated, output
-                    # )
-                    # exec_remote_command_host(
-                    #     host, script_mongodb_log_params, output
-                    # )
                     host.ssh.run_script(create_mongodb_rotate_script)
                     host.ssh.run_script(create_log_params_script)
                     host.ssh.run_script(script_mongodb_rotate_formated)
@@ -177,11 +152,6 @@ def execute(task, mongodb_restarted_hosts):
                     msg = '\nCreating profile file.'
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
-                    # exec_remote_command_host(
-                    #     host,
-                    #     create_profile_file.format(user, password),
-                    #     output
-                    # )
                     host.ssh.run_script(
                         create_profile_file.format(
                             user, password
@@ -191,7 +161,6 @@ def execute(task, mongodb_restarted_hosts):
                     msg = '\nCreating cron job.'
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
-                    # exec_remote_command_host(host, add_cron_job, output)
                     host.ssh.run_script(add_cron_job)
 
                     msg = '\nHost {}: Rotate script successfully updated.'.format(host)

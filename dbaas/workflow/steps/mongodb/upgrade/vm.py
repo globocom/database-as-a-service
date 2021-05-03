@@ -30,17 +30,7 @@ class ChangeBinaryBase(VmStep):
         script = build_context_script(
             context_dict, self.__script()
         )
-
-        # output = {}
-        # return_code = exec_remote_command(
-        #     self.host.address, self.host.user, self.host.password,
-        #     script, output
-        # )
-        # if return_code != 0:
-        #     raise EnvironmentError(
-        #         'Could change binary {}: {}'.format(return_code, output)
-        #     )
-        self.host.ssh.run_scrip(
+        self.host.ssh.run_script(
             script
         )
 

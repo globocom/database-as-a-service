@@ -61,7 +61,6 @@ def execute_scheduled_maintenance(self, maintenance_id):
             param_dict[param.parameter_name] = param_function(host.id)
 
         main_script = build_context_script(param_dict, maintenance.main_script)
-        # exit_status = exec_remote_command_host(host, main_script, main_output)
         main_output = host.ssh.run_script(
             script=main_script,
             raise_if_error=False
@@ -71,16 +70,12 @@ def execute_scheduled_maintenance(self, maintenance_id):
             hm.status = hm.SUCCESS
         else:
             if maintenance.rollback_script:
-                # rollback_output = {}
                 hm.status = hm.ROLLBACK
                 hm.save()
 
                 rollback_script = build_context_script(
                     param_dict, maintenance.rollback_script
                 )
-                # exit_status = exec_remote_command_host(
-                #     host, rollback_script, rollback_output
-                # )
                 rollback_output = host.ssh.run_script(
                     script=rollback_script,
                     raise_if_error=False

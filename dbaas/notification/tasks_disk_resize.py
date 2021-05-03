@@ -216,10 +216,6 @@ def disk_auto_resize(database, current_size, usage_percentage):
 def host_mount_data_percentage(address, task):
     host = Host.objects.filter(address=address).first()
 
-    # output_message = {}
-    # command_status = exec_remote_command_host(
-    #     host, 'df -hk | grep /data', output_message
-    # )
     try:
         output = host.ssh.run_script('df -hk | grep /data')
     except ScriptFailedException as err:

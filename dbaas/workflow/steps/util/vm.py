@@ -159,11 +159,7 @@ class CheckHostName(VmStep):
 
     @property
     def is_hostname_valid(self):
-        # output = {}
         script = "hostname | grep 'localhost.localdomain' | wc -l"
-        # return_code = exec_remote_command_host(self.host, script, output)
-        # if return_code != 0:
-        #     raise EnvironmentError(str(output))
         output = self.host.ssh.run_script(script)
 
         return int(output['stdout'][0]) < 1
@@ -181,7 +177,6 @@ class CheckHostNameAndReboot(CheckHostName):
     def do(self):
         if not self.is_hostname_valid:
             script = '/sbin/reboot -f > /dev/null 2>&1 &'
-            # exec_remote_command_host(self.host, script)
             self.host.ssh.run_script(script)
 
 
@@ -199,10 +194,8 @@ class CheckAccessToMaster(VmStep):
         if origin == destiny:
             return
 
-        # output = {}
         script = "(echo >/dev/tcp/{}/{}) &>/dev/null && exit 0 || exit 1"
         script = script.format(destiny.address, port)
-        # return_code = exec_remote_command_host(origin, script, output)
         try:
             output = origin.ssh.run_script(script)
         except origin.shh.ScriptFailedException:

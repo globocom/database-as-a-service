@@ -218,10 +218,6 @@ def scp_get_file(server, username, password, localpath, remotepath):
 def get_remote_file_content(file_path, host):
     output = {}
     script = 'cat {}'.format(file_path)
-    # return_code = exec_remote_command_host(host, script, output)
-
-    # if return_code != 0:
-    #     raise Exception(str(output))
     output = host.ssh.run_script(script)
 
     return output['stdout'][0].strip()
@@ -234,113 +230,6 @@ def get_host_os_description(host):
 def get_mongodb_key_file(infra):
     instance = infra.instances.first()
     return get_remote_file_content('/data/mongodb.key', instance.hostname)
-
-
-def exec_remote_command(server, username, password, command, output={},
-                        retry=False, get_pty=False):
-
-    try:
-        LOG.info(
-            "Executing command [%s] on remote server %s" % (command, server))
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(server, username=username, password=password)
-
-        stdin, stdout, stderr = client.exec_command(command, get_pty=get_pty)
-        log_stdout = stdout.readlines()
-        log_stderr = stderr.readlines()
-        exit_status = stdout.channel.recv_exit_status()
-        LOG.info("Comand return code: %s, stdout: %s, stderr %s" %
-                 (exit_status, log_stdout, log_stderr))
-        output['stdout'] = log_stdout
-        output['stderr'] = log_stderr
-        return exit_status
-    except (paramiko.ssh_exception.BadHostKeyException,
-            paramiko.ssh_exception.AuthenticationException,
-            paramiko.ssh_exception.SSHException,
-            socket.error) as e:
-        msg = "We caught an exception: {}.".format(e)
-        LOG.warning(msg)
-        if retry:
-            LOG.warning('It will retry in 10 seconds!')
-            sleep(10)
-            return exec_remote_command(server, username,
-                password, command, output, retry=False)
-        output['exception'] = str(e)
-        return None
-
-
-def exec_remote_command_host(host, command, output=None,
-                             retry=False, get_pty=False):
-    if output is None:
-        output = {}
-
-    return exec_remote_command(
-        server=host.address,
-        username=host.user,
-        password=host.password,
-        command=command,
-        output=output,
-        retry=retry,
-        get_pty=get_pty
-    )
-
-
-def exec_command_on_host(host, command, retry=False):
-    output = {}
-
-    exit_code = exec_remote_command_host(host, command, output, retry)
-
-    return output, exit_code
-
-
-def run_script(self, script, host):
-    output = {}
-    return_code = exec_remote_command_host(host, script, output)
-    if return_code != 0:
-        raise EnvironmentError(
-            'Could not execute script {}: {}'.format(
-                return_code, output
-            )
-        )
-    return output
-
-
-def check_ssh(host, retries=30, wait=30, interval=40, timeout=None):
-    server = host.address
-    username = host.user
-    password = host.password
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    LOG.info("Waiting %s seconds to check %s ssh connection..." %
-             (wait, server))
-    sleep(wait)
-
-    for attempt in range(retries):
-        try:
-
-            LOG.info("Login attempt number %i on %s " % (attempt + 1, server))
-
-            ssh.connect(server, port=22, username=username,
-                        password=password, timeout=timeout, allow_agent=True,
-                        look_for_keys=True, compress=False)
-            return True
-
-        except (paramiko.ssh_exception.BadHostKeyException,
-                paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException,
-                socket.error) as e:
-
-            if attempt == retries - 1:
-                LOG.error("Maximum number of login attempts : %s ." % (e))
-                return False
-
-            LOG.warning("We caught an exception: %s ." % (e))
-            LOG.info("Wating %i seconds to try again..." % (interval))
-            sleep(interval)
 
 
 def get_vm_name(prefix, sufix, vm_number):

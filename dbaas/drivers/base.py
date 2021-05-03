@@ -300,21 +300,13 @@ class BaseDriver(object):
         pass
 
     def agents_command(self, host, command):
-        # from util import exec_remote_command_host
 
         for agent in self.get_database_agents():
             script = host.commands.exec_service_command(
                 service_name=agent,
                 action=command
             )
-            # output = {}
-            # return_code = exec_remote_command_host(host, script, output)
             host.ssh.run_script(script)
-            # LOG.info(
-            #     'Running {} - Return Code: {}. Output script: {}'.format(
-            #         script, return_code, output
-            #     )
-            # )
 
     def start_agents(self, host):
         self.agents_command(host, "start")
