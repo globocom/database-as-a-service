@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 from dbaas_credentials.models import CredentialType
-from util import check_ssh, get_credentials_for
+from util import get_credentials_for
 from base import BaseInstanceStep
 
 CHANGE_MASTER_ATTEMPS = 30
@@ -11,8 +11,7 @@ CHANGE_MASTER_SECONDS = 15
 class HostStatus(object):
     @staticmethod
     def is_up(host_obj, attempts=2, wait=5, interval=10):
-        return check_ssh(
-            host_obj,
+        return host_obj.ssh.check(
             retries=attempts,
             wait=wait,
             interval=interval
@@ -47,7 +46,7 @@ class WaitingBeReady(VmStep):
         return "Waiting for VM be ready..."
 
     def do(self):
-        host_ready = check_ssh(self.host, wait=5, interval=10)
+        host_ready = self.host.ssh.check(wait=5, interval=10)
         if not host_ready:
             raise EnvironmentError('VM is not ready')
 
