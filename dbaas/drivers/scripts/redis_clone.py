@@ -49,7 +49,9 @@ class RedisDriver(object):
 
 
 def exec_remote_command(server, username, password, command, output={}):
-    raise Exception("O_O")
+    raise Exception(
+        "U must use the new method. run_script of HostSSH class"
+    )
     try:
         click.echo(
             "Executing command [%s] on remote server %s" % (command, server))

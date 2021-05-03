@@ -171,7 +171,9 @@ class VolumeProviderBase(BaseInstanceStep):
         return vol['path']
 
     def run_script(self, script, host=None):
-        raise Exception("O_O")
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         from util import exec_remote_command_host
         output = {}
         return_code = exec_remote_command_host(

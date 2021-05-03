@@ -59,7 +59,9 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
         return True
 
     def execute_script(self, script):
-        raise Exception("O_O")
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:

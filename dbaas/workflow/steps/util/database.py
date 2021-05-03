@@ -216,13 +216,6 @@ class StartRsyslog(DatabaseStep):
         script = self.host.commands.rsyslog(
             action=action
         )
-        # return_code, output = self.run_script(script)
-        # if return_code != 0:
-        #     raise EnvironmentError(
-        #         'Could not {} rsyslog {}: {}'.format(
-        #             action, return_code, output
-        #         )
-        #     )
         self.host.ssh.run_script(script)
 
     def _start(self):

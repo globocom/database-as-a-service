@@ -119,7 +119,9 @@ class PlanStep(BaseInstanceStep):
         pass
 
     def run_script(self, script, build_script=True):
-        raise Exception("O_O")
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         if build_script:
             script = build_context_script(self.script_variables, script)
         output = {}
