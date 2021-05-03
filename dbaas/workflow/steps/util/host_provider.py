@@ -211,6 +211,7 @@ class Provider(BaseInstanceStep):
         host.address = content["address"]
         host.user = self.vm_credential.user
         host.password = self.vm_credential.password
+        host.private_key = self.vm_credential.private_key
         host.provider = self.provider
         host.identifier = content["id"]
         host.offering = offering
