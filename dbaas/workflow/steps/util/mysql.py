@@ -7,7 +7,6 @@ from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
-from util import exec_remote_command_host
 
 
 class MySQLStep(BaseInstanceStep):
@@ -16,6 +15,9 @@ class MySQLStep(BaseInstanceStep):
         pass
 
     def run_script(self, script):
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         output = {}
         return_code = exec_remote_command_host(
             self.host, script, output
@@ -142,13 +144,17 @@ class DisableReplication(MySQLStep):
         if not self.is_valid:
             return
         script = build_uncomment_skip_slave_script()
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
+        
+
 
     def undo(self):
         if not self.is_valid:
             return
         script = build_comment_skip_slave_script()
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
 
 class DisableReplicationRecreateSlave(DisableReplication):
@@ -298,8 +304,7 @@ class SetFilePermission(MySQLStep):
             """
 
     def do(self):
-
-        self.run_script(self.script)
+        self.host.ssh.run_script(self.script)
 
 
 class RunMySQLUpgrade(MySQLStep):
@@ -312,7 +317,8 @@ class RunMySQLUpgrade(MySQLStep):
             self.infra.user, self.infra.password)
 
     def do(self):
-        self.run_script(self.script)
+        # self.run_script(self.script)
+        self.host.ssh.run_script(self.script)
 
 
 class AuditPlugin(MySQLStep):
@@ -350,6 +356,7 @@ class CheckIfAuditPluginIsInstalled(AuditPlugin):
         if not self.audit_plugin_status:
             raise EnvironmentError('The audit plugin is not installed.')
 
+
 class SkipSlaveStart(MySQLStep):
     def __unicode__(self):
         return "Skipping slave start parameter..."
@@ -359,7 +366,8 @@ class SkipSlaveStart(MySQLStep):
         return "echo 'skip_slave_start = 1' >> /etc/my.cnf"
 
     def do(self):
-        self.run_script(self.script)
+        # self.run_script(self.script)
+        self.host.ssh.run_script(self.script)
 
 
 class DisableLogBin(MySQLStep):
@@ -371,7 +379,8 @@ class DisableLogBin(MySQLStep):
         return "sed -e 's/^log_bin/#log_bin/' -i /etc/my.cnf"
 
     def do(self):
-        self.run_script(self.script)
+        # self.run_script(self.script)
+        self.host.ssh.run_script(self.script)
 
 
 class SetServerid(MySQLStep):
@@ -394,7 +403,8 @@ class SetServerid(MySQLStep):
         """.format(self.serverid)
 
     def do(self):
-        self.run_script(self.script)
+        # self.run_script(self.script)
+        self.host.ssh.run_script(self.script)
 
 
 class SetServeridMigrate(SetServerid):

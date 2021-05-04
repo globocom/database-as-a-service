@@ -22,7 +22,7 @@ def update_instance_variables(function):
 
 class DatabaseScript(object):
     def __init__(self, instance, host=None, database=None,
-                 plan=None, infra=None, disk_offering=None, 
+                 plan=None, infra=None, disk_offering=None,
                  need_move_data=False, need_master_variables=False):
         self.instance = instance
         self.host = host or instance.hostname

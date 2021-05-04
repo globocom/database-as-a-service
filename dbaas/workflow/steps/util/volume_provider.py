@@ -5,7 +5,7 @@ from requests import post, delete, get
 from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
 from workflow.steps.util.base import HostProviderClient
-from util import get_credentials_for, exec_remote_command_host
+from util import get_credentials_for
 from physical.models import Volume
 from base import BaseInstanceStep
 
@@ -171,6 +171,10 @@ class VolumeProviderBase(BaseInstanceStep):
         return vol['path']
 
     def run_script(self, script, host=None):
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
+        from util import exec_remote_command_host
         output = {}
         return_code = exec_remote_command_host(
             host or self.host,
@@ -360,6 +364,7 @@ class VolumeProviderBase(BaseInstanceStep):
         command = response.json()['command']
         if command:
             self.run_script(command)
+            self.host.ssh.run_script(command)
 
     def do(self):
         raise NotImplementedError
@@ -545,7 +550,8 @@ class MountDataVolume(VolumeProviderBase):
             return
 
         script = self.get_mount_command(self.volume)
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -576,14 +582,16 @@ class MountDataLatestVolume(MountDataVolume):
             data_directory=self.directory,
             fstab=False
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         script = self.get_umount_command(
             self.latest_disk,
             data_directory=self.directory,
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
 
 class UnmountDataLatestVolume(MountDataLatestVolume):
@@ -623,14 +631,16 @@ class MountDataVolumeMigrate(MountDataVolume):
             data_directory=self.directory,
             fstab=False
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         script = self.get_umount_command(
             self.host_migrate_volume,
             data_directory=self.directory,
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
 
 class MountDataVolumeRecreateSlave(MountDataVolumeMigrate):
@@ -932,7 +942,7 @@ class CopyFilesMigrate(VolumeProviderBase):
             self.dest_directory,
             self.snap_dir
         )
-        self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -999,7 +1009,8 @@ class CopyFiles(VolumeProviderBase):
             self.source_directory,
             self.dest_directory
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -1026,7 +1037,8 @@ class CopyPermissions(VolumeProviderBase):
                   ' && stat -c "%U:%G" {0} '
                   '| xargs -I{{}} chown {{}} {1}').format(
                     self.source_directory, self.dest_directory)
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
 
 class ScpFromSnapshotMigrate(VolumeProviderBase):
@@ -1065,7 +1077,8 @@ class ScpFromSnapshotMigrate(VolumeProviderBase):
             self.host_migrate.host.future_host.address,
             self.dest_dir
         )
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -1111,7 +1124,8 @@ class UnmountActiveVolume(VolumeProviderBase):
 
         script = self.get_umount_command(self.volume)
         if script:
-            self.run_script(script)
+            # self.run_script(script)
+            self.host.ssh.run_script(script)
 
     def undo(self):
         pass
@@ -1302,7 +1316,8 @@ class AddHostsAllowMigrate(VolumeProviderBase):
             self.original_host.address,
         )
 
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def add_hosts_allow(self):
         self._do_hosts_allow(
@@ -1347,7 +1362,8 @@ class CreatePubKeyMigrate(VolumeProviderBase):
             self.original_host.address
         )
 
-        return self.run_script(script, host=self.original_host)
+        # return self.run_script(script, host=self.original_host)
+        return self.original_host.ssh.run_script(script)
 
     @property
     def environment(self):
@@ -1359,7 +1375,8 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         )
         pub_key = output['stdout'][0]
         script = 'echo "{}" >> ~/.ssh/authorized_keys'.format(pub_key)
-        self.run_script(script)
+        # self.run_script(script)
+        self.host.ssh.run_script(script)
 
     def remove_pub_key(self):
         self._do_pub_key(
@@ -1553,7 +1570,9 @@ class DetachDisk(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             script = self.get_mount_command(self.volume)
-            self.run_script(script)
+            # self.run_script(script)
+            self.host.ssh.run_script(script)
+
 
 
 class MoveDisk(VolumeProviderBase):

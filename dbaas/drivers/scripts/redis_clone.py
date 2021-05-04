@@ -8,6 +8,8 @@ import logging
 import ast
 from contextlib import contextmanager
 
+from physical.models import Host
+
 
 class RedisDriver(object):
 
@@ -47,7 +49,9 @@ class RedisDriver(object):
 
 
 def exec_remote_command(server, username, password, command, output={}):
-
+    raise Exception(
+        "U must use the new method. run_script of HostSSH class"
+    )
     try:
         click.echo(
             "Executing command [%s] on remote server %s" % (command, server))
@@ -128,12 +132,14 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
                          sys_pass, remote_path, redis_time_out):
 
     click.echo("Restoring target database...")
-    exec_remote_command(server=host,
-                        username=sys_user,
-                        password=sys_pass,
-                        command=host.commands.database(
-                            action='stop'
-                        ))
+    Host.run_script(
+        address=host.address,
+        username=sys_user,
+        password=sys_pass,
+        script=host.commands.database(
+            action='stop'
+        )
+    )
 
     try:
         transport = paramiko.Transport((host, 22))
@@ -148,25 +154,23 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
 
-    exec_remote_command(
-        server=host,
+    Host.run_script(
+        address=host.address,
         username=sys_user,
         password=sys_pass,
-        command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
+        script="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
     )
-
-    exec_remote_command(
-        server=host,
+    Host.run_script(
+        address=host.address,
         username=sys_user,
         password=sys_pass,
-        command=host.commands.database(action='start')
+        script=host.commands.database(action='start')
     )
-
-    exec_remote_command(
-        server=host,
+    Host.run_script(
+        address=host.address,
         username=sys_user,
         password=sys_pass,
-        command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
+        script="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
     )
 
     driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
@@ -194,12 +198,14 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
         host = instance_info['host']
 
         click.echo("Restoring target database...")
-        exec_remote_command(server=host,
-                            username=sys_user,
-                            password=sys_pass,
-                            command=host.commands.database(
-                                action='stop'
-                            ))
+        Host.run_script(
+            address=host.address,
+            username=sys_user,
+            password=sys_pass,
+            script=host.commands.database(
+                action='stop'
+            )
+        )
 
     for instance_info in cluster_info:
         sys_user = instance_info['sys_user']
@@ -222,29 +228,26 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
             click.echo('ERROR while transporting dump file: {}'.format(e))
             return False
 
-        exec_remote_command(
-            server=host,
+        Host.run_script(
+            address=host.address,
             username=sys_user,
             password=sys_pass,
-            command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
+            script="sed -i 's/appendonly/#appendonly/g' /data/redis.conf"
         )
-
-        exec_remote_command(
-            server=host,
+        Host.run_script(
+            address=host.address,
             username=sys_user,
             password=sys_pass,
-            command=host.commands.database(
+            script=host.commands.database(
                 action='start'
             )
         )
-
-        exec_remote_command(
-            server=host,
+        Host.run_script(
+            address=host.address,
             username=sys_user,
             password=sys_pass,
-            command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
+            script="sed -i 's/#appendonly/appendonly/g' /data/redis.conf"
         )
-
         driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
 
         with driver.redis() as client:

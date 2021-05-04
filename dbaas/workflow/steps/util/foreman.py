@@ -3,7 +3,7 @@ import subprocess
 from dbaas_credentials.models import CredentialType
 from dbaas_foreman import get_foreman_provider
 
-from util import exec_command_on_host, get_or_none_credentials_for
+from util import get_or_none_credentials_for
 from base import BaseInstanceStep
 from workflow.steps.util.base import HostProviderClient
 from workflow.steps.util.vm import HostStatus
@@ -35,7 +35,7 @@ class Foreman(BaseInstanceStep):
     def fqdn(self):
         if self.host_status.is_up(self.host):
             script = 'hostname -f'
-            output, exit_code = exec_command_on_host(self.host, script)
+            output = self.host.ssh.run_script(script)
             return output['stdout'][0].strip()
         vm_properties = self.host_prov_client.get_vm_by_host(self.host)
         if vm_properties and vm_properties.fqdn:

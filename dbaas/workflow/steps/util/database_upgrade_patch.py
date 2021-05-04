@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from workflow.steps.util.base import BaseInstanceStep
-from util import exec_remote_command_host
 import os
 import logging
 
@@ -60,6 +59,9 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
         return True
 
     def execute_script(self, script):
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -92,7 +94,8 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         chown -R mongodb:mongodb mongodb/
         """.format(download_script=download_script, dir_name=dir_name)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)
 
 
 class MongoDBCHGBinStepRollback(MongoDBCHGBinStep):
@@ -124,12 +127,22 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         rm -f redis
         ln -s {dir_name} redis
         cd redis && make
-        cp /mnt/software/db/redis/redis-trib-gcom.rb /usr/local/redis/src/redis-trib-gcom.rb
+        wget -P /usr/local/redis/src/ https://artifactory.globoi.com/artifactory/generic-local/db/redis/redis-trib-gcom.rb
         cd ..
         chown -R redis:redis redis/
         """.format(download_script=download_script, dir_name=dir_name)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)
+
+class RedisCHGBinStepRollback(RedisCHGBinStep):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(RedisCHGBinStepRollback, self).do()
+
 
 
 class MySQLCHGBinStep(DatabaseUpgradePatchStep):
@@ -144,4 +157,5 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
         yum -y localinstall --nogpgcheck *.rpm
         """.format(patch_path=patch_path)
 
-        self.execute_script(script)
+        # self.execute_script(script)
+        self.host.ssh.run_script(script)

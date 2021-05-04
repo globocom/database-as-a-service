@@ -43,6 +43,8 @@ class HostFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Host
 
     hostname = factory.Sequence(lambda n: 'host{0}.mydomain.com'.format(n))
+    user = 'fake_user'
+    password = 'fake_pass'
 
 
 class DiskOfferingFactory(factory.DjangoModelFactory):
