@@ -1604,7 +1604,7 @@ class Resize2fs(VolumeProviderBase):
 
         script = self.get_resize2fs_command(self.volume)
         if script:
-            self.run_script(script)
+            self.host.ssh.run_script(script)
 
     def undo(self):
         pass
