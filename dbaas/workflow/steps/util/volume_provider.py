@@ -363,7 +363,6 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         command = response.json()['command']
         if command:
-            self.run_script(command)
             self.host.ssh.run_script(command)
 
     def do(self):
@@ -1009,7 +1008,6 @@ class CopyFiles(VolumeProviderBase):
             self.source_directory,
             self.dest_directory
         )
-        # self.run_script(script)
         self.host.ssh.run_script(script)
 
     def undo(self):
@@ -1037,7 +1035,6 @@ class CopyPermissions(VolumeProviderBase):
                   ' && stat -c "%U:%G" {0} '
                   '| xargs -I{{}} chown {{}} {1}').format(
                     self.source_directory, self.dest_directory)
-        # self.run_script(script)
         self.host.ssh.run_script(script)
 
 
@@ -1077,7 +1074,6 @@ class ScpFromSnapshotMigrate(VolumeProviderBase):
             self.host_migrate.host.future_host.address,
             self.dest_dir
         )
-        # self.run_script(script)
         self.host.ssh.run_script(script)
 
     def undo(self):
@@ -1124,7 +1120,6 @@ class UnmountActiveVolume(VolumeProviderBase):
 
         script = self.get_umount_command(self.volume)
         if script:
-            # self.run_script(script)
             self.host.ssh.run_script(script)
 
     def undo(self):
@@ -1316,7 +1311,6 @@ class AddHostsAllowMigrate(VolumeProviderBase):
             self.original_host.address,
         )
 
-        # self.run_script(script)
         self.host.ssh.run_script(script)
 
     def add_hosts_allow(self):
@@ -1361,8 +1355,6 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         script = func(
             self.original_host.address
         )
-
-        # return self.run_script(script, host=self.original_host)
         return self.original_host.ssh.run_script(script)
 
     @property
@@ -1375,7 +1367,6 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         )
         pub_key = output['stdout'][0]
         script = 'echo "{}" >> ~/.ssh/authorized_keys'.format(pub_key)
-        # self.run_script(script)
         self.host.ssh.run_script(script)
 
     def remove_pub_key(self):
@@ -1570,9 +1561,7 @@ class DetachDisk(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             script = self.get_mount_command(self.volume)
-            # self.run_script(script)
             self.host.ssh.run_script(script)
-
 
 
 class MoveDisk(VolumeProviderBase):
