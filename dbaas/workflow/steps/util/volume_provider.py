@@ -116,7 +116,8 @@ class VolumeProviderBase(BaseInstanceStep):
             "to_address": to_address,
             "snapshot_id": snapshot_id,
             "zone": zone,
-            "vm_name": vm_name
+            "vm_name": vm_name,
+            "team_name": self.team_name
         }
 
         response = post(url, json=data, headers=self.headers)

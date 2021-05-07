@@ -51,6 +51,16 @@ class BaseInstanceStep(object):
         return self.infra.databases.first()
 
     @property
+    def team_name(self):
+        if self.has_database:
+            return self.database.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
+
+    @property
     def plan(self):
         return self.infra.plan
 
