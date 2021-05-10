@@ -11,7 +11,6 @@ from django.utils.encoding import python_2_unicode_compatible
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
 from physical.models import Vip
-from util import check_ssh
 
 
 LOG = logging.getLogger(__name__)
@@ -49,6 +48,16 @@ class BaseInstanceStep(object):
     @property
     def database(self):
         return self.infra.databases.first()
+
+    @property
+    def team_name(self):
+        if self.has_database:
+            return self.database.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
 
     @property
     def plan(self):
@@ -221,8 +230,7 @@ class BaseInstanceStep(object):
         return False
 
     def vm_is_up(self, attempts=2, wait=5, interval=10):
-        return check_ssh(
-            self.host,
+        return self.host.ssh.check(
             retries=attempts,
             wait=wait,
             interval=interval
@@ -235,9 +243,7 @@ class BaseInstanceStep(object):
         return self.__is_instance_status(False, attempts=attempts)
 
     def run_script(self, script, host=None):
-        from util import run_script
-
-        return run_script(self, script, host or self.host)
+        return (host or self.host).ssh.run_script(script)
 
     @property
     def is_first_instance(self):

@@ -14,13 +14,15 @@ from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields.encrypted import EncryptedCharField
+from django_extensions.db.fields.encrypted import (EncryptedCharField,
+                                                   EncryptedTextField)
 from slugify import slugify
 
 from drivers import DatabaseInfraStatus
 from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
 from physical.commands import HostCommands
+from physical.ssh import HostSSH
 from physical.database_scripts import DatabaseScript
 from system.models import Configuration
 from util.models import BaseModel
@@ -1175,6 +1177,9 @@ class Host(BaseModel):
     offering = models.ForeignKey(Offering, null=True)
     user = models.CharField(max_length=255, blank=True, null=True)
     password = EncryptedCharField(max_length=255, blank=True, null=True)
+    private_key = EncryptedTextField(
+        verbose_name="Private Key", blank=True, null=True
+    )
     identifier = models.CharField(
         verbose_name=_("Identifier"),
         max_length=255, default=''
@@ -1199,16 +1204,9 @@ class Host(BaseModel):
 
     def update_os_description(self, ):
         from util import get_host_os_description
-
-        try:
-            os = get_host_os_description(self)
-        except Exception as e:
-            error = "Could not get os description for host {}. Error: {}"
-            error = error.format(self, e)
-            LOG.error(error)
-        else:
-            self.os_description = os
-            self.save()
+        os = get_host_os_description(self)
+        self.os_description = os
+        self.save()
 
     def database_instance(self):
         for instance in self.instances.all():
@@ -1246,6 +1244,25 @@ class Host(BaseModel):
     @property
     def commands(self):
         return HostCommands(self)
+
+    @property
+    def ssh(self):
+        return HostSSH(
+            address=self.address,
+            username=self.user,
+            password=self.password,
+            private_key=self.private_key
+        )
+
+    @staticmethod
+    def run_script(address, username, script,
+                   password=None, private_key=None):
+        return HostSSH(
+            address=address,
+            username=username,
+            password=password,
+            private_key=private_key
+        ).run_script(script)
 
     @property
     def is_ol6(self):

@@ -95,4 +95,4 @@ class CustomCommandOL6TestCase(CommandsBaseTestCase, TestCase):
 class CustomCommandOL7TestCase(CommandsBaseTestCase, TestCase):
     OS_VERSION = '7.10'
     HOST_COMMAND_CLASS = HostCommandOL7
-    EXPECTED_CMD_TMPL = 'systemctl {action} {service_name}.service'
+    EXPECTED_CMD_TMPL = 'sudo systemctl {action} {service_name}.service'

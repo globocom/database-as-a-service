@@ -29,6 +29,11 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.database_upgrade_patch.RedisCHGBinStep',
         )
 
+    def get_change_binaries_upgrade_patch_steps_rollback(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.RedisCHGBinStepRollback',
+        )
+
     def get_database_change_persistence_steps(self):
         return [{
             'Disable monitoring': (
@@ -63,6 +68,7 @@ class RedisSingle(BaseRedis):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -110,6 +116,7 @@ class RedisSingle(BaseRedis):
     def get_clone_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -155,6 +162,7 @@ class RedisSingle(BaseRedis):
             )
         }]
 
+    '''
     def get_host_migrate_steps(self):
         return [{
             'Migrating': (
@@ -182,7 +190,6 @@ class RedisSingle(BaseRedis):
                  '.RemoveAccessRecreateSlave'),
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
-
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
@@ -199,6 +206,58 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
+        }]
+    '''
+
+    def get_base_host_migrate_steps(self):
+        return (
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.plan.ConfigureLog',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
+            'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
+            ('workflow.steps.util.volume_provider'
+             '.WaitSnapshotAvailableMigrate'),
+            'workflow.steps.util.disk.CleanDataRecreateSlave',
+            'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
+            ('workflow.steps.util.volume_provider'
+             '.MountDataVolumeRecreateSlave'),
+            'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+            ('workflow.steps.util.volume_provider'
+             '.UmountDataVolumeRecreateSlave'),
+            ('workflow.steps.util.volume_provider'
+             '.RemoveAccessRecreateSlave'),
+            'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+            'workflow.steps.util.disk.RemoveDeprecatedFiles',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )
+
+    def get_host_migrate_steps_cleaning_up(self):
+        return (
+            'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+        )
+
+    def get_host_migrate_steps(self):
+        return [{
+            'Migrating':
+                self.get_base_host_migrate_steps() +
+                self.get_host_migrate_steps_cleaning_up()
         }]
 
     def get_filer_migrate_steps(self):
@@ -395,6 +454,7 @@ class RedisSentinel(BaseRedis):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -447,6 +507,7 @@ class RedisSentinel(BaseRedis):
     def get_clone_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -573,6 +634,7 @@ class RedisCluster(BaseRedis):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
@@ -752,3 +814,254 @@ class RedisCluster(BaseRedis):
     @property
     def driver_name(self):
         return 'redis_cluster'
+
+
+class RedisGenericGCE(object):
+    def get_single_host_migrate_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop previous database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+
+
+    def get_sentinel_host_migrate_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop pevious database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+                'workflow.steps.util.plan.InitializationMigrateRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.plan.InitializationMigrate',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.util.database.WaitForReplication',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+
+        '''
+        return (
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.plan.ConfigureLog',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+            'workflow.steps.util.database.SetSlave',
+            'workflow.steps.util.database.WaitForReplication',
+            'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.disk.ChangeSnapshotOwner',
+        )
+        '''
+
+    def get_cluster_host_migrate_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop pevious database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+                'workflow.steps.util.plan.InitializationMigrateRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.plan.InitializationMigrate',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+        '''
+        return (
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.redis.cluster.AddSlaveNode',
+            'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+            'workflow.steps.redis.cluster.CheckClusterStatus',
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            'workflow.steps.util.disk.ChangeSnapshotOwner',
+        )
+        '''
+
+
+class RedisSingleGCE(RedisSingle, RedisGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_single_host_migrate_steps()
+
+class RedisNoPersistenceGCE(RedisNoPersistence, RedisGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_single_host_migrate_steps()
+
+class RedisSentinelGCE(RedisSentinel, RedisGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_sentinel_host_migrate_steps()
+
+class RedisSentinelNoPersistenceGCE(RedisSentinelNoPersistence, RedisGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_sentinel_host_migrate_steps()
+
+class RedisClusterGCE(RedisCluster, RedisGenericGCE):
+    def get_host_migrate_steps(self):
+        return self.get_cluster_host_migrate_steps()

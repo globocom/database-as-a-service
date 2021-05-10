@@ -10,12 +10,12 @@ from dbaas.tests.helpers import DatabaseHelper
 from physical.models import Environment
 
 
-def fake_exec_remote_command(*args, **kw):
-    output = args[-1]
-    output['stdout'] = ['978']
-
-
 FAKE_MAKE_DATABASE_BACKUP_HOUR = [12, 23]
+FAKE_RUN_SCRIPT_OUTPUT = {
+       'stdout': ['978'],
+       'stdin': '',
+       'stderr': ''
+}
 
 
 class BaseTestCase(TestCase):
@@ -59,7 +59,9 @@ class BaseTestCase(TestCase):
             plan=self.plan,
             endpoint='127.0.0.1:1111'
         )
-        self.host = mommy.make('Host')
+        self.host = mommy.make_recipe(
+              'physical.host',
+       )
         self.instance = mommy.make(
             'Instance', databaseinfra=self.infra,
             hostname=self.host
@@ -84,7 +86,9 @@ class CreateSnapshotTestCase(BaseTestCase):
            new=MagicMock())
     @patch('backup.tasks.VolumeProviderBase',
            new=MagicMock())
-    @patch('backup.tasks.exec_remote_command_host',
+    @patch('physical.ssh.HostSSH.run_script',
+           new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
+    @patch('physical.ssh.HostSSH.connect',
            new=MagicMock())
     @patch('backup.tasks.register_backup_dbmonitor',
            new=MagicMock())
@@ -111,7 +115,9 @@ class CreateSnapshotTestCase(BaseTestCase):
 @patch('backup.tasks.mysql_binlog_save',
        new=MagicMock())
 @patch('backup.tasks.VolumeProviderBase.take_snapshot')
-@patch('backup.tasks.exec_remote_command_host',
+@patch('physical.ssh.HostSSH.run_script',
+       new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
+@patch('physical.ssh.HostSSH.connect',
        new=MagicMock())
 @patch('backup.tasks.register_backup_dbmonitor',
        new=MagicMock())
@@ -175,7 +181,9 @@ class SnapshotStatusTestCase(BaseTestCase):
 @patch('backup.tasks.mysql_binlog_save')
 @patch('backup.tasks.VolumeProviderBase.take_snapshot',
        new=MagicMock())
-@patch('backup.tasks.exec_remote_command_host',
+@patch('physical.ssh.HostSSH.run_script',
+       new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
+@patch('physical.ssh.HostSSH.connect',
        new=MagicMock())
 @patch('backup.tasks.register_backup_dbmonitor',
        new=MagicMock())
@@ -245,27 +253,31 @@ class BinlogSaveTestCase(BaseTestCase):
 @patch('physical.models.DatabaseInfra.get_driver',
        new=MagicMock())
 class SnapshotSizeTestCase(BaseTestCase):
-    @patch('backup.tasks.exec_remote_command_host',
-           side_effect=fake_exec_remote_command)
-    def test_get_snapshot_size(self, exec_remote_command_mock):
+    @patch('physical.ssh.HostSSH.run_script',
+           return_value=FAKE_RUN_SCRIPT_OUTPUT)
+    @patch('physical.ssh.HostSSH.connect',
+           new=MagicMock())
+    def test_get_snapshot_size(self, run_script_mock):
         snapshot = make_instance_snapshot_backup(
             instance=self.instance,
             error={},
             group=self.group,
         )
-        self.assertTrue(exec_remote_command_mock.called)
+        self.assertTrue(run_script_mock.called)
         self.assertEqual(snapshot.size, 978)
 
-    @patch('backup.tasks.exec_remote_command_host',
+    @patch('physical.models.HostSSH.run_script',
            side_effect=IndexError)
+    @patch('physical.models.HostSSH.connect',
+           new=MagicMock())
     def test_snapshot_size_0_when_got_a_error_on_command(
-            self, exec_remote_command_mock):
+            self, run_script_mock):
         snapshot = make_instance_snapshot_backup(
             instance=self.instance,
             error={},
             group=self.group,
         )
-        self.assertTrue(exec_remote_command_mock.called)
+        self.assertTrue(run_script_mock.called)
         self.assertEqual(snapshot.size, 0)
 
 
@@ -279,8 +291,10 @@ class SnapshotSizeTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.VolumeProviderBase.take_snapshot',
        new=MagicMock())
-@patch('backup.tasks.exec_remote_command_host',
+@patch('physical.ssh.HostSSH.run_script',
        side_effect=IndexError)
+@patch('physical.ssh.HostSSH.connect',
+       new=MagicMock())
 @patch('backup.tasks.register_backup_dbmonitor',
        new=MagicMock())
 @patch('physical.models.DatabaseInfra.get_driver',
@@ -288,7 +302,7 @@ class SnapshotSizeTestCase(BaseTestCase):
 class BackupPathTestCase(BaseTestCase):
 
     def test_call_second_remote_command_if_backup_path_exist(
-            self, exec_remote_command_mock):
+            self, run_script_mock):
         database = self.infra.databases.first()
         database.backup_path = 'fake/path'
         database.save()
@@ -297,7 +311,7 @@ class BackupPathTestCase(BaseTestCase):
             error={},
             group=self.group,
         )
-        self.assertEqual(exec_remote_command_mock.call_count, 2)
+        self.assertEqual(run_script_mock.call_count, 2)
 
 
 @patch('backup.tasks.Snapshot.done',
@@ -310,7 +324,9 @@ class BackupPathTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.VolumeProviderBase.take_snapshot',
        new=MagicMock())
-@patch('backup.tasks.exec_remote_command_host',
+@patch('physical.ssh.HostSSH.run_script',
+       new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
+@patch('physical.ssh.HostSSH.connect',
        new=MagicMock())
 @patch('backup.tasks.register_backup_dbmonitor')
 @patch('physical.models.DatabaseInfra.get_driver',

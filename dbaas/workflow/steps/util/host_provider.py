@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance, Ip
-from util import get_credentials_for, exec_remote_command_host
+from util import get_credentials_for
 from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
@@ -211,6 +211,7 @@ class Provider(BaseInstanceStep):
         host.address = content["address"]
         host.user = self.vm_credential.user
         host.password = self.vm_credential.password
+        host.private_key = self.vm_credential.private_key
         host.provider = self.provider
         host.identifier = content["id"]
         host.offering = offering
@@ -358,6 +359,9 @@ class HostProviderStep(BaseInstanceStep):
         return self._provider
 
     def execute_script(self, script):
+        raise Exception(
+            "U must use the new method. run_script of HostSSH class"
+        )
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
@@ -577,10 +581,8 @@ class AllocateIP(HostProviderStep):
         return "Allocating new ip..."
 
     def do(self):
-
-        self.provider.create_static_ip(
-            self.infra
-        )
+        if self.instance.static_ip is None:
+            self.provider.create_static_ip(self.infra)
 
     def undo(self):
         if self.instance.static_ip:
@@ -626,7 +628,7 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
             sleep(240)
 
         host = self.provider.create_host(
-            self.infra, self.offering, self.vm_name, 
+            self.infra, self.offering, self.vm_name,
             self.team, self.zone,
             static_ip=self.instance.static_ip
         )
@@ -689,7 +691,8 @@ class UpdateHostRootVolumeSize(HostProviderStep):
         script = """echo $(($(free | grep Swap | awk '{print $2}')\
         + $(df -l --total | tail -n1 | awk '{print $2}')))
         """
-        output = self.execute_script(script)
+        # output = self.execute_script(script)
+        output = self.host.ssh.run_script(script)
         disk_size_kb = float(output['stdout'][0])
         disk_size_gb = (disk_size_kb / 1024.0) / 1024.0
 
@@ -769,11 +772,11 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def __unicode__(self):
         return "Destroy VM from previous zone..."
-    
+
     @property
     def host_migrating(self):
         return self.host_migrate.host
-    
+
     @property
     def team(self):
         if self.has_database:
@@ -783,7 +786,7 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
         elif (self.step_manager
               and hasattr(self.step_manager, 'origin_database')):
             return self.step_manager.origin_database.team.name
-    
+
     @property
     def vm_name(self):
         return self.host_migrating.hostname.split('.')[0]
@@ -793,21 +796,21 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def undo(self):
         self.provider.create_host(
-            self.infra, self.host_migrating.offering, self.vm_name, 
+            self.infra, self.host_migrating.offering, self.vm_name,
             self.team, self.host_migrate.zone_origin,
             static_ip=self.instance.static_ip,
             host_obj=self.host
         )
         self.host.save()
 
-class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):   
+class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def __unicode__(self):
         return "Recreating virtual machine in new zone..."
 
     def do(self):
         self.provider.create_host(
-            self.infra, self.offering, self.vm_name, 
+            self.infra, self.offering, self.vm_name,
             self.team, self.zone,
             static_ip=self.instance.static_ip,
             host_obj=self.host

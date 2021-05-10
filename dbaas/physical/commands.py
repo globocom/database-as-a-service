@@ -119,10 +119,10 @@ class HostCommandOL7(HostBaseCommands):
         'mysql': 'mysql',
         'mysql_percona': 'mysql'
     }
-    PRIMARY_SERVICE_NAME_BY_ENGINE = {
+    SECONDARY_SERVICE_NAME_BY_ENGINE = {
         'mongodb': 'mongodb',
         'redis': 'sentinel',
         'mysql': '',
         'mysql_percona': ''
     }
-    command_tmpl = 'systemctl {action} {service_name}.service'
+    command_tmpl = 'sudo systemctl {action} {service_name}.service'
