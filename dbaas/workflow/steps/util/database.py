@@ -50,7 +50,7 @@ class DatabaseStep(BaseInstanceStep):
             action=command
         )
 
-        return self.run_script(script)
+        return self.run_script(script, raise_if_error=raise_if_error)
 
     def start_database(self, raise_if_error=True):
         return self._execute_init_script(
