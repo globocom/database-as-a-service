@@ -2,6 +2,7 @@
 import logging
 
 from .mysql import MySQLSingle, MySQLFoxHA, MySQLFoxHAAWS
+from .mysql import MySQLSingleGCP, MySQLFoxHAGCP
 from physical.models import Instance
 from base import InstanceDeploy
 
@@ -32,6 +33,29 @@ class MySQLPerconaFoxHA(MySQLFoxHA):
 
 
 class MySQLPerconaFoxHAAWS(MySQLFoxHAAWS):
+
+    @property
+    def driver_name(self):
+        return 'mysql_percona_foxha'
+
+    def deploy_instances(self):
+        return [
+            [InstanceDeploy(Instance.MYSQL_PERCONA, 3306)],
+            [InstanceDeploy(Instance.MYSQL_PERCONA, 3306)]
+        ]
+
+
+class MySQLPerconaSingleGCP(MySQLSingleGCP):
+
+    @property
+    def driver_name(self):
+        return 'mysql_percona_single'
+
+    def deploy_instances(self):
+        return [[InstanceDeploy(Instance.MYSQL_PERCONA, 3306)]]
+
+
+class MySQLPerconaFoxHAGCP(MySQLFoxHAGCP):
 
     @property
     def driver_name(self):
