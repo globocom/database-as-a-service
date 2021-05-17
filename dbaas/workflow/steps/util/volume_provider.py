@@ -401,11 +401,16 @@ class NewVolume(VolumeProviderBase):
     def _remove_volume(self, volume, host):
         self.destroy_volume(volume)
 
+    @property
+    def restore_snapshot_from_master(self):
+        return False
+
     def do(self):
         if not self.instance.is_database:
             return
         snapshot = None
-        if self.has_snapshot_on_step_manager:
+        if (self.has_snapshot_on_step_manager
+           or self.restore_snapshot_from_master):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
@@ -428,6 +433,22 @@ class NewVolume(VolumeProviderBase):
             self._remove_volume(volume, self.host)
 
 
+class DestroyVolume(NewVolume):
+
+    def __unicode__(self):
+        return "Removing volume..."
+
+    def do(self):
+        if not self.instance.is_database or not self.host:
+            return
+
+        for volume in self.host.volumes.all():
+            self._remove_volume(volume, self.host)
+
+    def undo(self):
+        return
+
+
 class NewVolumeMigrate(NewVolume):
     def __unicode__(self):
         return "Creating second volume based on snapshot for migrate..."
@@ -446,6 +467,19 @@ class NewVolumeMigrate(NewVolume):
 
     def undo(self):
         raise Exception("This step doesnt have roolback")
+
+
+class NewVolumeFromMaster(NewVolume):
+    def __unicode__(self):
+        return "Restore master backup in slave..."
+
+    @property
+    def provider_class(self):
+        return NewVolumeFromMaster
+
+    @property
+    def restore_snapshot_from_master(self):
+        return True
 
 
 class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
