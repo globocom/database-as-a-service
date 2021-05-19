@@ -106,7 +106,7 @@ class Provider(object):
         return action(url, **kw)
 
     def create_vip(self, infra, port, team_name, equipments,
-        vip_dns, database_name='', future_vip=False):
+                   vip_dns, database_name='', future_vip=False):
         url = "{}/{}/{}/vip/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -136,6 +136,38 @@ class Provider(object):
             vip.original_vip = original_vip
         vip.save()
         vip.vip_ip = content["ip"]
+
+        return vip
+
+    def create_instance_group(self, infra, port, team_name, equipments,
+                              vip_dns, database_name='', future_vip=False):
+        url = "{}/{}/{}/instance-group".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "group": infra.name,
+            "port": port,
+            "team_name": team_name,
+            "vip_dns": vip_dns,
+            "equipments": equipments
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderCreateVIPException(response.content, response)
+
+        content = response.json()
+
+        try:
+            original_vip = Vip.objects.get(infra=infra)
+        except Vip.DoesNotExist:
+            original_vip = None
+        vip = Vip()
+        vip.identifier = content["identifier"]
+        vip.infra = infra
+        if original_vip:
+            vip.original_vip = original_vip
+        vip.save()
 
         return vip
 
@@ -237,7 +269,8 @@ class VipProviderStep(BaseInstanceStep):
             equipment = {
                 'host_address': host.address,
                 'port': instance.port,
-                'identifier': vm_info.identifier
+                'identifier': vm_info.identifier,
+                'zone': vm_info.zone
             }
             equipments.append(equipment)
         return equipments
@@ -485,3 +518,20 @@ class WaitVipReady(VipProviderStep):
 
     def undo(self):
         pass
+
+
+class CreateInstanceGroup(CreateVip):
+
+    def __unicode__(self):
+        return "Creating instance group..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.create_instance_group(
+                    self.infra, self.instance.port, self.team,
+                    self.equipments, self.vip_dns)
+
+    def undo(self):
+        raise NotImplementedError

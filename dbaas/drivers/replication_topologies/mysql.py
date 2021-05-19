@@ -1673,10 +1673,17 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
-            #'Creating VIP': (
-            #    'workflow.steps.util.vip_provider.CreateVip',
+            'Creating VIP': (
+                'workflow.steps.util.vip_provider.CreateInstanceGroup',
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.vip_provider.CreateHeathcheck',
+                'workflow.steps.util.vip_provider.CreateBackendService',
+                'workflow.steps.util.vip_provider.CreateUrlMap',
+                'workflow.steps.util.vip_provider.CreateNamedPorts',
+                'workflow.steps.util.vip_provider.CreateTargetProxy',
+                'workflow.steps.util.vip_provider.CreateForwardingRule'
             #    'workflow.steps.util.dns.RegisterDNSVip',
-            #)}, {
+            )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
