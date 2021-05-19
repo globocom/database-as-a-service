@@ -8,8 +8,6 @@ import logging
 import ast
 from contextlib import contextmanager
 
-from physical.models import Host
-
 
 class RedisDriver(object):
 
@@ -131,6 +129,7 @@ def dump_src_database(host, redis_port, redis_pass,
 def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
                          sys_pass, remote_path, redis_time_out):
 
+    from physical.models import Host
     click.echo("Restoring target database...")
     Host.run_script(
         address=host.address,
@@ -189,6 +188,7 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user,
 
 def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
 
+    from physical.models import Host
     for instance_info in cluster_info:
         sys_user = instance_info['sys_user']
         sys_pass = instance_info['sys_pass']
