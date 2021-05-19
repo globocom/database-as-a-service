@@ -50,6 +50,14 @@ class VipProviderInfoException(VipProviderException):
     pass
 
 
+class VipProviderCreateInstanceGroupException(VipProviderException):
+    pass
+
+
+class VipProviderAddInstancesInGroupException(VipProviderException):
+    pass
+
+
 class Provider(object):
 
     def __init__(self, instance, environment):
@@ -120,6 +128,8 @@ class Provider(object):
         }
 
         response = self._request(post, url, json=data, timeout=600)
+
+
         if response.status_code != 201:
             raise VipProviderCreateVIPException(response.content, response)
 
@@ -154,7 +164,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise VipProviderCreateVIPException(response.content, response)
+            raise VipProviderCreateInstanceGroupException(response.content, response)
 
         content = response.json()
 
@@ -170,6 +180,21 @@ class Provider(object):
         vip.save()
 
         return vip
+
+    def add_instance_in_group(self, equipments, vip):
+        url = "{}/{}/{}/add-instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+        data = {
+            "equipments": equipments,
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderAddInstancesInGroupException(response.content, response)
+
+        return True
 
     def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
@@ -217,7 +242,10 @@ class Provider(object):
         )
         data = {
             "vip_id": Vip.objects.get(infra=infra).identifier,
+        
+        
         }
+
 
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
@@ -270,7 +298,9 @@ class VipProviderStep(BaseInstanceStep):
                 'host_address': host.address,
                 'port': instance.port,
                 'identifier': vm_info.identifier,
-                'zone': vm_info.zone
+                'zone': vm_info.zone,
+                'group': vm_info.group,
+                'name': vm_info.name
             }
             equipments.append(equipment)
         return equipments
@@ -282,6 +312,14 @@ class VipProviderStep(BaseInstanceStep):
         if self.has_database:
             return self.database.team.name
         return self.create.team.name
+
+    @property
+    def current_vip(self):
+        vip = Vip.objects.filter(infra=self.infra)
+        if vip.exists():
+            return vip.last()
+
+        return None
 
     def do(self):
         raise NotImplementedError
@@ -532,6 +570,21 @@ class CreateInstanceGroup(CreateVip):
         return self.provider.create_instance_group(
                     self.infra, self.instance.port, self.team,
                     self.equipments, self.vip_dns)
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class AddInstancesInGroup(CreateVip):
+    def __unicode__(self):
+        return "Adding instances in groups..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.add_instance_in_group(
+                    self.equipments, self.current_vip)
 
     def undo(self):
         raise NotImplementedError
