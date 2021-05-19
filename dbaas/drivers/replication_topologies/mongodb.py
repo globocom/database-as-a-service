@@ -815,15 +815,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 ('workflow.steps.util.volume_provider'
                  '.WaitSnapshotAvailableMigrate'),
                 'workflow.steps.util.database.StopIfRunning',
-                'workflow.steps.util.disk.CleanDataRecreateSlave',
-                'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
-                ('workflow.steps.util.volume_provider'
-                 '.MountDataVolumeRecreateSlave'),
-                'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
-                ('workflow.steps.util.volume_provider'
-                 '.UmountDataVolumeRecreateSlave'),
-                ('workflow.steps.util.volume_provider'
-                 '.RemoveAccessRecreateSlave'),
+                'workflow.steps.util.volume_provider.DestroyVolume',
+                'workflow.steps.util.volume_provider.NewVolumeFromMaster',
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.database.Start',
