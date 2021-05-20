@@ -815,16 +815,19 @@ class MongoDBReplicaset(BaseMongoDB):
                 ('workflow.steps.util.volume_provider'
                  '.WaitSnapshotAvailableMigrate'),
                 'workflow.steps.util.database.StopIfRunning',
-                'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.volume_provider.DestroyVolume',
-                'workflow.steps.util.volume_provider.NewVolumeFromMaster',
-                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.disk.CleanDataRecreateSlave',
+                'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
+                ('workflow.steps.util.volume_provider'
+                 '.MountDataVolumeRecreateSlave'),
+                'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                ('workflow.steps.util.volume_provider'
+                 '.UmountDataVolumeRecreateSlave'),
+                ('workflow.steps.util.volume_provider'
+                 '.RemoveAccessRecreateSlave'),
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.WaitForReplication',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -1106,6 +1109,33 @@ class MongoDBSingleK8s(MongoDBSingle):
 
 
 class MongoGenericGCE(object):
+    def get_recreate_slave_steps(self):
+        return [{
+            'Recreate Slave': (
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
+                ('workflow.steps.util.volume_provider'
+                 '.WaitSnapshotAvailableMigrate'),
+                'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.DestroyVolume',
+                'workflow.steps.util.volume_provider.NewVolumeFromMaster',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
     def get_replica_migration_steps(self):
         return [{
             'Disable monitoring and alarms': (
@@ -1222,26 +1252,26 @@ class MongoGenericGCE(object):
         )
 
 
-class MongoDBSingle42GCE(MongoDBSingle42, MongoGenericGCE):
+class MongoDBSingle42GCE(MongoGenericGCE, MongoDBSingle42):
     def get_host_migrate_steps(self):
         return self.get_single_migration_steps()
 
 
-class MongoDBSingleGCE(MongoDBSingle, MongoGenericGCE):
+class MongoDBSingleGCE(MongoGenericGCE, MongoDBSingle):
     def get_host_migrate_steps(self):
         return self.get_single_migration_steps()
 
 
-class MongoDBReplicaset42GCE(MongoDBReplicaset42, MongoGenericGCE):
+class MongoDBReplicaset42GCE(MongoGenericGCE, MongoDBReplicaset42):
     def get_host_migrate_steps(self):
         return self.get_replica_migration_steps()
 
 
-class MongoDBReplicaset40GCE(MongoDBReplicaset40, MongoGenericGCE):
+class MongoDBReplicaset40GCE(MongoGenericGCE, MongoDBReplicaset40):
     def get_host_migrate_steps(self):
         return self.get_replica_migration_steps()
 
 
-class MongoDBReplicasetGCE(MongoDBReplicaset, MongoGenericGCE):
+class MongoDBReplicasetGCE(MongoGenericGCE, MongoDBReplicaset):
     def get_host_migrate_steps(self):
         return self.get_replica_migration_steps()
