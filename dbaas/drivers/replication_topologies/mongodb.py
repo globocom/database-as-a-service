@@ -815,6 +815,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 ('workflow.steps.util.volume_provider'
                  '.WaitSnapshotAvailableMigrate'),
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.volume_provider.DestroyVolume',
                 'workflow.steps.util.volume_provider.NewVolumeFromMaster',
                 'workflow.steps.util.volume_provider.MountDataVolume',
@@ -822,6 +824,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.WaitForReplication',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
