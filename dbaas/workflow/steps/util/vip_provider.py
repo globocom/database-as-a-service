@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, put
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
-from physical.models import Vip
+from physical.models import Vip, VipInstanceGroup
 from util import get_credentials_for
 from base import BaseInstanceStep
 from dbaas_dnsapi.models import FOXHA
@@ -173,11 +173,17 @@ class Provider(object):
         except Vip.DoesNotExist:
             original_vip = None
         vip = Vip()
-        vip.identifier = content["identifier"]
+        vip.identifier = content["vip_identifier"]
         vip.infra = infra
         if original_vip:
             vip.original_vip = original_vip
         vip.save()
+
+        for g in content['groups']:
+            vg = VipInstanceGroup(vip=vip)
+            vg.name = g['name']
+            vg.identifier = g['identifier']
+            vg.save()
 
         return vip
 
@@ -555,7 +561,7 @@ class WaitVipReady(VipProviderStep):
 
 
     def undo(self):
-        pass
+        raise NotImplementedError
 
 
 class CreateInstanceGroup(CreateVip):
@@ -585,6 +591,71 @@ class AddInstancesInGroup(CreateVip):
 
         return self.provider.add_instance_in_group(
                     self.equipments, self.current_vip)
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateHeathcheck(CreateVip):
+    def __unicode__(self):
+        return "Add healthcheck..."
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateNamedPorts(CreateVip):
+    def __unicode__(self):
+        return "Add named ports..."
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateBackendService(CreateVip):
+    def __unicode__(self):
+        return "Add backend service..."
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateUrlMap(CreateVip):
+    def __unicode__(self):
+        return "Add url map..."
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateTargetProxy(CreateVip):
+    def __unicode__(self):
+        return "Add target proxy..."
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+class CreateForwardingRule(CreateVip):
+    def __unicode__(self):
+        return "Add Forwarding rule..."
+
+    def do(self):
+        raise NotImplementedError
 
     def undo(self):
         raise NotImplementedError
