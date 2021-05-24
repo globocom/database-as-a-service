@@ -58,6 +58,10 @@ class VipProviderAddInstancesInGroupException(VipProviderException):
     pass
 
 
+class VipProviderCreateHealthcheckException(VipProviderException()):
+    pass
+
+
 class Provider(object):
 
     def __init__(self, instance, environment):
@@ -164,7 +168,8 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise VipProviderCreateInstanceGroupException(response.content, response)
+            raise VipProviderCreateInstanceGroupException(
+                    response.content, response)
 
         content = response.json()
 
@@ -198,7 +203,26 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 200:
-            raise VipProviderAddInstancesInGroupException(response.content, response)
+            raise VipProviderAddInstancesInGroupException(
+                    response.content, response)
+
+        return True
+
+    def create_healthcheck(self, vip):
+        url = "{}/{}/{}/healthcheck/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(post, url, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderCreateHealthcheckException(
+                    response.content, response)
+
+        content = response.json()
+
+        vip.healthcheck = content.get('name')
+        vip.save()
 
         return True
 
@@ -601,7 +625,10 @@ class CreateHeathcheck(CreateVip):
         return "Add healthcheck..."
 
     def do(self):
-        raise NotImplementedError
+        if not self.is_valid or self.current_vip.healthcheck:
+            return
+
+        return self.provider.create_healthcheck(self.current_vip)
 
     def undo(self):
         raise NotImplementedError
