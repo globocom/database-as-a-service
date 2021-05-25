@@ -62,6 +62,13 @@ class VipProviderCreateHealthcheckException(VipProviderException()):
     pass
 
 
+class VipProviderCreateUrlMapException(VipProviderException):
+    pass
+
+
+class VipProviderCreateBackendServiceException(VipProviderException):
+    pass
+
 class Provider(object):
 
     def __init__(self, instance, environment):
@@ -234,12 +241,30 @@ class Provider(object):
 
         response = self._request(post, url, timeout=600)
         if response.status_code != 201:
-            raise VipProviderCreateHealthcheckException(
+            raise VipProviderCreateBackendServiceException(
                     response.content, response)
 
         content = response.json()
 
         vip.backend_service = content.get('name')
+        vip.save()
+
+        return True
+
+    def create_url_map(self, vip):
+        url = "{}/{}/{}/url-map/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(post, url, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderCreateUrlMapException(
+                    response.content, response)
+
+        content = response.json()
+
+        vip.url_map = content.get('name')
         vip.save()
 
         return True
@@ -682,7 +707,10 @@ class CreateUrlMap(CreateVip):
         return "Add url map..."
 
     def do(self):
-        raise NotImplementedError
+        if not self.is_valid or self.current_vip.url_map:
+            return
+
+        return self.provider.create_url_map(self.current_vip)
 
     def undo(self):
         raise NotImplementedError

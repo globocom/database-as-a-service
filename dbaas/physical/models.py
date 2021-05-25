@@ -1666,6 +1666,7 @@ class Vip(BaseModel):
     )
     healthcheck = models.CharField(max_length=60, null=True, default=None)
     backend_service = models.CharField(max_length=60, null=True, default=None)
+    url_map = models.CharField(max_length=60, null=True, default=None)
 
     def __unicode__(self):
         return 'Vip of infra {}'.format(self.infra.name)
