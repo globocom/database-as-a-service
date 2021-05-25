@@ -226,6 +226,24 @@ class Provider(object):
 
         return True
 
+    def create_backend_service(self, vip):
+        url = "{}/{}/{}/backend-service/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(post, url, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderCreateHealthcheckException(
+                    response.content, response)
+
+        content = response.json()
+
+        vip.backend_service = content.get('name')
+        vip.save()
+
+        return True
+
     def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
             self.credential.endpoint,
@@ -650,7 +668,10 @@ class CreateBackendService(CreateVip):
         return "Add backend service..."
 
     def do(self):
-        raise NotImplementedError
+        if not self.is_valid or self.current_vip.backend_service:
+            return
+
+        return self.provider.create_backend_service(self.current_vip)
 
     def undo(self):
         raise NotImplementedError
