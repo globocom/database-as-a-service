@@ -70,6 +70,10 @@ class VipProviderCreateBackendServiceException(VipProviderException):
     pass
 
 
+class VipProviderAllocateIpException(VipProviderException):
+    pass
+
+
 class Provider(object):
 
     def __init__(self, instance, environment):
@@ -226,11 +230,6 @@ class Provider(object):
             raise VipProviderCreateHealthcheckException(
                     response.content, response)
 
-        content = response.json()
-
-        vip.healthcheck = content.get('name')
-        vip.save()
-
         return True
 
     def create_backend_service(self, vip):
@@ -243,11 +242,6 @@ class Provider(object):
         if response.status_code != 201:
             raise VipProviderCreateBackendServiceException(
                     response.content, response)
-
-        content = response.json()
-
-        vip.backend_service = content.get('name')
-        vip.save()
 
         return True
 
@@ -262,10 +256,18 @@ class Provider(object):
             raise VipProviderCreateForwardingRuleException(
                     response.content, response)
 
-        content = response.json()
+        return True
 
-        vip.forwarding_rule = content.get('name')
-        vip.save()
+    def allocate_ip(self, vip):
+        url = "{}/{}/{}/allocate-ip/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(post, url, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderAllocateIpException(
+                    response.content, response)
 
         return True
 
@@ -675,7 +677,7 @@ class CreateHeathcheck(CreateVip):
         return "Add healthcheck..."
 
     def do(self):
-        if not self.is_valid or self.current_vip.healthcheck:
+        if not self.is_valid:
             return
 
         return self.provider.create_healthcheck(self.current_vip)
@@ -683,15 +685,30 @@ class CreateHeathcheck(CreateVip):
     def undo(self):
         raise NotImplementedError
 
+
 class CreateBackendService(CreateVip):
     def __unicode__(self):
         return "Add backend service..."
 
     def do(self):
-        if not self.is_valid or self.current_vip.backend_service:
+        if not self.is_valid:
             return
 
         return self.provider.create_backend_service(self.current_vip)
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class AllocateIP(CreateVip):
+    def __unicode__(self):
+        return "Allocating ip to vip..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.allocate_ip(self.current_vip)
 
     def undo(self):
         raise NotImplementedError
@@ -702,7 +719,7 @@ class CreateForwardingRule(CreateVip):
         return "Add Forwarding rule..."
 
     def do(self):
-        if not self.is_valid or self.current_vip.forwarding_rule:
+        if not self.is_valid:
             return
 
         return self.provider.create_forwarding_rule(self.current_vip)

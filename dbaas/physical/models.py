@@ -1664,9 +1664,6 @@ class Vip(BaseModel):
     original_vip = models.ForeignKey(
         "Vip", null=True, blank=True, on_delete=models.SET_NULL
     )
-    healthcheck = models.CharField(max_length=60, null=True, default=None)
-    backend_service = models.CharField(max_length=60, null=True, default=None)
-    forwarding_rule = models.CharField(max_length=60, null=True, default=None)
 
     def __unicode__(self):
         return 'Vip of infra {}'.format(self.infra.name)

@@ -1679,6 +1679,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
+                'workflow.steps.util.vip_provider.AllocateIP',
                 'workflow.steps.util.vip_provider.CreateForwardingRule'
             #    'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
