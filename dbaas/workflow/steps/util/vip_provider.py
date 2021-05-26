@@ -62,12 +62,13 @@ class VipProviderCreateHealthcheckException(VipProviderException()):
     pass
 
 
-class VipProviderCreateUrlMapException(VipProviderException):
+class VipProviderCreateForwardingRuleException(VipProviderException):
     pass
 
 
 class VipProviderCreateBackendServiceException(VipProviderException):
     pass
+
 
 class Provider(object):
 
@@ -139,7 +140,6 @@ class Provider(object):
         }
 
         response = self._request(post, url, json=data, timeout=600)
-
 
         if response.status_code != 201:
             raise VipProviderCreateVIPException(response.content, response)
@@ -251,20 +251,20 @@ class Provider(object):
 
         return True
 
-    def create_url_map(self, vip):
-        url = "{}/{}/{}/url-map/{}".format(
+    def create_forwarding_rule(self, vip):
+        url = "{}/{}/{}/forwarding-rule/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
         response = self._request(post, url, timeout=600)
         if response.status_code != 201:
-            raise VipProviderCreateUrlMapException(
+            raise VipProviderCreateForwardingRuleException(
                     response.content, response)
 
         content = response.json()
 
-        vip.url_map = content.get('name')
+        vip.forwarding_rule = content.get('name')
         vip.save()
 
         return True
@@ -393,6 +393,13 @@ class VipProviderStep(BaseInstanceStep):
             return vip.last()
 
         return None
+
+    @property
+    def current_instance_group(self):
+        if not self.current_vip:
+            return None
+
+        return VipInstanceGroup.objects.filter(vip=self.current_vip)
 
     def do(self):
         raise NotImplementedError
@@ -637,7 +644,7 @@ class CreateInstanceGroup(CreateVip):
         return "Creating instance group..."
 
     def do(self):
-        if not self.is_valid:
+        if not self.is_valid or self.current_instance_group:
             return
 
         return self.provider.create_instance_group(
@@ -676,18 +683,6 @@ class CreateHeathcheck(CreateVip):
     def undo(self):
         raise NotImplementedError
 
-
-class CreateNamedPorts(CreateVip):
-    def __unicode__(self):
-        return "Add named ports..."
-
-    def do(self):
-        raise NotImplementedError
-
-    def undo(self):
-        raise NotImplementedError
-
-
 class CreateBackendService(CreateVip):
     def __unicode__(self):
         return "Add backend service..."
@@ -702,36 +697,15 @@ class CreateBackendService(CreateVip):
         raise NotImplementedError
 
 
-class CreateUrlMap(CreateVip):
-    def __unicode__(self):
-        return "Add url map..."
-
-    def do(self):
-        if not self.is_valid or self.current_vip.url_map:
-            return
-
-        return self.provider.create_url_map(self.current_vip)
-
-    def undo(self):
-        raise NotImplementedError
-
-
-class CreateTargetProxy(CreateVip):
-    def __unicode__(self):
-        return "Add target proxy..."
-
-    def do(self):
-        raise NotImplementedError
-
-    def undo(self):
-        raise NotImplementedError
-
 class CreateForwardingRule(CreateVip):
     def __unicode__(self):
         return "Add Forwarding rule..."
 
     def do(self):
-        raise NotImplementedError
+        if not self.is_valid or self.current_vip.forwarding_rule:
+            return
+
+        return self.provider.create_forwarding_rule(self.current_vip)
 
     def undo(self):
         raise NotImplementedError

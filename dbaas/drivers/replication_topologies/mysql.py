@@ -1662,6 +1662,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 ) + self.get_host_migrate_steps_cleaning_up()
         }]
 
+
 class MySQLSingleGCP(MySQLSingle):
     pass
 
@@ -1678,9 +1679,6 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
-                'workflow.steps.util.vip_provider.CreateUrlMap',
-                'workflow.steps.util.vip_provider.CreateNamedPorts',
-                'workflow.steps.util.vip_provider.CreateTargetProxy',
                 'workflow.steps.util.vip_provider.CreateForwardingRule'
             #    'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
