@@ -138,6 +138,9 @@ dev_docker_run:
 dev_docker_shell: # run django shell
 	@cd dev && docker-compose exec app /code/dbaas/manage.py shell_plus --use-pythonrc
 
+dev_docker_app_bash:
+	@cd dev && docker-compose exec app bash
+
 dev_docker_stop:
 	@cd dev && docker-compose down
 

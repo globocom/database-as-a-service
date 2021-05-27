@@ -53,20 +53,27 @@ class VipProviderInfoException(VipProviderException):
 class VipProviderCreateInstanceGroupException(VipProviderException):
     pass
 
+class VipProviderDeleteInstanceGroupException(VipProviderException):
+    pass
+
 
 class VipProviderAddInstancesInGroupException(VipProviderException):
     pass
 
 
-class VipProviderCreateHealthcheckException(VipProviderException()):
+class VipProviderDeleteInstancesInGroupException(VipProviderException):
     pass
 
 
-class VipProviderCreateForwardingRuleException(VipProviderException):
+class VipProviderHealthcheckException(VipProviderException()):
     pass
 
 
-class VipProviderCreateBackendServiceException(VipProviderException):
+class VipProviderForwardingRuleException(VipProviderException):
+    pass
+
+
+class VipProviderBackendServiceException(VipProviderException):
     pass
 
 
@@ -164,6 +171,22 @@ class Provider(object):
 
         return vip
 
+    def delete_instance_group(self, vip, future_vip=False):
+        url = "{}/{}/{}/instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(delete, url, json=data, timeout=600)
+        if response.status_code != 204:
+            raise VipProviderDeleteInstanceGroupException(
+                    response.content, response)
+
+        VipInstanceGroup.objects.filter(vip=vip).delete()
+        vip.delete()
+
+        return True
+
     def create_instance_group(self, infra, port, team_name, equipments,
                               vip_dns, database_name='', future_vip=False):
         url = "{}/{}/{}/instance-group".format(
@@ -203,8 +226,8 @@ class Provider(object):
 
         return vip
 
-    def add_instance_in_group(self, equipments, vip):
-        url = "{}/{}/{}/add-instance-group/{}".format(
+    def instance_in_group(self, equipments, vip, destroy=False):
+        url = "{}/{}/{}/instance-in-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
@@ -212,64 +235,72 @@ class Provider(object):
             "equipments": equipments,
         }
 
-        response = self._request(post, url, json=data, timeout=600)
-        if response.status_code != 200:
+        response = self._request(
+            post if not destroy else delete, url, json=data, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
             raise VipProviderAddInstancesInGroupException(
                     response.content, response)
 
         return True
 
-    def create_healthcheck(self, vip):
+    def healthcheck(self, vip, destroy=False):
         url = "{}/{}/{}/healthcheck/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
-        response = self._request(post, url, timeout=600)
-        if response.status_code != 201:
-            raise VipProviderCreateHealthcheckException(
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderHealthcheckException(
                     response.content, response)
 
         return True
 
-    def create_backend_service(self, vip):
+    def backend_service(self, vip, destroy=False):
         url = "{}/{}/{}/backend-service/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
-        response = self._request(post, url, timeout=600)
-        if response.status_code != 201:
-            raise VipProviderCreateBackendServiceException(
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderBackendServiceException(
                     response.content, response)
 
         return True
 
-    def create_forwarding_rule(self, vip):
+    def forwarding_rule(self, vip, destroy=False):
         url = "{}/{}/{}/forwarding-rule/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
-        response = self._request(post, url, timeout=600)
-        if response.status_code != 201:
-            raise VipProviderCreateForwardingRuleException(
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderForwardingRuleException(
                     response.content, response)
 
         return True
 
-    def allocate_ip(self, vip):
+    def allocate_ip(self, vip, destroy=False):
         url = "{}/{}/{}/allocate-ip/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
-        response = self._request(post, url, timeout=600)
-        if response.status_code != 201:
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
             raise VipProviderAllocateIpException(
                     response.content, response)
+        if destroy:
+            return True
 
-        return True
+        content = response.json()
+        return content['address']
 
     def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
@@ -284,7 +315,8 @@ class Provider(object):
 
         response = self._request(put, url, json=data, timeout=600)
         if not response.ok:
-            raise VipProviderUpdateVipRealsException(response.content, response)
+            raise VipProviderUpdateVipRealsException(
+                    response.content, response)
 
     def add_real(self, infra, real_id, port):
         vip_id = Vip.objects.get(infra=infra).identifier
@@ -654,7 +686,9 @@ class CreateInstanceGroup(CreateVip):
                     self.equipments, self.vip_dns)
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.delete_instance_group(
+                    self.infra, self.instance.port, self.team,
+                    self.equipments, self.vip_dns)
 
 
 class AddInstancesInGroup(CreateVip):
@@ -665,11 +699,12 @@ class AddInstancesInGroup(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.add_instance_in_group(
+        return self.provider.instance_in_group(
                     self.equipments, self.current_vip)
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.instance_in_group(
+                    self.equipments, self.current_vip, destroy=True)
 
 
 class CreateHeathcheck(CreateVip):
@@ -680,10 +715,10 @@ class CreateHeathcheck(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.create_healthcheck(self.current_vip)
+        return self.provider.healthcheck(self.current_vip)
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.healthcheck(self.current_vip, destroy=True)
 
 
 class CreateBackendService(CreateVip):
@@ -694,10 +729,10 @@ class CreateBackendService(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.create_backend_service(self.current_vip)
+        return self.provider.backend_service(self.current_vip)
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.backend_service(self.current_vip, destroy=True)
 
 
 class AllocateIP(CreateVip):
@@ -708,10 +743,15 @@ class AllocateIP(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.allocate_ip(self.current_vip)
+        ip = self.provider.allocate_ip(self.current_vip)
+
+        self.infra.endpoint = "{}:{}".format(ip, 3306)
+        self.infra.endpoint_dns = "{}:{}".format(ip, 3306)
+
+        return True
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.allocate_ip(self.current_vip, destroy=True)
 
 
 class CreateForwardingRule(CreateVip):
@@ -722,7 +762,7 @@ class CreateForwardingRule(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.create_forwarding_rule(self.current_vip)
+        return self.provider.forwarding_rule(self.current_vip)
 
     def undo(self):
-        raise NotImplementedError
+        return self.provider.forwarding_rule(self.current_vip, destroy=True)
