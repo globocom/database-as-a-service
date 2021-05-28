@@ -242,7 +242,7 @@ class Provider(object):
 
         response = self._request(
             post, url, json=data, timeout=600)
-        if response.status_code != 201:
+        if response.status_code != 200:
             raise VipProviderAddInstancesInGroupException(
                     response.content, response)
 
@@ -758,6 +758,7 @@ class AllocateIP(CreateVip):
 
         self.infra.endpoint = "{}:{}".format(ip, 3306)
         self.infra.endpoint_dns = "{}:{}".format(ip, 3306)
+        self.infra.save()
 
         return True
 
