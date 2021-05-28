@@ -171,11 +171,16 @@ class Provider(object):
 
         return vip
 
-    def delete_instance_group(self, vip, future_vip=False):
+    def delete_instance_group(self, equipments, vip, future_vip=False):
         url = "{}/{}/{}/instance-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
+
+        data = {
+            "equipments": equipments,
+            "destroy_vip": True
+        }
 
         response = self._request(delete, url, json=data, timeout=600)
         if response.status_code != 204:
@@ -226,7 +231,7 @@ class Provider(object):
 
         return vip
 
-    def instance_in_group(self, equipments, vip, destroy=False):
+    def instance_in_group(self, equipments, vip):
         url = "{}/{}/{}/instance-in-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
@@ -236,8 +241,8 @@ class Provider(object):
         }
 
         response = self._request(
-            post if not destroy else delete, url, json=data, timeout=600)
-        if response.status_code != (201 if not destroy else 204):
+            post, url, json=data, timeout=600)
+        if response.status_code != 201:
             raise VipProviderAddInstancesInGroupException(
                     response.content, response)
 
@@ -569,7 +574,6 @@ class UpdateVipReals(VipProviderStep):
         self.update_vip_reals()
 
 
-
 class UpdateVipRealsMigrate(UpdateVipReals):
     @property
     def is_valid(self):
@@ -639,6 +643,7 @@ class RemoveReal(VipProviderStep):
     def undo(self):
         pass
 
+
 class RemoveRealMigrate(RemoveReal):
 
     def __unicode__(self):
@@ -667,7 +672,6 @@ class WaitVipReady(VipProviderStep):
         if not vip_ready:
             raise EnvironmentError("VIP not ready")
 
-
     def undo(self):
         raise NotImplementedError
 
@@ -686,9 +690,11 @@ class CreateInstanceGroup(CreateVip):
                     self.equipments, self.vip_dns)
 
     def undo(self):
+        if not self.current_vip:
+            return
+
         return self.provider.delete_instance_group(
-                    self.infra, self.instance.port, self.team,
-                    self.equipments, self.vip_dns)
+                    self.equipments, self.current_vip)
 
 
 class AddInstancesInGroup(CreateVip):
@@ -703,8 +709,7 @@ class AddInstancesInGroup(CreateVip):
                     self.equipments, self.current_vip)
 
     def undo(self):
-        return self.provider.instance_in_group(
-                    self.equipments, self.current_vip, destroy=True)
+        pass
 
 
 class CreateHeathcheck(CreateVip):
@@ -718,6 +723,9 @@ class CreateHeathcheck(CreateVip):
         return self.provider.healthcheck(self.current_vip)
 
     def undo(self):
+        if not self.current_vip:
+            return
+
         return self.provider.healthcheck(self.current_vip, destroy=True)
 
 
@@ -732,6 +740,9 @@ class CreateBackendService(CreateVip):
         return self.provider.backend_service(self.current_vip)
 
     def undo(self):
+        if not self.current_vip:
+            return
+
         return self.provider.backend_service(self.current_vip, destroy=True)
 
 
@@ -751,6 +762,9 @@ class AllocateIP(CreateVip):
         return True
 
     def undo(self):
+        if not self.current_vip:
+            return
+
         return self.provider.allocate_ip(self.current_vip, destroy=True)
 
 
@@ -765,4 +779,7 @@ class CreateForwardingRule(CreateVip):
         return self.provider.forwarding_rule(self.current_vip)
 
     def undo(self):
+        if not self.current_vip:
+            return
+
         return self.provider.forwarding_rule(self.current_vip, destroy=True)
