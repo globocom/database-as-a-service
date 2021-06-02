@@ -299,20 +299,23 @@ class BaseDriver(object):
     def stop_slave(self, instance):
         pass
 
-    def agents_command(self, host, command):
-
+    def agents_command(self, host, command,
+                       no_output=False, raise_if_error=False):
         for agent in self.get_database_agents():
             script = host.commands.exec_service_command(
                 service_name=agent,
-                action=command
+                action=command,
+                no_output=no_output
             )
-            host.ssh.run_script(script)
+            host.ssh.run_script(script, raise_if_error=raise_if_error)
 
-    def start_agents(self, host):
-        self.agents_command(host, "start")
+    def start_agents(self, host, no_output=False, raise_if_error=False):
+        self.agents_command(
+            host, "start", no_output=no_output, raise_if_error=raise_if_error)
 
-    def stop_agents(self, host):
-        self.agents_command(host, "stop")
+    def stop_agents(self, host, no_output=False, raise_if_error=False):
+        self.agents_command(
+            host, "stop", no_output=no_output, raise_if_error=raise_if_error)
 
     def check_replication_and_switch(self, instance, attempts=100,
                                      check_is_master_attempts=5):

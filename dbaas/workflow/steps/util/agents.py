@@ -33,3 +33,12 @@ class Stop(AgentsStep):
 
     def undo(self):
         Start(self.instance).do()
+
+
+class StartIgnoreRaise(Start):
+    def do(self):
+        CheckIsUp(self.instance)
+        self.driver.start_agents(
+            self.host,
+            no_output=True,
+            raise_if_error=True)
