@@ -40,5 +40,4 @@ class StartIgnoreRaise(Start):
         CheckIsUp(self.instance)
         self.driver.start_agents(
             self.host,
-            no_output=True,
-            raise_if_error=True)
+            raise_if_error=False)
