@@ -1769,6 +1769,42 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 )
             }]
 
+    def get_reinstallvm_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Reinstall VM': (
+                ('workflow.steps.util.database.'
+                 'checkAndFixMySQLReplicationIfRunning'),
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.host_provider.ReinstallTemplate',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+        }] + [{
+            'Start Database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.database.Stop',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + self.get_reinstallvm_steps_final()
+
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
