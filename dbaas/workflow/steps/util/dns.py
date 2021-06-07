@@ -2,6 +2,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.models import HOST, INSTANCE, FOXHA, DatabaseInfraDNSList
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
+from logical.models import Database
 from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
 import socket
@@ -224,9 +225,12 @@ class RegisterDNSVip(DNSStep):
         )
 
     def undo(self):
-        self._do_database_dns_for_ip(
-            self.provider.remove_databases_dns_for_ip
-        )
+        try:
+            self._do_database_dns_for_ip(
+                self.provider.remove_databases_dns_for_ip
+            )
+        except Database.DoesNotExist:
+            pass
 
 
 class RegisterDNSVipMigrate(RegisterDNSVip):
