@@ -1733,6 +1733,36 @@ class MySQLFoxHAGCP(MySQLFoxHA):
     #         'workflow.steps.util.zabbix.CreateAlarms',
     #         'workflow.steps.util.disk.ChangeSnapshotOwner',
     #     )
+    def get_migrate_engines_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                ('workflow.steps.util.database.'
+                 'checkAndFixMySQLReplicationIfRunning'),
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.volume_provider.DetachDisk',
+                ('workflow.steps.util.host_provider.'
+                 'InstallMigrateEngineTemplate'),
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.CheckHostName',
+            ) + self.get_migrate_engine_steps_extra() + (
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + self.get_migrate_engine_steps_final()
 
     def get_recreate_slave_steps(self):
         return [{
@@ -1818,7 +1848,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vip_provider.CreateBackendService',
                 'workflow.steps.util.vip_provider.AllocateIP',
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
-                'workflow.steps.util.dns.RegisterDNSVip',
+                #'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
