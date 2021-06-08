@@ -41,6 +41,10 @@ class BaseMysql(BaseTopology):
         return (
             'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStep',
         )
+    def get_change_binaries_upgrade_patch_steps_rollback(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStepRollback',
+        )
 
 
 class MySQLSingle(BaseMysql):
@@ -1664,7 +1668,58 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
 
 class MySQLSingleGCP(MySQLSingle):
-    pass
+
+    def get_host_migrate_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Stop previous database': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.database.CheckIsUpRollback',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Check patch if rollback': (
+                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Configure if rollback': (
+                'workflow.steps.util.plan.ConfigureLogRollback',
+                'workflow.steps.util.plan.ConfigureRollback',
+            )}, {
+            'Remove previous VM': (
+                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.vm.WaitingBeReadyRollback',
+                ('workflow.steps.util.host_provider.'
+                 'DestroyVirtualMachineMigrateKeepObject')
+            )}, {
+            'Create new VM': (
+                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+            )}, {
+            'Configure instance': (
+                'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
 
 
 class MySQLFoxHAGCP(MySQLFoxHA):
