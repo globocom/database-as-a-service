@@ -730,7 +730,7 @@ class CreateInstanceGroup(CreateVip):
                     self.equipments, self.vip_dns)
 
     def undo(self):
-        if not self.current_vip:
+        if not self.is_valid:
             return
 
         return self.provider.delete_instance_group(
@@ -763,7 +763,7 @@ class CreateHeathcheck(CreateVip):
         return self.provider.healthcheck(self.current_vip)
 
     def undo(self):
-        if not self.current_vip:
+        if not self.is_valid:
             return
 
         return self.provider.healthcheck(self.current_vip, destroy=True)
@@ -780,7 +780,7 @@ class CreateBackendService(CreateVip):
         return self.provider.backend_service(self.current_vip)
 
     def undo(self):
-        if not self.current_vip:
+        if not self.is_valid:
             return
 
         return self.provider.backend_service(self.current_vip, destroy=True)
@@ -803,7 +803,7 @@ class AllocateIP(CreateVip):
         return True
 
     def undo(self):
-        if not self.current_vip:
+        if not self.is_valid:
             return
 
         return self.provider.allocate_ip(self.current_vip, destroy=True)
@@ -820,7 +820,7 @@ class CreateForwardingRule(CreateVip):
         return self.provider.forwarding_rule(self.current_vip)
 
     def undo(self):
-        if not self.current_vip:
+        if not self.is_valid:
             return
 
         return self.provider.forwarding_rule(self.current_vip, destroy=True)
