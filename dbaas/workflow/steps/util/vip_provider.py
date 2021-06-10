@@ -53,6 +53,7 @@ class VipProviderInfoException(VipProviderException):
 class VipProviderCreateInstanceGroupException(VipProviderException):
     pass
 
+
 class VipProviderDeleteInstanceGroupException(VipProviderException):
     pass
 
@@ -395,14 +396,12 @@ class Provider(object):
             "vip_id": Vip.objects.get(infra=infra).identifier,
         }
 
-
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
             raise VipProviderWaitVIPReadyException(response.content, response)
 
         response = response.json()
         return response['healthy']
-
 
     def destroy_vip(self, identifier):
         url = "{}/{}/{}/vip/{}".format(
@@ -456,7 +455,7 @@ class VipProviderStep(BaseInstanceStep):
 
     @property
     def team(self):
-        ## TODO
+        # @TODO
         return "dbaas"
         if self.has_database:
             return self.database.team.name
@@ -496,7 +495,8 @@ class CreateVip(VipProviderStep):
 
     @property
     def vip_dns(self):
-        name, domain = get_dns_name_domain(self.infra, self.infra.name, FOXHA, is_database=False)
+        name, domain = get_dns_name_domain(
+            self.infra, self.infra.name, FOXHA, is_database=False)
         return '{}.{}'.format(name, domain)
 
     def do(self):
@@ -506,7 +506,8 @@ class CreateVip(VipProviderStep):
         vip = self.provider.create_vip(
             self.infra, self.instance.port, self.team,
             self.equipments, self.vip_dns)
-        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
+        dns = add_dns_record(
+            self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
         self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
@@ -573,7 +574,8 @@ class UpdateVipReals(VipProviderStep):
         equipments = []
         for instance in self.infra.instances.all():
             host = instance.hostname
-            if self.host_migrate and host.future_host and self.rollback is False:
+            if (self.host_migrate and
+               host.future_host and self.rollback is False):
                 host = host.future_host
             vm_info = self.host_prov_client.get_vm_by_host(host)
             equipment = {

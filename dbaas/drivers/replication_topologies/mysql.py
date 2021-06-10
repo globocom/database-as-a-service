@@ -41,9 +41,11 @@ class BaseMysql(BaseTopology):
         return (
             'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStep',
         )
+
     def get_change_binaries_upgrade_patch_steps_rollback(self):
         return (
-            'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStepRollback',
+            ('workflow.steps.util.database_upgrade_patch'
+             '.MySQLCHGBinStepRollback'),
         )
 
 
@@ -1677,7 +1679,8 @@ class MySQLSingleGCP(MySQLSingle):
             )}, {
             'Stop previous database': (
                 'workflow.steps.util.metric_collector.RestartTelegrafRollback',
-                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                ('workflow.steps.util.metric_collector.'
+                 'ConfigureTelegrafRollback'),
                 'workflow.steps.util.database.CheckIsUpRollback',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
@@ -1697,7 +1700,8 @@ class MySQLSingleGCP(MySQLSingle):
                  'DestroyVirtualMachineMigrateKeepObject')
             )}, {
             'Create new VM': (
-                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
+                ('workflow.steps.util.host_provider.'
+                 'RecreateVirtualMachineMigrate'),
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
@@ -1792,7 +1796,6 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )}
         ]
-
 
     def get_migrate_engines_steps(self):
         return [{
@@ -1909,7 +1912,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vip_provider.CreateBackendService',
                 'workflow.steps.util.vip_provider.AllocateIP',
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
-                #'workflow.steps.util.dns.RegisterDNSVip',
+                # 'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
@@ -1926,20 +1929,6 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.CheckHostName',
             )}, {
-             #'Check puppet': (
-             #    'workflow.steps.util.puppet.WaitingBeStarted',
-             #    'workflow.steps.util.puppet.WaitingBeDone',
-             #    'workflow.steps.util.puppet.ExecuteIfProblem',
-             #    'workflow.steps.util.puppet.WaitingBeDone',
-             #    'workflow.steps.util.puppet.CheckStatus',
-             #)}, {
-             #'Configure foreman': (
-             #    'workflow.steps.util.foreman.SetupDSRC',
-             #)}, {
-             #'Running puppet': (
-             #    'workflow.steps.util.puppet.Execute',
-             #    'workflow.steps.util.puppet.CheckStatus',
-             #)}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
