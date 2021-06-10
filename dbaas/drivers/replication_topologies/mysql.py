@@ -1732,6 +1732,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
             'Disable monitoring and alarms': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.fox.IsReplicationOkRollback',
                 'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
@@ -1742,12 +1743,19 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 ('workflow.steps.util.metric_collector'
                  '.ConfigureTelegrafRollback'),
                 'workflow.steps.util.database.CheckIsUpRollback',
-                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Check patch if rollback': (
                 ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
+            )}, {
+            'Reconfigure FOX if rollback': (
+                ('workflow.steps.util.vip_provider.'
+                 'DestroyEmptyInstanceGroupMigrateRollback'),
+                ('workflow.steps.util.vip_provider.'
+                 'UpdateBackendServiceMigrateRollback'),
+                'workflow.steps.util.vip_provider.AddInstancesInGroupRollback',
+                ('workflow.steps.util.vip_provider.'
+                 'CreateInstanceGroupRollback'),
             )}, {
             'Configure if rollback': (
                 'workflow.steps.util.plan.ConfigureLogRollback',
@@ -1773,7 +1781,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.plan.ConfigureLog',
             )}, {
             'Reconfigure FOX': (
-                'workflow.steps.util.vip_provider.CreateInstanceGroup',
+                'workflow.steps.util.vip_provider.CreateInstanceGroupWithoutRollback',
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.UpdateBackendServiceMigrate',
                 ('workflow.steps.util.vip_provider.'
@@ -1784,12 +1792,11 @@ class MySQLFoxHAGCP(MySQLFoxHA):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.StartSlave',
-                'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartRsyslog',
-                'workflow.steps.util.fox.IsReplicationOk',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.fox.IsReplicationOk',
             )}, {
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',

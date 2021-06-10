@@ -830,22 +830,92 @@ class DestroyEmptyInstanceGroupMigrate(CreateVip):
     def __unicode__(self):
         return "Destroy instance group if is empty..."
 
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone_origin
+
     def do(self):
         self.provider.destroy_instance_group(
-            self.host_migrate.zone_origin, self.current_vip)
+            self.zone_to, self.current_vip)
 
     def undo(self):
-        self.provider.destroy_instance_group(
-            self.host_migrate.zone, self.current_vip)
+        pass
 
 
 class UpdateBackendServiceMigrate(CreateBackendService):
     def __unicode__(self):
-        return "update backend service"
+        return "update backend service..."
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone_origin
 
     def do(self):
         self.provider.update_backend_service(
-            self.current_vip, self.host_migrate.zone_origin)
+            self.current_vip, self.zone_to)
 
     def undo(self):
-        raise NotImplementedError
+        pass
+
+
+class DestroyEmptyInstanceGroupMigrateRollback(
+        DestroyEmptyInstanceGroupMigrate):
+    def __unicode__(self):
+        return "Destroy instance group if is empty rollback..."
+
+    def do(self):
+        pass
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone
+
+    def undo(self):
+        super(DestroyEmptyInstanceGroupMigrateRollback, self).do()
+
+
+class UpdateBackendServiceMigrateRollback(UpdateBackendServiceMigrate):
+    def __unicode__(self):
+        return "update backend service rollback..."
+
+    def do(self):
+        pass
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone
+
+    def undo(self):
+        super(UpdateBackendServiceMigrateRollback, self).do()
+
+
+class CreateInstanceGroupRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Creating instance group rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(CreateInstanceGroupRollback, self).do()
+
+
+class AddInstancesInGroupRollback(AddInstancesInGroup):
+    def __unicode__(self):
+        return "Adding instances in groups rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(AddInstancesInGroupRollback, self).do()
+
+
+class CreateInstanceGroupWithoutRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Creating instance group without rollback..."
+
+    def undo(self):
+        pass

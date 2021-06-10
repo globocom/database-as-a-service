@@ -169,7 +169,7 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
         self.host.ssh.run_script(script)
 
 
-class MySQLCHGBinStepRollback(DatabaseUpgradePatchStep):
+class MySQLCHGBinStepRollback(MySQLCHGBinStep):
 
     def do(self):
         pass
