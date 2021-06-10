@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete, put
+from requests import post, delete, put, patch
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
 from physical.models import Vip, VipInstanceGroup
@@ -57,7 +57,7 @@ class VipProviderDeleteInstanceGroupException(VipProviderException):
     pass
 
 
-class VipProviderAddInstancesInGroupException(VipProviderException):
+class VipProviderInstanceGroupException(VipProviderException):
     pass
 
 
@@ -243,7 +243,7 @@ class Provider(object):
         response = self._request(
             post, url, json=data, timeout=600)
         if response.status_code != 200:
-            raise VipProviderAddInstancesInGroupException(
+            raise VipProviderInstanceGroupException(
                     response.content, response)
 
         return True
@@ -273,6 +273,22 @@ class Provider(object):
         if response.status_code != (201 if not destroy else 204):
             raise VipProviderBackendServiceException(
                     response.content, response)
+
+        return True
+
+    def update_backend_service(self, vip, exclude_zone):
+        url = "{}/{}/{}/backend-service/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {'exclude_zone': exclude_zone}
+        response = self._request(
+            patch, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderBackendServiceException(
+                    response.content, response)
+        content = response.json()
 
         return True
 
@@ -306,6 +322,29 @@ class Provider(object):
 
         content = response.json()
         return content['address']
+
+    def destroy_instance_group(self, zone, vip):
+        url = "{}/{}/{}/destroy-empty-instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {
+            'zone': zone
+        }
+
+        response = self._request(
+            delete, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderInstanceGroupException(
+                    response.content, response)
+
+        content = response.json()
+
+        for c in content.get('destroyed', []):
+            VipInstanceGroup.objects.get(identifier=c).delete()
+
+        return True
 
     def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
@@ -354,8 +393,6 @@ class Provider(object):
         )
         data = {
             "vip_id": Vip.objects.get(infra=infra).identifier,
-        
-        
         }
 
 
@@ -454,7 +491,8 @@ class CreateVip(VipProviderStep):
 
     @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first()
+        return self.instance == self.infra.instances.first() or\
+                self.host_migrate
 
     @property
     def vip_dns(self):
@@ -548,7 +586,7 @@ class UpdateVipReals(VipProviderStep):
 
     @property
     def vip(self):
-        original_vip =  Vip.objects.get(infra=self.infra)
+        original_vip = Vip.objects.get(infra=self.infra)
         try:
             future_vip = Vip.original_objects.get(
                 infra_id=self.infra.id,
@@ -682,7 +720,7 @@ class CreateInstanceGroup(CreateVip):
         return "Creating instance group..."
 
     def do(self):
-        if not self.is_valid or self.current_instance_group:
+        if not self.is_valid:
             return
 
         return self.provider.create_instance_group(
@@ -784,3 +822,28 @@ class CreateForwardingRule(CreateVip):
             return
 
         return self.provider.forwarding_rule(self.current_vip, destroy=True)
+
+
+class DestroyEmptyInstanceGroupMigrate(CreateVip):
+    def __unicode__(self):
+        return "Destroy instance group if is empty..."
+
+    def do(self):
+        self.provider.destroy_instance_group(
+            self.host_migrate.zone_origin, self.current_vip)
+
+    def undo(self):
+        self.provider.destroy_instance_group(
+            self.host_migrate.zone, self.current_vip)
+
+
+class UpdateBackendServiceMigrate(CreateBackendService):
+    def __unicode__(self):
+        return "update backend service"
+
+    def do(self):
+        self.provider.update_backend_service(
+            self.current_vip, self.host_migrate.zone_origin)
+
+    def undo(self):
+        raise NotImplementedError
