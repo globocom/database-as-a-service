@@ -218,7 +218,13 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}snapshot/{}/restore".format(
             self.base_url, snapshot.snapshopt_id
         )
-        response = post(url, headers=self.headers)
+
+        data = {
+            'vm_name': self.host_vm.name,
+            'zone': self.host_vm.zone
+        }
+
+        response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
