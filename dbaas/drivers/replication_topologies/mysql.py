@@ -1838,6 +1838,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
     def get_recreate_slave_steps(self):
         return [{
             'Recreate Slave': (
+                'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
