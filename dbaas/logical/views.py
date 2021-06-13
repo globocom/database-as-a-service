@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from workflow.steps.util.base import HostProviderClient
 
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
@@ -2176,15 +2177,36 @@ def database_migrate(request, context, database):
         can_migrate, error = database.can_migrate_host()
         if not can_migrate:
             messages.add_message(request, messages.ERROR, error)
+
         elif 'host_id' in request.POST:
+            host_prov_client = HostProviderClient(environment)
+
             host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
             zone_origin = request.POST.get("zone_origin")
+
+            # Do not allow GCP hosts
+            # to be in the same region
+            if ('gcp' in environment.name and
+               database.engine_type.startswith('mysql')):
+                instances = database.infra.instances.all()
+                for instance in instances:
+                    host = instance.hostname
+                    host_info = host_prov_client.get_vm_by_host(host)
+                    if host_info.zone == zone:
+                        messages.add_message(
+                            request,
+                            messages.ERROR,
+                            ("The new zone must be"
+                             "different from other hosts zone")
+                        )
+                        return
 
             TaskRegister.host_migrate(
                 host, zone, environment, request.user, database, 
                 zone_origin=zone_origin
             )
+
         elif 'new_environment' in request.POST:
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
