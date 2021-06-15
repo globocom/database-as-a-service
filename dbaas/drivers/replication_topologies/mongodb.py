@@ -207,6 +207,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -264,6 +265,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
@@ -295,6 +297,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
                 ('workflow.steps.util.volume_provider.UmountDataVolumeRecreateSlave'),
                 ('workflow.steps.util.volume_provider.RemoveAccessRecreateSlave'),
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
@@ -363,6 +366,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -473,6 +477,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.CopyPermissions',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.database.Start',
@@ -514,6 +519,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.CopyPermissions',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.database.Start',
@@ -531,6 +537,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.plan.ConfigureLog',
@@ -563,6 +570,7 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_add_database_instances_middle_steps(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -634,6 +642,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -700,6 +709,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -820,6 +830,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 ('workflow.steps.util.volume_provider'
                  '.MountDataVolumeRecreateSlave'),
                 'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
                 ('workflow.steps.util.volume_provider'
                  '.UmountDataVolumeRecreateSlave'),
                 ('workflow.steps.util.volume_provider'
@@ -853,6 +864,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
@@ -894,6 +906,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
                 ('workflow.steps.util.volume_provider.UmountDataVolumeRecreateSlave'),
                 ('workflow.steps.util.volume_provider.RemoveAccessRecreateSlave'),
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
@@ -984,6 +997,7 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
@@ -1011,6 +1025,7 @@ class MongoDBSingle42(MongoDBSingle):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
@@ -1075,6 +1090,7 @@ class MongoDBSingleK8s(MongoDBSingle):
                 #'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Configuring database': (
+                # 'workflow.steps.util.volume_provider.AttachDataVolume',
                 # 'workflow.steps.util.volume_provider.MountDataVolume',
                 # 'workflow.steps.util.plan.InitializationForNewInfra',
                 # 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -1123,6 +1139,7 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.volume_provider.DestroyVolume',
                 'workflow.steps.util.volume_provider.NewVolumeFromMaster',
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -1168,6 +1185,7 @@ class MongoGenericGCE(object):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.plan.InitializationMigrate',
@@ -1221,6 +1239,7 @@ class MongoGenericGCE(object):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
