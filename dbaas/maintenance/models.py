@@ -1130,7 +1130,8 @@ class RemoveInstanceDatabase(DatabaseMaintenanceTask):
 
     def update_step(self, step):
         try:
-            Instance.objects.get(id=self.instance.id)
+            if self.instance:
+                Instance.objects.get(id=self.instance.id)
         except Instance.DoesNotExist:
             self.instance = None
         super(RemoveInstanceDatabase, self).update_step(step)
@@ -1139,7 +1140,8 @@ class RemoveInstanceDatabase(DatabaseMaintenanceTask):
         if status == DatabaseMaintenanceTask.SUCCESS:
             self.instance = None
         try:
-            Instance.objects.get(id=self.instance.id)
+            if self.instance:
+                Instance.objects.get(id=self.instance.id)
         except Instance.DoesNotExist:
             self.instance = None
         super(RemoveInstanceDatabase, self).update_final_status(status)
