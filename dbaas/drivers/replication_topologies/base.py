@@ -192,6 +192,7 @@ class BaseTopology(object):
 
     def get_add_database_instances_first_steps(self):
         return (
+            'workflow.steps.util.host_provider.AllocateIP',
             'workflow.steps.util.host_provider.CreateVirtualMachine',
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',

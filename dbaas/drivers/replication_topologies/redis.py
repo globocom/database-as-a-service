@@ -352,7 +352,8 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
-            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf'
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
