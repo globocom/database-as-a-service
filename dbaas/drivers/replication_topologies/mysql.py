@@ -71,6 +71,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
@@ -134,6 +135,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
@@ -185,6 +187,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
                 'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
                 ('workflow.steps.util.volume_provider'
@@ -192,6 +195,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.AddAccessMigrate',
                 'workflow.steps.util.volume_provider.MountDataVolumeMigrate',
                 'workflow.steps.util.volume_provider.CopyFilesMigrate',
+                'workflow.steps.util.volume_provider.DetachDataVolumeMigrate',
                 'workflow.steps.util.volume_provider.UmountDataVolumeMigrate',
                 'workflow.steps.util.volume_provider.RemoveAccessMigrate',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
@@ -293,6 +297,7 @@ class MySQLSingle(BaseMysql):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -339,6 +344,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.MountDataLatestVolume',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.mysql.SetFilePermission',
@@ -484,6 +490,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -590,6 +597,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -671,6 +679,8 @@ class MySQLFoxHA(MySQLSingle):
                 ('workflow.steps.util.mysql'
                  '.AddDiskPermissionsRestoredDiskMySQL'),
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
+                'workflow.steps.util.mysql.DetachOldestExportRestoreMySQL',
+                'workflow.steps.util.mysql.AttachNewerExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -743,6 +753,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.volume_provider.MountDataLatestVolume',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.mysql.SetFilePermission',
@@ -774,7 +785,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -795,6 +806,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
@@ -823,7 +835,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -862,7 +874,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 ('workflow.steps.util.host_provider.'
                  'InstallMigrateEngineTemplate'),
                 'workflow.steps.util.host_provider.Start',
@@ -899,6 +911,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
@@ -1051,6 +1064,7 @@ class MySQLFoxHA(MySQLSingle):
                  '.MountDataVolumeRecreateSlave'),
                 'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
                 'workflow.steps.util.volume_provider.CopyReplFromSnapShot',
+                'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
                 ('workflow.steps.util.volume_provider'
                  '.UmountDataVolumeRecreateSlave'),
                 ('workflow.steps.util.volume_provider'
@@ -1091,12 +1105,14 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.puppet.Execute',
             'workflow.steps.util.puppet.CheckStatus',
             'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddAccessMigrate',
             'workflow.steps.util.volume_provider.MountDataVolumeMigrate',
             'workflow.steps.util.volume_provider.CopyFilesMigrate',
+            'workflow.steps.util.volume_provider.DetachDataVolumeMigrate',
             'workflow.steps.util.volume_provider.UmountDataVolumeMigrate',
             'workflow.steps.util.volume_provider.RemoveAccessMigrate',
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
@@ -1149,6 +1165,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
@@ -1302,6 +1319,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -1396,6 +1414,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -1479,6 +1498,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -1539,6 +1559,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
@@ -1550,6 +1571,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
              '.MountDataVolumeOnSlaveFirstNode'),
             ('workflow.steps.util.volume_provider'
              '.ScpFromSnapshotDatabaseMigrate'),
+             'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlaveLastNode',
             ('workflow.steps.util.volume_provider'
              '.UmountDataVolumeOnSlaveLastNode'),
             'workflow.steps.util.volume_provider.RemoveVolumeMigrateLastNode',
@@ -1694,7 +1716,7 @@ class MySQLSingleGCP(MySQLSingle):
                 'workflow.steps.util.plan.ConfigureRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 ('workflow.steps.util.host_provider.'
                  'DestroyVirtualMachineMigrateKeepObject')
@@ -1705,6 +1727,7 @@ class MySQLSingleGCP(MySQLSingle):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -1763,7 +1786,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 ('workflow.steps.util.host_provider.'
                  'DestroyVirtualMachineMigrateKeepObject')
@@ -1774,6 +1797,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.plan.InitializationMigrate',
@@ -1819,7 +1843,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 ('workflow.steps.util.host_provider.'
                  'InstallMigrateEngineTemplate'),
                 'workflow.steps.util.host_provider.Start',
@@ -1850,8 +1874,10 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.DestroyVolume',
                 'workflow.steps.util.volume_provider.NewVolumeFromMaster',
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -1884,7 +1910,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -1893,6 +1919,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.plan.Initialization',
@@ -1941,6 +1968,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
