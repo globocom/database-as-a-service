@@ -679,6 +679,8 @@ class MySQLFoxHA(MySQLSingle):
                 ('workflow.steps.util.mysql'
                  '.AddDiskPermissionsRestoredDiskMySQL'),
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
+                'workflow.steps.util.mysql.DetachOldestExportRestoreMySQL',
+                'workflow.steps.util.mysql.AttachNewerExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -783,7 +785,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -833,7 +835,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -872,7 +874,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 ('workflow.steps.util.host_provider.'
                  'InstallMigrateEngineTemplate'),
                 'workflow.steps.util.host_provider.Start',
@@ -1714,7 +1716,7 @@ class MySQLSingleGCP(MySQLSingle):
                 'workflow.steps.util.plan.ConfigureRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 ('workflow.steps.util.host_provider.'
                  'DestroyVirtualMachineMigrateKeepObject')
@@ -1784,7 +1786,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 ('workflow.steps.util.host_provider.'
                  'DestroyVirtualMachineMigrateKeepObject')
@@ -1841,7 +1843,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 ('workflow.steps.util.host_provider.'
                  'InstallMigrateEngineTemplate'),
                 'workflow.steps.util.host_provider.Start',
@@ -1872,6 +1874,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.DestroyVolume',
                 'workflow.steps.util.volume_provider.NewVolumeFromMaster',
                 'workflow.steps.util.volume_provider.AttachDataVolume',
@@ -1907,7 +1910,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',

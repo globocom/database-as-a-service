@@ -107,6 +107,12 @@ class VolumeProviderBase(BaseInstanceStep):
     def host_vm(self):
         return self.host_prov_client.get_vm_by_host(self.host)
 
+    @property
+    def master_host_vm(self):
+        return self.host_prov_client.get_vm_by_host(
+            self.infra.get_driver().get_master_instance().hostname
+        )
+
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
@@ -224,14 +230,14 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['removed']
 
-    def restore_snapshot(self, snapshot):
+    def restore_snapshot(self, snapshot, vm_name, vm_zone):
         url = "{}snapshot/{}/restore".format(
             self.base_url, snapshot.snapshopt_id
         )
 
         data = {
-            'vm_name': self.host_vm.name,
-            'zone': self.host_vm.zone
+            'vm_name': vm_name,
+            'zone': vm_zone
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -1220,12 +1226,25 @@ class RestoreSnapshot(VolumeProviderBase):
     def disk_host(self):
         return self.restore.master_for(self.instance).hostname
 
+    @property
+    def vm_name(self):
+        return self.host_vm.name
+
+    @property
+    def vm_zone(self):
+        return self.host_vm.zone
+
     def do(self):
         snapshot = self.snapshot
         if not snapshot:
             return
 
-        response = self.restore_snapshot(snapshot)
+        response = self.restore_snapshot(
+            snapshot,
+            self.vm_name,
+            self.vm_zone
+        )
+
         volume = self.latest_disk
         volume.identifier = response['identifier']
         volume.is_active = False
@@ -1238,6 +1257,16 @@ class RestoreSnapshot(VolumeProviderBase):
             return
 
         self.destroy_volume(self.latest_disk)
+
+
+class RestoreSnapshotToMaster(RestoreSnapshot):
+    @property
+    def vm_name(self):
+        return self.master_host_vm.name
+
+    @property
+    def vm_zone(self):
+        return self.master_host_vm.zone
 
 
 class AddAccess(VolumeProviderBase):
@@ -1615,6 +1644,28 @@ class DetachDataVolume(VolumeProviderBase):
             AttachDataVolume(self.instance).do()
 
 
+class DetachActiveVolume(DetachDataVolume):
+
+    def __unicode__(self):
+        return "Detaching volume..."
+
+    @property
+    def is_valid(self):
+        if not super(DetachActiveVolume, self).is_valid:
+            return False
+
+        return self.restore.is_master(self.instance)
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.detach_disk(self.volume)
+
+    def undo(self):
+        pass
+
+
 class MoveDisk(VolumeProviderBase):
     def __unicode__(self):
         return "Moving disk..."
@@ -1623,11 +1674,15 @@ class MoveDisk(VolumeProviderBase):
     def is_valid(self):
         return self.instance.is_database
 
+    @property
+    def zone(self):
+        return self.host_migrate.zone
+
     def do(self):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.host_migrate.zone)
+        self.move_disk(self.volume_migrate, self.zone)
 
     def undo(self):
         if not self.is_valid:
@@ -1690,7 +1745,7 @@ class AttachDataVolumeRestored(AttachDataVolume):
 
     @property
     def is_valid(self):
-        if not super(AttachDataVolume, self).is_valid:
+        if not super(AttachDataVolumeRestored, self).is_valid:
             return False
 
         return self.restore.is_master(self.instance)
@@ -1744,12 +1799,12 @@ class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
 class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
 
     def __unicode__(self):
-        return "Detach master volume in slave instance on dir..."
+        return "Detach master volume in slave instance..."
 
     def do(self):
         if self.is_database_instance:
-            super(UmountDataVolumeRecreateSlave, self).undo()
+            super(DetachDataVolumeRecreateSlave, self).undo()
 
     def undo(self):
         if self.is_database_instance:
-            super(UmountDataVolumeRecreateSlave, self).do()
+            super(DetachDataVolumeRecreateSlave, self).do()

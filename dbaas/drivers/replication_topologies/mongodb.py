@@ -777,7 +777,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.volume_provider.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshotToMaster',
             )}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
@@ -787,6 +787,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.DetachActiveVolume',
                 'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',

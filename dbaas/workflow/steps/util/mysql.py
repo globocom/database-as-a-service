@@ -3,7 +3,8 @@ from workflow.steps.mysql.util import get_replication_information_from_file, \
     change_master_to, start_slave, build_uncomment_skip_slave_script,\
     build_comment_skip_slave_script
 from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
-    RestoreSnapshot, UnmountActiveVolume
+    RestoreSnapshot, UnmountActiveVolume, DetachActiveVolume, \
+    AttachDataVolumeRestored
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
@@ -228,7 +229,17 @@ class UnmountOldestExportRestoreMySQL(
     pass
 
 
+class DetachOldestExportRestoreMySQL(
+    DiskRestoreMySQL, DetachActiveVolume
+):
+    pass
+
+
 class MountNewerExportRestoreMySQL(DiskRestoreMySQL, MountDataVolumeRestored):
+    pass
+
+
+class AttachNewerExportRestoreMySQL(DiskRestoreMySQL, AttachDataVolumeRestored):
     pass
 
 
