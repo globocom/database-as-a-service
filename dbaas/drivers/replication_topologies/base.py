@@ -83,7 +83,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -98,6 +98,7 @@ class BaseTopology(object):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
@@ -107,6 +108,7 @@ class BaseTopology(object):
 
     def get_migrate_engine_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForMigrateEngine',
             'workflow.steps.util.plan.ConfigureForMigrateEngine',
@@ -138,7 +140,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -315,7 +317,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -324,6 +326,7 @@ class BaseTopology(object):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',

@@ -207,7 +207,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -428,6 +428,7 @@ class MongoDBSingle(BaseMongoDB):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -642,7 +643,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -774,6 +775,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.disk.CleanData',
@@ -837,6 +839,8 @@ class MongoDBReplicaset(BaseMongoDB):
                  '.RemoveAccessRecreateSlave'),
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.WaitForReplication',
@@ -1137,12 +1141,15 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.DestroyVolume',
                 'workflow.steps.util.volume_provider.NewVolumeFromMaster',
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartRsyslog',
@@ -1176,7 +1183,7 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -1230,7 +1237,7 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.plan.ConfigureRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {

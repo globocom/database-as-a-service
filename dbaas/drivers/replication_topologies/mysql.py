@@ -135,7 +135,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
@@ -297,6 +297,7 @@ class MySQLSingle(BaseMysql):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -489,7 +490,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -1316,7 +1317,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -1964,7 +1965,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {

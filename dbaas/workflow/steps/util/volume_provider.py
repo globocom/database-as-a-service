@@ -152,12 +152,22 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def detach_disk(self, volume):
-        url = "{}detach-disk/{}".format(self.base_url, volume.identifier)
+        url = "{}detach/{}/".format(self.base_url, volume.identifier)
         response = post(url, headers=self.headers)
-
         if not response.ok:
             raise IndexError(response.content, response)
 
+        return response.json()
+
+    def attach_disk(self, volume):
+        url = "{}attach/{}/".format(self.base_url, volume.identifier)
+        data = {
+            'host_vm': self.host_vm.name,
+            'host_zone': self.host_vm.zone
+        }
+        response = post(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
         return response.json()
 
     def get_volume(self, volume):
@@ -1582,7 +1592,7 @@ class DestroyOldEnvironment(VolumeProviderBase):
         raise NotImplementedError
 
 
-class DetachDisk(VolumeProviderBase):
+class DetachDataVolume(VolumeProviderBase):
     def __unicode__(self):
         return "Detaching disk from VM..."
 
@@ -1594,15 +1604,15 @@ class DetachDisk(VolumeProviderBase):
         if not self.is_valid:
             return
 
-        self.detach_disk(self.volume)
+        for volume in self.host.volumes.all():
+            self.detach_disk(volume)
 
     def undo(self):
         if not self.is_valid:
             return
 
         if hasattr(self, 'host_migrate'):
-            script = self.get_mount_command(self.volume)
-            self.host.ssh.run_script(script)
+            AttachDataVolume(self.instance).do()
 
 
 class MoveDisk(VolumeProviderBase):
@@ -1632,7 +1642,7 @@ class MountDataVolumeWithUndo(MountDataVolume):
         if not self.is_valid:
             return
 
-        self.detach_disk(self.volume)
+        UnmountDataVolume(self.instance).do()
 
 
 class Resize2fs(VolumeProviderBase):
@@ -1649,3 +1659,97 @@ class Resize2fs(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class AttachDataVolume(VolumeProviderBase):
+    def __unicode__(self):
+        return "Attach disk in VM..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.attach_disk(self.volume)
+
+    def undo(self):
+        # at GCP when a disk is attached
+        # is automatically deleted with instance
+        pass
+
+
+class AttachDataVolumeWithUndo(AttachDataVolume):
+    def undo(self):
+        DetachDataVolume(self.instance).do()
+
+
+class AttachDataVolumeRestored(AttachDataVolume):
+
+    @property
+    def is_valid(self):
+        if not super(AttachDataVolume, self).is_valid:
+            return False
+
+        return self.restore.is_master(self.instance)
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
+class AttachDataVolumeMigrate(AttachDataVolume):
+
+    @property
+    def host_migrate_volume(self):
+        return self.host_migrate.host.volumes.get(is_active=True)
+
+    def do(self):
+        self.attach_disk(self.host_migrate_volume)
+
+    def undo(self):
+        self.detach_disk(self.host_migrate_volume)
+
+
+class AttachDataVolumeRecreateSlave(AttachDataVolumeMigrate):
+
+    @property
+    def host_migrate_volume(self):
+        master_instance = self.infra.get_driver().get_master_instance()
+        return master_instance.hostname.volumes.get(is_active=True)
+
+    def do(self):
+        if self.is_database_instance:
+            super(MountDataVolumeRecreateSlave, self).do()
+
+    def undo(self):
+        if self.is_database_instance:
+            super(MountDataVolumeRecreateSlave, self).undo()
+
+
+class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
+
+    def __unicode__(self):
+        return "Detach old volume in new instance..."
+
+    def do(self):
+        return super(AttachDataVolumeMigrate, self).undo()
+
+    def undo(self):
+        return super(AttachDataVolumeMigrate, self).do()
+
+
+class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
+
+    def __unicode__(self):
+        return "Detach master volume in slave instance on dir..."
+
+    def do(self):
+        if self.is_database_instance:
+            super(UmountDataVolumeRecreateSlave, self).undo()
+
+    def undo(self):
+        if self.is_database_instance:
+            super(UmountDataVolumeRecreateSlave, self).do()

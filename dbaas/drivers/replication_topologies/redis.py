@@ -83,7 +83,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -313,6 +313,7 @@ class RedisSingle(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -420,6 +421,7 @@ class RedisSentinel(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -478,7 +480,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
@@ -661,7 +663,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -748,6 +750,7 @@ class RedisCluster(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -855,7 +858,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.ConfigureRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -909,7 +912,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -1001,7 +1004,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
