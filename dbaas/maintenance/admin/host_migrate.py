@@ -95,7 +95,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         TaskRegister.host_migrate(
             retry_from.host, retry_from.zone, retry_from.environment,
             request.user, database, retry_from.current_step,
-            step_manager=retry_from
+            step_manager=retry_from, zone_origin=retry_from.zone_origin
         )
         return self.redirect_to_database(retry_from)
 

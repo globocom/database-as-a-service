@@ -382,6 +382,7 @@ class MySQL(BaseDriver):
         results = self.__query(
             query_string="show slave status", instance=instance
         )
+
         seconds_behind_master = results[0]['Seconds_Behind_Master']
         if seconds_behind_master is None:
             raise driver_errors.ReplicationNotRunningError
