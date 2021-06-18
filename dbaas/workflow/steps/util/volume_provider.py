@@ -1731,9 +1731,9 @@ class AttachDataVolume(VolumeProviderBase):
         self.attach_disk(self.volume)
 
     def undo(self):
-        # at GCP when a disk is attached
-        # is automatically deleted with instance
-        pass
+        if not self.is_valid:
+            return
+        self.detach_disk(self.volume)
 
 
 class AttachDataVolumeWithUndo(AttachDataVolume):
