@@ -1777,11 +1777,11 @@ class AttachDataVolumeRecreateSlave(AttachDataVolumeMigrate):
 
     def do(self):
         if self.is_database_instance:
-            super(MountDataVolumeRecreateSlave, self).do()
+            super(AttachDataVolumeRecreateSlave, self).do()
 
     def undo(self):
         if self.is_database_instance:
-            super(MountDataVolumeRecreateSlave, self).undo()
+            super(AttachDataVolumeRecreateSlave, self).undo()
 
 
 class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
@@ -1790,10 +1790,10 @@ class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
         return "Detach old volume in new instance..."
 
     def do(self):
-        return super(AttachDataVolumeMigrate, self).undo()
+        return super(DetachDataVolumeMigrate, self).undo()
 
     def undo(self):
-        return super(AttachDataVolumeMigrate, self).do()
+        return super(DetachDataVolumeMigrate, self).do()
 
 
 class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
