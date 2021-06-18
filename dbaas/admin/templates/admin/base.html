@@ -23,6 +23,8 @@
     <link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />
 {% endif %}
 
+<!--<link rel="stylesheet" type="text/css" href="{% static 'admin/css/dark-mode.css' %}" hidden="hidden" />-->
+<script type="text/javascript" src="{% static 'admin/js/dark_mode.js' %}"></script>
 <script type="text/javascript">
     window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";
 </script>
