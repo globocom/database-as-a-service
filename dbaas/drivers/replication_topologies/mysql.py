@@ -1073,7 +1073,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.mysql.SetFilePermission',
                 'workflow.steps.util.mysql.DisableReplicationRecreateSlave',
-                'workflow.steps.util.database.  ',
+                'workflow.steps.util.database.Start',
                 'workflow.steps.util.mysql.SetMasterRecreateSlave',
                 'workflow.steps.util.mysql.EnableReplicationRecreateSlave',
                 'workflow.steps.util.database.StartSlave',
