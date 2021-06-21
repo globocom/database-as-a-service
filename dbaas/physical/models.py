@@ -1769,6 +1769,20 @@ class Ip(BaseModel):
         return self.identifier
 
 
+class VipInstanceGroup(BaseModel):
+    vip = models.ForeignKey(Vip)
+    name = models.CharField(verbose_name=_("Name"), max_length=60)
+    identifier = models.CharField(verbose_name=_("Identifier"), max_length=200)
+
+    def __unicode__(self):
+        return 'Vip instance groups {}'.format(self.vip.infra.name)
+
+    class Meta:
+        unique_together = (
+            ('vip', 'name')
+        )
+
+
 ##########################################################################
 # Exceptions
 ##########################################################################

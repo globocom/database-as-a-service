@@ -36,23 +36,27 @@ class DatabaseStep(BaseInstanceStep):
     def undo(self):
         pass
 
-    def run_script(self, script):
+    def run_script(self, script, raise_if_error=True):
         output = self.host.ssh.run_script(
             script=script,
-            get_pty=self.driver.get_start_pty_default()
+            get_pty=self.driver.get_start_pty_default(),
+            raise_if_error=raise_if_error
         )
         return output['exit_code'], output
 
-    def _execute_init_script(self, command):
+    def _execute_init_script(self, command, raise_if_error=True):
         base_host = self.instance.hostname if self.host_migrate else self.host
         script = base_host.commands.init_database_script(
             action=command
         )
 
-        return self.run_script(script)
+        return self.run_script(script, raise_if_error=raise_if_error)
 
-    def start_database(self):
-        return self._execute_init_script('start')
+    def start_database(self, raise_if_error=True):
+        return self._execute_init_script(
+            'start',
+            raise_if_error=raise_if_error
+        )
 
     def stop_database(self):
         return self._execute_init_script('stop')
@@ -182,7 +186,7 @@ class Start(DatabaseStep):
         if not self.is_valid:
             return
 
-        return_code, output = self.start_database()
+        return_code, output = self.start_database(raise_if_error=False)
         if return_code != 0 and not self.is_up():
             raise EnvironmentError(
                 'Could not start database {}: {}'.format(return_code, output)

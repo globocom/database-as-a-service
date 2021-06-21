@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete, put
+from requests import post, delete, put, patch
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
-from physical.models import Vip
+from physical.models import Vip, VipInstanceGroup
 from util import get_credentials_for
 from base import BaseInstanceStep
 from dbaas_dnsapi.models import FOXHA
@@ -47,6 +47,38 @@ class VipProviderListZoneException(VipProviderException):
 
 
 class VipProviderInfoException(VipProviderException):
+    pass
+
+
+class VipProviderCreateInstanceGroupException(VipProviderException):
+    pass
+
+
+class VipProviderDeleteInstanceGroupException(VipProviderException):
+    pass
+
+
+class VipProviderInstanceGroupException(VipProviderException):
+    pass
+
+
+class VipProviderDeleteInstancesInGroupException(VipProviderException):
+    pass
+
+
+class VipProviderHealthcheckException(VipProviderException()):
+    pass
+
+
+class VipProviderForwardingRuleException(VipProviderException):
+    pass
+
+
+class VipProviderBackendServiceException(VipProviderException):
+    pass
+
+
+class VipProviderAllocateIpException(VipProviderException):
     pass
 
 
@@ -106,7 +138,7 @@ class Provider(object):
         return action(url, **kw)
 
     def create_vip(self, infra, port, team_name, equipments,
-        vip_dns, database_name='', future_vip=False):
+                   vip_dns, database_name='', future_vip=False):
         url = "{}/{}/{}/vip/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -120,6 +152,7 @@ class Provider(object):
         }
 
         response = self._request(post, url, json=data, timeout=600)
+
         if response.status_code != 201:
             raise VipProviderCreateVIPException(response.content, response)
 
@@ -139,6 +172,181 @@ class Provider(object):
 
         return vip
 
+    def delete_instance_group(self, equipments, vip, future_vip=False):
+        url = "{}/{}/{}/instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {
+            "equipments": equipments,
+            "destroy_vip": True
+        }
+
+        response = self._request(delete, url, json=data, timeout=600)
+        if response.status_code != 204:
+            raise VipProviderDeleteInstanceGroupException(
+                    response.content, response)
+
+        VipInstanceGroup.objects.filter(vip=vip).delete()
+        vip.delete()
+
+        return True
+
+    def create_instance_group(self, infra, port, team_name, equipments,
+                              vip_dns, database_name='', future_vip=False):
+        url = "{}/{}/{}/instance-group".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "group": infra.name,
+            "port": port,
+            "team_name": team_name,
+            "vip_dns": vip_dns,
+            "equipments": equipments
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderCreateInstanceGroupException(
+                    response.content, response)
+
+        content = response.json()
+
+        try:
+            original_vip = Vip.objects.get(infra=infra)
+        except Vip.DoesNotExist:
+            original_vip = None
+        vip = Vip()
+        vip.identifier = content["vip_identifier"]
+        vip.infra = infra
+        if original_vip:
+            vip.original_vip = original_vip
+        vip.save()
+
+        for g in content['groups']:
+            vg = VipInstanceGroup(vip=vip)
+            vg.name = g['name']
+            vg.identifier = g['identifier']
+            vg.save()
+
+        return vip
+
+    def instance_in_group(self, equipments, vip):
+        url = "{}/{}/{}/instance-in-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+        data = {
+            "equipments": equipments,
+        }
+
+        response = self._request(
+            post, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderInstanceGroupException(
+                    response.content, response)
+
+        return True
+
+    def healthcheck(self, vip, destroy=False):
+        url = "{}/{}/{}/healthcheck/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderHealthcheckException(
+                    response.content, response)
+
+        return True
+
+    def backend_service(self, vip, destroy=False):
+        url = "{}/{}/{}/backend-service/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderBackendServiceException(
+                    response.content, response)
+
+        return True
+
+    def update_backend_service(self, vip, exclude_zone):
+        url = "{}/{}/{}/backend-service/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {'exclude_zone': exclude_zone}
+        response = self._request(
+            patch, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderBackendServiceException(
+                    response.content, response)
+        content = response.json()
+
+        return True
+
+    def forwarding_rule(self, vip, destroy=False):
+        url = "{}/{}/{}/forwarding-rule/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderForwardingRuleException(
+                    response.content, response)
+
+        return True
+
+    def allocate_ip(self, vip, destroy=False):
+        url = "{}/{}/{}/allocate-ip/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(
+            post if not destroy else delete, url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderAllocateIpException(
+                    response.content, response)
+        if destroy:
+            return True
+
+        content = response.json()
+        return content['address']
+
+    def destroy_instance_group(self, zone, vip):
+        url = "{}/{}/{}/destroy-empty-instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {
+            'zone': zone
+        }
+
+        response = self._request(
+            delete, url, json=data, timeout=600)
+        if response.status_code != 200:
+            raise VipProviderInstanceGroupException(
+                    response.content, response)
+
+        content = response.json()
+
+        for c in content.get('destroyed', []):
+            VipInstanceGroup.objects.get(identifier=c).delete()
+
+        return True
+
     def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
             self.credential.endpoint,
@@ -152,7 +360,8 @@ class Provider(object):
 
         response = self._request(put, url, json=data, timeout=600)
         if not response.ok:
-            raise VipProviderUpdateVipRealsException(response.content, response)
+            raise VipProviderUpdateVipRealsException(
+                    response.content, response)
 
     def add_real(self, infra, real_id, port):
         vip_id = Vip.objects.get(infra=infra).identifier
@@ -193,7 +402,6 @@ class Provider(object):
 
         response = response.json()
         return response['healthy']
-
 
     def destroy_vip(self, identifier):
         url = "{}/{}/{}/vip/{}".format(
@@ -237,18 +445,36 @@ class VipProviderStep(BaseInstanceStep):
             equipment = {
                 'host_address': host.address,
                 'port': instance.port,
-                'identifier': vm_info.identifier
+                'identifier': vm_info.identifier,
+                'zone': vm_info.zone,
+                'group': vm_info.group,
+                'name': vm_info.name
             }
             equipments.append(equipment)
         return equipments
 
     @property
     def team(self):
-        ## TODO
+        # @TODO
         return "dbaas"
         if self.has_database:
             return self.database.team.name
         return self.create.team.name
+
+    @property
+    def current_vip(self):
+        vip = Vip.objects.filter(infra=self.infra)
+        if vip.exists():
+            return vip.last()
+
+        return None
+
+    @property
+    def current_instance_group(self):
+        if not self.current_vip:
+            return None
+
+        return VipInstanceGroup.objects.filter(vip=self.current_vip)
 
     def do(self):
         raise NotImplementedError
@@ -264,11 +490,13 @@ class CreateVip(VipProviderStep):
 
     @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first()
+        return self.instance == self.infra.instances.first() or\
+                self.host_migrate
 
     @property
     def vip_dns(self):
-        name, domain = get_dns_name_domain(self.infra, self.infra.name, FOXHA, is_database=False)
+        name, domain = get_dns_name_domain(
+            self.infra, self.infra.name, FOXHA, is_database=False)
         return '{}.{}'.format(name, domain)
 
     def do(self):
@@ -278,7 +506,8 @@ class CreateVip(VipProviderStep):
         vip = self.provider.create_vip(
             self.infra, self.instance.port, self.team,
             self.equipments, self.vip_dns)
-        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
+        dns = add_dns_record(
+            self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
         self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
@@ -345,7 +574,8 @@ class UpdateVipReals(VipProviderStep):
         equipments = []
         for instance in self.infra.instances.all():
             host = instance.hostname
-            if self.host_migrate and host.future_host and self.rollback is False:
+            if (self.host_migrate and
+               host.future_host and self.rollback is False):
                 host = host.future_host
             vm_info = self.host_prov_client.get_vm_by_host(host)
             equipment = {
@@ -358,7 +588,7 @@ class UpdateVipReals(VipProviderStep):
 
     @property
     def vip(self):
-        original_vip =  Vip.objects.get(infra=self.infra)
+        original_vip = Vip.objects.get(infra=self.infra)
         try:
             future_vip = Vip.original_objects.get(
                 infra_id=self.infra.id,
@@ -382,7 +612,6 @@ class UpdateVipReals(VipProviderStep):
     def undo(self):
         self.rollback = True
         self.update_vip_reals()
-
 
 
 class UpdateVipRealsMigrate(UpdateVipReals):
@@ -454,6 +683,7 @@ class RemoveReal(VipProviderStep):
     def undo(self):
         pass
 
+
 class RemoveRealMigrate(RemoveReal):
 
     def __unicode__(self):
@@ -482,6 +712,210 @@ class WaitVipReady(VipProviderStep):
         if not vip_ready:
             raise EnvironmentError("VIP not ready")
 
+    def undo(self):
+        raise NotImplementedError
+
+
+class CreateInstanceGroup(CreateVip):
+
+    def __unicode__(self):
+        return "Creating instance group..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.create_instance_group(
+                    self.infra, self.instance.port, self.team,
+                    self.equipments, self.vip_dns)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.delete_instance_group(
+                    self.equipments, self.current_vip)
+
+
+class AddInstancesInGroup(CreateVip):
+    def __unicode__(self):
+        return "Adding instances in groups..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.instance_in_group(
+                    self.equipments, self.current_vip)
+
+    def undo(self):
+        pass
+
+
+class CreateHeathcheck(CreateVip):
+    def __unicode__(self):
+        return "Add healthcheck..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.healthcheck(self.current_vip)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.healthcheck(self.current_vip, destroy=True)
+
+
+class CreateBackendService(CreateVip):
+    def __unicode__(self):
+        return "Add backend service..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.backend_service(self.current_vip)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.backend_service(self.current_vip, destroy=True)
+
+
+class AllocateIP(CreateVip):
+    def __unicode__(self):
+        return "Allocating ip to vip..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        ip = self.provider.allocate_ip(self.current_vip)
+
+        self.infra.endpoint = "{}:{}".format(ip, 3306)
+        self.infra.endpoint_dns = "{}:{}".format(ip, 3306)
+        self.infra.save()
+
+        return True
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.allocate_ip(self.current_vip, destroy=True)
+
+
+class CreateForwardingRule(CreateVip):
+    def __unicode__(self):
+        return "Add Forwarding rule..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.forwarding_rule(self.current_vip)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.forwarding_rule(self.current_vip, destroy=True)
+
+
+class DestroyEmptyInstanceGroupMigrate(CreateVip):
+    def __unicode__(self):
+        return "Destroy instance group if is empty..."
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone_origin
+
+    def do(self):
+        self.provider.destroy_instance_group(
+            self.zone_to, self.current_vip)
+
+    def undo(self):
+        pass
+
+
+class UpdateBackendServiceMigrate(CreateBackendService):
+    def __unicode__(self):
+        return "update backend service..."
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone_origin
+
+    def do(self):
+        self.provider.update_backend_service(
+            self.current_vip, self.zone_to)
+
+    def undo(self):
+        pass
+
+
+class DestroyEmptyInstanceGroupMigrateRollback(
+        DestroyEmptyInstanceGroupMigrate):
+    def __unicode__(self):
+        return "Destroy instance group if is empty rollback..."
+
+    def do(self):
+        pass
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone
+
+    def undo(self):
+        super(DestroyEmptyInstanceGroupMigrateRollback, self).do()
+
+
+class UpdateBackendServiceMigrateRollback(UpdateBackendServiceMigrate):
+    def __unicode__(self):
+        return "update backend service rollback..."
+
+    def do(self):
+        pass
+
+    @property
+    def zone_to(self):
+        return self.host_migrate.zone
+
+    def undo(self):
+        super(UpdateBackendServiceMigrateRollback, self).do()
+
+
+class CreateInstanceGroupRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Creating instance group rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(CreateInstanceGroupRollback, self).do()
+
+
+class AddInstancesInGroupRollback(AddInstancesInGroup):
+    def __unicode__(self):
+        return "Adding instances in groups rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(AddInstancesInGroupRollback, self).do()
+
+
+class CreateInstanceGroupWithoutRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Creating instance group without rollback..."
 
     def undo(self):
         pass

@@ -139,6 +139,9 @@ class HostSSH(object):
             get_pty=get_pty
         )
         self.handle_command_output(command_output)
+        LOG.info(
+            "Command output: [{}]".format(self.output)
+        )
         self.clean_script_files()
         if self.script_exit_code != 0:
             if retry:

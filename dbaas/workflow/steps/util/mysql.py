@@ -3,7 +3,8 @@ from workflow.steps.mysql.util import get_replication_information_from_file, \
     change_master_to, start_slave, build_uncomment_skip_slave_script,\
     build_comment_skip_slave_script
 from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
-    RestoreSnapshot, UnmountActiveVolume
+    RestoreSnapshot, UnmountActiveVolume, DetachActiveVolume, \
+    AttachDataVolumeRestored
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
@@ -146,8 +147,6 @@ class DisableReplication(MySQLStep):
         script = build_uncomment_skip_slave_script()
         # self.run_script(script)
         self.host.ssh.run_script(script)
-        
-
 
     def undo(self):
         if not self.is_valid:
@@ -230,7 +229,17 @@ class UnmountOldestExportRestoreMySQL(
     pass
 
 
+class DetachOldestExportRestoreMySQL(
+    DiskRestoreMySQL, DetachActiveVolume
+):
+    pass
+
+
 class MountNewerExportRestoreMySQL(DiskRestoreMySQL, MountDataVolumeRestored):
+    pass
+
+
+class AttachNewerExportRestoreMySQL(DiskRestoreMySQL, AttachDataVolumeRestored):
     pass
 
 
@@ -268,6 +277,7 @@ class CreateAlarmsVipForUpgrade(CreateAlarmsVip):
     @property
     def target_plan(self):
         return self.plan.engine_equivalent_plan
+
 
 class CreateAlarmsVipForMigradeEngine(CreateAlarmsVip):
     @property
@@ -336,6 +346,7 @@ class AuditPlugin(MySQLStep):
             return False
         return True
 
+
 class InstallAuditPlugin(AuditPlugin):
     def __unicode__(self):
         return "Installing audit plugin..."
@@ -347,6 +358,7 @@ class InstallAuditPlugin(AuditPlugin):
     def do(self):
         if not self.audit_plugin_status:
             self.driver.query(query_string=self.query, instance=self.instance)
+
 
 class CheckIfAuditPluginIsInstalled(AuditPlugin):
     def __unicode__(self):
@@ -431,7 +443,8 @@ class SetReplicationHostMigrate(MySQLStep):
         if not self.is_valid:
             return
         log_file, log_pos = get_replication_information_from_file(self.host)
-        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
+        change_master_to(self.master_instance,
+                         self.host.address, log_file, log_pos)
 
     def undo(self):
         raise Exception("There is no rollback for this step.")
@@ -459,8 +472,10 @@ class SetReplicationLastInstanceMigrate(SetReplicationHostMigrate):
     @property
     def host(self):
         # database_migrate = self.host_migrate.database_migrate
-        # return database_migrate.hosts.exclude(id=self.host_migrate.id).first().host.future_host
-        return self.infra.instances.exclude(id=self.instance.id).first().hostname.future_host
+        # return database_migrate.hosts.exclude(id=self.\
+        #   host_migrate.id).first().host.future_host
+        return self.infra.instances.exclude(id=self.instance.id).\
+                first().hostname.future_host
 
     @property
     def master_instance(self):
@@ -484,4 +499,5 @@ class SetReplicationFirstInstanceMigrate(SetReplicationLastInstanceMigrate):
         row = r.fetch_row(maxrows=0, how=1)
         log_file = row[0]['File']
         log_pos = row[0]['Position']
-        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
+        change_master_to(self.master_instance, self.host.address,
+                         log_file, log_pos)

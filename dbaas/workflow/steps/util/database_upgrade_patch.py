@@ -153,9 +153,26 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
 
         patch_path = self.patch_path_by_os
 
-        script = """cd {patch_path}
-        yum -y localinstall --nogpgcheck *.rpm
-        """.format(patch_path=patch_path)
+        if self.patch_path_by_os.startswith('https'):
+            script = """
+            mkdir /tmp/mysql_patch/
+            wget -P /tmp/mysql_patch/ -r -nH --reject="index.html*" --no-parent --cut-dirs=8 {patch_path}
+            yum -y localinstall --nogpgcheck /tmp/mysql_patch/*.rpm
+            rm -rf /tmp/mysql_patch/
+            """.format(patch_path=patch_path)
+        else:
+            script = """cd {patch_path}
+            yum -y localinstall --nogpgcheck *.rpm
+            """.format(patch_path=patch_path)
 
         # self.execute_script(script)
         self.host.ssh.run_script(script)
+
+
+class MySQLCHGBinStepRollback(MySQLCHGBinStep):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(MySQLCHGBinStepRollback, self).do()

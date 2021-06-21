@@ -1128,8 +1128,21 @@ class RemoveInstanceDatabase(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "Remove instances from database: {}".format(self.database)
 
+    def update_step(self, step):
+        try:
+            if self.instance:
+                Instance.objects.get(id=self.instance.id)
+        except Instance.DoesNotExist:
+            self.instance = None
+        super(RemoveInstanceDatabase, self).update_step(step)
+
     def update_final_status(self, status):
         if status == DatabaseMaintenanceTask.SUCCESS:
+            self.instance = None
+        try:
+            if self.instance:
+                Instance.objects.get(id=self.instance.id)
+        except Instance.DoesNotExist:
             self.instance = None
         super(RemoveInstanceDatabase, self).update_final_status(status)
 

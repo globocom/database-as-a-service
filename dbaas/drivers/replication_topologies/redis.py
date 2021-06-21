@@ -6,6 +6,7 @@ from physical.models import Instance
 class BaseRedis(BaseTopology):
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
@@ -82,6 +83,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -130,6 +132,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -171,6 +174,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
@@ -184,6 +188,7 @@ class RedisSingle(BaseRedis):
                 ('workflow.steps.util.volume_provider'
                  '.MountDataVolumeRecreateSlave'),
                 'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
                 ('workflow.steps.util.volume_provider'
                  '.UmountDataVolumeRecreateSlave'),
                 ('workflow.steps.util.volume_provider'
@@ -216,6 +221,7 @@ class RedisSingle(BaseRedis):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -229,6 +235,7 @@ class RedisSingle(BaseRedis):
             ('workflow.steps.util.volume_provider'
              '.MountDataVolumeRecreateSlave'),
             'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+            'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
             ('workflow.steps.util.volume_provider'
              '.UmountDataVolumeRecreateSlave'),
             ('workflow.steps.util.volume_provider'
@@ -275,6 +282,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.CopyPermissions',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.database.Start',
@@ -305,6 +313,7 @@ class RedisSingle(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -348,11 +357,13 @@ class RedisSentinel(BaseRedis):
 
     def get_add_database_instances_middle_steps(self):
         return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
-            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf'
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
@@ -379,6 +390,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.CopyPermissions',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.database.Start',
@@ -410,6 +422,7 @@ class RedisSentinel(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -468,6 +481,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
@@ -521,6 +535,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
@@ -574,6 +589,7 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -648,6 +664,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -701,6 +718,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.volume_provider.CopyPermissions',
                 'workflow.steps.util.volume_provider.CopyFiles',
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
                 'workflow.steps.util.database.Start',
@@ -733,6 +751,7 @@ class RedisCluster(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -774,6 +793,7 @@ class RedisCluster(BaseRedis):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -839,7 +859,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.ConfigureRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -848,6 +868,7 @@ class RedisGenericGCE(object):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
@@ -892,7 +913,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -901,6 +922,7 @@ class RedisGenericGCE(object):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.plan.InitializationMigrate',
@@ -935,6 +957,7 @@ class RedisGenericGCE(object):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -982,7 +1005,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrateRollback',
             )}, {
             'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDisk',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.vm.WaitingBeReadyRollback',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
             )}, {
@@ -991,6 +1014,7 @@ class RedisGenericGCE(object):
             )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.plan.InitializationMigrate',
@@ -1021,6 +1045,7 @@ class RedisGenericGCE(object):
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            'workflow.steps.util.volume_provider.AttachDataVolume',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
