@@ -412,7 +412,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.volume_provider.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshotToMaster',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
@@ -740,7 +740,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.volume_provider.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshotToMaster',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
