@@ -420,9 +420,9 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.volume_provider.MoveDisk',
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.MoveDiskRestore',
                 'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
@@ -741,7 +741,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.volume_provider.RestoreSnapshotToMaster',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
@@ -750,9 +750,9 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.redis.cluster.SaveNodeConfig'
             )}, {
             'Configuring': (
-                'workflow.steps.util.volume_provider.MoveDisk',
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.MoveDiskRestore',
                 'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
