@@ -110,7 +110,7 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def master_host_vm(self):
         host = self.infra.get_driver().get_master_instance()
-        if isinstance(mater_instance, list):
+        if isinstance(host, list):
             host = host[0]
 
         host = host.hostname
