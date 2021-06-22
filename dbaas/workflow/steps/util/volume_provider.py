@@ -109,8 +109,13 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def master_host_vm(self):
+        host = self.infra.get_driver().get_master_instance()
+        if isinstance(mater_instance, list):
+            host = host[0]
+
+        host = host.hostname
         return self.host_prov_client.get_vm_by_host(
-            self.infra.get_driver().get_master_instance().hostname
+            host
         )
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,

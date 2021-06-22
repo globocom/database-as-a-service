@@ -844,7 +844,7 @@ class DestroyEmptyInstanceGroupMigrate(CreateVip):
 
 class UpdateBackendServiceMigrate(CreateBackendService):
     def __unicode__(self):
-        return "update backend service..."
+        return "update backend service...."
 
     @property
     def zone_to(self):
