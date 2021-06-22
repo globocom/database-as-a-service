@@ -1682,18 +1682,39 @@ class MoveDisk(VolumeProviderBase):
     @property
     def zone(self):
         return self.host_migrate.zone
+    
+    @property
+    def volume(self):
+        return self.volume_migrate
 
     def do(self):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.zone)
+        self.move_disk(self.volume, self.zone)
 
     def undo(self):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
+        self.move_disk(self.volume, self.host_migrate.zone_origin)
+
+
+class MoveDiskRestore(MoveDisk):
+
+    def is_valid(self):
+        if not super(MoveDiskRestore, self).is_valid:
+            return False
+
+        return self.restore.is_master(self.instance)
+
+    @property
+    def zone(self):
+        return self.host_vm.zone
+
+    @property
+    def volume(self):
+        return self.latest_disk
 
 
 class MountDataVolumeWithUndo(MountDataVolume):
