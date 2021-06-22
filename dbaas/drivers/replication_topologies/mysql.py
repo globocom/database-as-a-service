@@ -1815,12 +1815,13 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
             )}, {
             'Starting database': (
-                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.fox.IsReplicationOk',
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.util.fox.IsReplicationOk',
             )}, {
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
