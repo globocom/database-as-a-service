@@ -1798,8 +1798,6 @@ class MySQLFoxHAGCP(MySQLFoxHA):
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartSlave',
-                'workflow.steps.util.fox.IsReplicationOk',
-                'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()

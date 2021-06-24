@@ -741,6 +741,10 @@ class AddInstancesInGroup(CreateVip):
     def __unicode__(self):
         return "Adding instances in groups..."
 
+    @property
+    def is_valid(self):
+        return True
+
     def do(self):
         if not self.is_valid:
             return
