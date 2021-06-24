@@ -1750,6 +1750,60 @@ class MySQLSingleGCP(MySQLSingle):
 
 
 class MySQLFoxHAGCP(MySQLFoxHA):
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.util.volume_provider.AttachDataVolume',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.plan.ConfigureLog',
+            'workflow.steps.util.mysql.SkipSlaveStart',
+            'workflow.steps.util.mysql.DisableLogBin',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.mysql.RunMySQLUpgrade',
+            'workflow.steps.util.mysql.InstallAuditPlugin',
+            'workflow.steps.util.mysql.CheckIfAuditPluginIsInstalled',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.ConfigureLog',
+        )
+
+    def get_upgrade_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.volume_provider.DetachDataVolume',
+                'workflow.steps.util.host_provider.InstallNewTemplate',
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.fox.IsReplicationOk',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + self.get_upgrade_steps_final()
+
     def get_host_migrate_steps(self):
         return [{
             'Disable monitoring and alarms': (
