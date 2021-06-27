@@ -40,6 +40,7 @@ class HostProviderChangeOfferingException(HostProviderException):
 class HostProviderCreateVMException(HostProviderException):
     pass
 
+
 class HostProviderCreateIPException(HostProviderException):
     pass
 
@@ -57,6 +58,14 @@ class HostProviderListZoneException(HostProviderException):
 
 
 class HostProviderInfoException(HostProviderException):
+    pass
+
+
+class HostProviderCreateServiceAccountException(HostProviderException):
+    pass
+
+
+class HostProviderDestroyServiceAccountException(HostProviderException):
     pass
 
 
@@ -148,7 +157,8 @@ class Provider(BaseInstanceStep):
             "host_id": self.host.identifier,
             "team_name": self.team_name,
             "database_name": self.database.name,
-            "group": self.infra.name
+            "group": self.infra.name,
+            "service_account": self.infra.service_account
         }
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
@@ -190,7 +200,8 @@ class Provider(BaseInstanceStep):
             "group": infra.name,
             "team_name": team_name,
             "database_name": database_name,
-            "static_ip_id": static_ip and static_ip.identifier
+            "static_ip_id": static_ip and static_ip.identifier,
+            "service_account": self.infra.service_account
         }
         if zone:
             data['zone'] = zone
@@ -348,6 +359,35 @@ class Provider(BaseInstanceStep):
         if not response.ok:
             raise HostProviderException(response.content, response)
         return response.json()
+
+    def create_service_account(self, name):
+
+        url = "{}/{}/{}/sa/".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "name": name
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderCreateServiceAccountException(
+                response.content, response
+            )
+
+        content = response.json()
+        return content['service_account']
+
+    def destroy_service_account(self, service_account):
+        url = "{}/{}/{}/sa/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            service_account
+        )
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyServiceAccountException(
+                response.content, response
+            )
 
 
 class HostProviderStep(BaseInstanceStep):
@@ -773,6 +813,7 @@ class WaitingNewDeployUndo(WaitingNewDeploy):
     def undo(self):
         self.execute()
 
+
 class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def __unicode__(self):
@@ -808,6 +849,7 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
         )
         self.host.save()
 
+
 class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def __unicode__(self):
@@ -824,3 +866,25 @@ class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def undo(self):
         self.provider.destroy_host(self.host_migrate.host)
+
+
+class CreateServiceAccount(HostProviderStep):
+
+    def __unicode__(self):
+        return "Creating Service Account..."
+
+    def do(self):
+        service_account = self.infra.service_account
+        if not service_account:
+            name = self.infra.name
+            service_account = self.provider.create_service_account(name)
+            self.infra.service_account = service_account
+            self.infra.save()
+
+    def undo(self):
+        service_account = self.infra.service_account
+        if service_account:
+            self.provider.destroy_service_account(service_account)
+            self.infra.service_account = None
+            self.infra.save()
+

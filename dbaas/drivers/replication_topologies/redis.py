@@ -68,6 +68,9 @@ class RedisSingle(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -467,6 +470,9 @@ class RedisSentinel(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -650,6 +656,9 @@ class RedisCluster(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',

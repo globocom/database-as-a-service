@@ -117,6 +117,9 @@ class MySQLSingle(BaseMysql):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -449,6 +452,9 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -1292,6 +1298,9 @@ class MySQLFoxHA(MySQLSingle):
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
@@ -1989,6 +1998,9 @@ class MySQLFoxHAGCP(MySQLFoxHA):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
