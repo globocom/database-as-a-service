@@ -144,7 +144,12 @@ class Provider(BaseInstanceStep):
         url = "{}/{}/{}/host/reinstall".format(
             self.credential.endpoint, self.provider, self.environment
         )
-        data = {"host_id": self.host.identifier}
+        data = {
+            "host_id": self.host.identifier,
+            "team_name": self.team_name,
+            "database_name": self.database.name,
+            "group": self.infra.name
+        }
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
