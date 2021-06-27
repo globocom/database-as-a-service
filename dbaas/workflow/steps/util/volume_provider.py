@@ -1232,12 +1232,16 @@ class RestoreSnapshot(VolumeProviderBase):
         return self.restore.master_for(self.instance).hostname
 
     @property
+    def vm_info(self):
+        return self.host_prov_client.get_vm_by_host(self.disk_host)
+
+    @property
     def vm_name(self):
-        return self.host_vm.name
+        return self.vm_info.name
 
     @property
     def vm_zone(self):
-        return self.host_vm.zone
+        return self.vm_info.zone
 
     def do(self):
         snapshot = self.snapshot

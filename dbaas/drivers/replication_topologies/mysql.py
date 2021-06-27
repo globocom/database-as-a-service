@@ -677,16 +677,19 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.mysql.SaveMySQLBinlog',
+                'workflow.steps.util.database.StopSlave',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.agents.Stop',
                 'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.metric_collector.StopTelegraf',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
                 ('workflow.steps.util.mysql'
                  '.AddDiskPermissionsRestoredDiskMySQL'),
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
-                'workflow.steps.util.mysql.DetachOldestExportRestoreMySQL',
                 'workflow.steps.util.mysql.AttachNewerExportRestoreMySQL',
+                'workflow.steps.util.mysql.DetachOldestExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -715,6 +718,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.agents.Start',
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
