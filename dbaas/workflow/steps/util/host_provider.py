@@ -376,7 +376,9 @@ class Provider(BaseInstanceStep):
             )
 
         content = response.json()
-        return content['service_account']
+        if content:
+            return content['service_account']
+        return None
 
     def destroy_service_account(self, service_account):
         url = "{}/{}/{}/sa/{}".format(
