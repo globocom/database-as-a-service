@@ -293,14 +293,24 @@ class Provider(object):
 
         return True
 
-    def forwarding_rule(self, vip, destroy=False):
+    def forwarding_rule(self, vip, destroy=False,
+                        team_name=None, engine_name=None,
+                        database_name=None, infra_name=None):
         url = "{}/{}/{}/forwarding-rule/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
         )
 
+        data = {
+            "team_name": team_name,
+            "database_name": database_name,
+            "infra_name": infra_name,
+            "engine_name": engine_name
+        }
+
         response = self._request(
-            post if not destroy else delete, url, timeout=600)
+            post if not destroy else delete,
+            url, json=data, timeout=600)
         if response.status_code != (201 if not destroy else 204):
             raise VipProviderForwardingRuleException(
                     response.content, response)
@@ -821,7 +831,11 @@ class CreateForwardingRule(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.forwarding_rule(self.current_vip)
+        return self.provider.forwarding_rule(
+            self.current_vip, False, team_name=self.team,
+            engine_name=self.engine.name.split("_")[0],
+            database_name=self.create.name,
+            infra_name=self.infra.name)
 
     def undo(self):
         if not self.is_valid:
