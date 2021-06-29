@@ -121,6 +121,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
+
         data = {
             "group": group,
             "size_kb": size_kb,
@@ -128,7 +129,9 @@ class VolumeProviderBase(BaseInstanceStep):
             "snapshot_id": snapshot_id,
             "zone": zone,
             "vm_name": vm_name,
-            "team_name": self.team_name
+            "team_name": self.team_name,
+            "engine": self.engine.name,
+            "db_name": self.database_name
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -215,8 +218,8 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}snapshot/{}".format(self.base_url, self.volume.identifier)
         data = {
             "engine": self.engine.name,
-            "db_name": self.database.name,
-            "team_name": self.database.team.name
+            "db_name": self.database_name,
+            "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
 
@@ -242,7 +245,10 @@ class VolumeProviderBase(BaseInstanceStep):
 
         data = {
             'vm_name': vm_name,
-            'zone': vm_zone
+            'zone': vm_zone,
+            'engine': self.engine.name,
+            'db_name': self.database_name,
+            'team_name': self.team_name
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -1686,7 +1692,7 @@ class MoveDisk(VolumeProviderBase):
     @property
     def zone(self):
         return self.host_migrate.zone
-    
+
     @property
     def volume(self):
         return self.volume_migrate
