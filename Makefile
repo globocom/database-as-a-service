@@ -69,7 +69,7 @@ unit_test: # run tests
 	@cd dbaas && REUSE_DB=1 coverage run --source='.' manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 send_codecov:
-	@cd dbaas && bash <(curl -s https://codecov.io/bash)
+	@cd dbaas && curl -s https://codecov.io/bash > codecov.sh  && bash codecov.sh 
 
 docker_build:
 	docker build -t dbaas_test .

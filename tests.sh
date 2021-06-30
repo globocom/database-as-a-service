@@ -22,4 +22,4 @@ sleep 60
 # Run tests
 make unit_test
 
-make send_codecov
+#make send_codecov

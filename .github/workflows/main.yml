@@ -34,3 +34,12 @@ jobs:
       run: docker ps
     - name: run tests
       run: docker-compose run test
+    - uses: codecov/codecov-action@v1
+      with:
+        files: ./dbaas/coverage
+        flags: unittests 
+        name: codecov-umbrella 
+        fail_ci_if_error: true
+        verbose: true
+      
+    
