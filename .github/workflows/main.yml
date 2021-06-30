@@ -7,9 +7,9 @@ jobs:
     env:
       DOCKER_COMPOSE_VERSION: 1.11.2
     steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '2.7'
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '2.7'
     - name: Shutdown Ubuntu MySQL
         run: sudo service mysql stop
     - name: Checkout Code
