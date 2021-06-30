@@ -35,9 +35,9 @@ jobs:
     - name: run tests
       run: docker-compose run test
     - name: Send to codecov
-        uses: codecov/codecov-action@v1
-        with:
-          flags: unittests 
-          name: codecov-umbrella 
-          fail_ci_if_error: true 
-          verbose: true 
+      uses: codecov/codecov-action@v1
+      with:
+        flags: unittests 
+        name: codecov-umbrella 
+        fail_ci_if_error: true 
+        verbose: true 
