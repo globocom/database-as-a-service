@@ -36,7 +36,7 @@ jobs:
       run: docker-compose run test
     - uses: codecov/codecov-action@v1
       with:
-        files: ./dbaas/coverage
+        files: ./dbaas/coverage.xml
         flags: unittests 
         name: codecov-umbrella 
         fail_ci_if_error: true
