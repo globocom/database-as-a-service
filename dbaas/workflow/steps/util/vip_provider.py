@@ -811,7 +811,6 @@ class AllocateIP(CreateVip):
         ip = self.provider.allocate_ip(self.current_vip)
 
         self.infra.endpoint = "{}:{}".format(ip, 3306)
-        self.infra.endpoint_dns = "{}:{}".format(ip, 3306)
         self.infra.save()
 
         return True
@@ -821,6 +820,24 @@ class AllocateIP(CreateVip):
             return
 
         return self.provider.allocate_ip(self.current_vip, destroy=True)
+
+
+class AllocateDNS(CreateVip):
+    def __unicode__(self):
+        return "Allocating DNS to vip..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        dns = add_dns_record(
+            self.infra, self.infra.name,
+            self.infra.endpoint, FOXHA, is_database=False)
+        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
+        self.infra.save()
+
+    def undo(self):
+        pass
 
 
 class CreateForwardingRule(CreateVip):
