@@ -66,7 +66,7 @@ test: # run tests
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 unit_test: # run tests
-	@cd dbaas && REUSE_DB=1 python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
+	@cd dbaas && REUSE_DB=1 coverage run --source='.' manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 docker_build:
 	docker build -t dbaas_test .
