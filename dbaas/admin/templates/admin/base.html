@@ -90,13 +90,18 @@
                     <div class="dropdown pull-right welcome-message" id="dropdown-menu-notification">
                         {% get_notifications user.username %}
                     </div>
+                    <div class="dark-mode-toggle">
+                    <i class="fa fa-sun-o" class="iconsdm iconlight"></i>
+                    <input type="checkbox" id="dmodechckbox" title="Dark mode">
+                     <i class="fa fa-moon-o" class="iconsdm icondark"></i>
+                    </div>
+                    
                 </div>
             </div>
         {% endif %}
     </div>
     <!-- END Header -->
 {% endif %}
-
 <div id="main-notification" class='container-fluid'>
 {% block notification %}
 {% endblock %}

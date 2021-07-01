@@ -17,3 +17,6 @@ if (is_dark){
 }
 
 localStorage.setItem('darkmode', is_dark);
+
+
+JQuery("#dmodechckbox").check()

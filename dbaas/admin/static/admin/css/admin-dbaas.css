@@ -63,3 +63,51 @@
     font-family: 'Titillium Web', sans-serif;
     padding: 16px;
 }
+
+
+
+/* Styling the checkbox input */
+#dmodechckbox{
+    position: fixed;
+    top: 6px;
+    appearance: none;
+    -webkit-appearance : none;
+    -moz-appearance : none;
+    -o-appearance : none;
+    width: 40px;
+    height: 20px;
+    background: black;
+    border-radius: 11px;
+    cursor: pointer;
+    outline: none;
+}
+/* styling the circle inside the checkbox input */
+#dmodechckbox::before{
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 17px;
+    background-color:white;
+    border-radius: 17px;
+    top: 2px;
+    left: 2px;
+    cursor: pointer;
+    transition: .3s linear;
+}
+/* Switching to the dark when the checkbox is toggled */
+#dmodechckbox:checked + .container{
+  background: rgb(19, 18, 18);
+  color: white;
+}
+/* moving the checkbox circle when it's toggled by the user */
+#dmodechckbox:checked::before{
+    left: 20px;
+}
+/* changing the color of the checkbox when it's toggled */
+#dmodechckbox:checked{
+    background: rgb(12, 177, 81);
+}
+
+.iconsdm{
+    margin-top: 6px
+}
