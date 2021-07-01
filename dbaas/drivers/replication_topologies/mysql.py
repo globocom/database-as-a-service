@@ -2018,6 +2018,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vip_provider.AllocateIP',
                 'workflow.steps.util.vip_provider.AllocateDNS',
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
+                'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
                 'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
