@@ -875,18 +875,22 @@ class CreateServiceAccount(HostProviderStep):
     def __unicode__(self):
         return "Creating Service Account..."
 
+    @property
+    def infra_service_account(self):
+        from physical.models import DatabaseInfra
+        infra = DatabaseInfra.objects.get(id=self.infra.id)
+        return infra.service_account
+
     def do(self):
-        service_account = self.infra.service_account
-        if not service_account:
+        if not self.infra_service_account:
             name = self.infra.name
             service_account = self.provider.create_service_account(name)
             self.infra.service_account = service_account
             self.infra.save()
 
     def undo(self):
-        service_account = self.infra.service_account
-        if service_account:
-            self.provider.destroy_service_account(service_account)
+        if self.infra_service_account:
+            self.provider.destroy_service_account(self.infra_service_account)
             self.infra.service_account = None
             self.infra.save()
 
