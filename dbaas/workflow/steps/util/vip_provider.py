@@ -293,9 +293,24 @@ class Provider(object):
 
         return True
 
-    def forwarding_rule(self, vip, destroy=False,
-                        team_name=None, engine_name=None,
-                        database_name=None, infra_name=None):
+    def forwarding_rule(self, vip, destroy=False):
+        url = "{}/{}/{}/forwarding-rule/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        response = self._request(
+            post if not destroy else delete,
+            url, timeout=600)
+        if response.status_code != (201 if not destroy else 204):
+            raise VipProviderForwardingRuleException(
+                    response.content, response)
+
+        return True
+
+    def add_labels(self, vip,
+                   team_name=None, engine_name=None,
+                   database_name=None, infra_name=None):
         url = "{}/{}/{}/forwarding-rule/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
@@ -308,14 +323,10 @@ class Provider(object):
             "engine_name": engine_name
         }
 
-        response = self._request(
-            post if not destroy else delete,
-            url, json=data, timeout=600)
-        if response.status_code != (201 if not destroy else 204):
+        response = self._request(patch, url, json=data, timeout=600)
+        if response.status_code != 201:
             raise VipProviderForwardingRuleException(
                     response.content, response)
-
-        return True
 
     def allocate_ip(self, vip, destroy=False):
         url = "{}/{}/{}/allocate-ip/{}".format(
@@ -848,11 +859,7 @@ class CreateForwardingRule(CreateVip):
         if not self.is_valid:
             return
 
-        return self.provider.forwarding_rule(
-            self.current_vip, False, team_name=self.team,
-            engine_name=self.engine.name.split("_")[0],
-            database_name=self.create.name,
-            infra_name=self.infra.name)
+        return self.provider.forwarding_rule(self.current_vip)
 
     def undo(self):
         if not self.is_valid:
@@ -951,6 +958,24 @@ class CreateInstanceGroupWithoutRollback(CreateInstanceGroup):
 
     def __unicode__(self):
         return "Creating instance group without rollback..."
+
+    def undo(self):
+        pass
+
+
+class AddLoadBalanceLabels(CreateForwardingRule):
+    def __unicode__(self):
+        return "Add LB labels..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.add_labels(
+            self.current_vip, team_name=self.team,
+            engine_name=self.engine.name.split("_")[0],
+            database_name=self.create.name,
+            infra_name=self.infra.name)
 
     def undo(self):
         pass
