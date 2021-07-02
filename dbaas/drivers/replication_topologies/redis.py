@@ -68,6 +68,9 @@ class RedisSingle(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -412,7 +415,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.volume_provider.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshotToMaster',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
@@ -422,6 +425,7 @@ class RedisSentinel(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.MoveDiskRestore',
                 'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
@@ -466,6 +470,9 @@ class RedisSentinel(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -649,6 +656,9 @@ class RedisCluster(BaseRedis):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -751,6 +761,7 @@ class RedisCluster(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
+                'workflow.steps.util.volume_provider.MoveDiskRestore',
                 'workflow.steps.util.volume_provider.AttachDataVolumeRestored',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',

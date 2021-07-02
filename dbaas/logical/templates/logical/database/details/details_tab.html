@@ -105,6 +105,11 @@
     <div class="controls"><p class="readonly">{{ database.environment }}</p></div>
   </div>
 
+  <div class="control-group">
+    <div class="control-label"><label>Service Account:</label></div>
+    <div class="controls"><p class="readonly">{{ database.infra.service_account }}</p></div>
+  </div>
+
   {% if database.has_persistence %}
     <div class="control-group">
       <div class="control-label"><label>Disk:</label></div>

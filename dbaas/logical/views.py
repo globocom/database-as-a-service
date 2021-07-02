@@ -2179,11 +2179,13 @@ def database_migrate(request, context, database):
             messages.add_message(request, messages.ERROR, error)
 
         elif 'host_id' in request.POST:
+
             host_prov_client = HostProviderClient(environment)
 
             host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
             zone_origin = request.POST.get("zone_origin")
+
 
             # Do not allow GCP hosts
             # to be in the same region
@@ -2191,8 +2193,8 @@ def database_migrate(request, context, database):
                database.engine_type.startswith('mysql')):
                 instances = database.infra.instances.all()
                 for instance in instances:
-                    host = instance.hostname
-                    host_info = host_prov_client.get_vm_by_host(host)
+                    host_check = instance.hostname
+                    host_info = host_prov_client.get_vm_by_host(host_check)
                     if host_info.zone == zone:
                         messages.add_message(
                             request,

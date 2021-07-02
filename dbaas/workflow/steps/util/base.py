@@ -60,6 +60,13 @@ class BaseInstanceStep(object):
             return self.step_manager.origin_database.team.name
 
     @property
+    def database_name(self):
+        if self.has_database:
+            return self.database.name
+        elif self.create:
+            return self.create.name
+
+    @property
     def plan(self):
         return self.infra.plan
 
