@@ -26,7 +26,7 @@ def profile(request, user_id=None):
         databases = Database.alive.filter(
             team__in=[team.id for team in teams]).order_by('team')
         roles = [team.role for team in teams]
-    except Exception, e:
+    except Exception as e:
         LOG.warning("Ops... %s" % e)
 
     return render_to_response(

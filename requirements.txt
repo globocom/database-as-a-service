@@ -39,7 +39,7 @@ pymongo==3.9.0
 python-gnupg==0.3.6
 python-keyczar==0.71c
 python-ldap==2.3.13
-python-slugify==0.0.6
+python-slugify==4.0.1
 pytz==2013.7
 raven==3.5.0
 redis==2.10.6
