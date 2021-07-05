@@ -133,7 +133,12 @@ class NewVersionTestCase(BaseProviderTestCase):
         )
         expected_json = {
             'host_id': 'fake_identifier1',
-            'engine': self.infra.engine.full_name_for_host_provider
+            'engine': self.infra.engine.full_name_for_host_provider,
+            'database_name': None,
+            'group': None,
+            'host_id': None,
+            'service_account': None,
+            'team_name': None
         }
         self.assertDictEqual(post_params[1]['json'], expected_json)
         self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
@@ -149,6 +154,11 @@ class NewVersionTestCase(BaseProviderTestCase):
         )
         expected_json = {
             'host_id': 'fake_identifier1',
+            'database_name': None,
+            'group': None,
+            'host_id': None,
+            'service_account': None,
+            'team_name': None
         }
         self.assertDictEqual(post_params[1]['json'], expected_json)
         self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
@@ -251,6 +261,7 @@ class CreateHostTestCase(BaseProviderTestCase):
         expected_json = {
             'engine': u'fake_1_2_1',
             'name': 'fake_host01',
+            'service_account': None,
             'static_ip_id': None,
             'cpu': 2,
             'memory': 999,
