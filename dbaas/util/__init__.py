@@ -258,6 +258,14 @@ def gen_infra_names(name, qt):
     return names
 
 
+def get_credentials_in_any_env(credential_type, **kwargs):
+    from dbaas_credentials.models import Credential
+    kwargs.pop("environment")
+    return Credential.objects.filter(
+        integration_type__type=credential_type, **kwargs
+    )[0]
+
+
 def get_credentials_for(environment, credential_type, **kwargs):
     from dbaas_credentials.models import Credential
     return Credential.objects.filter(

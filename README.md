@@ -1,4 +1,4 @@
-[![build status](https://travis-ci.org/globocom/database-as-a-service.svg?branch=master)](http://travis-ci.org/globocom/database-as-a-service)
+[![Run Tests](https://github.com/globocom/database-as-a-service/actions/workflows/main.yml/badge.svg)](https://github.com/globocom/database-as-a-service/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/globocom/database-as-a-service/branch/master/graph/badge.svg?token=gS1uG9vME4)](https://codecov.io/gh/globocom/database-as-a-service)
 
 Database as a Service (DBaaS)
 ===================================
