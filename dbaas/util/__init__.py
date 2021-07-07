@@ -289,7 +289,7 @@ def get_credentials_for(environment, credential_type, **kwargs):
 def get_or_none_credentials_for(environment, credential_type, **kwargs):
     try:
         return get_credentials_for(environment, credential_type, **kwargs)
-    except (IndexError or GetCredentialException):
+    except (IndexError, GetCredentialException):
         return None
 
 
