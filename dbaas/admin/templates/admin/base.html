@@ -23,7 +23,7 @@
     <link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />
 {% endif %}
 
-<!--<link rel="stylesheet" type="text/css" href="{% static 'admin/css/dark-mode.css' %}" hidden="hidden" />-->
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/dark-mode.css' %}" />
 <script type="text/javascript">
     window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";
 </script>
@@ -91,10 +91,10 @@
                     <div class="dropdown pull-right welcome-message" id="dropdown-menu-notification">
                         {% get_notifications user.username %}
                     </div>
-                    <div class="dark-mode-toggle">
-                    <i class="fa fa-sun-o" class="iconsdm iconlight"></i>
-                    <input type="checkbox" id="dmodechckbox" title="Dark mode">
-                    <i class="fa fa-moon-o" class="iconsdm icondark"></i>
+                    <div class="dark-mode-toggle pull-right">
+                        <i class="fa fa-sun-o" class="iconsdm iconlight"></i>
+                        <input type="checkbox" id="dmodechckbox" title="Dark mode">
+                        <i class="fa fa-moon-o" class="iconsdm icondark"></i>
                     </div>
                     
                 </div>
