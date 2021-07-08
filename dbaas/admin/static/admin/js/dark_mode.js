@@ -1,22 +1,36 @@
-var is_dark = localStorage.getItem('darkmode');
+var isDark = localStorage.getItem('darkmode');
 
 var setDarkMode = function(){
     console.log('add dark')
+    django.jQuery('body').addClass('dark')
 }
 
 var removeDarkMode = function(){
     console.log('remove dark')
+    django.jQuery('body').removeClass('dark')
 }
 
 
-if (!is_dark)
-    is_dark = false;
+if (!isDark)
+    isDark = false;
 
-if (is_dark){
+if (isDark){
     setDarkMode();
 }
 
-localStorage.setItem('darkmode', is_dark);
+localStorage.setItem('darkmode', isDark);
 
 
-JQuery("#dmodechckbox").check()
+django.jQuery(document).ready(function(){
+    django.jQuery('#dmodechckbox').attr('checked', 'checked');
+    django.jQuery('#dmodechckbox').on("change", function(v){
+        isDark = django.jQuery('#dmodechckbox').is(':checked');
+        if (isDark){
+            setDarkMode();
+        }else{
+            removeDarkMode();
+        }
+        localStorage.setItem('darkmode', isDark);
+    });
+})
+

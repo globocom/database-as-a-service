@@ -66,7 +66,6 @@
 
 
 
-/* Styling the checkbox input */
 #dmodechckbox{
     position: fixed;
     top: 6px;
@@ -81,7 +80,6 @@
     cursor: pointer;
     outline: none;
 }
-/* styling the circle inside the checkbox input */
 #dmodechckbox::before{
     content: '';
     position: absolute;
@@ -94,16 +92,13 @@
     cursor: pointer;
     transition: .3s linear;
 }
-/* Switching to the dark when the checkbox is toggled */
 #dmodechckbox:checked + .container{
   background: rgb(19, 18, 18);
   color: white;
 }
-/* moving the checkbox circle when it's toggled by the user */
 #dmodechckbox:checked::before{
     left: 20px;
 }
-/* changing the color of the checkbox when it's toggled */
 #dmodechckbox:checked{
     background: rgb(12, 177, 81);
 }
