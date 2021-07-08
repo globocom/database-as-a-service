@@ -837,13 +837,17 @@ class AllocateDNS(CreateVip):
     def __unicode__(self):
         return "Allocating DNS to vip..."
 
+    @property
+    def vip_ip(self):
+        return self.infra.endpoint.split(":")[0]
+
     def do(self):
         if not self.is_valid:
             return
 
         dns = add_dns_record(
             self.infra, self.infra.name,
-            self.infra.endpoint, FOXHA, is_database=False)
+            self.vip_ip, FOXHA, is_database=False)
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
         self.infra.save()
 
