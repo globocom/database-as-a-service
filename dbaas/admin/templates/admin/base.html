@@ -32,13 +32,25 @@
 
 
 
+
+
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
 </head>
 {% load i18n %}
 
 {% block body %}
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
+<script>
+// just to add dark class to body
+// to avoid screen blink when load page
+var element = document.getElementsByTagName("body")[0];
+var addsDark = localStorage.getItem('darkmode');
+addsDark = (addsDark === "true" || addsDark === true)
+if(addsDark)
+    element.classList.add("dark");
+</script>
 {% endblock %}
+
 
 {% if not is_popup %}
     <!-- Header -->
