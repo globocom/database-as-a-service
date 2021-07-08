@@ -1,5 +1,5 @@
 from system.models import Configuration
-from util import get_credentials_for
+from util import get_credentials_for, GetCredentialException
 from dbaas_credentials.models import CredentialType
 from physical.models import Environment
 
@@ -19,7 +19,7 @@ def external_links(request):
             credential.get_parameter_by_name('sofia_dbaas_dashboard'),
             credential.get_parameter_by_name('datasource')
         )
-    except IndexError:
+    except (IndexError, GetCredentialException):
         sofia_dashboard = ""
 
     return {'iaas_status': iaas_status,

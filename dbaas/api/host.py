@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import filters
 from rest_framework.views import APIView
-from util import get_credentials_for
+from util import get_credentials_for, GetCredentialException
 from dbaas_credentials.models import CredentialType, Credential
 from notification.tasks import TaskRegister
 
@@ -83,7 +83,7 @@ class HostSerializer(serializers.ModelSerializer):
         try:
             credential = get_credentials_for(
                 env, CredentialType.CLOUDSTACK)
-        except IndexError:
+        except (IndexError, GetCredentialException):
             return None
 
         return credential and credential.project

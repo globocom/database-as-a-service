@@ -149,16 +149,18 @@ class Provider(BaseInstanceStep):
             raise HostProviderStopVMException(response.content, response)
         return True
 
-    def new_version(self, engine=None):
+    def new_version(self, engine=None, host_identifier=None,
+                    team_name=None, database_name=None,
+                    infra_name=None, service_account=None):
         url = "{}/{}/{}/host/reinstall".format(
             self.credential.endpoint, self.provider, self.environment
         )
         data = {
-            "host_id": self.host.identifier,
-            "team_name": self.team_name,
-            "database_name": self.database.name,
-            "group": self.infra.name,
-            "service_account": self.infra.service_account
+            "host_id": host_identifier,
+            "team_name": team_name,
+            "database_name": database_name,
+            "group": infra_name,
+            "service_account": service_account
         }
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
@@ -469,7 +471,10 @@ class InstallNewTemplate(HostProviderStep):
         return "Installing new template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.future_engine)
+        reinstall = self.provider.new_version(
+            self.future_engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -484,7 +489,10 @@ class InstallMigrateEngineTemplate(HostProviderStep):
         return "Installing new engine template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.future_engine)
+        reinstall = self.provider.new_version(
+            self.future_engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -495,7 +503,10 @@ class ReinstallTemplate(HostProviderStep):
         return "Reinstalling template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.engine)
+        reinstall = self.provider.new_version(
+            self.engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 

@@ -16,6 +16,7 @@ from util.email_notifications import notify_new_user_creation
 from .helper import find_ldap_groups_from_user
 from system.models import Configuration
 from dbaas.celery import app
+from util.teams import Teams as TeamsAPI
 
 from physical.models import Environment
 
@@ -120,8 +121,17 @@ class Organization(BaseModel):
 
 
 class Team(BaseModel):
+    def validate_name(value):
+        teams_API = TeamsAPI()
+        try:
+            return teams_API.validate(value)
+        except Exception as ex:
+            raise ValidationError(ex)
 
-    name = models.CharField(_('name'), max_length=80, unique=True)
+        return True
+
+    name = models.CharField(_('name'), max_length=80, 
+                            unique=True, validators=[validate_name])
     email = models.EmailField(null=False, blank=False)
     database_alocation_limit = models.PositiveSmallIntegerField(
         _('DB Alocation Limit'),
