@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
 
 from dbaas_credentials.models import CredentialType
-from util import get_credentials_for, AuthRequest
+from util import get_credentials_for, AuthRequest, GetCredentialException
 from physical.models import Vip
 
 
@@ -58,6 +58,13 @@ class BaseInstanceStep(object):
         elif (self.step_manager
               and hasattr(self.step_manager, 'origin_database')):
             return self.step_manager.origin_database.team.name
+
+    @property
+    def database_name(self):
+        if self.has_database:
+            return self.database.name
+        elif self.create:
+            return self.create.name
 
     @property
     def plan(self):
@@ -405,7 +412,7 @@ class ACLFromHellClient(object):
                 self._credential = get_credentials_for(
                     self.environment, CredentialType.ACLFROMHELL
                 )
-            except IndexError:
+            except (IndexError, GetCredentialException):
                 raise Exception(
                     "Credential ACLFROMHELL for env {} not found".format(
                         self.environment.name

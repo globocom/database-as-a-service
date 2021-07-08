@@ -189,6 +189,10 @@ class MongoDBSingle(BaseMongoDB):
 
     def get_deploy_steps(self):
         return [{
+
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -637,6 +641,9 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -1085,6 +1092,9 @@ class MongoDBSingleK8s(MongoDBSingle):
 
     def get_deploy_steps(self):
         return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
             'Creating k8s Service': (
                 'workflow.steps.util.k8s.NewServiceK8S',
             )}, {

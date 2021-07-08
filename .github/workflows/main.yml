@@ -1,0 +1,46 @@
+name: Run Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    name: Test
+    env:
+      DOCKER_COMPOSE_VERSION: 1.11.2
+    steps:
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '2.7'
+    - name: Shutdown Ubuntu MySQL
+      run: sudo service mysql stop
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - name: Docker build
+      run: make docker_build
+    - name: Remove compose 
+      run: sudo rm /usr/local/bin/docker-compose
+    - name: Download compose
+      run: curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - name: configure compose
+      run: chmod +x docker-compose && sudo mv docker-compose /usr/local/bin
+    - name: check compose version
+      run: docker-compose --version
+    - name: pull containers
+      run: docker-compose pull mysqldb56 redisdb mongodb
+    - name: check images
+      run: docker images
+    - name: Check running containers
+      run: docker ps
+    - name: run tests
+      run: docker-compose run test
+    - name: send codecov report
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./dbaas/coverage.xml
+        flags: unittests 
+        name: codecov-umbrella 
+        fail_ci_if_error: true
+        verbose: true
+      
+    

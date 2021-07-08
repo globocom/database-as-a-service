@@ -864,6 +864,13 @@ class DatabaseInfra(BaseModel):
         null=True, blank=True
     )
 
+    service_account = models.CharField(
+        verbose_name=_("Service Account"),
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
     def __unicode__(self):
         return self.name
 

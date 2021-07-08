@@ -51,6 +51,7 @@ class BaseTopology(object):
             'workflow.steps.util.host_provider.Stop',
             'workflow.steps.util.host_provider.ChangeOffering',
             'workflow.steps.util.host_provider.Start',
+            'workflow.steps.util.vm.WaitingBeReady',
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',

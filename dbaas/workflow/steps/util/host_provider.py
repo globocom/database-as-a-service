@@ -40,6 +40,7 @@ class HostProviderChangeOfferingException(HostProviderException):
 class HostProviderCreateVMException(HostProviderException):
     pass
 
+
 class HostProviderCreateIPException(HostProviderException):
     pass
 
@@ -57,6 +58,14 @@ class HostProviderListZoneException(HostProviderException):
 
 
 class HostProviderInfoException(HostProviderException):
+    pass
+
+
+class HostProviderCreateServiceAccountException(HostProviderException):
+    pass
+
+
+class HostProviderDestroyServiceAccountException(HostProviderException):
     pass
 
 
@@ -140,11 +149,19 @@ class Provider(BaseInstanceStep):
             raise HostProviderStopVMException(response.content, response)
         return True
 
-    def new_version(self, engine=None):
+    def new_version(self, engine=None, host_identifier=None,
+                    team_name=None, database_name=None,
+                    infra_name=None, service_account=None):
         url = "{}/{}/{}/host/reinstall".format(
             self.credential.endpoint, self.provider, self.environment
         )
-        data = {"host_id": self.host.identifier}
+        data = {
+            "host_id": host_identifier,
+            "team_name": team_name,
+            "database_name": database_name,
+            "group": infra_name,
+            "service_account": service_account
+        }
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
@@ -185,7 +202,8 @@ class Provider(BaseInstanceStep):
             "group": infra.name,
             "team_name": team_name,
             "database_name": database_name,
-            "static_ip_id": static_ip and static_ip.identifier
+            "static_ip_id": static_ip and static_ip.identifier,
+            "service_account": self.infra.service_account
         }
         if zone:
             data['zone'] = zone
@@ -344,6 +362,37 @@ class Provider(BaseInstanceStep):
             raise HostProviderException(response.content, response)
         return response.json()
 
+    def create_service_account(self, name):
+
+        url = "{}/{}/{}/sa/".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "name": name
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderCreateServiceAccountException(
+                response.content, response
+            )
+
+        content = response.json()
+        if content:
+            return content['service_account']
+        return None
+
+    def destroy_service_account(self, service_account):
+        url = "{}/{}/{}/sa/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            service_account
+        )
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise HostProviderDestroyServiceAccountException(
+                response.content, response
+            )
+
 
 class HostProviderStep(BaseInstanceStep):
 
@@ -422,7 +471,10 @@ class InstallNewTemplate(HostProviderStep):
         return "Installing new template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.future_engine)
+        reinstall = self.provider.new_version(
+            self.future_engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -437,7 +489,10 @@ class InstallMigrateEngineTemplate(HostProviderStep):
         return "Installing new engine template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.future_engine)
+        reinstall = self.provider.new_version(
+            self.future_engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -448,7 +503,10 @@ class ReinstallTemplate(HostProviderStep):
         return "Reinstalling template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.engine)
+        reinstall = self.provider.new_version(
+            self.engine, self.host.identifier,
+            self.team_name, self.database.name,
+            self.infra.name, self.infra.service_account)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -768,6 +826,7 @@ class WaitingNewDeployUndo(WaitingNewDeploy):
     def undo(self):
         self.execute()
 
+
 class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
 
     def __unicode__(self):
@@ -803,6 +862,7 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
         )
         self.host.save()
 
+
 class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def __unicode__(self):
@@ -819,3 +879,29 @@ class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
 
     def undo(self):
         self.provider.destroy_host(self.host_migrate.host)
+
+
+class CreateServiceAccount(HostProviderStep):
+
+    def __unicode__(self):
+        return "Creating Service Account..."
+
+    @property
+    def infra_service_account(self):
+        from physical.models import DatabaseInfra
+        infra = DatabaseInfra.objects.get(id=self.infra.id)
+        return infra.service_account
+
+    def do(self):
+        if not self.infra_service_account:
+            name = self.infra.name
+            service_account = self.provider.create_service_account(name)
+            self.infra.service_account = service_account
+            self.infra.save()
+
+    def undo(self):
+        if self.infra_service_account:
+            self.provider.destroy_service_account(self.infra_service_account)
+            self.infra.service_account = None
+            self.infra.save()
+

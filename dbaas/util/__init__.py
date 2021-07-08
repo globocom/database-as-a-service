@@ -51,6 +51,10 @@ class AlarmException(Exception):
     pass
 
 
+class GetCredentialException(Exception):
+    pass
+
+
 def alarm_handler(signum, frame):
     raise AlarmException
 
@@ -258,18 +262,34 @@ def gen_infra_names(name, qt):
     return names
 
 
+def get_credentials_in_any_env(credential_type, **kwargs):
+    from dbaas_credentials.models import Credential
+    if "environment" in kwargs:
+        kwargs.pop("environment")
+    return Credential.objects.filter(
+        integration_type__type=credential_type, **kwargs
+    )[0]
+
+
 def get_credentials_for(environment, credential_type, **kwargs):
     from dbaas_credentials.models import Credential
-    return Credential.objects.filter(
+    creds = Credential.objects.filter(
         integration_type__type=credential_type, environments=environment,
         **kwargs
-    )[0]
+    )
+
+    if not creds.exists():
+        raise GetCredentialException(
+            ("Credentials not found for type %s and env %s" %
+             (credential_type, environment)))
+
+    return creds[0]
 
 
 def get_or_none_credentials_for(environment, credential_type, **kwargs):
     try:
         return get_credentials_for(environment, credential_type, **kwargs)
-    except IndexError:
+    except (IndexError, GetCredentialException):
         return None
 
 

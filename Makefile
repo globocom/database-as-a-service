@@ -66,7 +66,10 @@ test: # run tests
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 unit_test: # run tests
-	@cd dbaas && REUSE_DB=1 python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
+	@cd dbaas && REUSE_DB=1 coverage run --source='.' manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS)) && coverage xml
+
+send_codecov:
+	@cd dbaas && curl -s https://codecov.io/bash > codecov.sh  && bash codecov.sh 
 
 docker_build:
 	docker build -t dbaas_test .
@@ -135,10 +138,10 @@ dev_docker_mysql_shell:
 dev_docker_run:
 	@cd dev && docker-compose up
 
-dev_docker_shell: # run django shell
+dev_docker_django_shell: # run django shell
 	@cd dev && docker-compose exec app /code/dbaas/manage.py shell_plus --use-pythonrc
 
-dev_docker_app_bash:
+dev_docker_app_shell:
 	@cd dev && docker-compose exec app bash
 
 dev_docker_stop:

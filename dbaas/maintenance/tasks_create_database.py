@@ -84,6 +84,8 @@ def rollback_create(maintenance, task, user=None, instances=None):
 
     if instances is None:
         instances = get_instances_for(maintenance.infra, topology_path)
+    #    instances = ([host.instances.order_by('instance_type').first()
+    #                 for host in maintenance.infra.hosts])
 
     maintenance.id = None
     maintenance.user = user.username if user else task.user

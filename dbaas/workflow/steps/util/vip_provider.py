@@ -300,12 +300,33 @@ class Provider(object):
         )
 
         response = self._request(
-            post if not destroy else delete, url, timeout=600)
+            post if not destroy else delete,
+            url, timeout=600)
         if response.status_code != (201 if not destroy else 204):
             raise VipProviderForwardingRuleException(
                     response.content, response)
 
         return True
+
+    def add_labels(self, vip,
+                   team_name=None, engine_name=None,
+                   database_name=None, infra_name=None):
+        url = "{}/{}/{}/forwarding-rule/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip.identifier
+        )
+
+        data = {
+            "team_name": team_name,
+            "database_name": database_name,
+            "infra_name": infra_name,
+            "engine_name": engine_name
+        }
+
+        response = self._request(patch, url, json=data, timeout=600)
+        if response.status_code != 201:
+            raise VipProviderForwardingRuleException(
+                    response.content, response)
 
     def allocate_ip(self, vip, destroy=False):
         url = "{}/{}/{}/allocate-ip/{}".format(
@@ -741,6 +762,10 @@ class AddInstancesInGroup(CreateVip):
     def __unicode__(self):
         return "Adding instances in groups..."
 
+    @property
+    def is_valid(self):
+        return True
+
     def do(self):
         if not self.is_valid:
             return
@@ -797,7 +822,6 @@ class AllocateIP(CreateVip):
         ip = self.provider.allocate_ip(self.current_vip)
 
         self.infra.endpoint = "{}:{}".format(ip, 3306)
-        self.infra.endpoint_dns = "{}:{}".format(ip, 3306)
         self.infra.save()
 
         return True
@@ -807,6 +831,24 @@ class AllocateIP(CreateVip):
             return
 
         return self.provider.allocate_ip(self.current_vip, destroy=True)
+
+
+class AllocateDNS(CreateVip):
+    def __unicode__(self):
+        return "Allocating DNS to vip..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        dns = add_dns_record(
+            self.infra, self.infra.name,
+            self.infra.endpoint, FOXHA, is_database=False)
+        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
+        self.infra.save()
+
+    def undo(self):
+        pass
 
 
 class CreateForwardingRule(CreateVip):
@@ -844,7 +886,7 @@ class DestroyEmptyInstanceGroupMigrate(CreateVip):
 
 class UpdateBackendServiceMigrate(CreateBackendService):
     def __unicode__(self):
-        return "update backend service..."
+        return "update backend service...."
 
     @property
     def zone_to(self):
@@ -916,6 +958,24 @@ class CreateInstanceGroupWithoutRollback(CreateInstanceGroup):
 
     def __unicode__(self):
         return "Creating instance group without rollback..."
+
+    def undo(self):
+        pass
+
+
+class AddLoadBalanceLabels(CreateForwardingRule):
+    def __unicode__(self):
+        return "Add LB labels..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.add_labels(
+            self.current_vip, team_name=self.team,
+            engine_name=self.engine.name.split("_")[0],
+            database_name=self.create.name,
+            infra_name=self.infra.name)
 
     def undo(self):
         pass

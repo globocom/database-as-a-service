@@ -3,7 +3,7 @@ from base import BaseInstanceStep
 from dbaas_aclapi.tasks import replicate_acl_for
 from dbaas_aclapi.acl_base_client import AclClient
 from dbaas_credentials.models import CredentialType
-from util import get_credentials_for
+from util import get_credentials_for, GetCredentialException
 from workflow.steps.util.base import ACLFromHellClient
 
 import logging
@@ -24,7 +24,7 @@ class ACLStep(BaseInstanceStep):
             acl_credential = get_credentials_for(
                 environment=self.environment,
                 credential_type=CredentialType.ACLAPI)
-        except IndexError:
+        except (IndexError, GetCredentialException):
             self.acl_client = None
         else:
             self.acl_client = AclClient(

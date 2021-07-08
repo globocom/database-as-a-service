@@ -11,7 +11,8 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
-from util import get_worker_name, get_credentials_for
+from util import (get_worker_name, get_credentials_for,
+                  GetCredentialException)
 
 LOG = getLogger(__name__)
 
@@ -373,10 +374,18 @@ def remove_database_old_backups(self):
     task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
     snapshots = []
-    for env in Environment.objects.all():
-        snapshots += get_snapshots_by_env(env)
-
     msgs = []
+    for env in Environment.objects.all():
+        try:
+            snapshots += get_snapshots_by_env(env)
+        except GetCredentialException as ex:
+            status = TaskHistory.STATUS_ERROR
+            LOG.error(str(ex))
+            msgs.append(str(ex))
+            task_history.update_status_for(
+                status, details="\n".join(msgs))
+            return
+
     status = TaskHistory.STATUS_SUCCESS
     if len(snapshots) == 0:
         msgs.append("There is no snapshot to purge")

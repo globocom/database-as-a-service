@@ -109,13 +109,19 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def master_host_vm(self):
+        host = self.infra.get_driver().get_master_instance()
+        if isinstance(host, list):
+            host = host[0]
+
+        host = host.hostname
         return self.host_prov_client.get_vm_by_host(
-            self.infra.get_driver().get_master_instance().hostname
+            host
         )
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
         url = self.base_url + "volume/new"
+
         data = {
             "group": group,
             "size_kb": size_kb,
@@ -123,7 +129,9 @@ class VolumeProviderBase(BaseInstanceStep):
             "snapshot_id": snapshot_id,
             "zone": zone,
             "vm_name": vm_name,
-            "team_name": self.team_name
+            "team_name": self.team_name,
+            "engine": self.engine.name,
+            "db_name": self.database_name
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -210,8 +218,8 @@ class VolumeProviderBase(BaseInstanceStep):
         url = "{}snapshot/{}".format(self.base_url, self.volume.identifier)
         data = {
             "engine": self.engine.name,
-            "db_name": self.database.name,
-            "team_name": self.database.team.name
+            "db_name": self.database_name,
+            "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
 
@@ -237,7 +245,10 @@ class VolumeProviderBase(BaseInstanceStep):
 
         data = {
             'vm_name': vm_name,
-            'zone': vm_zone
+            'zone': vm_zone,
+            'engine': self.engine.name,
+            'db_name': self.database_name,
+            'team_name': self.team_name
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -1227,12 +1238,16 @@ class RestoreSnapshot(VolumeProviderBase):
         return self.restore.master_for(self.instance).hostname
 
     @property
+    def vm_info(self):
+        return self.host_prov_client.get_vm_by_host(self.disk_host)
+
+    @property
     def vm_name(self):
-        return self.host_vm.name
+        return self.vm_info.name
 
     @property
     def vm_zone(self):
-        return self.host_vm.zone
+        return self.vm_info.zone
 
     def do(self):
         snapshot = self.snapshot
@@ -1678,17 +1693,38 @@ class MoveDisk(VolumeProviderBase):
     def zone(self):
         return self.host_migrate.zone
 
+    @property
+    def volume(self):
+        return self.volume_migrate
+
     def do(self):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.zone)
+        self.move_disk(self.volume, self.zone)
 
     def undo(self):
         if not self.is_valid:
             return
 
-        self.move_disk(self.volume_migrate, self.host_migrate.zone_origin)
+        self.move_disk(self.volume, self.host_migrate.zone_origin)
+
+
+class MoveDiskRestore(MoveDisk):
+
+    def is_valid(self):
+        if not super(MoveDiskRestore, self).is_valid:
+            return False
+
+        return self.restore.is_master(self.instance)
+
+    @property
+    def zone(self):
+        return self.host_vm.zone
+
+    @property
+    def volume(self):
+        return self.latest_disk
 
 
 class MountDataVolumeWithUndo(MountDataVolume):
@@ -1731,9 +1767,9 @@ class AttachDataVolume(VolumeProviderBase):
         self.attach_disk(self.volume)
 
     def undo(self):
-        # at GCP when a disk is attached
-        # is automatically deleted with instance
-        pass
+        if not self.is_valid:
+            return
+        self.detach_disk(self.volume)
 
 
 class AttachDataVolumeWithUndo(AttachDataVolume):
@@ -1777,11 +1813,11 @@ class AttachDataVolumeRecreateSlave(AttachDataVolumeMigrate):
 
     def do(self):
         if self.is_database_instance:
-            super(MountDataVolumeRecreateSlave, self).do()
+            super(AttachDataVolumeRecreateSlave, self).do()
 
     def undo(self):
         if self.is_database_instance:
-            super(MountDataVolumeRecreateSlave, self).undo()
+            super(AttachDataVolumeRecreateSlave, self).undo()
 
 
 class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
@@ -1790,10 +1826,10 @@ class DetachDataVolumeMigrate(AttachDataVolumeMigrate):
         return "Detach old volume in new instance..."
 
     def do(self):
-        return super(AttachDataVolumeMigrate, self).undo()
+        return super(DetachDataVolumeMigrate, self).undo()
 
     def undo(self):
-        return super(AttachDataVolumeMigrate, self).do()
+        return super(DetachDataVolumeMigrate, self).do()
 
 
 class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
