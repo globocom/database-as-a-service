@@ -79,6 +79,7 @@
     border-radius: 11px;
     cursor: pointer;
     outline: none;
+    display:  block;
 }
 #dmodechckbox::before{
     content: '';
@@ -100,7 +101,7 @@
     left: 20px;
 }
 #dmodechckbox:checked{
-    background: rgb(12, 177, 81);
+    background: #008ab8;
 }
 
 .iconsdm{
