@@ -5983,7 +5983,19 @@ body.dark .pagination ul>li>a, body.dark  .pagination ul>li>span{
 }
 
 
-body.dark #footer{
-	background-color: #111;;
+/* body.dark #footer, body.dark .navbar-fixed-bottom{
+	background-color: #111;
+} */
+
+/* body.dark #dropdown-menu-notification .dropdown-menu li{
+	background-color: #000;
+	border-color: #333;
+} */
+
+body.dark #dropdown-menu-notification .dropdown-menu li a{
+	color: #fff;
 }
 
+body.dark .auto-refresh-label b{
+	color: white;
+}
