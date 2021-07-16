@@ -14,13 +14,13 @@ The URLs used to receive Tsuru requests can be found in the following file
 
 EX:
 #Use the same user and pass from dbaas dev login
-## criando database
+## creating database
 curl --location --request POST 'localhost:8000/dev/tsuru/resources' \
 -u [USER]:[PASS] \
 --header 'Content-Type: application/json' \
 --data-raw '{"name": "[DB_NAME]","team": "dbaas", "description": "test","plan":"redis-single-not-persisted-4-0-rjdev-dev", "user": "[DBAAS_USER]@g.globo"}'
 
-## removendo database
+## destroying database
 curl --location --request DELETE 'localhost:8000/dev/tsuru/resources/[DB_NAME]' \
 -u [USER]:[PASS] \
 --header 'Content-Type: application/json'
