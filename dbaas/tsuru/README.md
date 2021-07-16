@@ -1,18 +1,19 @@
-O dbaas é um serviço cadastrado no tsuru.
+DBaas is a service in tsuru.
 
-A App Tsuru no DBaaS utiliza o Django Rest Framework e a autenticação no ambiente de dev utiliza "Basic Authentication"
+The tsuru app in DBaaS is writed using Django rest framework and the auth system uses "Basic Auth"
 
 
-comente a seguinte linha no settings.py do seu ambiente local
+# Test API in DEV
+comment the following line in settings.py file to disable CSRF verification in local environment.
+
 #'django.middleware.csrf.CsrfViewMiddleware',
 
 
-As URLS disponíveis para o projeto podem ser encontradas em:
-
-dbaas/tsuru/urls.py
+The URLs used to receive Tsuru requests can be found in the following file
+`dbaas/tsuru/urls.py`
 
 EX:
-#utilize o mesmo USER  e PASS do login  dev
+#Use the same user and pass from dbaas dev login
 ## criando database
 curl --location --request POST 'localhost:8000/dev/tsuru/resources' \
 -u [USER]:[PASS] \
