@@ -167,8 +167,8 @@ class Database(BaseModel):
         super(Database, self).validate_unique(*args, **kwargs)
 
         if not any([
-         self.environment,
-         self.name]):
+         hasattr(self, "environment"),
+         hasattr(self, "name")]):
             return
 
         environment = Environment.objects.get(pk=self.environment_id)
