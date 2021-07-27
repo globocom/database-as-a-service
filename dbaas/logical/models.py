@@ -166,6 +166,9 @@ class Database(BaseModel):
             in environemnt stage'''
         super(Database, self).validate_unique(*args, **kwargs)
 
+        if not self.environment_id:
+            return
+
         environment = Environment.objects.get(pk=self.environment_id)
         db_check = Database.objects.filter(
             name=self.name,
