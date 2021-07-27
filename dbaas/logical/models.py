@@ -171,7 +171,10 @@ class Database(BaseModel):
          hasattr(self, "name")]):
             return
 
-        environment = Environment.objects.get(pk=self.environment_id)
+        environment = Environment.objects.filter(pk=self.environment_id)
+        if not environment.exists():
+            return
+        environment = environment[0]
         db_check = Database.objects.filter(
             name=self.name,
             environment__stage=environment.stage
