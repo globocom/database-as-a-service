@@ -100,9 +100,13 @@
   
 
 .iconsdm{
-    margin-top: -20px
+    margin: 10px;
+    height: 100%;
+    vertical-align: middle;
+    margin-top: 14px;
 }
 
 .dark-mode-toggle{
     width: 100px;
+    display: flex;
 }
