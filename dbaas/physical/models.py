@@ -128,6 +128,14 @@ class Environment(BaseModel):
     def k8s_envs(cls):
         return cls._get_envs_by_provisioner(cls.KUBERNETES)
 
+    @classmethod
+    def get_stage_by_id(cls, id):
+        for st in cls.STAGE_CHOICES:
+            if st[0] == id:
+                return st[1]
+        return None
+
+
 
 class EnvironmentGroup(BaseModel):
     name = models.CharField(max_length=100, help_text="Group name")

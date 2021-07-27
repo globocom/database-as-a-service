@@ -161,6 +161,26 @@ class Database(BaseModel):
         null=True, blank=True, editable=False
     )
 
+    def validate_unique(self, *args, **kwargs):
+        ''' Validate if database name is unique
+            in environemnt stage'''
+        super(Database, self).validate_unique(*args, **kwargs)
+
+        environment = Environment.objects.get(pk=self.environment_id)
+        db_check = Database.objects.filter(
+            name=self.name,
+            environment__stage=environment.stage
+        )
+        if db_check.exists():
+            raise ValidationError({
+                "name": [
+                    "Name %s is alredy been used in the %s environment" % (
+                        self.name,
+                        Environment.get_stage_by_id(self.environment.stage)
+                    )
+                ]
+            })
+
     def team_contact(self):
         if self.team:
             return self.team.emergency_contacts
