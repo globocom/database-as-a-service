@@ -168,7 +168,7 @@ class Database(BaseModel):
 
         if not any([
          hasattr(self, "environment"),
-         hasattr(self, "name")]):
+         hasattr(self, "name")]) or self.id:
             return
 
         environment = Environment.objects.filter(pk=self.environment_id)
