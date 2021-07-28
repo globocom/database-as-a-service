@@ -620,11 +620,15 @@ class ServiceRemove(APIView):
 def get_plans_dict(hard_plans):
     plans = []
     for hard_plan in hard_plans:
-        hard_plan['description'] = "%s - %s\n%s" % (
+        hard_plan['description'] = '%s - %s\n%s' % (
             hard_plan['name'],
             hard_plan['environments__name'],
-            hard_plan['environments__location_description'])
-        hard_plan['name'] = slugify(hard_plan['description'])
+            hard_plan['environments__location_description'] or ""
+        )
+        hard_plan['name'] = slugify("%s - %s" % (
+            hard_plan['description'],
+            hard_plan['environments__name'],
+        ))
         del hard_plan['environments__name']
         del hard_plan['environments__location_description']
         plans.append(hard_plan)
