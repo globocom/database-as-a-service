@@ -273,33 +273,18 @@ class ServiceAdd(APIView):
             self.extra_params.update({'pool': self.dbaas_pool})
 
     def post(self, request, format=None):
-        err = self._validate_required_params()
-        if err is not None:
-            return err
-        err = self._validate_search_metadata_params()
-        if err is not None:
-            return err
-        err = self._validate_env()
-        if err is not None:
-            return err
-        err = self._validate_database()
-        if err is not None:
-            return err
-        err = self._validate_user()
-        if err is not None:
-            return err
-        err = self._validate_team()
-        if err is not None:
-            return err
-        err = self._validate_database_alocation()
-        if err is not None:
-            return err
-        err = self._validate_plan()
-        if err is not None:
-            return err
-        err = self._validate_if_kubernetes_env()
-        if err is not None:
-            return err
+        validations = (
+            self._validate_required_params,
+            self._validate_search_metadata_params, self._validate_env,
+            self._validate_database, self._validate_user,
+            self._validate_database_alocation, self._validate_team,
+            self._validate_plan, self._validate_if_kubernetes_env
+        )
+
+        for validation in validations:
+            err = validation()
+            if err is not None:
+                return err
 
         backup_hour, maintenance_hour, maintenance_day = (
             DatabaseForm.randomize_backup_and_maintenance_hour()
