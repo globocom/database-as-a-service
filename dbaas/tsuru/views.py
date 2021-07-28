@@ -41,7 +41,8 @@ class ListPlans(APIView):
         hard_plans = Plan.objects.filter(
             environments__name=get_url_env(request)
         ).values(
-            'name', 'description', 'environments__name'
+            'name', 'description',
+            'environments__name', 'environments__location_description'
         ).extra(
             where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
         )
@@ -619,10 +620,13 @@ class ServiceRemove(APIView):
 def get_plans_dict(hard_plans):
     plans = []
     for hard_plan in hard_plans:
-        hard_plan['description'] = hard_plan[
-            'name'] + '-' + hard_plan['environments__name']
+        hard_plan['description'] = "%s - %s\n%s" % (
+            hard_plan['name'],
+            hard_plan['environments__name'],
+            hard_plan['environments__location_description'])
         hard_plan['name'] = slugify(hard_plan['description'])
         del hard_plan['environments__name']
+        del hard_plan['environments__location_description']
         plans.append(hard_plan)
 
     return plans
