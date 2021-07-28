@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from listPlans import ListPlans
 from getServiceStatus import GetServiceStatus
-
+from getServiceInfo import GetServiceInfo
 
 import re
 import logging
@@ -37,28 +37,6 @@ from utils import get_plans_dict, get_url_env
 
 
 DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
-
-
-class GetServiceInfo(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Database
-
-    def get(self, request, database_name, format=None):
-        env = get_url_env(request)
-        try:
-            database = get_database(database_name, env)
-            info = {'used_size_in_bytes': str(database.used_size_in_bytes)}
-        except IndexError as e:
-            info = {}
-            LOG.warn(
-                "There is not a database {} on {}. {}".format(
-                    database_name, env, e
-                )
-            )
-
-        LOG.info("Info = {}".format(info))
-
-        return Response(info)
 
 
 class ServiceAppBind(APIView):
