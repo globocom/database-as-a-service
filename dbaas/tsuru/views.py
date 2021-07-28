@@ -38,8 +38,16 @@ class ListPlans(APIView):
     model = Plan
 
     def get(self, request, format=None):
+        ''' list all plans in the same
+            stage that environment
+        '''
+        environment = Environment.objects.filter(name=get_url_env(request))
+        if not environment.exists():
+            response("Invalid environment", status=403)
+
+        environment = environment[0]
         hard_plans = Plan.objects.filter(
-            environments__name=get_url_env(request)
+            environments__stage=environment.stage
         ).values(
             'name', 'description',
             'environments__name', 'environments__location_description'
