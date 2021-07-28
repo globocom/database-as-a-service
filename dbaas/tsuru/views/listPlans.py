@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from physical.models import Plan, Environment
-from utils import get_plans_dict, get_url_env
+from utils import (get_plans_dict, get_url_env, validate_environment)
 
 
 class ListPlans(APIView):
@@ -13,13 +13,16 @@ class ListPlans(APIView):
         ''' list all plans in the same
             stage that environment
         '''
-        environment = Environment.objects.filter(name=get_url_env(request))
-        if not environment.exists():
+
+        if not validate_environment(request):
             response("Invalid environment", status=403)
 
-        environment = environment[0]
+        stage = Environment.DEV if\
+            get_url_env(request) in Environment.dev_envs() else\
+            Environment.PROD
+
         hard_plans = Plan.objects.filter(
-            environments__stage=environment.stage,
+            environments__stage=stage,
             is_active=True,
             environments__tsuru_deploy=True
         ).values(
