@@ -321,7 +321,8 @@ class ServiceAdd(APIView):
     @cached_property
     def dbaas_plan(self):
         hard_plans = Plan.objects.values(
-            'name', 'description', 'pk', 'environments__name'
+            'name', 'description',
+            'environments__name', 'environments__location_description'
         ).extra(
             where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
         )

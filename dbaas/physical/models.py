@@ -136,7 +136,6 @@ class Environment(BaseModel):
         return None
 
 
-
 class EnvironmentGroup(BaseModel):
     name = models.CharField(max_length=100, help_text="Group name")
     environments = models.ManyToManyField(Environment, related_name='groups')
