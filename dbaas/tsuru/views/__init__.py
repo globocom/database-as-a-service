@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+from listPlans import ListPlans
+from getServiceStatus import GetServiceStatus
+
+
 import re
 import logging
+
 
 import requests
 from slugify import slugify
@@ -28,71 +33,10 @@ from logical.validators import database_name_evironment_constraint
 from logical.models import Database
 from logical.forms import DatabaseForm
 from dbaas.middleware import UserMiddleware
+from utils import get_plans_dict, get_url_env
 
-LOG = logging.getLogger(__name__)
+
 DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
-
-
-class ListPlans(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Plan
-
-    def get(self, request, format=None):
-        ''' list all plans in the same
-            stage that environment
-        '''
-        environment = Environment.objects.filter(name=get_url_env(request))
-        if not environment.exists():
-            response("Invalid environment", status=403)
-
-        environment = environment[0]
-        hard_plans = Plan.objects.filter(
-            environments__stage=environment.stage
-        ).values(
-            'name', 'description',
-            'environments__name', 'environments__location_description'
-        ).extra(
-            where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
-        )
-        return Response(get_plans_dict(hard_plans))
-
-
-class GetServiceStatus(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Database
-
-    def get(self, request, database_name, format=None):
-        env = get_url_env(request)
-        LOG.info("Database name {}. Environment {}".format(
-            database_name, env)
-        )
-        try:
-            database = get_database(database_name, env)
-            database_status = database.status
-        except IndexError as e:
-            database_status = 0
-            LOG.warn(
-                "There is not a database with this {} name on {}. {}".format(
-                    database_name, env, e
-                )
-            )
-
-        LOG.info("Status = {}".format(database_status))
-        task = TaskHistory.objects.filter(
-            Q(arguments__contains=database_name) &
-            Q(arguments__contains=env), task_status="RUNNING"
-        ).order_by("created_at")
-
-        LOG.info("Task {}".format(task))
-
-        if database_status == Database.ALIVE:
-            database_status = status.HTTP_204_NO_CONTENT
-        elif database_status == Database.DEAD and not task:
-            database_status = status.HTTP_500_INTERNAL_SERVER_ERROR
-        else:
-            database_status = status.HTTP_202_ACCEPTED
-
-        return Response(status=database_status)
 
 
 class GetServiceInfo(APIView):
@@ -626,29 +570,6 @@ class ServiceRemove(APIView):
         return Response(status.HTTP_204_NO_CONTENT)
 
 
-def get_plans_dict(hard_plans):
-    plans = []
-    for hard_plan in hard_plans:
-        hard_plan['description'] = '%s - %s\n%s' % (
-            hard_plan['name'],
-            hard_plan['environments__name'],
-            hard_plan['environments__location_description'] or ""
-        )
-        hard_plan['name'] = slugify("%s - %s" % (
-            hard_plan['description'],
-            hard_plan['environments__name'],
-        ))
-        del hard_plan['environments__name']
-        del hard_plan['environments__location_description']
-        plans.append(hard_plan)
-
-    return plans
-
-
-def get_url_env(request):
-    return request._request.path.split('/')[1]
-
-
 def log_and_response(msg, http_status, e="Conditional Error."):
     LOG.warn(msg)
     LOG.warn("Error: {}".format(e))
@@ -758,20 +679,6 @@ def get_network_from_ip(ip, database_environment):
         network['oct1'], network['oct2'], network['oct3'],
         network['oct4'], network['block']
     )
-
-
-def get_database(name, env):
-    query_params = {
-        'name': name
-    }
-    if env in Environment.dev_envs():
-        query_params['environment__name'] = env
-    else:
-        query_params['environment__name__in'] = Environment.prod_envs()
-
-    return Database.objects.filter(
-        **query_params
-    ).exclude(is_in_quarantine=True)[0]
 
 
 def check_acl_service_and_get_unit_network(database, data,
