@@ -14,7 +14,7 @@ from logical.models import Database
 
 
 @patch('tsuru.views.ServiceAppBind.add_acl_for_hosts')
-@patch('tsuru.views.check_database_status')
+@patch('tsuru.views.serviceAppBind.check_database_status')
 class ServiceAppBindPostTestCase(TestCase):
     """HTTP test cases for the tsuru bind API. This class focuses on the POST
     method.
