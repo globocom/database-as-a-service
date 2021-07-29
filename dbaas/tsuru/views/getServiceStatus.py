@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from logical.models import Database
 from notification.models import TaskHistory
-from utils import get_url_env, get_database, LOG
+from ..utils import get_url_env, get_database, LOG
 from django.db.models import Q
 
 

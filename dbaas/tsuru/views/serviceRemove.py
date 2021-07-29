@@ -6,7 +6,7 @@ from dbaas.middleware import UserMiddleware
 from account.models import AccountUser, Team
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from utils import (get_url_env, get_database, log_and_response)
+from ..utils import (get_url_env, get_database, log_and_response)
 
 
 class ServiceRemove(APIView):

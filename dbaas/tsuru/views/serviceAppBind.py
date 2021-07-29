@@ -3,7 +3,7 @@ from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from logical.models import Database
 from workflow.steps.util.base import ACLFromHellClient
-from utils import (log_and_response, get_url_env, LOG, check_database_status)
+from ..utils import (log_and_response, get_url_env, LOG, check_database_status)
 from rest_framework import status
 
 

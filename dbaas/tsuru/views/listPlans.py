@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from physical.models import Plan, Environment
-from utils import (get_plans_dict, get_url_env, validate_environment)
+from ..utils import (get_plans_dict, get_url_env, validate_environment)
 
 
 class ListPlans(APIView):

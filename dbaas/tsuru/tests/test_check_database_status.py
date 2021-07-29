@@ -6,12 +6,12 @@ from rest_framework.response import Response
 
 from maintenance.models import DatabaseCreate, DatabaseMaintenanceTask
 from logical.models import Database
-from tsuru.views import check_database_status
+from tsuru.utils import check_database_status
 from notification.tests.factory import TaskHistoryFactory
 
 
-@patch('tsuru.views.get_database')
-@patch('tsuru.views.last_database_create')
+@patch('tsuru.utils.get_database')
+@patch('tsuru.utils.last_database_create')
 class CheckDatabaseStatusTestCase(TestCase):
 
     def setUp(self):

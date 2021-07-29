@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from logical.models import Database
 from rest_framework.response import Response
-from utils import get_url_env, get_database, LOG
+from ..utils import get_url_env, get_database, LOG
 
 
 class GetServiceInfo(APIView):

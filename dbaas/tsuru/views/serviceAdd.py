@@ -2,11 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from logical.models import Database
-from physical.models import Plan, Environment, PlanNotFound
+from physical.models import Plan, Environment, PlanNotFound, Pool
 from rest_framework import status
-from utils import (get_plans_dict, get_url_env,
-                   log_and_response, validate_environment,
-                   LOG, DATABASE_NAME_REGEX)
+from ..utils import (get_plans_dict, get_url_env,
+                     log_and_response, validate_environment,
+                     LOG, DATABASE_NAME_REGEX)
 from django.utils.functional import cached_property
 from django.core.exceptions import ObjectDoesNotExist
 from account.models import AccountUser, Team
@@ -62,6 +62,8 @@ class ServiceAdd(APIView):
     @property
     def env(self):
         ''' get env from plan '''
+        if not validate_environment(self.request):
+            raise EnvironmentError
         return self.dbaas_plan.environments.all()[0]
 
     @property
@@ -75,9 +77,9 @@ class ServiceAdd(APIView):
 
     @property
     def stage(self):
-        return Environment.DEV if\
-            self.env_param in Environment.dev_envs() else\
-            Environment.PROD
+        return Environment.PROD if\
+            self.env_param in Environment.prod_envs() else\
+            Environment.DEV
 
     @cached_property
     def dbaas_plan(self):
@@ -136,7 +138,7 @@ class ServiceAdd(APIView):
                     return log_and_response(
                         msg='{} <{}> was not found'.format(
                             param_name.capitalize(),
-                            getattr(self, '{}_param'.format(param_name))
+                            getattr(self, '{}_param'.format(param_name)),
                         ),
                         http_status=status.HTTP_400_BAD_REQUEST
                     )
@@ -186,8 +188,6 @@ class ServiceAdd(APIView):
     def _validate_env(self):
         try:
             self.env
-            if not validate_environment(self.request):
-                raise EnvironmentError
         except (ObjectDoesNotExist, EnvironmentError):
             msg = "Environment was not found"
             return log_and_response(
@@ -278,8 +278,8 @@ class ServiceAdd(APIView):
             self._validate_required_params,
             self._validate_search_metadata_params, self._validate_env,
             self._validate_database, self._validate_user,
-            self._validate_database_alocation, self._validate_team,
-            self._validate_plan, self._validate_if_kubernetes_env
+            self._validate_team, self._validate_database_alocation,
+            self._validate_if_kubernetes_env, self._validate_plan
         )
 
         for validation in validations:

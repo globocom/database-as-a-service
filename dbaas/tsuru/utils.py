@@ -5,6 +5,7 @@ from logical.models import Database
 from physical.models import Environment
 from rest_framework.response import Response
 from maintenance.models import DatabaseCreate
+from rest_framework import status
 
 
 LOG = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ def get_plans_dict(hard_plans):
             hard_plan['environments__name'],
             hard_plan['environments__location_description'] or ""
         )
-        hard_plan['name'] = slugify("%s - %s" % (
-            hard_plan['description'],
+        hard_plan['name'] = slugify("%s -%s" % (
+            hard_plan['name'],
             hard_plan['environments__name'],
         ))
         del hard_plan['environments__name']
@@ -55,7 +56,7 @@ def log_and_response(msg, http_status=400, e="Conditional Error."):
 
 
 def validate_environment(request):
-    return get_url_env(request) in\
+    return not get_url_env(request) or get_url_env(request) in\
         (list(Environment.prod_envs()) + list(Environment.dev_envs()))
 
 
