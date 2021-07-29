@@ -147,6 +147,10 @@ class VolumeProviderBase(BaseInstanceStep):
         return volume
 
     def destroy_volume(self, volume):
+        from backup.tasks import remove_snapshot_backup
+        for snapshot in volume.backups.filter(purge_at__isnull=True):
+            remove_snapshot_backup(snapshot, self)
+
         url = "{}volume/{}".format(self.base_url, volume.identifier)
         response = delete(url, headers=self.headers)
         if not response.ok:
