@@ -4,6 +4,7 @@ from slugify import slugify
 from logical.models import Database
 from physical.models import Environment
 from rest_framework.response import Response
+from maintenance.models import DatabaseCreate
 
 
 LOG = logging.getLogger(__name__)
@@ -68,9 +69,12 @@ def last_database_create(database_name, env):
     Returns:
     DatabaseCreate: DatabaseCreate object
     """
+    environments = Environment.prod_envs()\
+        if env in Environment.prod_envs() else Environment.dev_envs()
+
     return DatabaseCreate.objects.filter(
         name=database_name,
-        environment__name=env
+        environment__name__in=environments
     ).last()
 
 

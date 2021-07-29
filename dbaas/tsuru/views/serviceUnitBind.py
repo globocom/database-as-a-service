@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from logical.models import Database
 from rest_framework import status
 
-
 class ServiceUnitBind(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database

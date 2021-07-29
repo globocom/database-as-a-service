@@ -20,7 +20,7 @@ class ServiceRemove(APIView):
 
         user = data.get('user')
         team = data.get('team')
-        # data.get('plan') 
+        # data.get('plan')
         env = get_url_env(request)
 
         UserMiddleware.set_current_user(request.user)
