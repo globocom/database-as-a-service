@@ -5994,3 +5994,8 @@ body.dark #dropdown-menu-notification .dropdown-menu li a{
 body.dark .auto-refresh-label b{
 	color: white;
 }
+
+
+body.dark #dropdown-menu-notification li{
+	background-color: #000;
+}
