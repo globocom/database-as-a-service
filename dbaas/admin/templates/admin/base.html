@@ -23,11 +23,16 @@
     <link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />
 {% endif %}
 
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/dark-mode.css' %}" />
 <script type="text/javascript">
     window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";
 </script>
 
 {% block extrahead %}{% endblock %}
+
+
+
+
 
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
 </head>
@@ -35,7 +40,17 @@
 
 {% block body %}
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
+<script>
+// just to add dark class to body
+// to avoid screen blink when load page
+var element = document.getElementsByTagName("body")[0];
+var addsDark = localStorage.getItem('darkmode');
+addsDark = (addsDark === "true" || addsDark === true)
+if(addsDark)
+    element.classList.add("dark");
+</script>
 {% endblock %}
+
 
 {% if not is_popup %}
     <!-- Header -->
@@ -88,13 +103,19 @@
                     <div class="dropdown pull-right welcome-message" id="dropdown-menu-notification">
                         {% get_notifications user.username %}
                     </div>
+                    <div class="dark-mode-toggle pull-right flex">
+                        <i class="fa fa-sun-o iconsdm iconlight"></i>
+                        <label class="switch"><input type="checkbox" id="dmodechckbox" title="Dark mode" />    <div></div>
+  </label>
+                        <i class="fa fa-moon-o iconsdm icondark"></i>
+                    </div>
+                    
                 </div>
             </div>
         {% endif %}
     </div>
     <!-- END Header -->
 {% endif %}
-
 <div id="main-notification" class='container-fluid'>
 {% block notification %}
 {% endblock %}
@@ -160,6 +181,7 @@
     <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
     <script type="text/javascript" src="{% static "admin/js/commons.js" %}"></script>
     <script type="text/javascript" src="{% static 'admin/js/confirmation_modal.js' %}"></script>
+    <script type="text/javascript" src="{% static 'admin/js/dark_mode.js' %}"></script>
 {% endblock js_footer_commons %}
 <script type="text/javascript" src="{% static 'admin/js/mustache2.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/notification.js' %}"></script>
