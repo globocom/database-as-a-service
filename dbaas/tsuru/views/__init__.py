@@ -3,6 +3,7 @@ from listPlans import ListPlans
 from getServiceStatus import GetServiceStatus
 from getServiceInfo import GetServiceInfo
 from serviceAdd import ServiceAdd
+from serviceRemove import ServiceRemove
 
 import re
 import logging
@@ -36,7 +37,7 @@ from dbaas.middleware import UserMiddleware
 from utils import get_plans_dict, get_url_env
 
 
-DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
+
 
 
 class ServiceAppBind(APIView):
@@ -183,76 +184,7 @@ class ServiceUnitBind(APIView):
         return Response(status.HTTP_204_NO_CONTENT)
 
 
-class ServiceRemove(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Database
 
-    def put(self, request, database_name, format=None):
-        data = request.DATA
-        user = data['user']
-        team = data['team']
-        data['plan']
-        env = get_url_env(request)
-
-        UserMiddleware.set_current_user(request.user)
-        env = get_url_env(request)
-        try:
-            database = get_database(database_name, env)
-        except IndexError as e:
-            msg = "Database id provided does not exist {} in {}.".format(
-                database_name, env)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_404_NOT_FOUND
-            )
-
-        try:
-            dbaas_user = AccountUser.objects.get(email=user)
-        except ObjectDoesNotExist as e:
-            msg = "User does not exist."
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        except MultipleObjectsReturned as e:
-            msg = "There are multiple user for {} email.".format(user)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        try:
-            dbaas_team = Team.objects.get(name=team)
-        except ObjectDoesNotExist as e:
-            msg = "Team does not exist."
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        try:
-            dbaas_user.team_set.get(name=dbaas_team.name)
-        except ObjectDoesNotExist as e:
-            msg = "The user is not on {} team.".format(dbaas_team.name)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        database.team = dbaas_team
-        database.save()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def delete(self, request, database_name, format=None):
-        UserMiddleware.set_current_user(request.user)
-        env = get_url_env(request)
-        try:
-            database = get_database(database_name, env)
-        except IndexError as e:
-            msg = "Database id provided does not exist {} in {}.".format(
-                database_name, env)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        database.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
 
 
 
@@ -328,96 +260,3 @@ def check_database_status(database_name, env):
             msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return database
-
-
-def get_network_from_ip(ip, database_environment):
-    net_api_credentials = get_credentials_for(
-        environment=database_environment,
-        credential_type=CredentialType.NETWORKAPI
-    )
-
-    ip_client = Ip.Ip(
-        net_api_credentials.endpoint, net_api_credentials.user,
-        net_api_credentials.password
-    )
-
-    ips = ip_client.get_ipv4_or_ipv6(ip)
-    ips = ips['ips']
-    if type(ips) != list:
-        ips = [ips]
-
-    net_ip = ips[0]
-    network_client = Network.Network(
-        net_api_credentials.endpoint, net_api_credentials.user,
-        net_api_credentials.password
-    )
-
-    network = network_client.get_network_ipv4(net_ip['networkipv4'])
-    network = network['network']
-
-    return '{}.{}.{}.{}/{}'.format(
-        network['oct1'], network['oct2'], network['oct3'],
-        network['oct4'], network['block']
-    )
-
-
-def check_acl_service_and_get_unit_network(database, data,
-                                           ignore_ip_error=False):
-
-    try:
-        acl_credential = get_credentials_for(
-            environment=database.environment,
-            credential_type=CredentialType.ACLAPI
-        )
-    except IndexError:
-        error = 'The {} do not have integration with ACLAPI'.format(
-            database.environment
-        )
-        return log_and_response(
-            msg=None, e=error, http_status=status.HTTP_201_CREATED
-        )
-
-    health_check_info = acl_credential.get_parameters_by_group('hc')
-    try:
-        health_check_url = (acl_credential.endpoint
-                            + health_check_info['health_check_url'])
-        simple_hc = simple_health_check.SimpleHealthCheck(
-            health_check_url=health_check_url,
-            service_key=health_check_info['key_name'],
-            redis_client=REDIS_CLIENT, http_client=requests,
-            http_request_exceptions=(Exception,), verify_ssl=False,
-            health_check_request_timeout=int(health_check_info['timeout'])
-        )
-    except KeyError as e:
-        msg = "AclApi Credential configured improperly."
-        return log_and_response(
-            msg=msg, e=e,
-            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-    try:
-        simple_hc.check_service()
-    except simple_health_check.HealthCheckError as e:
-        LOG.warn(e)
-        msg = ("We are experiencing errors with the acl api, please try again "
-               "later.")
-        return log_and_response(
-            msg=msg, e=e,
-            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    except Exception as e:
-        LOG.warn(e)
-
-    try:
-        return get_network_from_ip(
-            data.get('unit-host'), database.environment
-        )
-    except Exception as e:
-        LOG.warn(e)
-        msg = ("We are experiencing errors with the network api, please try "
-               "get network again later")
-        if not ignore_ip_error:
-            return log_and_response(
-                msg=msg, e=e,
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )

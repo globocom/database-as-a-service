@@ -61,7 +61,8 @@ class ServiceAdd(APIView):
 
     @property
     def env(self):
-        return Environment.objects.get(name=self.env_param)
+        ''' get env from plan '''
+        return self.dbaas_plan.environments.all()[0]
 
     @property
     def is_k8s_env(self):
