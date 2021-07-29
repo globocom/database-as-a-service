@@ -4,6 +4,7 @@ from getServiceStatus import GetServiceStatus
 from getServiceInfo import GetServiceInfo
 from serviceAdd import ServiceAdd
 from serviceRemove import ServiceRemove
+from serviceUnitBind import ServiceUnitBind
 
 import re
 import logging
@@ -173,90 +174,6 @@ class ServiceAppBind(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ServiceUnitBind(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Database
-
-    def post(self, request, database_name, format=None):
-        return Response(None, status.HTTP_201_CREATED)
-
-    def delete(self, request, database_name, format=None):
-        return Response(status.HTTP_204_NO_CONTENT)
 
 
 
-
-
-
-def last_database_create(database_name, env):
-    """This function returns the most recent DatabaseCreate's task.
-
-    Parameters:
-    database_name (str): Name of the database
-    env (str): It represents the database environment (prod or dev)
-
-    Returns:
-    DatabaseCreate: DatabaseCreate object
-    """
-    return DatabaseCreate.objects.filter(
-        name=database_name,
-        environment__name=env
-    ).last()
-
-
-def check_database_status(database_name, env):
-    """This function looks for a DatabaseCreate task and returns a http
-    response or the Database itself depeding on the context. If the
-    DatabaseCreate task is still running of failed, a http response is
-    returned, otherwise this functions tries to retrieve the Database with
-    the get_database function.
-
-    Parameters:
-    database_name (str): Name of the database
-    env (str): It represents the database environment (prod or dev)
-
-    Returns:
-    Database or Response: Database or Rest Framework Response object
-    """
-    database_create = last_database_create(database_name, env)
-
-    LOG.info(
-        "Task {}".format(getattr(database_create, 'task', 'No tasks found'))
-    )
-
-    if database_create:
-        if database_create.is_running:
-            msg = "Database {} in env {} is beeing created.".format(
-                database_name, env)
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
-
-        elif database_create.is_status_error:
-            msg = ("A error ocurred creating database {} in env {}. Check "
-                   "error on task history in https://dbaas.globoi.com").format(
-                database_name, env)
-            return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    try:
-        database = get_database(database_name, env)
-    except IndexError as e:
-        msg = "Database {} does not exist in env {}.".format(
-            database_name, env)
-        return log_and_response(
-            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except MultipleObjectsReturned as e:
-        msg = "There are multiple databases called {} in {}.".format(
-            database_name, env)
-        return log_and_response(
-            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except Exception as e:
-        msg = "Something ocurred on dbaas, please get in touch with your DBA."
-        return log_and_response(
-            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    if not(database and database.status):
-        msg = "Database {} is not Alive.".format(database_name)
-        return log_and_response(
-            msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    return database
