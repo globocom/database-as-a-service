@@ -1630,10 +1630,7 @@ class DestroyOldEnvironment(VolumeProviderBase):
         return super(DestroyOldEnvironment, self).can_run
 
     def do(self):
-        from backup.tasks import remove_snapshot_backup
         for volume in self.host.volumes.all():
-            for snapshot in volume.backups.all():
-                remove_snapshot_backup(snapshot, self)
             self.destroy_volume(volume)
 
     def undo(self):
