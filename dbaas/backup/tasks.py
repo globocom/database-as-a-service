@@ -449,8 +449,20 @@ def purge_unused_exports(task=None):
 
         provider = VolumeProviderBase(volume.host.instances.first())
         try:
+            if task:
+                task.add_detail('Add access...', level=3)
             provider.add_access(volume, volume.host)
+
+            if task:
+                task.add_detail('Clean up...', level=3)
             provider.clean_up(volume)
+
+            if task:
+                task.add_detail('Detach disk...', level=3)
+            provider.detach_disk(volume)
+
+            if task:
+                task.add_detail('Destroy volume...', level=3)
             provider.destroy_volume(volume)
         except Exception as e:
             success = False
