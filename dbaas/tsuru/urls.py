@@ -5,7 +5,7 @@ from views import (ListPlans, GetServiceStatus, GetServiceInfo, ServiceAdd,
 
 urlpatterns = patterns(
     'tsuru.views',
-    url(r'^resources/plans$', ListPlans.as_view()),
+    url(r'^resources/plans$', ListPlans.as_view(), name='list-plans'),
     url(r'^resources/(?P<database_name>\w+)/status$',
         GetServiceStatus.as_view()),
     url(r'^services/(?P<database_name>\w+)$',
