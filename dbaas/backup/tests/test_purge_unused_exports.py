@@ -96,6 +96,7 @@ class PurgeUnusedExports(TestCase):
         destroy.assert_called_once_with(self.export)
 
     @patch('backup.tasks.VolumeProviderBase.destroy_volume', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderBase.detach_disk', new=MagicMock())
     @patch('backup.tasks.VolumeProviderBase.clean_up', new=MagicMock())
     @patch('backup.tasks.VolumeProviderBase.add_access', new=MagicMock())
     def test_task_with_success(self):
