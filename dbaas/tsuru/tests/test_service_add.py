@@ -15,6 +15,7 @@ class BaseValidationTestCase(TestCase):
     PASSWORD = "123456"
     plan_name = 'fake-plan-dev'
     is_k8s = False
+    tsuru_deployable = True
 
     def setUp(self):
         self.role = mommy.make('Role', name='fake_role')
@@ -38,7 +39,7 @@ class BaseValidationTestCase(TestCase):
                                       name=self.env,
                                       provisioner=Environment.CLOUDSTACK,
                                       stage=Environment.DEV,
-                                      tsuru_deploy=True)
+                                      tsuru_deploy=self.tsuru_deployable)
         self.k8s_env = mommy.make(
             'Environment',
             name=self.k8s_env_name,
@@ -112,6 +113,10 @@ class ValidationRequiredParamsTestCase(BaseValidationTestCase):
         self.payload.pop('description')
         self.do_request_and_assert('Param description must be provided.')
 
+    def test_plan(self):
+        self.payload.pop('plan')
+        self.do_request_and_assert('Param plan must be provided.')
+
 
 class NotFoundMetadataValidationTestCase(BaseValidationTestCase):
     """HTTP test cases for the tsuru Service Add. This class focuses on
@@ -180,6 +185,20 @@ class OthersValidatetionsTestCase(BaseValidationTestCase):
 
         self.assertTrue(create_database_mock.called)
         self.assertEqual(resp.status_code, 201)
+
+
+class GCPValidationTestCase(BaseValidationTestCase):
+
+    tsuru_deployable = False
+
+    def test_create_database_in_non_tsuru_deployable_env(self):
+        resp = self.do_request()
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(
+            resp.content,
+            '"[DBaaS Error] Plan <%s-%s> was not found"' %
+            (self.plan_name, self.env))
 
 
 class K8sValidationTestCase(BaseValidationTestCase):
