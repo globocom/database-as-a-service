@@ -53,7 +53,7 @@ class PurgeUnusedExports(TestCase):
     @patch('backup.tasks.VolumeProviderBase.clean_up')
     @patch('backup.tasks.VolumeProviderBase.add_access')
     def test_cannot_delete_inactive_with_active_snapshot(
-        self, add_access, clean_up, destroy
+        self, add_access, clean_up, detach_disk, destroy
     ):
         mommy.make(
             'Snapshot',
@@ -79,7 +79,7 @@ class PurgeUnusedExports(TestCase):
     @patch('backup.tasks.VolumeProviderBase.clean_up')
     @patch('backup.tasks.VolumeProviderBase.add_access')
     def test_can_delete_inactive_with_inactive_snapshot(
-        self, add_access, clean_up, destroy
+        self, add_access, clean_up, detach_disk, destroy
     ):
         mommy.make(
             'Snapshot',
