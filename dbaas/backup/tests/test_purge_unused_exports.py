@@ -40,7 +40,7 @@ class PurgeUnusedExports(TestCase):
     @patch('backup.tasks.VolumeProviderBase.detach_disk')
     @patch('backup.tasks.VolumeProviderBase.clean_up')
     @patch('backup.tasks.VolumeProviderBase.add_access')
-    def test_delete_only_inactive(self, add_access, clean_up, destroy):
+    def test_delete_only_inactive(self, add_access, clean_up, detach_disk, destroy):
         self.assertTrue(purge_unused_exports())
 
         add_access.assert_called_once_with(self.export, self.export.host)
