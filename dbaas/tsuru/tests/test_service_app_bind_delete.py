@@ -16,7 +16,7 @@ from workflow.steps.util.base import ACLFromHellClient
 
 
 @patch('workflow.steps.util.base.ACLFromHellClient.remove_acl')
-@patch('tsuru.views.check_database_status')
+@patch('tsuru.views.serviceAppBind.check_database_status')
 class ServiceAppBindDeleteTestCase(TestCase):
     """HTTP test cases for the tsuru unbind API. This class focuses on the
     DELETE method.

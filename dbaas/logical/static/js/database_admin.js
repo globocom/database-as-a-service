@@ -74,19 +74,21 @@
             var environment_id = $("#id_environment").val() || "none";
             var current_engine = $("#id_engine").val() || "none";
             if(environment_id !== "none"){
-                var engine_selector = document.getElementById("id_engine");
+                var engine_selector = $("#id_engine");
+                var $engineOptions = $("#id_engine option");
                 var self = this;
                 $.ajax({
                     type: "GET",
                     dataType: "json",
                     url: "/physical/engines_by_env/" + environment_id + "/"
                 }).done(function (response) {
+                    $("#engnoopts").remove();
                     if(response.engines.length !== 0){
                         response.engines.push("");
                         var options2ShowSelector = response.engines.map(function(id) {
                           return "[value='" + id + "']";
                         }).join(",");
-                        var $engineOptions = $("#id_engine option");
+                        
                         $engineOptions.hide();
                         $engineOptions.filter(options2ShowSelector).show();
                         var selectedId = parseInt($engineOptions.filter(':selected').val(), 10);
@@ -96,8 +98,9 @@
                         }
                     }
                     else{
-                        engine_selector.innerHTML = '<option selected="selected">' +
-                                                    'This environment has no active plans</option>';
+                        $engineOptions.hide();
+                        engine_selector.append('<option id="engnoopts" selected="selected">' +
+                                                    'This environment has no active plans</option>');
                     }
                 });
                 $(document.getElementsByClassName("field-engine")[0]).fadeIn("slow");
