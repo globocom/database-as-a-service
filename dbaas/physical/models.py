@@ -81,6 +81,20 @@ class Environment(BaseModel):
     provisioner = models.IntegerField(
         choices=PROVISIONER_CHOICES, default=CLOUDSTACK
     )
+    location_description = models.CharField(
+        verbose_name=_("Location description"),
+        max_length=255,
+        blank=True,
+        null=True,
+        default=None,
+        help_text=_("Environment location description.")
+    )
+    tsuru_deploy = models.BooleanField(
+        verbose_name="Tsuru deploy enabled",
+        default=False,
+        help_text=(
+            "Check this option if this environment can be deployed by tsuru")
+    )
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -113,6 +127,13 @@ class Environment(BaseModel):
     @classmethod
     def k8s_envs(cls):
         return cls._get_envs_by_provisioner(cls.KUBERNETES)
+
+    @classmethod
+    def get_stage_by_id(cls, id):
+        for st in cls.STAGE_CHOICES:
+            if st[0] == id:
+                return st[1]
+        return None
 
 
 class EnvironmentGroup(BaseModel):

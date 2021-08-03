@@ -7,12 +7,15 @@ from django.core.urlresolvers import reverse
 from physical.models import Plan, Environment
 from system.models import Configuration
 from model_mommy import mommy
+from slugify import slugify
 
 
 class BaseValidationTestCase(TestCase):
     USERNAME = "fake_user"
     PASSWORD = "123456"
     plan_name = 'fake-plan-dev'
+    is_k8s = False
+    tsuru_deployable = True
 
     def setUp(self):
         self.role = mommy.make('Role', name='fake_role')
@@ -32,11 +35,17 @@ class BaseValidationTestCase(TestCase):
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
         self.env = 'dev'
         self.k8s_env_name = 'k8s_env'
-        self.environment = mommy.make('Environment', name=self.env)
+        self.environment = mommy.make('Environment',
+                                      name=self.env,
+                                      provisioner=Environment.CLOUDSTACK,
+                                      stage=Environment.DEV,
+                                      tsuru_deploy=self.tsuru_deployable)
         self.k8s_env = mommy.make(
             'Environment',
             name=self.k8s_env_name,
-            provisioner=Environment.KUBERNETES
+            provisioner=Environment.KUBERNETES,
+            stage=Environment.DEV,
+            tsuru_deploy=True
         )
         self.url = reverse('tsuru:service-add', args=(self.env,))
         self.name = 'fake_database'
@@ -44,8 +53,9 @@ class BaseValidationTestCase(TestCase):
         self.description = 'fake desc'
         self.plan = mommy.make(
             'Plan',
-            name='fake_plan',
-            provider=Plan.CLOUDSTACK
+            name=self.plan_name,
+            provider=Plan.CLOUDSTACK,
+            is_active=True
         )
         self.plan.environments.add(self.environment)
         self.payload = {
@@ -53,7 +63,10 @@ class BaseValidationTestCase(TestCase):
             'user': self.user,
             'description': self.description,
             'team': self.team.name,
-            'plan': self.plan_name
+            'plan': slugify("%s-%s" % (
+                self.plan_name,
+                self.env if not self.is_k8s else self.k8s_env_name
+            ))
         }
         self.headers = {
             'HTTP_X_TSURU_POOL_NAME': 'Fake Pool',
@@ -100,6 +113,10 @@ class ValidationRequiredParamsTestCase(BaseValidationTestCase):
         self.payload.pop('description')
         self.do_request_and_assert('Param description must be provided.')
 
+    def test_plan(self):
+        self.payload.pop('plan')
+        self.do_request_and_assert('Param plan must be provided.')
+
 
 class NotFoundMetadataValidationTestCase(BaseValidationTestCase):
     """HTTP test cases for the tsuru Service Add. This class focuses on
@@ -133,7 +150,7 @@ class NotFoundMetadataValidationTestCase(BaseValidationTestCase):
 
 
 class OthersValidatetionsTestCase(BaseValidationTestCase):
-    @patch('tsuru.views.Database.objects.get', new=MagicMock())
+    @patch('tsuru.views.serviceAdd.Database.objects.get', new=MagicMock())
     def test_database_already_exists(self):
         self.do_request_and_assert(('There is already a database called '
                                     'fake_database in dev.'))
@@ -145,14 +162,14 @@ class OthersValidatetionsTestCase(BaseValidationTestCase):
         )
 
     @patch(
-        'tsuru.views.database_name_evironment_constraint',
+        'tsuru.views.serviceAdd.database_name_evironment_constraint',
         new=MagicMock(return_value=True)
     )
     def test_already_exist_database_with_name(self):
         self.do_request_and_assert('fake_database already exists in env dev!')
 
     @patch(
-        'tsuru.views.Team.count_databases_in_use',
+        'tsuru.views.serviceAdd.Team.count_databases_in_use',
         new=MagicMock(return_value=99)
     )
     def test_allocation_limit(self):
@@ -170,8 +187,23 @@ class OthersValidatetionsTestCase(BaseValidationTestCase):
         self.assertEqual(resp.status_code, 201)
 
 
+class GCPValidationTestCase(BaseValidationTestCase):
+
+    tsuru_deployable = False
+
+    def test_create_database_in_non_tsuru_deployable_env(self):
+        resp = self.do_request()
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(
+            resp.content,
+            '"[DBaaS Error] Plan <%s-%s> was not found"' %
+            (self.plan_name, self.env))
+
+
 class K8sValidationTestCase(BaseValidationTestCase):
     plan_name = 'fake-plan-k8s-env'
+    is_k8s = True
 
     def setUp(self):
         super(K8sValidationTestCase, self).setUp()
