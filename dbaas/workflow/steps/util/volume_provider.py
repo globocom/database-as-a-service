@@ -29,6 +29,8 @@ class VolumeProviderGetSnapshotState(VolumeProviderException):
 class VolumeProviderScpFromSnapshotCommand(VolumeProviderException):
     pass
 
+class VolumeProviderRsyncFromSnapshotCommand(VolumeProviderException):
+    pass
 
 class VolumeProviderAddHostAllowCommand(VolumeProviderException):
     pass
@@ -379,6 +381,25 @@ class VolumeProviderBase(BaseInstanceStep):
         response = get(url, json=data, headers=self.headers)
         if not response.ok:
             raise VolumeProviderScpFromSnapshotCommand(
+                response.content,
+                response
+            )
+        return response.json()['command']
+
+    def get_rsync_from_snapshot_command(
+         self, snapshot, source_dir, dest_ip, dest_dir):
+        url = "{}snapshots/{}/commands/rsync".format(
+            self.base_url,
+            snapshot.snapshopt_id
+        )
+        data = {
+            'source_dir': source_dir,
+            'target_ip': dest_ip,
+            'target_dir': dest_dir
+        }
+        response = get(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise VolumeProviderRsyncFromSnapshotCommand(
                 response.content,
                 response
             )
