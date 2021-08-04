@@ -14,7 +14,7 @@ from .parameter import ParameterAdmin
 from .offering import OfferingAdmin
 from .cloud import CloudAdmin
 from .pool import PoolAdmin
-
+from core_replication_topology import CoreReplicationTopologyAdmin
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
 admin.site.register(models.Engine, EngineAdmin)
@@ -30,3 +30,4 @@ admin.site.register(models.Parameter, ParameterAdmin)
 admin.site.register(models.Cloud, CloudAdmin)
 admin.site.register(models.Script)
 admin.site.register(models.Pool, PoolAdmin)
+admin.site.register(models.CoreReplicationTopology, CoreReplicationTopologyAdmin)

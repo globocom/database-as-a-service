@@ -1811,6 +1811,20 @@ class VipInstanceGroup(BaseModel):
         )
 
 
+class CoreReplicationTopology(BaseModel):
+    class Meta:
+        verbose_name_plural = "core replication topologies"
+
+    name = models.CharField(
+        verbose_name=_("Core topology name"), max_length=200
+    )
+    replication_topology = models.ManyToManyField(
+        ReplicationTopology, related_name='replication_topologies'
+    )
+
+
+
+
 ##########################################################################
 # Exceptions
 ##########################################################################
