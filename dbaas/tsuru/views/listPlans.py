@@ -15,7 +15,7 @@ class ListPlans(APIView):
         '''
 
         if not validate_environment(request):
-            response("Invalid environment", status=403)
+            return Response("Invalid environment", status=403)
 
         stage = Environment.DEV if\
             get_url_env(request) in Environment.dev_envs() else\
