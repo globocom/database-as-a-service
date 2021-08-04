@@ -143,3 +143,30 @@ def database_environment_migrate_stand_alone_phase1(
     else:
         database_migrate.set_error()
         task.set_status_error('Could not migrate database')
+
+
+def rollback_database_environment_migrate_stand_alone_phase1(migrate, task):
+    migrate.id = None
+    migrate.created_at = None
+    migrate.finished_at = None
+    migrate.task = task
+    migrate.save()
+
+    database = migrate.database
+    instances = database.infra.instances.all() ## tmp code
+    class_path = database.infra.plan.replication_topology.class_path
+    steps = get_database_migrate_stand_alone_phase1_steps(class_path)
+
+    result = rollback_for_instances_full(
+        steps, instances, task, migrate.get_current_step, migrate.update_step
+    )
+    migrate = DatabaseMigrate.objects.get(id=migrate.id)
+    if result:
+        migrate.set_rollback()
+        task.set_status_success('Rollback executed with success')
+    else:
+        migrate.set_error()
+        task.set_status_error(
+            'Could not do rollback\n'
+            'Please check error message and do retry'
+        )
