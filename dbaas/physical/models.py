@@ -1819,7 +1819,7 @@ class CoreReplicationTopology(BaseModel):
         verbose_name=_("Core topology name"), max_length=200
     )
     replication_topology = models.ManyToManyField(
-        ReplicationTopology, related_name='replication_topologies'
+        ReplicationTopology, related_name='core_replication_topologies'
     )
 
 
