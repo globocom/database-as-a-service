@@ -2598,4 +2598,22 @@ class TaskRegister(object):
 
         database_set_ssl_not_required.delay(**delay_params)
 
+    @classmethod
+    def database_migrate_stand_alone_phase1(
+        cls, database, new_environment, user,
+        since_step=None, step_manager=None
+    ):
+        task_params = {
+            'task_name': "db_env_migrate_standalone_phase1",
+            'arguments': "Database: {}, Environment: {}".format(
+                database, new_environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return maintenace_tasks.db_env_migrate_standalone_phase1.delay(
+            database=database, new_environment=new_environment,
+            task=task, since_step=since_step, step_manager=step_manager
+        )
     # ============  END TASKS   ============
