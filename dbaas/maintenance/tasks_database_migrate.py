@@ -11,6 +11,7 @@ from util.providers import (
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from copy import copy
 from datetime import datetime
+from physical.models import Offering
 
 
 def get_steps(database):
@@ -127,7 +128,8 @@ def database_environment_migrate_stand_alone_phase1(
     database_migrate.source_plan = database.plan
     database_migrate.target_plan = database.plan ## tmp code
     database_migrate.source_offering = database.infra.offering
-    database_migrate.target_offering = database.infra.offering ## tmp code
+    database_migrate.target_offering = Offering.get_equivalent_offering(
+                                        database, new_environment)
     database_migrate.save()
 
     instances = database.infra.instances.all() ## tmp code

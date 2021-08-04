@@ -28,7 +28,7 @@ class DatabaseMigrateStandAlonePhase1Admin(DatabaseMaintenanceTaskAdmin):
         "target_plan", "source_offering", "target_offering", "maintenance_action",
         "status", "started_at", "finished_at", "task_schedule"
     )
-    
+
     def maintenance_action(self, maintenance_task):
         if not maintenance_task.is_status_error:
             return 'N/A'

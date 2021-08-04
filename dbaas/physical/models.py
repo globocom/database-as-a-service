@@ -46,6 +46,23 @@ class Offering(BaseModel):
     def __unicode__(self):
         return '{}'.format(self.name)
 
+    @classmethod
+    def get_equivalent_offering(cls, database, to_environment):
+        current_offer = database.infra.offering
+        offers = cls.objects.filter(
+            cpus__gte=current_offer.cpus,
+            memory_size_mb__gte=current_offer.memory_size_mb,
+            environments__in=[to_environment]
+        ).order_by("cpus", "memory_size_mb")
+
+        for offer in offers:
+            if all([
+             offer.cpus >= current_offer.cpus,
+             offer.memory_size_mb >= current_offer.memory_size_mb]):
+                return offer
+
+        raise Exception("There's no equivalent offer")
+
 
 class Environment(BaseModel):
 
