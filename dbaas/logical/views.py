@@ -2287,6 +2287,14 @@ def database_migrate(request, context, database):
     )
 
 
+@database_view('migratestep')
+def database_migrate_step(request, context, database):
+    return render_to_response(
+        "logical/database/details/migrate_step_tab.html", context,
+        RequestContext(request)
+    )
+
+
 def zones_for_environment(request, database_id, environment_id):
     database = get_object_or_404(Database, pk=database_id)
     environment = get_object_or_404(Environment, pk=environment_id)

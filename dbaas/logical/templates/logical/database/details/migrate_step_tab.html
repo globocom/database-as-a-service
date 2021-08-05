@@ -1,0 +1,33 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+
+    .padding-host {
+        padding-left: 50px !important;
+    }
+  </style>
+{% endblock %}
+
+
+{% block tab %}
+<h1> TODO </h1>
+{% endblock %}
+
+{% block database_button_save %}
+
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_environment_modal" confirmation_message="Are you sure you want to migrate this database?" box_title="Migrate database" button_class="btn btn-primary" id_optional="id=migrate_database_btn_modal"%}
+
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+
+{% endblock %}

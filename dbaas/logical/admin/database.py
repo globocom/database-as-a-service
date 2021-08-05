@@ -42,7 +42,8 @@ from logical.views import database_details, DatabaseHostsView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
     RemoveInstanceDatabaseRetryView, database_history, \
     database_set_ssl_required, database_set_ssl_required_retry, \
-    database_set_ssl_not_required, database_set_ssl_not_required_retry
+    database_set_ssl_not_required, database_set_ssl_not_required_retry, \
+    database_migrate_step
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -761,6 +762,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/migrate/$',
                 self.admin_site.admin_view(database_migrate),
                 name="logical_database_migrate"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/migrate_step/$',
+                self.admin_site.admin_view(database_migrate_step),
+                name="logical_database_migrate_step"
             ),
             url(
                 r'^/?(?P<database_id>\d+)/zones_for_environment/?(?P<environment_id>\d+)/$',
