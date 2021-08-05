@@ -2450,7 +2450,7 @@ class TaskRegister(object):
         task_params = {
             'task_name': "database_migrate",
             'arguments': "Database: {}, Environment: {}".format(
-                migrate.database, migrate.target_environment
+                migrate.database, migrate.environment
             ),
         }
         if user:
