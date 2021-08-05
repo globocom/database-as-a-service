@@ -420,9 +420,12 @@ class BaseTopology(object):
 
     def get_database_migrate_stand_alone_phase1_steps(self):
         return [{
-            #'Disable monitoring': (
-            #    'workflow.steps.util.zabbix.DisableAlarms',
-            #    'workflow.steps.util.db_monitor.DisableMonitoring',
+            #'Creating Service Account': (
+            #    'workflow.steps.util.host_provider.CreateServiceAccount',
+            #)}, {
+            #'Creating virtual machine': (
+            #    'workflow.steps.util.host_provider.AllocateIP',
+            #    'workflow.steps.util.host_provider.CreateVirtualMachine',
             #)}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
@@ -431,14 +434,8 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
-            'Starting database': (
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            #)}, {
-            #'Enabling monitoring': (
-            #    'workflow.steps.util.db_monitor.EnableMonitoring',
-            #    'workflow.steps.util.zabbix.EnableAlarms',
+            'Raise Excpetion': (
+                'workflow.steps.util.database.RaiseTestMigrateExcetion',
             )
         }]
 
