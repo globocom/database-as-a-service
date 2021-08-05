@@ -2620,7 +2620,7 @@ class TaskRegister(object):
     @classmethod
     def database_migrate_stand_alone_phase1_rollback(cls, migrate, user):
         task_params = {
-            'task_name': "db_env_migrate_standalone_phase1_rollback",
+            'task_name': "db_env_migrate_sa_phase1_rollback",
             'arguments': "Database: {}, Environment: {}".format(
                 migrate.database, migrate.target_environment
             ),
@@ -2628,7 +2628,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return maintenace_tasks.db_env_migrate_standalone_phase1_rollback.delay(
+        return maintenace_tasks.db_env_migrate_sa_phase1_rollback.delay(
             migrate, task
         )
 

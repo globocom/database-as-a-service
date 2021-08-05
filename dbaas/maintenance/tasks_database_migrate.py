@@ -165,7 +165,7 @@ def rollback_database_environment_migrate_stand_alone_phase1(migrate, task):
     result = rollback_for_instances_full(
         steps, instances, task, migrate.get_current_step, migrate.update_step
     )
-    migrate = DatabaseMigrate.objects.get(id=migrate.id)
+    migrate = DatabaseMigrateStandAlonePhase1.objects.get(id=migrate.id)
     if result:
         migrate.set_rollback()
         task.set_status_success('Rollback executed with success')

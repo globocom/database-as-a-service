@@ -452,7 +452,7 @@ def db_env_migrate_standalone_phase1(
 
 
 @app.task(bind=True)
-def db_env_migrate_standalone_phase1_rollback(self, migrate, task):
+def db_env_migrate_sa_phase1_rollback(self, migrate, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
