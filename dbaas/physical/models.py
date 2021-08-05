@@ -708,10 +708,21 @@ class Plan(BaseModel):
 #    def weaker_offering(self):
 #        return self.offerings.filter(weaker=True).first()
 
-    def get_equivalent_plan_for_env(self, env):
+    def get_equivalent_plan_for_env(self, env, validate_core_replication=False):
+        filters = {
+            'engine': self.engine,
+            'environments': env
+        }
+
+        if validate_core_replication:
+            filters.update(
+                {"replication_topology__in": self.replication_topology
+                                                 .core_replication_topologies
+                                                 .first().replication_topology
+                                                 .all()}
+            )
         return self._meta.model.objects.filter(
-            engine=self.engine,
-            environments=env
+            **filters
         ).order_by(
             'stronger_offering__memory_size_mb',
             'stronger_offering__cpus'

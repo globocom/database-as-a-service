@@ -121,18 +121,21 @@ def database_environment_migrate_stand_alone_phase1(
         database_migrate.created_at = datetime.now()
     else:
         database_migrate = DatabaseMigrateStandAlonePhase1()
+
     database_migrate.task = task
     database_migrate.database = database
     database_migrate.source_environment = database.environment
     database_migrate.target_environment = new_environment
     database_migrate.source_plan = database.plan
-    database_migrate.target_plan = database.plan ## tmp code
+    database_migrate.target_plan = database.plan.get_equivalent_plan_for_env(
+                                    new_environment,
+                                    validate_core_replication=True)
     database_migrate.source_offering = database.infra.offering
     database_migrate.target_offering = Offering.get_equivalent_offering(
                                         database, new_environment)
     database_migrate.save()
 
-    instances = database.infra.instances.all() ## tmp code
+    instances = database.infra.instances.all()  # tmp code
     class_path = database.infra.plan.replication_topology.class_path
     steps = get_database_migrate_stand_alone_phase1_steps(class_path)
     result = steps_for_instances(
