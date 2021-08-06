@@ -55,11 +55,8 @@ class Offering(BaseModel):
             environments__in=[to_environment]
         ).order_by("cpus", "memory_size_mb")
 
-        for offer in offers:
-            if all([
-             offer.cpus >= current_offer.cpus,
-             offer.memory_size_mb >= current_offer.memory_size_mb]):
-                return offer
+        if offers.exists():
+            return offers.first()
 
         raise Exception("There's no equivalent offer")
 
