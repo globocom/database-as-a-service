@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
+    @property
+    def driver_name(self):
+        raise NotImplementedError
+
     def deploy_instances(self):
         """ This method returns deploy instances to an infra. It must be
         implemented for every new type added to Instance Model, even subclasses
@@ -386,10 +390,6 @@ class BaseTopology(object):
         raise NotImplementedError
 
     def get_database_migrate_steps(self):
-        raise NotImplementedError
-
-    @property
-    def driver_name(self):
         raise NotImplementedError
 
     def get_filer_migrate_steps(self):
