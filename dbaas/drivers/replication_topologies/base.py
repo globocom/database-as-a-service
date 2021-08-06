@@ -389,8 +389,30 @@ class BaseTopology(object):
     def get_host_migrate_steps(self):
         raise NotImplementedError
 
+    '''
     def get_database_migrate_steps(self):
         raise NotImplementedError
+    '''
+
+    def get_database_migrate_steps(self):
+        return self.get_host_env_migrate_steps()
+
+    def get_host_env_migrate_steps(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+            )
+        }]
 
     def get_filer_migrate_steps(self):
         raise NotImplementedError
