@@ -409,6 +409,32 @@ class BaseTopology(object):
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
             )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+                ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
+                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+                ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
             'Raise Test Migrate Exception': (
                 'workflow.steps.util.base.BaseRaiseTestException',
             )
