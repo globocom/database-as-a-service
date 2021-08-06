@@ -56,7 +56,7 @@ def log_and_response(msg, http_status=400, e="Conditional Error."):
 
 
 def validate_environment(request):
-    return not get_url_env(request) or get_url_env(request) in\
+    return get_url_env(request) in\
         (list(Environment.prod_envs()) + list(Environment.dev_envs()))
 
 
