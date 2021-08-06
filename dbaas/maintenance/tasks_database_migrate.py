@@ -128,8 +128,7 @@ def database_environment_migrate_stand_alone_phase1(
     database_migrate.target_environment = new_environment
     database_migrate.source_plan = database.plan
     database_migrate.target_plan = database.plan.get_equivalent_plan_for_env(
-                                    new_environment,
-                                    validate_core_replication=True)
+                                    new_environment)
     database_migrate.source_offering = database.infra.offering
     database_migrate.target_offering = Offering.get_equivalent_offering(
                                         database, new_environment)

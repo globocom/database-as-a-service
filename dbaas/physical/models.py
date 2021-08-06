@@ -705,19 +705,18 @@ class Plan(BaseModel):
 #    def weaker_offering(self):
 #        return self.offerings.filter(weaker=True).first()
 
-    def get_equivalent_plan_for_env(self, env, validate_core_replication=False):
+    def get_equivalent_plan_for_env(self, env):
         filters = {
-            'engine': self.engine,
-            'environments': env
+            "engine": self.engine,
+            "environments": env,
+            "replication_topology__in":
+            self.replication_topology
+                .core_replication_topologies
+                .first().replication_topology
+                .all(),
+            "is_ha": self.is_ha,
+            "has_persistence": self.has_persistence
         }
-
-        if validate_core_replication:
-            filters.update(
-                {"replication_topology__in": self.replication_topology
-                                                 .core_replication_topologies
-                                                 .first().replication_topology
-                                                 .all()}
-            )
         return self._meta.model.objects.filter(
             **filters
         ).order_by(
