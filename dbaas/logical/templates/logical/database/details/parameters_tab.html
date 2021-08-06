@@ -242,10 +242,14 @@
 
 function check_static_parameter_changed()
 {
-  var inputs = $("input, select")
+  var inputs = $("input, select");
   var new_value;
+
   for (x = 0 ; x < inputs.length ; x++){
     myname = inputs[x].getAttribute("name");
+
+    if (!myname)
+      continue
 
     if(myname.indexOf("new_value_")==0){
       new_value = document.getElementById(myname);
