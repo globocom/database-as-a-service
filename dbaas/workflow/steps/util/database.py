@@ -46,8 +46,9 @@ class DatabaseStep(BaseInstanceStep):
 
     def _execute_init_script(self, command, raise_if_error=True):
         base_host = self.instance.hostname if self.host_migrate else self.host
-        script = base_host.commands.init_database_script(
-            action=command
+        instances = base_host.instances.all()
+        script = self.host.commands.init_database_script(
+            action=command, instances=instances
         )
 
         return self.run_script(script, raise_if_error=raise_if_error)
