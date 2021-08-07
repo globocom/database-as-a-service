@@ -1,17 +1,8 @@
-from maintenance.models import (
-    DatabaseMigrate,
-    HostMigrate,
-    DatabaseMigrateStandAlonePhase1,
-    DatabaseMigrateStandAlonePhase2
-)
-from util.providers import (
-    get_database_migrate_steps,
-    get_database_migrate_stand_alone_phase1_steps
-)
+from maintenance.models import DatabaseMigrate, HostMigrate
+from util.providers import get_database_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from copy import copy
 from datetime import datetime
-from physical.models import Offering
 
 
 def get_steps(database):
