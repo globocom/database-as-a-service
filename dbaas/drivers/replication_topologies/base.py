@@ -488,28 +488,6 @@ class BaseTopology(object):
             )
         }]
 
-    def get_database_migrate_stand_alone_phase1_steps(self):
-        return [{
-            #'Creating Service Account': (
-            #    'workflow.steps.util.host_provider.CreateServiceAccount',
-            #)}, {
-            #'Creating virtual machine': (
-            #    'workflow.steps.util.host_provider.AllocateIP',
-            #    'workflow.steps.util.host_provider.CreateVirtualMachine',
-            #)}, {
-            'Stopping database': (
-                'workflow.steps.util.database.Stop',
-                'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Raise Excpetion': (
-                'workflow.steps.util.database.RaiseTestMigrateExcetion',
-            )
-        }]
-
-
 class FakeTestTopology(BaseTopology):
 
     @property

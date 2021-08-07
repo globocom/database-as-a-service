@@ -124,7 +124,3 @@ def get_engine_credentials(engine, environment):
         environment=environment,
         credential_type=credential_type
     )
-
-def get_database_migrate_stand_alone_phase1_steps(class_path):
-    return get_replication_topology_instance(class_path).get_database_migrate_stand_alone_phase1_steps()
-
