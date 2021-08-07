@@ -25,8 +25,6 @@ from .remove_instance_database import RemoveInstanceDatabaseAdmin
 from .database_change_persistence import DatabaseChangePersistenceAdmin
 from .database_set_ssl_required import DatabaseSetSSLRequiredAdmin
 from .database_set_ssl_not_required import DatabaseSetSSLNotRequiredAdmin
-from .database_migrate_stand_alone_phase1 import DatabaseMigrateStandAlonePhase1Admin
-from .database_migrate_stand_alone_phase2 import DatabaseMigrateStandAlonePhase2Admin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -60,10 +58,4 @@ admin.site.register(
 )
 admin.site.register(
     models.DatabaseSetSSLNotRequired, DatabaseSetSSLNotRequiredAdmin
-)
-admin.site.register(
-    models.DatabaseMigrateStandAlonePhase1, DatabaseMigrateStandAlonePhase1Admin
-)
-admin.site.register(
-    models.DatabaseMigrateStandAlonePhase2, DatabaseMigrateStandAlonePhase2Admin
 )

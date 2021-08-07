@@ -1224,104 +1224,6 @@ class DatabaseSetSSLNotRequired(DatabaseMaintenanceTask):
         return "{} set SSL Not Required".format(self.database.name)
 
 
-class DatabaseMigrateStandAlonePhase1(DatabaseMaintenanceTask):
-    database = models.ForeignKey(
-        Database, verbose_name="Database",
-        null=False, unique=False, related_name="db_migrate_sa_phase_1"
-    )
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, unique=False, related_name="task_db_migrate_sa_phase_1"
-    )
-    source_environment = models.ForeignKey(
-        Environment, verbose_name="Source Environment",
-        null=True, blank=True, unique=False,
-        related_name="source_environment_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    target_environment = models.ForeignKey(
-        Environment, verbose_name="Target Environment",
-        null=True, blank=True, unique=False,
-        related_name="target_environment_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    source_plan = models.ForeignKey(
-        Plan, verbose_name="Source Plan",
-        null=True, blank=True, unique=False,
-        related_name="source_plan_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    target_plan = models.ForeignKey(
-        Plan, verbose_name="Target Plan",
-        null=True, blank=True, unique=False,
-        related_name="target_plan_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    source_offering = models.ForeignKey(
-        Offering, verbose_name="Source Offering",
-        null=True, blank=True, unique=False,
-        related_name="source_offering_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    target_offering = models.ForeignKey(
-        Offering, verbose_name="Target Offering",
-        null=True, blank=True, unique=False,
-        related_name="target_offering_migrate_sa_phase_1",
-        on_delete=models.SET_NULL
-    )
-    def __unicode__(self):
-        return "{}: Migrate Stand Alone Database Phase 1".format(self.database.name)
-
-
-class DatabaseMigrateStandAlonePhase2(DatabaseMaintenanceTask):
-    database = models.ForeignKey(
-        Database, verbose_name="Database",
-        null=False, unique=False, related_name="db_migrate_sa_phase_2"
-    )
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, unique=False, related_name="task_db_migrate_sa_phase_2"
-    )
-    source_environment = models.ForeignKey(
-        Environment, verbose_name="Source Environment",
-        null=True, blank=True, unique=False,
-        related_name="source_environment_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    target_environment = models.ForeignKey(
-        Environment, verbose_name="Target Environment",
-        null=True, blank=True, unique=False,
-        related_name="target_environment_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    source_plan = models.ForeignKey(
-        Plan, verbose_name="Source Plan",
-        null=True, blank=True, unique=False,
-        related_name="source_plan_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    target_plan = models.ForeignKey(
-        Plan, verbose_name="Target Plan",
-        null=True, blank=True, unique=False,
-        related_name="target_plan_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    source_offering = models.ForeignKey(
-        Offering, verbose_name="Source Offering",
-        null=True, blank=True, unique=False,
-        related_name="source_offering_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    target_offering = models.ForeignKey(
-        Offering, verbose_name="Target Offering",
-        null=True, blank=True, unique=False,
-        related_name="target_offering_migrate_sa_phase_2",
-        on_delete=models.SET_NULL
-    )
-    def __unicode__(self):
-        return "{}: Migrate Stand Alone Database Phase 2".format(self.database.name)
-
-
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
@@ -1337,9 +1239,6 @@ simple_audit.register(RestartDatabase)
 simple_audit.register(DatabaseChangePersistence)
 simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
-simple_audit.register(DatabaseMigrateStandAlonePhase1)
-simple_audit.register(DatabaseMigrateStandAlonePhase2)
-
 
 #########################################################
 #                       SIGNALS                         #
