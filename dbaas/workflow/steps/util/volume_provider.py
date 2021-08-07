@@ -55,6 +55,8 @@ class VolumeProviderSnapshotHasWarningStatusError(VolumeProviderException):
 class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
+class VolumeProviderSnapshotHasErrorStatus(VolumeProviderException):
+    pass
 
 class VolumeProviderBase(BaseInstanceStep):
 
@@ -932,6 +934,18 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
             snapshot.is_automatic = False
             snapshot.save()
+
+            if snapshot.has_warning:
+                raise VolumeProviderSnapshotHasWarningStatusError(
+                    'Backup was warning'
+                )
+
+            if snapshot.was_error:
+                error = 'Backup was unsuccessful.'
+                if snapshot.error:
+                    error = '{} Error: {}'.format(error, snapshot.error)
+                    raise VolumeProviderSnapshotHasErrorStatus(error)
+
         if self.database_migrate:
             host_migrate = self.host_migrate
             host_migrate.snapshot = snapshot
