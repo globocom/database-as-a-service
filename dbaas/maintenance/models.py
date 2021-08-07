@@ -1240,6 +1240,7 @@ simple_audit.register(DatabaseChangePersistence)
 simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
 
+
 #########################################################
 #                       SIGNALS                         #
 #########################################################
