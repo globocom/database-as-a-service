@@ -453,10 +453,55 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
 
+
+            'Check access between instances': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            #'Replicate ACL': (
+            #    'workflow.steps.util.acl.ReplicateAclsMigrate',
+            #)}, {
+            'Stopping database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            #'Configure SSL': (
+            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured'),
+            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
+            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
+            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
+            #)}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                ('workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate'),
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                ('workflow.steps.util.host_provider.DestroyVirtualMachineMigrate'),
+
+            )}, {
             'Raise Test Migrate Exception': (
                 'workflow.steps.util.base.BaseRaiseTestException',
-            )
-        }]
+
+        )}]
 
     def get_filer_migrate_steps(self):
         raise NotImplementedError
