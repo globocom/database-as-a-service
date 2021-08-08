@@ -414,48 +414,44 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
             )}, {
-            'Check patch': (
-                ) + self.get_change_binaries_upgrade_patch_steps() + (
-            )}, {
-            'Configure SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
-                ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
-                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
-                ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
-                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
-                ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
-                ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
-                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
-                'workflow.steps.util.ssl.UpdateExpireAtDate',
-            )}, {
-
             'Backup and restore': (
-                #####'workflow.steps.util.volume_provider.TakeSnapshotFromMaster', ## TODO BACKUP MONGODB
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
                 'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
-                #'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
-                #('workflow.steps.util.volume_provider.MountDataVolumeRecreateSlave'),
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrate',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+                'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
-                #'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
-                #'workflow.steps.util.disk.RemoveDeprecatedFiles',
-                #'workflow.steps.util.database.Start',
-                #'workflow.steps.util.database.CheckIsUp',
-                #'workflow.steps.util.volume_provider.DetachDataVolumeRecreateSlave',
-                #('workflow.steps.util.volume_provider.UmountDataVolumeRecreateSlave'),
-                #('workflow.steps.util.volume_provider.RemoveAccessRecreateSlave'),
-                #'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
             )}, {
-
-
+            #'Configure SSL': (
+            #    'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            #    ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
+            #    'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
+            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
+            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
+            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
+            #)}, {
+            'Configure and start database': (
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
 
             'Raise Test Migrate Exception': (
                 'workflow.steps.util.base.BaseRaiseTestException',
