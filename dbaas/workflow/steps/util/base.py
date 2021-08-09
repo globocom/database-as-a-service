@@ -564,7 +564,8 @@ class BaseRaiseTestException(BaseInstanceStep):
         return "Raise a test exception..."
 
     def do(self):
-        raise Exception('Test exception!')
+        return True
+        #raise Exception('Test exception!')
 
     def undo(self):
         pass
