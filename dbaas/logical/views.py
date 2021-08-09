@@ -2281,6 +2281,7 @@ def database_migrate(request, context, database):
     from maintenance.models import HostMigrate
     migrates = HostMigrate.objects.filter(host__in=hosts)
     context["last_host_migrate"] = migrates.last()
+    context["valid_provisioners"] = [Environment.CLOUDSTACK]
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)
