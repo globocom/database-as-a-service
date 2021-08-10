@@ -5,10 +5,9 @@ from copy import copy
 from datetime import datetime
 
 
-def get_steps(database):
+def get_migrate_steps(database, stage):
     class_path = database.infra.plan.replication_topology.class_path
-    return get_database_migrate_steps(class_path)
-
+    return get_database_migrate_steps(class_path, stage)
 
 def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
     instances = []
@@ -32,9 +31,11 @@ def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
 
 
 def database_environment_migrate(
+
     database, new_environment, new_offering, task, hosts_zones, since_step=None,
     step_manager=None
 ):
+    infra = database.infra
     if step_manager:
         database_migrate = copy(step_manager)
         database_migrate.id = None
@@ -42,6 +43,7 @@ def database_environment_migrate(
         database_migrate.created_at = datetime.now()
     else:
         database_migrate = DatabaseMigrate()
+        infra.migration_stage += 1
     database_migrate.task = task
     database_migrate.database = database
     database_migrate.environment = new_environment
@@ -49,10 +51,11 @@ def database_environment_migrate(
     database_migrate.offering = new_offering
     database_migrate.origin_offering = database.infra.offering
     database_migrate.save()
+    infra.save()
 
     instances = build_migrate_hosts(hosts_zones, database_migrate, step_manager=step_manager)
     instances = sorted(instances, key=lambda k: k.dns)
-    steps = get_steps(database)
+    steps = get_migrate_steps(database, infra.migration_stage)
     result = steps_for_instances(
         steps, instances, task, database_migrate.update_step, since_step,
         step_manager=step_manager
@@ -85,7 +88,7 @@ def rollback_database_environment_migrate(migrate, task):
 
     instances = build_migrate_hosts(hosts_zones, migrate)
     instances = sorted(instances, key=lambda k: k.dns)
-    steps = get_steps(migrate.database)
+    steps = get_migrate_steps(migrate.database, 1)
     result = rollback_for_instances_full(
         steps, instances, task, migrate.get_current_step, migrate.update_step
     )

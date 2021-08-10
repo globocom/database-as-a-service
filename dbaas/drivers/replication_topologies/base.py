@@ -389,15 +389,10 @@ class BaseTopology(object):
     def get_host_migrate_steps(self):
         raise NotImplementedError
 
-    '''
     def get_database_migrate_steps(self):
         raise NotImplementedError
-    '''
 
-    def get_database_migrate_steps(self):
-        return self.get_host_env_migrate_steps()
-
-    def get_host_env_migrate_steps(self):
+    def get_database_migrate_steps_stage_1(self):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
@@ -452,8 +447,6 @@ class BaseTopology(object):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
-
-
             'Check access between instances': (
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
@@ -487,13 +480,20 @@ class BaseTopology(object):
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 ('workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate'),
             )}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
+
+
+    def get_database_migrate_steps_stage_2(self):
+        return [{
             'Cleaning up': (
-                'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 ('workflow.steps.util.host_provider.DestroyVirtualMachineMigrate'),
 
@@ -502,6 +502,9 @@ class BaseTopology(object):
                 'workflow.steps.util.base.BaseRaiseTestException',
 
         )}]
+
+    def get_database_migrate_steps_stage_3(self):
+        raise NotImplementedError
 
     def get_filer_migrate_steps(self):
         raise NotImplementedError
