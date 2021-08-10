@@ -2282,6 +2282,14 @@ def database_migrate(request, context, database):
     migrates = HostMigrate.objects.filter(host__in=hosts)
     context["last_host_migrate"] = migrates.last()
     context["valid_provisioners"] = [Environment.CLOUDSTACK]
+
+    stage_info = {
+        "total_stage": 3 if database.plan.is_ha else 2,
+        "current_stage": database.infra.migration_stage + 1
+    }
+
+    context.update(**stage_info)
+
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)

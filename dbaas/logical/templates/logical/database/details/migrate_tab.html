@@ -21,6 +21,8 @@
   {% if database.environment.provisioner in valid_provisioners %}
   <div class="control-group">
     <h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
+    
+    {% if current_stage == 1 %}
     <p>New environment
       {%if last_host_migrate and last_host_migrate.is_status_error %}
         <u>{{ current_environment }}</u>
@@ -45,9 +47,10 @@
         New offering
         <select id="migrate_offering" class="offerings" name="migrate_offering">
         </select>
-        <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
+        <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment ({{current_stage}} of {{total_stage}})</button>
       {% endif %}
     </p>
+    {% endif %}
   </div>
   {% endif %}
   <div class="panel-body">
