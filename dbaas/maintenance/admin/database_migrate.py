@@ -16,12 +16,13 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     list_filter = [
         "status", "database", "environment"
     ]
-    search_fields = ("task__id", "task__task_id")
+    search_fields = ("task__id", "task__task_id", "database")
 
     list_display = (
-        "current_step", "database", "origin_environment", "environment",
-        "origin_offering", "offering", "friendly_status",
-        "maintenance_action", "link_task", "started_at", "finished_at"
+        "database", "origin_environment", "environment",
+        "origin_offering", "offering", "migration_stage", "current_step",
+        "friendly_status", "maintenance_action", "link_task",
+        "started_at", "finished_at"
     )
     readonly_fields = (
         "database", "origin_environment", "environment", "origin_offering",
