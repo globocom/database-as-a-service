@@ -63,14 +63,21 @@ def database_environment_migrate(
     database_migrate = DatabaseMigrate.objects.get(id=database_migrate.id)
     if result:
         database = database_migrate.database
-        database.environment = database_migrate.environment
-        database.save()
         infra = database.infra
-        infra.environment = database_migrate.environment
-        infra.plan = infra.plan.get_equivalent_plan_for_env(
-            database_migrate.environment
-        )
-        infra.save()
+        is_ha = infra.plan.is_ha
+        migration_stage = infra.migration_stage
+        if ((is_ha and migration_stage == infra.STAGE_3) or
+           (not is_ha and migration_stage == infra.STAGE_2)):
+        
+            database.environment = database_migrate.environment
+            database.save()
+        
+            infra.environment = database_migrate.environment
+            infra.plan = infra.plan.get_equivalent_plan_for_env(
+                database_migrate.environment
+            )
+            infra.migration_stage = infra.NOT_STARTED
+            infra.save()
         database_migrate.set_success()
         task.set_status_success('Database migrated with success')
     else:
@@ -94,6 +101,10 @@ def rollback_database_environment_migrate(migrate, task):
     )
     migrate = DatabaseMigrate.objects.get(id=migrate.id)
     if result:
+        infra = migrate.database.infra
+        infra.migration_stage -= 1
+        infra.save()
+
         migrate.set_rollback()
         task.set_status_success('Rollback executed with success')
     else:
