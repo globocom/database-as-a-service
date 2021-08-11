@@ -44,15 +44,16 @@ def database_environment_migrate(
     else:
         database_migrate = DatabaseMigrate()
         infra.migration_stage += 1
+        infra.save()
     database_migrate.task = task
     database_migrate.database = database
     database_migrate.environment = new_environment
     database_migrate.origin_environment = database.environment
     database_migrate.offering = new_offering
     database_migrate.origin_offering = database.infra.offering
+    database_migrate.migration_stage = infra.migration_stage
     database_migrate.save()
-    infra.save()
-
+    
     instances = build_migrate_hosts(hosts_zones, database_migrate, step_manager=step_manager)
     instances = sorted(instances, key=lambda k: k.dns)
     steps = get_migrate_steps(database, infra.migration_stage)
@@ -91,6 +92,7 @@ def rollback_database_environment_migrate(migrate, task):
     migrate.created_at = None
     migrate.finished_at = None
     migrate.task = task
+    migrate.migration_stage = migrate.database.infra.migration_stage
     migrate.save()
 
     instances = build_migrate_hosts(hosts_zones, migrate)
