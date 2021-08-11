@@ -18,42 +18,46 @@
 
 {% block tab %}
 <fieldset class="module aligned">
-  {% if database.environment.provisioner in valid_provisioners %}
-  <div class="control-group">
+  
+  <div class="control-group hide-in-invalid-prov">
     <h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
     
-    {% if current_stage == 1 %}
     <p>New environment
       {%if last_host_migrate and last_host_migrate.is_status_error %}
         <u>{{ current_environment }}</u>
         {%if last_host_migrate.database_migrate %}
           to <u>{{ last_host_migrate.database_migrate.environment }}</u> using offering <u>{{ last_host_migrate.database_migrate.offering }}</u>
           &nbsp&nbsp&nbsp
-          <a class="resize_button btn btn-danger" href="{% url 'admin:database_migrate_rollback' last_host_migrate.database_migrate.id %}" title="Rollback database migrate">Rollback</a>
-          <a class="resize_button btn btn-warning" href="{% url 'admin:database_migrate_retry' last_host_migrate.database_migrate.id %}" title="Retry database migrate">Retry</a>
+          <a class="resize_button btn btn-danger" href="{% url 'admin:database_migrate_rollback' last_host_migrate.database_migrate.id %}" title="Rollback database migrate">Rollback stage {{current_stage|add:"-1"}}</a>
+          <a class="resize_button btn btn-warning" href="{% url 'admin:database_migrate_retry' last_host_migrate.database_migrate.id %}" title="Retry database migrate">Retry stage {{current_stage|add:"-1" }}</a>
           <p><a href="{% url 'admin:maintenance_databasemigrate_change' last_host_migrate.database_migrate.id %}" target='_blank'>Last database migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
         {% endif %}
       {% else %}
         <select id="migrate_environment" class="environments" name="migrate_environment">
-        {% for env in environments %}
-          {% if env == current_environment %}
-            <option value="{{env.id}}" selected="selected">---------</option>
-          {% else %}
-            <option value="{{env.id}}">{{env}}</option>
-          {% endif %}
-        {% endfor %}
+        {% if current_stage == 1 %}
+          {% for env in environments %}
+              {% if env == current_environment %}
+                <option value="{{env.id}}" selected="selected">---------</option>
+              {% else %}
+                <option value="{{env.id}}">{{env}}</option>
+              {% endif %}
+          {% endfor %}
+        {% else %}
+          <option value="{{last_db_migrate.environment.id}}">{{last_db_migrate.environment}}</option>
+        {% endif %}
         </select>
         &nbsp&nbsp&nbsp
         New offering
         <select id="migrate_offering" class="offerings" name="migrate_offering">
+        {% if current_stage > 1 %}
+          <option value='{{last_db_migrate.offering.id}}' selected='selected'>{{last_db_migrate.offering}}</option>
+        {% endif %}
         </select>
         <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment ({{current_stage}} of {{total_stage}})</button>
       {% endif %}
     </p>
-    {% endif %}
   </div>
-  {% endif %}
-  <div class="panel-body">
+  <div class="panel-body zone-migrate-box">
     <div class="control-group">
       <table id="table-hosts" class="table table-striped table-hover">
         <tbody>
@@ -97,7 +101,23 @@
 
 <script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
 <script>
+
+  var isValidProvisioner = {% if database.environment.provisioner in valid_provisioners %}true{%else%}false{%endif%};
+  var currentStage = {{ current_stage }}
+  if(!isValidProvisioner){
+    $(".hide-in-invalid-prov").hide();
+  }
+
+  if (currentStage != 1){
+    $(".environments").attr("disabled", "disabled");
+    $(".offerings").attr("disabled", "disabled");
+    $(".zone-migrate-box").hide();
+  }
+
   function load_offerings(environment_id) {
+    if (currentStage != 1)
+      return
+    
     if ({{current_environment.id}} == environment_id) {
       var offering_select = document.getElementById("migrate_offering")
       offering_select.innerHTML = "<option value='0' selected='selected'>---------</option>";
@@ -171,6 +191,7 @@
   }
 
   jQuery(document).ready(function($) {
+    
     $(".host-zone").on("change", function() {
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
@@ -186,6 +207,7 @@
         status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
       }
     });
+
     $(".host-zone").change()
 
     var hostId;
