@@ -507,9 +507,6 @@ class MongoDBSingle(BaseMongoDB):
 
 class MongoDBReplicaset(BaseMongoDB):
 
-    def get_upgrade_steps_description(self):
-        return 'Upgrading to MongoDB 3.6'
-
     def get_filer_migrate_steps(self):
         return [{
             'Migrating': (
