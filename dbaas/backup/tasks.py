@@ -130,6 +130,7 @@ def make_instance_snapshot_backup(instance, error, group,
         else:
             response = provider.take_snapshot()
             snapshot.done(response)
+            snapshot.save()
     except Exception as e:
         errormsg = "Error creating snapshot: {}".format(e)
         error['errormsg'] = errormsg
