@@ -86,16 +86,19 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         rollback_from = get_object_or_404(
             DatabaseMigrate, pk=database_migrate_id
         )
-        success, redirect = self.check_status(
-            request, rollback_from, 'rollback'
-        )
-        if not success:
-            return redirect
+
+        if rollback_from.migration_stage == rollback_from.NOT_STARTED:
+            success, redirect = self.check_status(
+                request, rollback_from, 'rollback'
+            )
+            if not success:
+                return redirect
         TaskRegister.database_migrate_rollback(rollback_from, request.user)
         return self.redirect_to_database(rollback_from)
 
     def check_status(self, request, database_migrate, operation):
         success = True
+
         if success and not database_migrate.is_status_error:
             success = False
             messages.add_message(
