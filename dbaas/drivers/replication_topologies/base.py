@@ -451,9 +451,9 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
             )}, {
-            #'Replicate ACL': (
-            #    'workflow.steps.util.acl.ReplicateAclsMigrate',
-            #)}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
