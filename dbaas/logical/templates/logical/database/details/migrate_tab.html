@@ -19,7 +19,7 @@
 {% block tab %}
 <fieldset class="module aligned">
   
-  <div class="control-group hide-in-invalid-prov">
+  <div class="control-group environment-box">
     <h3>Environments</h3>
     <h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
     
@@ -108,9 +108,10 @@
 <script>
 
   var isValidProvisioner = {% if database.environment.provisioner in valid_provisioners %}true{%else%}false{%endif%};
+  var isHa = "{{ is_ha }}" == "True";
   var currentStage = {{ current_stage }}
-  if(!isValidProvisioner){
-    $(".hide-in-invalid-prov").hide();
+  if(!isValidProvisioner || isHa){
+    $(".environment-box").hide();
   }
 
   if (currentStage != 1){

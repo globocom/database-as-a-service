@@ -2286,7 +2286,8 @@ def database_migrate(request, context, database):
     context["last_db_migrate"] = db_migrates
     stage_info = {
         "total_stage": 3 if database.plan.is_ha else 2,
-        "current_stage": database.infra.migration_stage + 1
+        "current_stage": database.infra.migration_stage + 1,
+        "is_ha": database.plan.is_ha
     }
 
     context.update(**stage_info)
