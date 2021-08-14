@@ -505,10 +505,10 @@ class BaseTopology(object):
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
-                ('workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate'),
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
