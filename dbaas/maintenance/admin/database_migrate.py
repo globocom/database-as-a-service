@@ -17,7 +17,6 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "status", "database", "environment"
     ]
     search_fields = ("task__id", "task__task_id", "database")
-
     list_display = (
         "database", "origin_environment", "environment",
         "origin_offering", "offering", "migration_stage", "current_step",
@@ -29,6 +28,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "offering", "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule"
     )
+    ordering = ["-started_at"]
 
     def maintenance_action(self, maintenance_task):
         if not maintenance_task.is_status_error:

@@ -28,6 +28,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at", "status", "task_schedule",
         "maintenance_action", "database_migrate"
     )
+    ordering = ["-started_at"]
 
     def link_database_migrate(self, maintenance_task):
         database_migrate = maintenance_task.database_migrate
