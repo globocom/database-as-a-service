@@ -39,8 +39,9 @@ def database_environment_migrate(
     if step_manager:
         database_migrate = copy(step_manager)
         database_migrate.id = None
-        database_migrate.finished_at = None
         database_migrate.created_at = datetime.now()
+        database_migrate.started_at = None
+        database_migrate.finished_at = None
     else:
         database_migrate = DatabaseMigrate()
         infra.migration_stage += 1
@@ -89,7 +90,8 @@ def database_environment_migrate(
 def rollback_database_environment_migrate(migrate, task):
     hosts_zones = migrate.hosts_zones
     migrate.id = None
-    migrate.created_at = None
+    migrate.created_at = datetime.now()
+    migrate.started_at = None
     migrate.finished_at = None
     migrate.task = task
     migrate.migration_stage = migrate.database.infra.migration_stage
