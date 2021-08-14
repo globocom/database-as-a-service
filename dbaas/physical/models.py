@@ -800,6 +800,18 @@ class DatabaseInfra(BaseModel):
         (PREFERTLS, "preferTLS"),
         (REQUIRETLS, "requireTLS"))
 
+    # migration stage
+    NOT_STARTED = 0
+    STAGE_1 = 1
+    STAGE_2 = 2
+    STAGE_3 = 3
+
+    MIGRATION_STAGES = (
+        (NOT_STARTED, "Not Started"),
+        (STAGE_1, "Stage 1"),
+        (STAGE_2, "Stage 2"),
+        (STAGE_3, "Stage 3"))
+
     name = models.CharField(
         verbose_name=_("DatabaseInfra Name"),
         max_length=100,
@@ -915,6 +927,13 @@ class DatabaseInfra(BaseModel):
         blank=True,
         null=True,
     )
+
+    migration_stage = models.IntegerField(
+        choices=MIGRATION_STAGES,
+        verbose_name=_("Migration Stage"),
+        null=False,
+        blank=False,
+        default=NOT_STARTED)
 
     def __unicode__(self):
         return self.name

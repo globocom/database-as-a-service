@@ -14,12 +14,12 @@ from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
 class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
     list_filter = [
-        "status", "zone", "environment"
+        "status", "zone", "environment", "host"
     ]
-    search_fields = ("task__id", "task__task_id")
+    search_fields = ("task__id", "task__task_id", "host")
 
     list_display = (
-        "current_step", "host", "zone", "environment", "friendly_status",
+        "host", "zone", "environment", "current_step", "friendly_status",
         "maintenance_action", "link_task", "link_database_migrate",
         "started_at", "finished_at"
     )
@@ -28,6 +28,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at", "status", "task_schedule",
         "maintenance_action", "database_migrate"
     )
+    ordering = ["-started_at"]
 
     def link_database_migrate(self, maintenance_task):
         database_migrate = maintenance_task.database_migrate

@@ -16,18 +16,19 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     list_filter = [
         "status", "database", "environment"
     ]
-    search_fields = ("task__id", "task__task_id")
-
+    search_fields = ("task__id", "task__task_id", "database")
     list_display = (
-        "current_step", "database", "origin_environment", "environment",
-        "origin_offering", "offering", "friendly_status",
-        "maintenance_action", "link_task", "started_at", "finished_at"
+        "database", "origin_environment", "environment",
+        "origin_offering", "offering", "migration_stage", "current_step",
+        "friendly_status", "maintenance_action", "link_task",
+        "started_at", "finished_at"
     )
     readonly_fields = (
         "database", "origin_environment", "environment", "origin_offering",
         "offering", "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule"
     )
+    ordering = ["-started_at"]
 
     def maintenance_action(self, maintenance_task):
         if not maintenance_task.is_status_error:
@@ -85,16 +86,19 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         rollback_from = get_object_or_404(
             DatabaseMigrate, pk=database_migrate_id
         )
-        success, redirect = self.check_status(
-            request, rollback_from, 'rollback'
-        )
-        if not success:
-            return redirect
+
+        if rollback_from.migration_stage == rollback_from.NOT_STARTED:
+            success, redirect = self.check_status(
+                request, rollback_from, 'rollback'
+            )
+            if not success:
+                return redirect
         TaskRegister.database_migrate_rollback(rollback_from, request.user)
         return self.redirect_to_database(rollback_from)
 
     def check_status(self, request, database_migrate, operation):
         success = True
+
         if success and not database_migrate.is_status_error:
             success = False
             messages.add_message(
