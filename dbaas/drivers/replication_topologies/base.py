@@ -516,12 +516,10 @@ class BaseTopology(object):
         return [{
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
-                ('workflow.steps.util.host_provider.DestroyVirtualMachineMigrate'),
-
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
-
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     def get_database_migrate_steps_stage_3(self):
