@@ -153,6 +153,33 @@ class BaseMongoDB(BaseTopology):
             ),
         }]
 
+    def get_configure_ssl_libs_and_folder_steps(self):
+        return (
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+        )
+
+    def get_configure_ssl_ip_steps(self):
+        return (
+            'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
+        )
+
+    def get_configure_ssl_dns_steps(self):
+        return (
+            'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
+        )
+
 
 class MongoDBSingle(BaseMongoDB):
 

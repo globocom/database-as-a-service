@@ -171,6 +171,15 @@ class BaseTopology(object):
     def get_change_binaries_upgrade_patch_steps(self):
         return ()
 
+    def get_configure_ssl_libs_and_folder_steps(self):
+        return ()
+
+    def get_configure_ssl_ip_steps(self):
+        return ()
+
+    def get_configure_ssl_dns_steps(self):
+        return ()
+
     def get_upgrade_patch_steps(self):
         return [{
             'Disable monitoring and alarms': (
@@ -429,10 +438,18 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
             )}, {
-            #'Configure SSL': (
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            #'Configure SSL lib and folder': (
             #    'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
             #    ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
             #    'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            #)}, {
+            #'Configure SSL (IP)':
             #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
             #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
             #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
@@ -453,6 +470,7 @@ class BaseTopology(object):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
@@ -465,6 +483,9 @@ class BaseTopology(object):
             'Update and Check DNS': (
                 'workflow.steps.util.dns.ChangeEndpoint',
                 'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
             )}, {
             #'Configure SSL': (
             #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured'),
