@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
+    @property
+    def driver_name(self):
+        raise NotImplementedError
+
     def deploy_instances(self):
         """ This method returns deploy instances to an infra. It must be
         implemented for every new type added to Instance Model, even subclasses
@@ -165,6 +169,15 @@ class BaseTopology(object):
         }]
 
     def get_change_binaries_upgrade_patch_steps(self):
+        return ()
+
+    def get_configure_ssl_libs_and_folder_steps(self):
+        return ()
+
+    def get_configure_ssl_ip_steps(self):
+        return ()
+
+    def get_configure_ssl_dns_steps(self):
         return ()
 
     def get_upgrade_patch_steps(self):
@@ -388,8 +401,128 @@ class BaseTopology(object):
     def get_database_migrate_steps(self):
         raise NotImplementedError
 
-    @property
-    def driver_name(self):
+    def get_database_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+            )}, {
+            'Backup and restore': (
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrate',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
+            )}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            #'Configure SSL lib and folder': (
+            #    'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            #    ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
+            #    'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            #)}, {
+            #'Configure SSL (IP)':
+            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
+            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
+            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
+            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
+            #)}, {
+            'Configure and start database': (
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Check access between instances': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Stopping database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
+            )}, {
+            #'Configure SSL': (
+            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured'),
+            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
+            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
+            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
+            #)}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
+
+
+    def get_database_migrate_steps_stage_2(self):
+        return [{
+            'Cleaning up': (
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
+
+    def get_database_migrate_steps_stage_3(self):
         raise NotImplementedError
 
     def get_filer_migrate_steps(self):
@@ -401,7 +534,7 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
-            'Restarting datbase': (
+            'Restarting database': (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -417,7 +550,6 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
-
 
 class FakeTestTopology(BaseTopology):
 

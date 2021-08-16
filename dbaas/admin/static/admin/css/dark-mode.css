@@ -5995,7 +5995,10 @@ body.dark .auto-refresh-label b{
 	color: white;
 }
 
-
 body.dark #dropdown-menu-notification li{
 	background-color: #000;
+}
+
+body.dark .form-actions {
+	background-color: #222;
 }

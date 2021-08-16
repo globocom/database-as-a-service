@@ -23,9 +23,9 @@ class HostBaseCommands(object):
 
         return cmd
 
-    def init_database_script(self, action, no_output=True):
+    def init_database_script(self, action, instances, no_output=True):
         script = ''
-        for instance in self.host.instances.all():
+        for instance in instances:
             script += "{};".format(self.database(
                 action=action
             ))
