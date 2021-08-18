@@ -344,6 +344,10 @@ class RedisSingle(BaseRedis):
 
 class RedisSentinel(BaseRedis):
 
+    @property
+    def driver_name(self):
+        return 'redis_sentinel'
+
     def get_upgrade_steps_final(self):
         return [{
             'Resetting Sentinel': (
@@ -374,10 +378,6 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
-
-    @property
-    def driver_name(self):
-        return 'redis_sentinel'
 
     def get_filer_migrate_steps(self):
         return [{
@@ -650,6 +650,10 @@ class RedisSentinelNoPersistence(RedisSentinel):
 
 class RedisCluster(BaseRedis):
 
+    @property
+    def driver_name(self):
+        return 'redis_cluster'
+
     def deploy_instances(self):
         return [
             [InstanceDeploy(Instance.REDIS, 6379)],
@@ -847,10 +851,6 @@ class RedisCluster(BaseRedis):
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
-
-    @property
-    def driver_name(self):
-        return 'redis_cluster'
 
 
 class RedisGenericGCE(object):
