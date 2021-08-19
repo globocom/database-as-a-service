@@ -567,7 +567,13 @@ class CreateVirtualMachine(HostProviderStep):
 
     @property
     def weaker_offering(self):
-        return self.plan.weaker_offering
+        if self.host_migrate:
+            plan = self.plan.get_equivalent_plan_for_env(
+                self.environment
+            )
+        else:
+            plan = self.plan
+        return plan.weaker_offering
 
     @property
     def database_offering(self):
@@ -739,6 +745,13 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
     def undo(self):
         raise NotImplementedError
 
+
+class DestroyVirtualMachineDBMigrate(HostProviderStep):
+    def do(self):
+        instances = self.instance.hostname.instances.all()
+        for instance in instances:
+            instance.delete()
+        super(DestroyVirtualMachineDBMigrate, self).do()
 
 class UpdateHostRootVolumeSize(HostProviderStep):
 
