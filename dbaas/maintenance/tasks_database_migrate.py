@@ -16,6 +16,7 @@ def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
         if step_manager:
             host_migrate = step_manager.hosts.get(host=instance.hostname)
             host_migrate.id = None
+            host_migrate.started_at = None
             host_migrate.finished_at = None
             host_migrate.created_at = datetime.now()
         else:
