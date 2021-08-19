@@ -10,9 +10,18 @@ def get_migrate_steps(database, stage):
     return get_database_migrate_steps(class_path, stage)
 
 def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
+    
+    future_instances = []
+    for host, zone in hosts_zones.iteritems():
+        instance = host.instances.first()
+        if instance.future_instance:
+            future_instances.append(instance.future_instance)
+    
     instances = []
     for host, zone in hosts_zones.iteritems():
         instance = host.instances.first()
+        if instance in future_instances:
+            continue
         if step_manager:
             host_migrate = step_manager.hosts.get(host=instance.hostname)
             host_migrate.id = None

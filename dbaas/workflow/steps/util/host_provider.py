@@ -746,7 +746,11 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
         raise NotImplementedError
 
 
-class DestroyVirtualMachineDBMigrate(HostProviderStep):
+class DestroyVirtualMachineDBMigrate(DestroyVirtualMachineMigrate):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
     def do(self):
         instances = self.instance.hostname.instances.all()
         for instance in instances:
