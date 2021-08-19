@@ -808,7 +808,9 @@ def database_change_parameters_retry(request, context, database):
 def database_metrics(request, context, database):
     context['hostname'] = request.GET.get(
         'hostname',
-        database.infra.instances.first().hostname.hostname.split('.')[0]
+        database.infra.instances.filter(
+            is_active=True
+        ).first().hostname.hostname.split('.')[0]
     )
 
     context['source'] = request.GET.get('source', 'zabbix')
@@ -826,7 +828,9 @@ def database_metrics(request, context, database):
 
     context['hosts'] = []
     for host in Host.objects.filter(
-            instances__databaseinfra=database.infra).distinct():
+            instances__databaseinfra=database.infra,
+            instances__is_active=True
+        ).distinct():
         context['hosts'].append(host.hostname.split('.')[0])
 
     credential = get_credentials_for(
@@ -834,7 +838,7 @@ def database_metrics(request, context, database):
         credential_type=CredentialType.GRAFANA
     )
     instance = database.infra.instances.filter(
-        hostname__hostname__contains=context['hostname']
+        hostname__hostname__contains=context['hostname'],
     ).first()
 
     organization = database.team.organization
