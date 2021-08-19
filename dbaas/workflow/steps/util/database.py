@@ -152,6 +152,15 @@ class Stop(DatabaseStep):
         self.undo_klass(self.instance).do()
 
 
+class StopSourceDatabaseMigrate(Stop):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def host_migrate(self):
+        return None
+
 class StopIfRunning(Stop):
 
     @property
