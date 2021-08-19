@@ -118,12 +118,11 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
         self.assertEqual(27017, self.driver.default_port)
 
     @patch.object(MongoDB, 'get_replica_name')
-    @patch.object(MongoDB, 'is_ha')
-    def test_connection_string_when_in_replica_set(self, get_replica_name, is_ha):
+    def test_connection_string_when_in_replica_set(self, get_replica_name):
+        self.databaseinfra.plan.is_ha = True
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
         get_replica_name.return_value = 'my_repl'
-        is_ha.return_value = True
 
         expected_conn = ("mongodb://<user>:<password>"
                          "@{},127.0.0.2:27018"
@@ -144,12 +143,11 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
         )
 
     @patch.object(MongoDB, 'get_replica_name')
-    @patch.object(MongoDB, 'is_ha')
-    def test_connection_with_database_and_replica(self, get_replica_name, is_ha):
+    def test_connection_with_database_and_replica(self, get_replica_name):
+        self.databaseinfra.plan.is_ha = True
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
         get_replica_name.return_value = 'my_repl'
-        is_ha.return_value = True
         self.database = factory_logical.DatabaseFactory(
             name="my_db_url_name", databaseinfra=self.databaseinfra)
 
