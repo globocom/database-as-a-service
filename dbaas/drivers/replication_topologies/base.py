@@ -527,7 +527,7 @@ class BaseTopology(object):
         return [{
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
-                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineDBMigrate',
             #)}, {
             #'Raise Test Migrate Exception': (
             #    'workflow.steps.util.base.BaseRaiseTestException',
