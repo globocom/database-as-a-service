@@ -640,6 +640,100 @@ class RedisSentinel(BaseRedis):
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
 
+    def get_database_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+            )}, {
+            #'Backup and restore': (
+            #    'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            #    'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+            #    'workflow.steps.util.volume_provider.AddHostsAllowMigrate',
+            #    'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+            #    'workflow.steps.util.database.StopWithoutUndo',
+            #    'workflow.steps.util.database.CheckIsDown',
+            #    'workflow.steps.util.disk.CleanDataMigrate',
+            #    'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate',
+            #    'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+            #    'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
+            #)}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            'Configure and start database': (
+            #    'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Check access between instances': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Configure replication': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+            )}, {
+            #'Stopping database': (
+            #    'workflow.steps.util.database.Stop',
+            #    'workflow.steps.util.database.StopRsyslog',
+            #    'workflow.steps.util.database.CheckIsDown',
+            #)}, {
+            #'Destroy Alarms': (
+            #    'workflow.steps.util.zabbix.DestroyAlarms',
+            #)}, {
+            #'Update and Check DNS': (
+            #    'workflow.steps.util.dns.ChangeEndpoint',
+            #    'workflow.steps.util.dns.CheckIsReady',
+            #)}, {
+            #'Configure SSL (DNS)': (
+            #    ) + self.get_configure_ssl_dns_steps() + (
+            #)}, {
+            #'Starting database': (
+            #    'workflow.steps.util.database.Start',
+            #    'workflow.steps.util.database.CheckIsUp',
+            #    'workflow.steps.util.database.StartRsyslog',
+            #    'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            #    'workflow.steps.util.metric_collector.RestartTelegraf',
+            #    'workflow.steps.util.disk.ChangeSnapshotOwner',
+            #)}, {
+            #'Recreate Alarms': (
+            #    'workflow.steps.util.zabbix.CreateAlarms',
+            #    'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            #)}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
 class RedisNoPersistence(RedisSingle):
     pass
 

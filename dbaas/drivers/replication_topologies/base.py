@@ -409,6 +409,7 @@ class BaseTopology(object):
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance2',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
@@ -425,6 +426,10 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
+                #'workflow.steps.util.plan.InitializationMigration',
+                #'workflow.steps.util.plan.ConfigureMigration',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
@@ -460,7 +465,7 @@ class BaseTopology(object):
             'Configure and start database': (
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
+                #'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
@@ -502,6 +507,12 @@ class BaseTopology(object):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )}, {
+            'Stop source database and start the migrated database': (
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.database.Start',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
