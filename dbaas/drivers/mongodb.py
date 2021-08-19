@@ -111,17 +111,19 @@ class MongoDB(BaseDriver):
         dns = self.concatenate_instances_dns_only()
         return dns, port
 
+    def set_replicaset_uri(self, uri):
+        if self.databaseinfra.plan.is_ha:
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
+        return uri
+
     def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
             uri = "%s/%s" % (uri, database.name)
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def get_admin_connection(self):
         uri = "mongodb://{user}:{password}@{instances}/admin".format(
@@ -130,12 +132,7 @@ class MongoDB(BaseDriver):
             instances=self.__concatenate_instances()
         )
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def get_connection_dns(self, database=None):
         uri = "mongodb://<user>:<password>@{}".format(
@@ -144,12 +141,7 @@ class MongoDB(BaseDriver):
         if database:
             uri = "%s/%s" % (uri, database.name)
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def __get_admin_connection(self, instance=None):
         if instance:
