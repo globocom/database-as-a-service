@@ -111,11 +111,8 @@ class MongoDB(BaseDriver):
         dns = self.concatenate_instances_dns_only()
         return dns, port
     
-    def is_ha(self,):
-        return self.databaseinfra.plan.is_ha
-
     def set_replicaset_uri(self, uri):
-        if self.is_ha:
+        if self.databaseinfra.plan.is_ha:
             repl_name = self.get_replica_name()
             if repl_name:
                 uri = "%s?replicaSet=%s" % (uri, repl_name)
