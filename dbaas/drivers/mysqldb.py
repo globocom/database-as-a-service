@@ -354,7 +354,9 @@ class MySQL(BaseDriver):
         return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
-        if self.databaseinfra.instances.count() == 1:
+        if not instance.is_active:
+            return False
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
         results = self.__query(
             query_string="show variables like 'read_only'", instance=instance)
@@ -364,6 +366,8 @@ class MySQL(BaseDriver):
             return False
 
     def check_instance_is_master(self, instance, default_timeout=False):
+        if not instance.is_active:
+            return False
         return self.replication_topology_driver.check_instance_is_master(
             driver=self, instance=instance
         )

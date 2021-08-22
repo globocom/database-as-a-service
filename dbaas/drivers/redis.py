@@ -266,7 +266,9 @@ class Redis(BaseDriver):
         return True
 
     def check_instance_is_master(self, instance, default_timeout=False):
-        return True
+        if instance.is_active:
+            return True
+        return False
 
     def deprecated_files(self,):
         return ["*.pid", ]
@@ -477,6 +479,9 @@ class RedisSentinel(Redis):
 
     def check_instance_is_master(self, instance, default_timeout=False):
         if instance.instance_type == Instance.REDIS_SENTINEL:
+            return False
+        
+        if not instance.is_active:
             return False
 
         masters_for_sentinel = []
@@ -698,6 +703,9 @@ class RedisCluster(Redis):
                 return info['role'] == 'slave'
 
     def check_instance_is_master(self, instance, default_timeout=False):
+        if not instance.is_active:
+            return False
+
         with self.redis(instance=instance, default_timeout=default_timeout) as client:
             try:
                 info = client.info()
