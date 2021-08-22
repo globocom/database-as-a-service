@@ -69,7 +69,7 @@ class Memory(Update):
         self.infra.save()
 
 
-class MigrationCreateInstance(BaseInstanceStepMigration):
+class MigrationCreateInstanceOldCode(BaseInstanceStepMigration):
 
     def __unicode__(self):
         return "Creating new infra instance..."
@@ -92,7 +92,7 @@ class MigrationCreateInstance(BaseInstanceStepMigration):
                 self.instance.future_instance = new_instance
                 self.instance.save()
 
-class MigrationCreateInstance2(BaseInstanceStep):
+class MigrationCreateInstance(BaseInstanceStep):
 
     def __unicode__(self):
         return "Creating new infra instance..."
@@ -119,9 +119,9 @@ class MigrationCreateInstance2(BaseInstanceStep):
             instance.future_instance = new_instance
             instance.save()
 
-            if self.instance.id == instance.id:
-                self.instance.future_instance = new_instance
-                self.instance.save()
+            #if self.instance.id == instance.id:
+            #    self.instance.future_instance = new_instance
+            #    self.instance.save()
 
     def undo(self):
         if not self.instance.future_instance:
@@ -141,9 +141,9 @@ class MigrationCreateInstance2(BaseInstanceStep):
             instance.save()
             future_instance.delete()
 
-            if self.instance.id == instance.id:
-                self.instance.future_instance = None
-                self.instance.save()
+            #if self.instance.id == instance.id:
+            #    self.instance.future_instance = None
+            #    self.instance.save()
 
 class EnableFutureInstances(BaseInstanceStep):
 
