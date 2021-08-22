@@ -39,9 +39,10 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             args=(database_migrate.id,)
         )
         return format_html(
-            "<a href={}>{}/{}</a>".format(
+            "<a href={}>{}/{}/Stage:{}</a>".format(
                 url, database_migrate.database.name,
-                database_migrate.environment
+                database_migrate.environment,
+                database_migrate.migration_stage
             )
         )
     link_database_migrate.short_description = "Database Migrate"
