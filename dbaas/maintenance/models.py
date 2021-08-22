@@ -945,7 +945,6 @@ class DatabaseConfigureSSL(DatabaseMaintenanceTask):
 
 class DatabaseMigrate(DatabaseMaintenanceTask):
 
-
     # migration stage
     NOT_STARTED = 0
     STAGE_1 = 1
@@ -1008,7 +1007,9 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         return hosts
 
     def __unicode__(self):
-        return "Migrate {} to {}".format(self.database, self.environment)
+        return "Migrate {} to {} - Stage: {}".format(
+            self.database, self.environment, self.migration_stage
+        )
 
 
 class HostMigrate(DatabaseMaintenanceTask):
