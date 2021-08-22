@@ -108,9 +108,10 @@
 <script>
 
   var isValidProvisioner = {% if database.environment.provisioner in valid_provisioners %}true{%else%}false{%endif%};
-  var isHa = "{{ is_ha }}" == "True";
+  //var isHa = "{{ is_ha }}" == "True";
   var currentStage = {{ current_stage }}
-  if(!isValidProvisioner || isHa){
+  //if(!isValidProvisioner || isHa){
+  if(!isValidProvisioner){
     $(".environment-box").hide();
   }
 

@@ -956,3 +956,30 @@ class SetMysqlDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
     @property
     def engine_credentials(self):
         return get_credentials_for(self.environment, CredentialType.MYSQL)
+
+
+class StartSourceDatabaseMigrate(Start):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def host_migrate(self):
+        return None
+
+    @property
+    def undo_klass(self):
+        return StopSourceDatabaseMigrate
+
+class StopSourceDatabaseMigrate(Stop):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def host_migrate(self):
+        return None
+
+    @property
+    def undo_klass(self):
+        return StartSourceDatabaseMigrate

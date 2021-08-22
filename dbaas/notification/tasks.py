@@ -469,7 +469,7 @@ def update_database_status(self):
 
 @app.task(bind=True)
 @only_one(key="check_database_status")
-def check_databases_status(self):
+def check_databases_status(self, wait=60):
     LOG.info("Checking all databases")
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -482,7 +482,7 @@ def check_databases_status(self):
     )
     try:
         for database in databases:
-            check_database_is_alive.delay(database)
+            check_database_is_alive.delay(database, wait=wait)
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details="All databases were checked."
         )
@@ -492,7 +492,7 @@ def check_databases_status(self):
 
 
 @app.task(bind=True)
-def check_database_is_alive(self, database):
+def check_database_is_alive(self, database, wait=60, retries=3):
     LOG.info("Checking {} status".format(database))
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -505,8 +505,7 @@ def check_database_is_alive(self, database):
         TaskHistory.STATUS_RUNNING,
         details='Checking {} status\n'.format(database)
     )
-    sleep(60)
-    retries = 3
+    sleep(wait)
     for attempt in range(retries):
         database.update_status()
         if database.status in status:
@@ -517,7 +516,7 @@ def check_database_is_alive(self, database):
                 )
             )
             return
-        sleep(60)
+        sleep(wait)
     task_history.update_status_for(
         TaskHistory.STATUS_ERROR, details='Database {} is {}\n'.format(
             database, database.get_status_display()
@@ -2446,18 +2445,18 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_migrate_rollback(cls, migrate, user):
+    def database_migrate_rollback(cls, step_manager, user):
         task_params = {
             'task_name': "database_migrate",
             'arguments': "Database: {}, Environment: {}".format(
-                migrate.database, migrate.environment
+                step_manager.database, step_manager.environment
             ),
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return maintenace_tasks.database_environment_migrate_rollback.delay(
-            migrate, task
+            step_manager, task
         )
 
     @classmethod

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from physical.models import Instance
+from physical.models import Instance, Ip
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
 
@@ -69,7 +69,7 @@ class Memory(Update):
         self.infra.save()
 
 
-class MigrationCreateInstance(BaseInstanceStepMigration):
+class MigrationCreateInstanceOldCode(BaseInstanceStepMigration):
 
     def __unicode__(self):
         return "Creating new infra instance..."
@@ -91,6 +91,90 @@ class MigrationCreateInstance(BaseInstanceStepMigration):
             if self.instance.id == instance.id:
                 self.instance.future_instance = new_instance
                 self.instance.save()
+
+class MigrationCreateInstance(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Creating new infra instance..."
+
+    def do(self):
+        if self.instance.future_instance:
+            return
+
+        for instance in self.instance.hostname.instances.all():
+            new_instance = Instance.objects.get(id=instance.id)
+            new_instance.id = None
+            new_instance.address = self.host.address
+            new_instance.hostname = self.host
+            new_instance.is_active = False
+            new_instance.save()
+
+            try:
+                ip = Ip.objects.get(address=new_instance.address)
+                ip.instance = new_instance
+                ip.save()
+            except Ip.DoesNotExist:
+                pass
+
+            instance.future_instance = new_instance
+            instance.save()
+
+            #if self.instance.id == instance.id:
+            #    self.instance.future_instance = new_instance
+            #    self.instance.save()
+
+    def undo(self):
+        if not self.instance.future_instance:
+            return
+        
+        for instance in self.instance.hostname.instances.all():
+            future_instance = instance.future_instance
+
+            try:
+                ip = Ip.objects.get(address=future_instance.address)
+                ip.instance = instance
+                ip.save()
+            except Ip.DoesNotExist:
+                pass
+            
+            instance.future_instance = None
+            instance.save()
+            future_instance.delete()
+
+            #if self.instance.id == instance.id:
+            #    self.instance.future_instance = None
+            #    self.instance.save()
+
+class EnableFutureInstances(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Enable future instances..."
+
+    def do(self):
+        for instance in self.instance.hostname.instances.all():
+            future_instance = instance.future_instance
+            future_instance.is_active = True
+            future_instance.save()
+
+    def undo(self):
+        for instance in self.instance.hostname.instances.all():
+            future_instance = instance.future_instance
+            future_instance.is_active = False
+            future_instance.save()
+
+class DisableSourceInstances(BaseInstanceStep):
+    def __unicode__(self):
+        return "Disable source instances..."
+
+    def do(self):
+        for instance in self.instance.hostname.instances.all():
+            instance.is_active = False
+            instance.save()
+
+    def undo(self):
+        for instance in self.instance.hostname.instances.all():
+            instance.is_active = True
+            instance.save()
 
 
 class UpdateMigrateEnvironment(BaseInstanceStepMigration):
