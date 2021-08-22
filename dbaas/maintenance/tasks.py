@@ -426,10 +426,10 @@ def database_environment_migrate(
 
 
 @app.task(bind=True)
-def database_environment_migrate_rollback(self, migrate, task):
+def database_environment_migrate_rollback(self, step_manager, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
     )
     from tasks_database_migrate import rollback_database_environment_migrate
-    rollback_database_environment_migrate(migrate, task)
+    rollback_database_environment_migrate(step_manager, task)
