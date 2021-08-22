@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance, Ip
+from maintenance.models import HostMigrate
 from util import get_credentials_for
 from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
@@ -727,35 +728,30 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
         return self.infra.environment
 
     def do(self):
-        host = self.instance.hostname
-        if not host.future_host:
+        origin_host = self.instance.hostname
+
+        if not origin_host.future_host:
             return
 
-        self.provider.destroy_host(host)
-        for instance in host.instances.all():
-            instance.hostname = self.host
-            instance.address = self.host.address
-            instance.save()
+        self.provider.destroy_host(origin_host)
 
-        migrate = self.host_migrate
-        migrate.host = host.future_host
-        migrate.save()
-        host.delete()
+        for host_migrate in HostMigrate.objects.filter(host=origin_host):
+            host_migrate.host = host_migrate.host.future_host
+            host_migrate.save()
+                
+        for instance in origin_host.instances.all():
+            if instance.future_instance:
+                instance.delete()
+            else:
+                instance.hostname = self.host
+                instance.address = self.host.address
+                instance.save()
+        
+        origin_host.delete()
 
     def undo(self):
         raise NotImplementedError
 
-
-class DestroyVirtualMachineDBMigrate(DestroyVirtualMachineMigrate):
-
-    def __unicode__(self):
-        return "Destroying virtual machine..."
-
-    def do(self):
-        instances = self.instance.hostname.instances.all()
-        for instance in instances:
-            instance.delete()
-        super(DestroyVirtualMachineDBMigrate, self).do()
 
 class UpdateHostRootVolumeSize(HostProviderStep):
 
