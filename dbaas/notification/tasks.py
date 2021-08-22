@@ -2445,18 +2445,18 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_migrate_rollback(cls, migrate, user):
+    def database_migrate_rollback(cls, step_manager, user):
         task_params = {
             'task_name': "database_migrate",
             'arguments': "Database: {}, Environment: {}".format(
-                migrate.database, migrate.environment
+                step_manager.database, step_manager.environment
             ),
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return maintenace_tasks.database_environment_migrate_rollback.delay(
-            migrate, task
+            step_manager, task
         )
 
     @classmethod
