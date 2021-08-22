@@ -149,7 +149,7 @@ def region_migration_start(self, infra, instances, since_step=None):
         )}, {
         'Creating new infra': (
             'workflow.steps.util.vm.MigrationWaitingBeReady',
-            'workflow.steps.util.infra.MigrationCreateInstance',
+            'workflow.steps.util.infra.MigrationCreateInstanceOldCode',
             'workflow.steps.util.disk.MigrationCreateExport',
         )}, {
         'Configuring new infra': (
