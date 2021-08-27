@@ -151,5 +151,8 @@ dev_docker_generate_migration:
 	$(eval app = $(if $(app),$(app),$(error Modo de uso: make dev_docker_generate_migration app=NOME_DA_APP)))
 	@cd dev && docker-compose run app /code/dbaas/manage.py schemamigration ${app} --auto
 
+dev_docker_develop_libs:
+	@echo "wait for it..."
+
 %:
 	@:

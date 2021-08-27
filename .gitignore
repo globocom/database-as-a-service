@@ -20,3 +20,4 @@ node_modules/
 docker-compose.override.yml
 dev/requirements*
 dev/data
+dev/lib

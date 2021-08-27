@@ -7,6 +7,7 @@ services:
     image: dbaas_dev
     volumes:
       - ..:/code
+      - ./lib:/opt/lib
     command: /code/run_dev.sh
     ports:
       - "8000:8000"
@@ -30,6 +31,7 @@ services:
     image: dbaas_dev
     volumes:
       - ..:/code
+      - ./lib:/opt/lib
     command: /code/run_dev_celery.sh
     depends_on:
         - dev_mysqldb57
@@ -53,13 +55,11 @@ services:
         container_name: dev_redis32
         networks: 
             - gntw
-
   dev_mongodb:
         image: mongo:3.4
         container_name: dev_mongo34
         networks: 
           - gntw
-
   dev_mysqldb57:
         platform: linux/x86_64
         image: mysql:5.7
