@@ -1022,6 +1022,10 @@ class DatabaseInfra(BaseModel):
     @property
     def set_require_ssl_for_databaseinfra(self):
         return self.get_driver().set_require_ssl_for_databaseinfra
+    
+    @property
+    def migration_in_progress(self):
+        return self.migration_stage > NOT_STARTED
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
