@@ -130,7 +130,6 @@ def rollback_database_environment_migrate(step_manager, task):
     database = step_manager.database
     migration_stage = database.infra.migration_stage
 
-
     database_migrate = rebuild_database_migrate(task, step_manager)
     instances = rebuild_hosts_migrate(database_migrate, step_manager)
     instances = sorted(instances, key=lambda k: k.dns)

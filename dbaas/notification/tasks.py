@@ -24,12 +24,16 @@ from workflow.workflow import (steps_for_instances,
                                total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
-from maintenance.models import DatabaseDestroy, RestartDatabase
+from maintenance.models import (
+    DatabaseDestroy,
+    RestartDatabase,
+    DatabaseCreate,
+    DatabaseMigrate
+)
 from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra,
                                                get_instances_for)
 from notification.scripts import script_mongo_log_rotate
-from maintenance.models import DatabaseCreate
 from util.providers import get_deploy_settings
 
 
@@ -2428,14 +2432,20 @@ class TaskRegister(object):
         cls, database, new_environment, new_offering, user, hosts_zones,
         since_step=None, step_manager=None
     ):
+        if step_manager:
+            migration_stage = step_manager.migration_stage
+        else:
+            migration_stage = database.infra.migration_stage + 1
+
+        args = "Database: {}, Environment: {}, Migration Stage: {}".format(
+                database, new_environment, migration_stage)
         task_params = {
             'task_name': "database_migrate",
-            'arguments': "Database: {}, Environment: {}".format(
-                database, new_environment
-            ),
+            'arguments': args,
         }
         if user:
             task_params['user'] = user
+
         task = cls.create_task(task_params)
         return maintenace_tasks.database_environment_migrate.delay(
             database=database, new_environment=new_environment,
@@ -2445,15 +2455,31 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_migrate_rollback(cls, step_manager, user):
+    def database_migrate_rollback(
+        cls, database, user, step_manager=None,
+        migration_stage=None
+    ):
+
+        if step_manager:
+            database_migrate = step_manager
+        else:
+            database_migrate = DatabaseMigrate.objects.filter(
+                database=database,
+                migration_stage=migration_stage,
+                status=DatabaseMigrate.SUCCESS
+            ).last()
+
+        args = "Database: {}, Environment: {}, Migration Stage: {}".format(
+                database,
+                database_migrate.environment,
+                database_migrate.migration_stage)
         task_params = {
-            'task_name': "database_migrate",
-            'arguments': "Database: {}, Environment: {}".format(
-                step_manager.database, step_manager.environment
-            ),
+            'task_name': "database_migrate_rollback",
+            'arguments': args,
         }
         if user:
             task_params['user'] = user
+
         task = cls.create_task(task_params)
         return maintenace_tasks.database_environment_migrate_rollback.delay(
             step_manager, task
