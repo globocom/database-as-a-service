@@ -106,7 +106,9 @@ class MigrationCreateInstance(BaseInstanceStep):
             new_instance.id = None
             new_instance.address = self.host.address
             new_instance.hostname = self.host
-            new_instance.is_active = False
+            new_instance.dns = self.host.address
+            if not self.plan.is_ha:
+                new_instance.is_active = False
             new_instance.save()
 
             try:
@@ -119,8 +121,8 @@ class MigrationCreateInstance(BaseInstanceStep):
             instance.future_instance = new_instance
             instance.save()
 
-            #if self.instance.id == instance.id:
-            #    self.instance.future_instance = new_instance
+            if self.instance.id == instance.id:
+                self.instance.future_instance = new_instance
             #    self.instance.save()
 
     def undo(self):
@@ -141,8 +143,8 @@ class MigrationCreateInstance(BaseInstanceStep):
             instance.save()
             future_instance.delete()
 
-            #if self.instance.id == instance.id:
-            #    self.instance.future_instance = None
+            if self.instance.id == instance.id:
+                self.instance.future_instance = None
             #    self.instance.save()
 
 class EnableFutureInstances(BaseInstanceStep):
