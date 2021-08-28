@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 from workflow.steps.util.database import DatabaseStep
-from workflow.steps.redis.util import reset_sentinel
+from workflow.steps.redis.util import (
+    reset_sentinel,
+    change_slave_priority_instance,
+    change_slave_priority_file
+)
 
 
 class AddInstanceToRedisCluster(DatabaseStep):
@@ -45,11 +49,118 @@ class SetNotEligible(DatabaseStep):
     def priority_field(self):
         return "slave-priority"
 
+    @property
+    def not_elegible_instance(self):
+        return self.instance
+
     def do(self):
         self.driver.set_configuration(
-            self.instance, self.priority_field, self.priority
+            self.not_elegible_instance, self.priority_field, self.priority
         )
 
     def undo(self):
         self.priority = 100
         self.do()
+
+
+class ChangeEligibleInstance(DatabaseStep):
+
+    @property
+    def target_instance(self):
+        raise NotImplementedError
+
+    @property
+    def original_value(self):
+        raise NotImplementedError
+
+    @property
+    def final_value(self):
+        raise NotImplementedError
+
+    @property
+    def is_valid(self):
+        return self.target_instance.is_redis
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        change_slave_priority_instance(
+            self.target_instance,
+            self.final_value
+        )
+        change_slave_priority_file(
+            self.target_instance.hostname,
+            self.original_value,
+            self.final_value
+        )
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        change_slave_priority_instance(
+            self.target_instance,
+            self.original_value
+        )
+        change_slave_priority_file(
+            self.target_instance.hostname,
+            self.final_value,
+            self.original_value
+        )
+
+
+class SetInstanceEligible(ChangeEligibleInstance):
+
+    def __unicode__(self):
+        return "Set instances eligible to be master..."
+
+    @property
+    def original_value(self):
+        return 0
+
+    @property
+    def final_value(self):
+        return 100
+
+class SetInstanceNotEligible(ChangeEligibleInstance):
+
+    def __unicode__(self):
+        return "Set instances not eligible to be master..."
+
+    @property
+    def original_value(self):
+        return 100
+
+    @property
+    def final_value(self):
+        return 0
+
+
+
+class SetFutureInstanceEligible(SetInstanceEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+
+class SetFutureInstanceNotEligible(SetInstanceNotEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+
+class SetSourceInstanceEligible(SetInstanceEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance
+
+
+class SetSourceInstanceNotEligible(SetInstanceNotEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance
