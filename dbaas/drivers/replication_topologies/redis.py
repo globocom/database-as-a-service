@@ -645,9 +645,13 @@ class RedisSentinel(BaseRedis):
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
             )}, {
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinelRolllback',
+            )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
@@ -664,19 +668,10 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.plan.Configure',
             )}, {
-            #'Backup and restore': (
-            #    'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
-            #    'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
-            #    'workflow.steps.util.volume_provider.AddHostsAllowMigrate',
-            #    'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
-            #    'workflow.steps.util.database.StopWithoutUndo',
-            #    'workflow.steps.util.database.CheckIsDown',
-            #    'workflow.steps.util.disk.CleanDataMigrate',
-            #    'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate',
-            #    'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
-            #    'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
-            #)}, {
             'Configure SSL lib and folder': (
                 ) + self.get_configure_ssl_libs_and_folder_steps() + (
             )}, {
@@ -684,56 +679,80 @@ class RedisSentinel(BaseRedis):
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
             'Configure and start database': (
-            #    'workflow.steps.util.disk.RemoveDeprecatedFiles',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check access between instances': (
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
             )}, {
             'Replicate ACL': (
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                #### RICK temporary comment - slow tests
+                #'workflow.steps.util.acl.ReplicateAclsMigrate',
+                #'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Configure replication': (
-                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
-                'workflow.steps.util.database.SetSlave',
-                'workflow.steps.util.database.WaitForReplication',
-                'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+                #'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlaveDatabaseMigration',
+                'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceNotEligible',
             )}, {
-            #'Stopping database': (
-            #    'workflow.steps.util.database.Stop',
-            #    'workflow.steps.util.database.StopRsyslog',
-            #    'workflow.steps.util.database.CheckIsDown',
-            #)}, {
-            #'Destroy Alarms': (
-            #    'workflow.steps.util.zabbix.DestroyAlarms',
-            #)}, {
-            #'Update and Check DNS': (
-            #    'workflow.steps.util.dns.ChangeEndpoint',
-            #    'workflow.steps.util.dns.CheckIsReady',
-            #)}, {
-            #'Configure SSL (DNS)': (
-            #    ) + self.get_configure_ssl_dns_steps() + (
-            #)}, {
-            #'Starting database': (
-            #    'workflow.steps.util.database.Start',
-            #    'workflow.steps.util.database.CheckIsUp',
-            #    'workflow.steps.util.database.StartRsyslog',
-            #    'workflow.steps.util.metric_collector.ConfigureTelegraf',
-            #    'workflow.steps.util.metric_collector.RestartTelegraf',
-            #    'workflow.steps.util.disk.ChangeSnapshotOwner',
-            #)}, {
-            #'Recreate Alarms': (
-            #    'workflow.steps.util.zabbix.CreateAlarms',
-            #    'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            #)}, {
+            'Wait replication': (
+                'workflow.steps.util.database.WaitForReplication',
+            )}, {
             'Raise Test Migrate Exception': (
                 'workflow.steps.util.base.BaseRaiseTestException',
         )}]
+
+
+    def get_database_migrate_steps_stage_2(self):
+        return [{
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+            )}, {
+            'Change Master Rollback': (
+                ## RICK REVER ISSO AQUI
+                #'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterRollbackMigrate',
+            )}, {
+            'Configure Eligible Master': (
+                'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceEligible',
+                'workflow.steps.redis.horizontal_elasticity.database.SetSourceInstanceNotEligible',
+            )}, {
+            'Change Master': (
+                'workflow.steps.util.vm.ChangeMasterMigrate',
+                ## RICK REVER ISSO AQUI
+                #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            )}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+            )}]
+
+
+    def get_database_migrate_steps_stage_3(self):
+        return [{
+            'Cleaning up': (
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+            )}, {
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+            )}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
+
+
 class RedisNoPersistence(RedisSingle):
     pass
 
