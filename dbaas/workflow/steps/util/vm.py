@@ -95,11 +95,16 @@ class ChangeMaster(VmStep):
     def is_single_instance(self):
         return not self.infra.plan.is_ha
 
-    def do(self):
+    @property
+    def is_valid(self):
         if self.is_single_instance:
-            return
-
+            return False
         if self.is_slave:
+            return False
+        return True
+
+    def do(self):
+        if not self.is_valid:
             return
 
         error = None
@@ -131,13 +136,15 @@ class ChangeMasterRollback(ChangeMaster):
 class ChangeMasterMigrate(ChangeMaster):
     @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first()
+        is_valid = super(ChangeMasterMigrate, self).is_valid
+        return is_valid and self.instance == self.infra.instances.first()
 
-    def do(self):
-        if not self.is_valid:
-            return
-        return super(ChangeMasterMigrate, self).do()
 
+class ChangeMasterRollbackMigrate(ChangeMasterRollback):
+    @property
+    def is_valid(self):
+        is_valid = super(ChangeMasterRollbackMigrate, self).is_valid
+        return is_valid and self.instance == self.infra.instances.first()
 
 class InstanceIsSlave(ChangeMaster):
 
