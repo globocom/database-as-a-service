@@ -82,6 +82,7 @@ class ChangeEligibleInstance(DatabaseStep):
         return self.target_instance.is_redis
 
     def do(self):
+
         if not self.is_valid:
             return
 
@@ -154,12 +155,20 @@ class SetFutureInstanceNotEligible(SetInstanceNotEligible):
 
 class SetSourceInstanceEligible(SetInstanceEligible):
 
+    def __init__(self, instance):
+        super(DatabaseStep, self).__init__(instance)
+        self.instance.address = self.instance.hostname.address
+
     @property
     def target_instance(self):
         return self.instance
 
 
 class SetSourceInstanceNotEligible(SetInstanceNotEligible):
+
+    def __init__(self, instance):
+        super(DatabaseStep, self).__init__(instance)
+        self.instance.address = self.instance.hostname.address
 
     @property
     def target_instance(self):
