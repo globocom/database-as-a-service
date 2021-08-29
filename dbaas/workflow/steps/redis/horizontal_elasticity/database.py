@@ -79,7 +79,10 @@ class ChangeEligibleInstance(DatabaseStep):
 
     @property
     def is_valid(self):
-        return self.target_instance.is_redis
+        return (
+            self.target_instance.is_redis and
+            not self.target_instance.read_only
+        )
 
     def do(self):
 
