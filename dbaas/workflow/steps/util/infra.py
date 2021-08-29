@@ -92,6 +92,7 @@ class MigrationCreateInstanceOldCode(BaseInstanceStepMigration):
                 self.instance.future_instance = new_instance
                 self.instance.save()
 
+
 class MigrationCreateInstance(BaseInstanceStep):
 
     def __unicode__(self):
@@ -107,8 +108,7 @@ class MigrationCreateInstance(BaseInstanceStep):
             new_instance.address = self.host.address
             new_instance.hostname = self.host
             new_instance.dns = self.host.address
-            if not self.plan.is_ha:
-                new_instance.is_active = False
+            new_instance.is_active = False
             new_instance.save()
 
             try:
@@ -147,6 +147,7 @@ class MigrationCreateInstance(BaseInstanceStep):
                 self.instance.future_instance = None
             #    self.instance.save()
 
+
 class EnableFutureInstances(BaseInstanceStep):
 
     def __unicode__(self):
@@ -163,6 +164,7 @@ class EnableFutureInstances(BaseInstanceStep):
             future_instance = instance.future_instance
             future_instance.is_active = False
             future_instance.save()
+
 
 class DisableSourceInstances(BaseInstanceStep):
     def __unicode__(self):
@@ -203,6 +205,7 @@ class UpdateMigratePlan(BaseInstanceStepMigration):
         if self.plan:
             self.infra.plan = self.plan
             self.infra.save()
+
 
 class UpdateEndpoint(BaseInstanceStep):
 
