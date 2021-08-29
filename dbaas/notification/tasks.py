@@ -2481,8 +2481,9 @@ class TaskRegister(object):
             task_params['user'] = user
 
         task = cls.create_task(task_params)
+
         return maintenace_tasks.database_environment_migrate_rollback.delay(
-            step_manager, task
+            database_migrate, task
         )
 
     @classmethod
