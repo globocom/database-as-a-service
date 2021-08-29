@@ -708,9 +708,10 @@ class RedisSentinel(BaseRedis):
 
     def get_database_migrate_steps_stage_2(self):
         return [{
-            'Destroy Alarms': (
-                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
-            )}, {
+            ## RICK REVER ISSO AQUI
+            #'Destroy Alarms': (
+            #    'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            #)}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
@@ -719,19 +720,20 @@ class RedisSentinel(BaseRedis):
             'Change Master Rollback': (
                 ## RICK REVER ISSO AQUI
                 #'workflow.steps.util.database.CheckIfSwitchMasterRollback',
-                'workflow.steps.util.vm.ChangeMasterRollbackMigrate',
+                'workflow.steps.util.vm.ChangeMasterMigrateRollback',
             )}, {
             'Configure Eligible Master': (
                 'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceEligible',
                 'workflow.steps.redis.horizontal_elasticity.database.SetSourceInstanceNotEligible',
             )}, {
             'Change Master': (
-                'workflow.steps.util.vm.ChangeMasterMigrate',
+                'workflow.steps.util.vm.ChangeMaster',
                 ## RICK REVER ISSO AQUI
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
             'Recreate Alarms': (
-                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                ## RICK REVER ISSO AQUI
+                #'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             )}, {
             'Raise Test Migrate Exception': (
