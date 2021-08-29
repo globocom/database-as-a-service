@@ -282,6 +282,20 @@ class BaseDriver(object):
 
         return None
 
+    def get_master_instance2(self, ignore_instance=None, default_timeout=False):
+        instances = self.get_database_instances()
+        if ignore_instance:
+            instances.remove(ignore_instance)
+        for instance in instances:
+            try:
+                if self.check_instance_is_master(
+                        instance, default_timeout=default_timeout):
+                    return instance
+            except ConnectionError:
+                continue
+
+        return None
+
     def get_slave_instances(self, ):
         instances = self.get_database_instances()
         master = self.get_master_instance()

@@ -88,6 +88,9 @@ class MySQL(BaseDriver):
 
         return None
 
+    def get_master_instance2(self, ignore_instance=None, default_timeout=False):
+        return self.get_master_instance(ignore_instance,default_timeout )
+
     def __get_admin_connection(self, instance=None):
         """
         endpoint is on the form HOST:PORT

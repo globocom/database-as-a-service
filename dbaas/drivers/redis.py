@@ -768,6 +768,17 @@ class RedisCluster(Redis):
 
         return masters
 
+    def get_master_instance2(self):
+        masters = []
+        for instance in self.get_database_instances():
+            try:
+                if self.check_instance_is_master(instance, default_timeout=False):
+                    masters.append(instance)
+            except ConnectionError:
+                continue
+
+        return masters
+
     def get_slave_instances(self, ):
         instances = self.get_database_instances()
         masters = self.get_master_instance()
