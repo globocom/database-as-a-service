@@ -1469,6 +1469,14 @@ class Instance(BaseModel):
         return self.instance_type == self.REDIS_SENTINEL
 
     @property
+    def is_mongodb(self):
+        return self.instance_type == self.MONGODB
+
+    @property
+    def is_arbiter(self):
+        return self.instance_type == self.MONGODB_ARBITER
+
+    @property
     def is_mysql(self):
         return self.instance_type in (self.MYSQL, self.MYSQL_PERCONA)
 
