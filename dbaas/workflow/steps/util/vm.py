@@ -78,15 +78,19 @@ class ChangeMaster(VmStep):
         return "Changing master node..."
 
     @property
+    def target_instance(self):
+        return self.instance
+
+    @property
     def is_slave(self):
         master = self.driver.get_master_instance()
         if isinstance(master, list):
-            if self.instance not in master:
+            if self.target_instance not in master:
                 return True
-        elif self.instance != master:
+        elif self.target_instance != master:
             return True
 
-        if not self.driver.check_instance_is_master(self.instance):
+        if not self.driver.check_instance_is_master(self.target_instance):
             return True
 
         return False
@@ -112,7 +116,7 @@ class ChangeMaster(VmStep):
             if self.is_slave:
                 return
             try:
-                self.driver.check_replication_and_switch(self.instance)
+                self.driver.check_replication_and_switch(self.target_instance)
             except Exception as e:
                 error = e
                 sleep(CHANGE_MASTER_SECONDS)
@@ -133,18 +137,31 @@ class ChangeMasterRollback(ChangeMaster):
         return super(ChangeMasterRollback, self).do()
 
 
+class ChangeMasterMigrateRollback(ChangeMasterRollback):
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+    @property
+    def is_slave(self):
+        master = self.driver.get_master_instance2()
+        if isinstance(master, list):
+            if self.target_instance not in master:
+                return True
+        elif self.target_instance != master:
+            return True
+
+        if not self.driver.check_instance_is_master(self.target_instance):
+            return True
+
+        return False
+
 class ChangeMasterMigrate(ChangeMaster):
     @property
     def is_valid(self):
         is_valid = super(ChangeMasterMigrate, self).is_valid
         return is_valid and self.instance == self.infra.instances.first()
 
-
-class ChangeMasterRollbackMigrate(ChangeMasterRollback):
-    @property
-    def is_valid(self):
-        is_valid = super(ChangeMasterRollbackMigrate, self).is_valid
-        return is_valid and self.instance == self.infra.instances.first()
 
 class InstanceIsSlave(ChangeMaster):
 
