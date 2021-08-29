@@ -680,6 +680,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Configure and start database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.infra.EnableFutureInstances',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -744,6 +745,7 @@ class RedisSentinel(BaseRedis):
     def get_database_migrate_steps_stage_3(self):
         return [{
             'Cleaning up': (
+                'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )}, {
