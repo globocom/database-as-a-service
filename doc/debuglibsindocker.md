@@ -1,6 +1,8 @@
 ## To debug DBAAS libs using docker follow this steps
 
- - Add symlink from your libs project ROOT foder to dev/libs. the symlink must be like this:
-![Screen Shot 2021-08-27 at 16 12 11](https://user-images.githubusercontent.com/6109737/131177559-21bed3a8-99e7-4c91-88c1-fe4c50e96e12.png)
+- The libs root path must be tha same than DBaaS project root path, like ˜/Users/[USERNAME]/projects˜.
 
-- run the command ˜make dev_docker_develop_libs˜
+To enable lib debug run the following command:
+   $make dev_docker_develop_package [package_name] # (example: make dev_docker_develop_package dbaas-aclapi)
+
+With this command the source package in docker imnage will be the host machine package repo until you run a new docker image build.

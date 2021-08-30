@@ -7,7 +7,7 @@ services:
     image: dbaas_dev
     volumes:
       - ..:/code
-      - ./lib:/opt/lib
+      - $PROJECT_PATH:/opt/lib
     command: /code/run_dev.sh
     ports:
       - "8000:8000"
@@ -31,7 +31,7 @@ services:
     image: dbaas_dev
     volumes:
       - ..:/code
-      - ./lib:/opt/lib
+      - $PROJECT_PATH:/opt/lib
     command: /code/run_dev_celery.sh
     depends_on:
         - dev_mysqldb57
