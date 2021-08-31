@@ -217,7 +217,7 @@ class Provider(BaseInstanceStep):
         if init_password:
             data['init_password'] = init_password
 
-        response = self._request(post, url, json=data, timeout=600)
+        response = self._request(post, url, json=data, timeout=900)
         if response.status_code != 201:
             raise HostProviderCreateVMException(response.content, response)
 
