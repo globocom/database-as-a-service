@@ -506,7 +506,7 @@ class MongoDB(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         client = self.get_client(None)
         try:
             client.admin.command(
