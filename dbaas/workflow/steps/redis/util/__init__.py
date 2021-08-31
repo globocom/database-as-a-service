@@ -9,8 +9,9 @@ LOG = logging.getLogger(__name__)
 def change_slave_priority_file(host, original_value, final_value):
     script = test_bash_script_error()
     script += """
-        sed -i 's/slave-priority {}/slave-priority {}/g' /data/redis.conf
-    """.format(original_value, final_value)
+        sed -i 's/slave-priority {original_value}/slave-priority {final_value}/g' /data/redis.conf
+        sed -i 's/replica-priority {original_value}/replica-priority {final_value}/g' /data/redis.conf
+    """.format(original_value=original_value, final_value=final_value)
     script = build_context_script({}, script)
     host.ssh.run_script(script)
 

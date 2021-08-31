@@ -120,6 +120,86 @@ class CreateAlarms(ZabbixStep):
         DestroyAlarms(self.instance).do()
 
 
+class CreateAlarmsDatabaseMigrateBase(ZabbixStep):
+
+    @property
+    def environment(self):
+        raise NotImplementedError
+
+    @property
+    def host_monitor(self):
+        return NotImplementedError
+
+    @property
+    def instances_monitor(self):
+        return self.host_monitor.instances.all()
+
+    @property
+    def hosts_in_zabbix(self):
+        monitors = [self.host_monitor.hostname]
+        for instance in self.instances_monitor:
+            current_dns = instance.dns
+            monitors.append(current_dns)
+
+            zabbix_extras = self.zabbix_provider.get_zabbix_databases_hosts()
+            for zabbix_extra in zabbix_extras:
+                if current_dns in zabbix_extra and zabbix_extra != current_dns:
+                    monitors.append(zabbix_extra)
+
+        return monitors
+
+    def _create_alarms(self):
+        self.zabbix_provider.create_instance_basic_monitors(self.host_monitor)
+        for instance in self.instances_monitor:
+            self.zabbix_provider.create_instance_monitors(instance)
+
+    def _destroy_alarms(self):
+        for host in self.hosts_in_zabbix:
+            if self.zabbix_provider.get_host_triggers(host):
+                self.zabbix_provider.delete_instance_monitors(host)
+
+    def do(self):
+        self._destroy_alarms()
+        self._create_alarms()
+
+    def undo(self):
+        self._destroy_alarms()
+
+
+class CreateAlarmsDatabaseMigrate(CreateAlarmsDatabaseMigrateBase):
+
+    def __unicode__(self):
+        return "Recreating Zabbix alarms..."
+
+    @property
+    def environment(self):
+        return self.host_migrate.environment
+
+    @property
+    def host_monitor(self):
+        return self.instance.hostname.future_host
+
+class DestroyAlarmsDatabaseMigrate(CreateAlarmsDatabaseMigrateBase):
+
+    def __unicode__(self):
+        return "Destroying Zabbix alarms..."
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def host_monitor(self):
+        return self.instance.hostname
+
+    def do(self):
+        self._destroy_alarms()
+
+    def undo(self):
+        self._destroy_alarms()
+        self._create_alarms()
+
+
 class CreateAlarmsForUpgrade(CreateAlarms):
 
     @property

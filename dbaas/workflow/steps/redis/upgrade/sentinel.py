@@ -32,7 +32,7 @@ class ResetAllSentinel(BaseInstanceStep):
     def __unicode__(self):
         return "Resetting Sentinel..."
 
-    def do(self):
+    def reset_sentinels(self):
         driver = self.infra.get_driver()
         for sentinel_instance in driver.get_non_database_instances():
             reset_sentinel(
@@ -42,5 +42,17 @@ class ResetAllSentinel(BaseInstanceStep):
                 self.infra.name
             )
 
+    def do(self):
+        self.reset_sentinels()
+
     def undo(self):
         pass
+
+
+class ResetAllSentinelRolllback(ResetAllSentinel):
+
+    def do(self):
+        pass
+
+    def undo(self):
+        self.reset_sentinels()

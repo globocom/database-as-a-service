@@ -136,6 +136,10 @@ class UpdateInfraCloudDatabaseMigrate(DBMonitorStep):
         self.provider.update_database_cloud(
             self.infra, self.environment.cloud.name)
 
+    def undo(self):
+        self.provider.update_database_cloud(
+            self.infra, self.infra.environment.cloud.name)
+
 
 class UpdateInfraOrganizationName(DBMonitorStep):
     def __unicode__(self):

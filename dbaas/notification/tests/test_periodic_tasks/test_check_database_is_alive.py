@@ -22,7 +22,7 @@ class DatabaseStatusTestCase(TestCase):
     def test_database_alive(self, task_register_mock):
         database = DatabaseHelper.create(name='test', status=Database.ALIVE)
         task_register_mock.return_value = self.task_history
-        check_database_is_alive(database)
+        check_database_is_alive(database, wait=0)
 
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('Database test is Alive', self.task_history.details)
@@ -32,7 +32,7 @@ class DatabaseStatusTestCase(TestCase):
             name='test', status=Database.INITIALIZING
         )
         task_register_mock.return_value = self.task_history
-        check_database_is_alive(database)
+        check_database_is_alive(database, wait=0)
 
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('Database test is Initializing',
@@ -42,7 +42,7 @@ class DatabaseStatusTestCase(TestCase):
     def test_database_alert(self, task_register_mock):
         database = DatabaseHelper.create(name='test', status=Database.ALERT)
         task_register_mock.return_value = self.task_history
-        check_database_is_alive(database)
+        check_database_is_alive(database, wait=0)
 
         self.assertEqual(self.task_history.task_status, 'ERROR')
         self.assertIn('Database test is Alert', self.task_history.details)
@@ -50,7 +50,7 @@ class DatabaseStatusTestCase(TestCase):
     def test_database_dead(self, task_register_mock):
         database = DatabaseHelper.create(name='test', status=Database.DEAD)
         task_register_mock.return_value = self.task_history
-        check_database_is_alive(database)
+        check_database_is_alive(database, wait=0)
 
         self.assertEqual(self.task_history.task_status, 'ERROR')
         self.assertIn('Database test is Dead', self.task_history.details)

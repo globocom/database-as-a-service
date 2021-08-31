@@ -119,6 +119,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     @patch.object(MongoDB, 'get_replica_name')
     def test_connection_string_when_in_replica_set(self, get_replica_name):
+        self.databaseinfra.plan.is_ha = True
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
         get_replica_name.return_value = 'my_repl'
@@ -143,6 +144,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     @patch.object(MongoDB, 'get_replica_name')
     def test_connection_with_database_and_replica(self, get_replica_name):
+        self.databaseinfra.plan.is_ha = True
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
         get_replica_name.return_value = 'my_repl'

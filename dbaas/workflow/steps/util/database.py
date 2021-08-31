@@ -390,8 +390,12 @@ class CheckIfSwitchMaster(DatabaseStep):
     def __unicode__(self):
         return "Checking if master was switched..."
 
+    @property
+    def is_valid(self):
+        return self.infra.plan.is_ha
+
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.is_valid:
             return
 
         master = None
@@ -422,14 +426,11 @@ class CheckIfSwitchMasterRollback(CheckIfSwitchMaster):
 
 
 class CheckIfSwitchMasterMigrate(CheckIfSwitchMaster):
-    @property
-    def is_valid(self):
-        return self.instance == self.infra.instances.first()
 
-    def do(self):
-        if not self.is_valid:
-            return
-        return super(CheckIfSwitchMasterMigrate, self).do()
+    def __init__(self, instance):
+        super(CheckIfSwitchMasterMigrate, self).__init__(instance)
+        if self.host_migrate:
+            self.instance.address = self.instance.hostname.address
 
 
 class CheckIsUpForResizeLog(CheckIsUp):
@@ -619,7 +620,6 @@ class SetSlave(DatabaseStep):
         client = self.infra.get_driver().get_client(self.instance)
         client.slaveof(master.address, master.port)
 
-
 class SetSlaveRestore(SetSlave):
 
     @property
@@ -652,6 +652,22 @@ class SetSlavesMigration(SetSlave):
 
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
+
+
+class SetSlaveDatabaseMigration(SetSlave):
+    @property
+    def master(self):
+        return self.infra.get_driver().get_master_instance()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        master = self.master
+        instance = self.instance.future_instance
+
+        client = self.infra.get_driver().get_client(instance)
+        client.slaveof(master.address, master.port)
 
 
 class StartMonit(DatabaseStep):
@@ -956,3 +972,30 @@ class SetMysqlDBUsersPasswordFromCredentials(SetUsersPasswordFromCredentials):
     @property
     def engine_credentials(self):
         return get_credentials_for(self.environment, CredentialType.MYSQL)
+
+
+class StartSourceDatabaseMigrate(Start):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def host_migrate(self):
+        return None
+
+    @property
+    def undo_klass(self):
+        return StopSourceDatabaseMigrate
+
+class StopSourceDatabaseMigrate(Stop):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def host_migrate(self):
+        return None
+
+    @property
+    def undo_klass(self):
+        return StartSourceDatabaseMigrate

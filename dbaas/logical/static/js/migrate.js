@@ -77,6 +77,19 @@
                 });
             },
             /**
+            * Rollback full migrate database stage
+            */
+            full_rollback_migrate_stage: function(database_id, migration_stage) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/migrate/",
+                    "type": "POST",
+                    "data": { "full_rollback_migrate_stage": true, "migration_stage": migration_stage},
+                }).complete(function() {
+                    location.reload();
+                });
+            },
+            /**
             * Get all offerings to selected environment
             */
             offerings_for_environment: function(environment_id, callback) {

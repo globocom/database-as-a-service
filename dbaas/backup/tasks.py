@@ -285,7 +285,10 @@ def make_databases_backup(self):
             group = BackupGroup()
             group.save()
 
-            for instance in infra.instances.filter(read_only=False):
+            instances_backup = infra.instances.filter(
+                read_only=False, is_active=True
+            )
+            for instance in instances_backup:
                 try:
                     driver = instance.databaseinfra.get_driver()
                     is_eligible = driver.check_instance_is_eligible_for_backup(

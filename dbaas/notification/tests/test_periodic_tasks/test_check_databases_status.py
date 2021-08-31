@@ -21,7 +21,7 @@ class CheckDatabasesStatusTestCase(TestCase):
     def test_database_alive(self, task_register_mock):
         DatabaseHelper.create(status=Database.ALIVE)
         task_register_mock.return_value = self.task_history
-        check_databases_status()
+        check_databases_status(wait=0)
 
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('All databases were checked.', self.task_history.details)
@@ -29,7 +29,7 @@ class CheckDatabasesStatusTestCase(TestCase):
     def test_database_initializing(self, task_register_mock):
         DatabaseHelper.create(status=Database.INITIALIZING)
         task_register_mock.return_value = self.task_history
-        check_databases_status()
+        check_databases_status(wait=0)
 
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('All databases were checked.', self.task_history.details)
@@ -38,9 +38,9 @@ class CheckDatabasesStatusTestCase(TestCase):
     def test_database_alert(self, check_database_is_alive, task_register_mock):
         database = DatabaseHelper.create(status=Database.ALERT)
         task_register_mock.return_value = self.task_history
-        check_databases_status()
+        check_databases_status(wait=0)
 
-        check_database_is_alive.assert_called_with(database)
+        check_database_is_alive.assert_called_with(database, wait=0)
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('All databases were checked.', self.task_history.details)
 
@@ -48,9 +48,9 @@ class CheckDatabasesStatusTestCase(TestCase):
     def test_database_dead(self, check_database_is_alive, task_register_mock):
         database = DatabaseHelper.create(status=Database.DEAD)
         task_register_mock.return_value = self.task_history
-        check_databases_status()
+        check_databases_status(wait=0)
 
-        check_database_is_alive.assert_called_with(database)
+        check_database_is_alive.assert_called_with(database, wait=0)
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
         self.assertIn('All databases were checked.', self.task_history.details)
 
@@ -64,9 +64,9 @@ class CheckDatabasesStatusTestCase(TestCase):
         database_dead = DatabaseHelper.create(status=Database.DEAD)
         task_register_mock.return_value = self.task_history
 
-        calls = [call(database_dead), call(database_alert)]
+        calls = [call(database_dead, wait=0), call(database_alert, wait=0)]
 
-        check_databases_status()
+        check_databases_status(wait=0)
 
         check_database_is_alive.assert_has_calls(calls)
         self.assertEqual(self.task_history.task_status, 'SUCCESS')
