@@ -8,6 +8,7 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
+      - /etc/ssl/certs:/etc/ssl/certsg
     command: /code/dev/run.sh
     ports:
       - "8000:8000"
@@ -25,6 +26,7 @@ services:
         - DBAAS_DATABASE_PASSWORD=123
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
+        - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks: 
       - gntw
   app_celery:
@@ -32,6 +34,7 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
+      - /etc/ssl/certs:/etc/ssl/certsg
     command: /code/dev/run_celery.sh
     depends_on:
         - dev_mysqldb57
@@ -48,6 +51,7 @@ services:
         - DBAAS_DATABASE_PASSWORD=123
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
+        - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks: 
       - gntw
   dev_redisdb:

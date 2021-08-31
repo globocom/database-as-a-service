@@ -13,5 +13,5 @@ then
 fi
 
 cd /code
-touch log
+touch /code/dev/log
 make run
