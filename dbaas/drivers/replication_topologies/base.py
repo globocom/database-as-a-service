@@ -458,9 +458,8 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.CheckAccessFromMaster',
             )}, {
             'Replicate ACL': (
-                #### RICK temporary comment - slow tests
-                #'workflow.steps.util.acl.ReplicateAclsMigrate',
-                #'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
@@ -495,9 +494,9 @@ class BaseTopology(object):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
@@ -506,9 +505,9 @@ class BaseTopology(object):
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     def get_database_migrate_steps_stage_3(self):

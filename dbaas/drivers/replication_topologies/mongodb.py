@@ -1051,13 +1051,10 @@ class MongoDBReplicaset(BaseMongoDB):
             'Configure SSL (IP)': (
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
-
             'Replicate ACL': (
-                #### RICK temporary comment - slow tests
-                #'workflow.steps.util.acl.ReplicateAclsMigrate',
-                #'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
-
             'Start database and configure replication': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
@@ -1072,30 +1069,28 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Wait replication': (
                 'workflow.steps.util.database.WaitForReplication',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
     def get_database_migrate_steps_stage_2(self):
         return [{
-            ## RICK REVER ISSO AQUI
-            #'Destroy Alarms': (
-            #    'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
-            #)}, {
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
                 'workflow.steps.util.dns.CheckIsReadyDBMigrate',
             )}, {
-
             'Configure Eligible Master': (
                 'workflow.steps.mongodb.database.SetFutureInstanceEligible',
             )}, {
 
             'Change Master Rollback': (
-                ## RICK REVER ISSO AQUI
+                ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterMigrateRollback',
             )}, {
@@ -1105,43 +1100,35 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Change Master': (
                 'workflow.steps.util.vm.ChangeMaster',
+                ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
             'Configure Eligible Master': (
                 'workflow.steps.mongodb.database.SetSourceInstanceNotEligible',
             )}, {
-
             'Recreate Alarms': (
-                ## RICK REVER ISSO AQUI
-                #'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            )}, {
-
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
-            )}]
-
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
 
     def get_database_migrate_steps_stage_3(self):
         return [{
             'Remove instance from replica set': (
                 'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetWithouUndo',
                 'workflow.steps.util.infra.DisableSourceInstances',
-                #'workflow.steps.util.volume_provider.DestroyOldEnvironment',
-                #'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
-
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
+
+
 class MongoDBReplicaset40(MongoDBReplicaset):
 
     def get_resize_oplog_steps(self):
