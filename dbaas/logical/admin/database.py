@@ -26,7 +26,7 @@ from notification.tasks import TaskRegister
 from system.models import Configuration
 from util.html import show_info_popup
 from logical.models import Database
-from physical.models import Engine
+from physical.models import Engine, DatabaseInfra
 from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
@@ -84,6 +84,23 @@ class RelatedEngineFilter(SimpleListFilter):
         return queryset
 
 
+class MigrationInProgressFilter(SimpleListFilter):
+    title = _('Migration in progress')
+    parameter_name = 'migration_in_progress'
+    def lookups(self, request, model_admin):
+        return [(1, 'Yes'), (0, 'No')]
+    def queryset(self, request, queryset):
+        if self.value() == '1':
+            queryset = queryset.filter(
+                databaseinfra__migration_stage__gt=DatabaseInfra.NOT_STARTED
+            )
+        elif self.value() == '0':
+            queryset = queryset.filter(
+                databaseinfra__migration_stage=DatabaseInfra.NOT_STARTED
+            )
+        return queryset
+
+
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     """
     the form used by this view is returned by the method get_form
@@ -113,7 +130,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
         "databaseinfra__plan__has_persistence",
         "databaseinfra__plan__replication_topology__name",
-        "databaseinfra__ssl_configured"
+        "databaseinfra__ssl_configured",
+        MigrationInProgressFilter,
     ]
     list_filter_advanced = list_filter_basic + [
         "is_in_quarantine", "team", "team__organization"

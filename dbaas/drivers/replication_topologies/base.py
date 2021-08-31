@@ -426,8 +426,6 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
-                #'workflow.steps.util.plan.InitializationMigration',
-                #'workflow.steps.util.plan.ConfigureMigration',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
@@ -469,11 +467,12 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Destroy Alarms': (
-                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
             'Update and Check DNS': (
-                'workflow.steps.util.dns.ChangeEndpoint',
-                'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
             )}, {
             'Configure SSL (DNS)': (
                 ) + self.get_configure_ssl_dns_steps() + (
@@ -493,11 +492,11 @@ class BaseTopology(object):
                 'workflow.steps.util.database.Start',
             )}, {
             'Recreate Alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
@@ -506,9 +505,9 @@ class BaseTopology(object):
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            )}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            #)}, {
+            #'Raise Test Migrate Exception': (
+            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     def get_database_migrate_steps_stage_3(self):

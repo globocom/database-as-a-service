@@ -384,8 +384,11 @@ class MongoDB(BaseDriver):
     def check_instance_is_eligible_for_backup(self, instance):
         if instance.instance_type == instance.MONGODB_ARBITER:
             return False
+        
+        if not instance.is_active:
+            return False
 
-        if self.databaseinfra.instances.count() == 1:
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
 
         with self.pymongo(instance=instance) as client:
@@ -405,8 +408,11 @@ class MongoDB(BaseDriver):
     def check_instance_is_master(self, instance, default_timeout=False):
         if instance.instance_type == instance.MONGODB_ARBITER:
             return False
+        
+        if not instance.is_active:
+            return False
 
-        if self.databaseinfra.instances.count() == 1:
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
 
         with self.pymongo(
@@ -500,7 +506,7 @@ class MongoDB(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         client = self.get_client(None)
         try:
             client.admin.command(

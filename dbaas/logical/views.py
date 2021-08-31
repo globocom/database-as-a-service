@@ -1727,7 +1727,7 @@ class DatabaseHostsView(TemplateView):
                 if instance.shard:
                     padding = True
 
-            if len(hosts) > 1:
+            if self.database.databaseinfra.plan.is_ha:
                 full_description += ' - ' + '/'.join(attributes)
 
             host_data = {
@@ -2178,7 +2178,9 @@ def database_migrate(request, context, database):
 
     environment = database.infra.environment
     if request.POST:
+
         can_migrate, error = database.can_migrate_host()
+
         if not can_migrate:
             messages.add_message(request, messages.ERROR, error)
 
@@ -2189,7 +2191,6 @@ def database_migrate(request, context, database):
             host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
             zone_origin = request.POST.get("zone_origin")
-
 
             # Do not allow GCP hosts
             # to be in the same region
@@ -2213,6 +2214,13 @@ def database_migrate(request, context, database):
                 zone_origin=zone_origin
             )
 
+        elif 'full_rollback_migrate_stage' in request.POST:
+            migration_stage = request.POST.get('migration_stage')
+            print('migration_stage:', migration_stage)
+            TaskRegister.database_migrate_rollback(
+                database, request.user, migration_stage=migration_stage
+            )
+
         elif 'new_environment' in request.POST:
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
@@ -2229,9 +2237,25 @@ def database_migrate(request, context, database):
                 )
                 return
 
+            hp = Provider(database.infra.instances.first(), environment)
+            hp_zones = hp.list_zones()
+            hp_zones_list = []
+            for hp_zone in hp_zones:
+                hp_zones_list.append(hp_zone.get('name'))
+
             hosts_zones = OrderedDict()
             data = json.loads(request.POST.get('hosts_zones'))
             for host_id, zone in data.items():
+                if (zone not in hp_zones_list and 
+                   database.infra.migration_stage == database.infra.NOT_STARTED
+                ):
+                    error = "Zone {} isn't available in {} environment".format(
+                        zone, environment
+                    )
+                    messages.add_message(
+                        request, messages.ERROR, error
+                    )
+                    return
                 host = get_object_or_404(Host, pk=host_id)
                 hosts_zones[host] = zone
             if not hosts_zones:

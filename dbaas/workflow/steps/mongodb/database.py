@@ -100,6 +100,10 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
         add.do()
 
 
+class RemoveInstanceFromReplicaSetWithouUndo(RemoveInstanceFromReplicaSet):
+    def undo(self):
+        raise NotImplementedError
+
 class SetNotEligible(DatabaseReplicaSet):
 
     def __unicode__(self):
@@ -144,3 +148,127 @@ class RecreateMongoLogRotateScript(MongoDBDatabaseStep):
             self.ssl_conn_string, self.ssl_conn_string, self.ssl_conn_string)
         self._execute_script({}, script)
 
+
+class ChangeEligibleInstance(DatabaseReplicaSet):
+
+    def __init__(self, instance):
+        super(ChangeEligibleInstance, self).__init__(instance)
+        self._priority = None
+
+    @property
+    def priority_do(self):
+        raise NotImplementedError
+
+    @property
+    def priority_undo(self):
+        raise NotImplementedError
+
+    @property
+    def target_instance(self):
+        raise NotImplementedError
+
+    @property
+    def is_valid(self):
+        return (
+            self.target_instance.is_mongodb
+            and not self.target_instance.read_only
+            and not self.driver.check_instance_is_master(self.target_instance)
+        )
+
+    @property
+    def script_variables(self):
+        if self.infra.ssl_mode == self.infra.REQUIRETLS:
+            ssl_connect = '--tls --tlsCAFile {}'.format(
+                self.root_certificate_file)
+        else:
+            ssl_connect = ''
+        variables = {
+            'CONNECT_ADMIN_URI': self.driver.get_admin_connection(),
+            'HOST_ADDRESS': "{}:{}".format(self.target_instance.address, self.target_instance.port),
+            'PRIORITY': self._priority,
+            'SSL_CONN_STRING': ssl_connect,
+        }
+        return variables
+
+    def change_priority(self):
+        if not self.is_valid:
+            return
+        script = test_bash_script_error()
+        script += build_change_priority_script(len(self.infra.instances.all()))
+        self._execute_script(self.script_variables, script)
+    
+    def do(self):
+        self._priority = self.priority_do
+        self.change_priority()
+
+    def undo(self):
+        self._priority = self.priority_undo
+        self.change_priority()
+
+class SetInstanceEligible(ChangeEligibleInstance):
+
+    def __unicode__(self):
+        return "Set instances eligible to be master..."
+
+    @property
+    def priority_do(self):
+        return 1
+
+    @property
+    def priority_undo(self):
+        return 0
+
+
+class SetInstanceNotEligible(ChangeEligibleInstance):
+
+    def __unicode__(self):
+        return "Set instances not eligible to be master..."
+
+    @property
+    def priority_do(self):
+        return 0
+
+    @property
+    def priority_undo(self):
+        return 1
+
+
+class SetFutureInstanceEligible(SetInstanceEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+
+class SetFutureInstanceNotEligible(SetInstanceNotEligible):
+
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+
+class SetSourceInstanceEligible(SetInstanceEligible):
+
+    def __init__(self, instance):
+        super(DatabaseStep, self).__init__(instance)
+        self.instance.address = self.instance.hostname.address
+
+    @property
+    def target_instance(self):
+        return self.instance
+
+
+class SetSourceInstanceNotEligible(SetInstanceNotEligible):
+
+    def __init__(self, instance):
+        super(DatabaseStep, self).__init__(instance)
+        self.instance.address = self.instance.hostname.address
+
+    @property
+    def target_instance(self):
+        return self.instance
+
+
+class SetFutureInstanceNotEligibleWithouUndo(SetFutureInstanceNotEligible):
+    def undo(self):
+        pass

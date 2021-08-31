@@ -56,7 +56,7 @@
         </select>
         <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment ({{current_stage}} of {{total_stage}})</button>
         {% if current_stage > 1 and not last_host_migrate.is_status_error %}
-        <a class="resize_button btn btn-danger" href="{% url 'admin:database_migrate_rollback' last_host_migrate.database_migrate.id %}" title="Rollback database migrate">Rollback stage {{current_stage|add:"-1"}}</a>
+        <button data-toggle="modal" id="full_rollback_migrate_stage_btn" class="btn btn-danger" data-target="#full_rollback_migrate_stage_modal">Rollback stage {{current_stage|add:"-1"}}</button>
         {% endif %}
       {% endif %}
     </p>
@@ -98,7 +98,7 @@
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_environment_modal" confirmation_message="Are you sure you want to migrate this database?" box_title="Migrate database" button_class="btn btn-primary" id_optional="id=migrate_database_btn_modal"%}
-
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="full_rollback_migrate_stage_modal" confirmation_message="Are you sure you want to rollback migration full stage?" box_title="Rollback migrate database full stage" button_class="btn btn-primary" id_optional="id=full_rollback_migrate_stage_btn_modal"%}
 {% endblock %}
 
 {% block js_footer %}
@@ -253,6 +253,11 @@
         hosts_zones[obj.dataset['hostId'].toString()] = obj.value;
       })
       window.MigrateManager.migrate_database({{database.id}}, $("#migrate_environment").val(), $("#migrate_offering").val(), hosts_zones);
+    });
+
+    $("#full_rollback_migrate_stage_btn_modal").click(function() {
+      //window.MigrateManager.full_rollback_migrate_stage({{database.id}}, 10);
+      window.MigrateManager.full_rollback_migrate_stage({{database.id}}, {{current_stage|add:"-1"}});
     });
 
     function control_migrate_button() {
