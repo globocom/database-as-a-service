@@ -147,6 +147,9 @@ dev_docker_django_shell: # run django shell
 dev_docker_app_shell:
 	@cd dev && docker-compose exec app bash
 
+dev_docker_app_celery_shell:
+	@cd dev && docker-compose exec app_celery bash
+
 dev_docker_stop:
 	@cd dev && docker-compose down
 
@@ -158,9 +161,7 @@ dev_docker_restart:
 	@cd dev && docker-compose restart $(filter-out $@,$(MAKECMDGOALS))
 
 dev_docker_develop_package:
-	@cd dev && docker-compose exec app bash /code/dev/debug_lib.sh $(filter-out $@,$(MAKECMDGOALS))
-	@cd dev && docker-compose exec -u root app_celery bash /code/dev/debug_lib.sh $(filter-out $@,$(MAKECMDGOALS))
-	@make dev_docker_restart app
-	@make dev_docker_restart app_celery
+	@cd dev && docker-compose exec app bash /code/dev/add_debug_lib.sh $(filter-out $@,$(MAKECMDGOALS))
+	@make dev_docker_restart app app_celery
 %:
 	@:

@@ -21,3 +21,5 @@ docker-compose.override.yml
 dev/requirements*
 dev/data
 dev/lib
+dev/debug_lib/*.list
+dev/log

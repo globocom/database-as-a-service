@@ -8,7 +8,7 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-    command: /code/run_dev.sh
+    command: /code/dev/run.sh
     ports:
       - "8000:8000"
     depends_on:
@@ -32,7 +32,7 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-    command: /code/run_dev_celery.sh
+    command: /code/dev/run_celery.sh
     depends_on:
         - dev_mysqldb57
         - dev_mongodb
