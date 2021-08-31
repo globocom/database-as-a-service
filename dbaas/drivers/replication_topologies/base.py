@@ -470,9 +470,11 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
             'Update and Check DNS': (
+                'workflow.steps.util.infra.UpdateEndpointMigrateRollback',
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
                 'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+                'workflow.steps.util.infra.UpdateEndpointMigrate',
             )}, {
             'Configure SSL (DNS)': (
                 ) + self.get_configure_ssl_dns_steps() + (

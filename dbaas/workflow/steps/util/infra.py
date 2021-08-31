@@ -219,3 +219,31 @@ class UpdateEndpoint(BaseInstanceStep):
 
     def undo(self):
         pass
+
+
+class UpdateEndpointMigrate(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Updating endpoint..."
+
+    def do(self):
+        self.infra.endpoint = "{}:{}".format(self.instance.future_instance.address, self.instance.future_instance.port)
+        self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
+        self.infra.save()
+
+    def undo(self):
+        pass
+
+
+class UpdateEndpointMigrateRollback(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Updating endpoint rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        self.infra.endpoint = "{}:{}".format(self.instance.address, self.instance.port)
+        self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
+        self.infra.save()
