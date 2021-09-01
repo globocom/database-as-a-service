@@ -61,7 +61,9 @@ class ReplicateAcls2NewInstance(ACLStep):
         replicate_acl_for(
             database=self.database,
             old_ip=self.source_instance.address,
-            new_ip=self.destination_instance.address
+            new_ip=self.destination_instance.address,
+            old_sa=self.source_instance.infra.service_account,
+            new_sa=self.destination_instance.infra.service_account
         )
 
 
