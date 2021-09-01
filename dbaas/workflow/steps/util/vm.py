@@ -220,14 +220,13 @@ class CheckAccessToMaster(VmStep):
         script = "(echo >/dev/tcp/{}/{}) &>/dev/null && exit 0 || exit 1"
         script = script.format(destiny.address, port)
         try:
-            output = origin.ssh.run_script(script)
-        except origin.ssh.ScriptFailedException:
-            err = 'Could not connect from {} to {}:{}'.format(
-                origin.address, destiny.address, port
+            origin.ssh.run_script(script)
+        except origin.ssh.ScriptFailedException as err:
+            raise EnvironmentError(
+                'Could not connect from {} to {}:{} - Error: {}'.format(
+                    origin.address, destiny.address, port, err
+                )
             )
-            if output:
-                err += ' - Error: {}'.format(output)
-            raise EnvironmentError(err)
 
     def do(self):
         self.check_access(self.host, self.master, self.driver.default_port)
