@@ -197,7 +197,7 @@ class CheckAccessToMaster(VmStep):
         script = script.format(destiny.address, port)
         try:
             output = origin.ssh.run_script(script)
-        except origin.shh.ScriptFailedException:
+        except origin.ssh.ScriptFailedException:
             raise EnvironmentError(
                 'Could not connect from {} to {}:{} - Error: {}'.format(
                     origin.address, destiny.address, port, str(output)
