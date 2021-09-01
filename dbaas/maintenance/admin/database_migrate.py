@@ -93,7 +93,9 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             )
             if not success:
                 return redirect
-        TaskRegister.database_migrate_rollback(rollback_from, request.user)
+        TaskRegister.database_migrate_rollback(
+            rollback_from.database, request.user, step_manager=rollback_from
+        )
         return self.redirect_to_database(rollback_from)
 
     def check_status(self, request, database_migrate, operation):

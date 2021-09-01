@@ -110,18 +110,20 @@ class MongoDB(BaseDriver):
             instance_type=Instance.MONGODB, is_active=True).all()[0].port
         dns = self.concatenate_instances_dns_only()
         return dns, port
+    
+    def set_replicaset_uri(self, uri):
+        if self.databaseinfra.plan.is_ha:
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
+        return uri
 
     def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
             uri = "%s/%s" % (uri, database.name)
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def get_admin_connection(self):
         uri = "mongodb://{user}:{password}@{instances}/admin".format(
@@ -130,12 +132,7 @@ class MongoDB(BaseDriver):
             instances=self.__concatenate_instances()
         )
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def get_connection_dns(self, database=None):
         uri = "mongodb://<user>:<password>@{}".format(
@@ -144,12 +141,7 @@ class MongoDB(BaseDriver):
         if database:
             uri = "%s/%s" % (uri, database.name)
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
-
-        return uri
+        return  self.set_replicaset_uri(uri)
 
     def __get_admin_connection(self, instance=None):
         if instance:
@@ -392,8 +384,11 @@ class MongoDB(BaseDriver):
     def check_instance_is_eligible_for_backup(self, instance):
         if instance.instance_type == instance.MONGODB_ARBITER:
             return False
+        
+        if not instance.is_active:
+            return False
 
-        if self.databaseinfra.instances.count() == 1:
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
 
         with self.pymongo(instance=instance) as client:
@@ -413,8 +408,11 @@ class MongoDB(BaseDriver):
     def check_instance_is_master(self, instance, default_timeout=False):
         if instance.instance_type == instance.MONGODB_ARBITER:
             return False
+        
+        if not instance.is_active:
+            return False
 
-        if self.databaseinfra.instances.count() == 1:
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
 
         with self.pymongo(
@@ -508,7 +506,7 @@ class MongoDB(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         client = self.get_client(None)
         try:
             client.admin.command(

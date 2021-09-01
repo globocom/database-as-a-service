@@ -88,6 +88,9 @@ class MySQL(BaseDriver):
 
         return None
 
+    def get_master_instance2(self, ignore_instance=None, default_timeout=False):
+        return self.get_master_instance(ignore_instance,default_timeout )
+
     def __get_admin_connection(self, instance=None):
         """
         endpoint is on the form HOST:PORT
@@ -354,7 +357,9 @@ class MySQL(BaseDriver):
         return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
-        if self.databaseinfra.instances.count() == 1:
+        if not instance.is_active:
+            return False
+        if self.databaseinfra.instances.filter(is_active=True).count() == 1:
             return True
         results = self.__query(
             query_string="show variables like 'read_only'", instance=instance)
@@ -364,6 +369,8 @@ class MySQL(BaseDriver):
             return False
 
     def check_instance_is_master(self, instance, default_timeout=False):
+        if not instance.is_active:
+            return False
         return self.replication_topology_driver.check_instance_is_master(
             driver=self, instance=instance
         )
@@ -419,7 +426,7 @@ class MySQL(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         return self.replication_topology_driver.switch_master(driver=self)
 
     def start_slave(self, instance):

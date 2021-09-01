@@ -1022,6 +1022,10 @@ class DatabaseInfra(BaseModel):
     @property
     def set_require_ssl_for_databaseinfra(self):
         return self.get_driver().set_require_ssl_for_databaseinfra
+    
+    @property
+    def migration_in_progress(self):
+        return self.migration_stage > NOT_STARTED
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
@@ -1369,11 +1373,13 @@ class Instance(BaseModel):
     DEAD = 0
     ALIVE = 1
     INITIALIZING = 2
+    INACTIVE = 3
 
     INFRA_STATUS = (
         (DEAD, 'Dead'),
         (ALIVE, 'Alive'),
-        (INITIALIZING, 'Initializing')
+        (INITIALIZING, 'Initializing'),
+        (INACTIVE, 'Inactive'),
     )
 
     NONE = 0
@@ -1463,6 +1469,14 @@ class Instance(BaseModel):
         return self.instance_type == self.REDIS_SENTINEL
 
     @property
+    def is_mongodb(self):
+        return self.instance_type == self.MONGODB
+
+    @property
+    def is_arbiter(self):
+        return self.instance_type == self.MONGODB_ARBITER
+
+    @property
     def is_mysql(self):
         return self.instance_type in (self.MYSQL, self.MYSQL_PERCONA)
 
@@ -1542,16 +1556,20 @@ class Instance(BaseModel):
             status = html_default.format("success", "Alive")
         elif self.status == self.INITIALIZING:
             status = html_default.format("warning", "Initializing")
+        elif self.status == self.INACTIVE:
+            status = html_default.format("info", "Inactive")
         else:
             status = html_default.format("info", "N/A")
 
         return format_html(status)
 
     def update_status(self):
-        self.status = Instance.DEAD
-
-        if self.check_status():
-            self.status = Instance.ALIVE
+        if self.is_active:
+            self.status = Instance.DEAD
+            if self.check_status():
+                self.status = Instance.ALIVE
+        else:
+            self.status = Instance.INACTIVE
 
         self.save(update_fields=['status'])
 
