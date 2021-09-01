@@ -222,11 +222,12 @@ class CheckAccessToMaster(VmStep):
         try:
             output = origin.ssh.run_script(script)
         except origin.ssh.ScriptFailedException:
-            raise EnvironmentError(
-                'Could not connect from {} to {}:{} - Error: {}'.format(
-                    origin.address, destiny.address, port, str(output)
-                )
+            err = 'Could not connect from {} to {}:{}'.format(
+                origin.address, destiny.address, port
             )
+            if output:
+                err += ' - Error: {}'.format(output)
+            raise EnvironmentError(err)
 
     def do(self):
         self.check_access(self.host, self.master, self.driver.default_port)
