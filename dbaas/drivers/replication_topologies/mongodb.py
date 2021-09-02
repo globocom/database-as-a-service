@@ -1085,10 +1085,19 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
                 'workflow.steps.util.dns.CheckIsReadyDBMigrate',
             )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
+            )}, {
+            'Restart Database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
             'Configure Eligible Master': (
                 'workflow.steps.mongodb.database.SetFutureInstanceEligible',
             )}, {
-
             'Change Master Rollback': (
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterRollback',

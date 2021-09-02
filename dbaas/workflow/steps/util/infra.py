@@ -228,7 +228,7 @@ class UpdateEndpointMigrate(BaseInstanceStep):
 
     def do(self):
         self.infra.endpoint = "{}:{}".format(self.instance.future_instance.address, self.instance.future_instance.port)
-        self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
+        self.infra.endpoint_dns = "{}:{}".format(self.instance.future_instance.dns, self.instance.future_instance.port)
         self.infra.save()
 
     def undo(self):
