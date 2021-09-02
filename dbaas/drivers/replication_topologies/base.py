@@ -491,7 +491,7 @@ class BaseTopology(object):
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.infra.EnableFutureInstances',
-                'workflow.steps.util.database.Start',
+                #'workflow.steps.util.database.Start',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
