@@ -889,6 +889,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -945,6 +946,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrate',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.acl.ReplicateAclsMigrate'
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -1037,6 +1039,7 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.plan.InitializationMigrate',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.acl.ReplicateAclsMigrate'
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (

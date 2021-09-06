@@ -1894,6 +1894,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.plan.InitializationMigrate',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Reconfigure FOX': (
                 'workflow.steps.util.vip_provider.CreateInstanceGroupWithoutRollback',
