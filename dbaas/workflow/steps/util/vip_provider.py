@@ -364,7 +364,9 @@ class Provider(object):
         content = response.json()
 
         for c in content.get('destroyed', []):
-            VipInstanceGroup.objects.get(identifier=c).delete()
+            ig = VipInstanceGroup.objects.filter(identifier=c)
+            for i in ig:
+                i.delete()
 
         return True
 

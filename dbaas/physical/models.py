@@ -46,6 +46,20 @@ class Offering(BaseModel):
     def __unicode__(self):
         return '{}'.format(self.name)
 
+    @classmethod
+    def get_equivalent_offering(cls, database, to_environment):
+        current_offer = database.infra.offering
+        offers = cls.objects.filter(
+            cpus__gte=current_offer.cpus,
+            memory_size_mb__gte=current_offer.memory_size_mb,
+            environments__in=[to_environment]
+        ).order_by("cpus", "memory_size_mb")
+
+        if offers.exists():
+            return offers.first()
+
+        raise Exception("There's no equivalent offer")
+
 
 class Environment(BaseModel):
 
@@ -692,9 +706,19 @@ class Plan(BaseModel):
 #        return self.offerings.filter(weaker=True).first()
 
     def get_equivalent_plan_for_env(self, env):
+        filters = {
+            "engine": self.engine,
+            "environments": env,
+            "replication_topology__in":
+            self.replication_topology
+                .core_replication_topologies
+                .first().replication_topology
+                .all(),
+            "is_ha": self.is_ha,
+            "has_persistence": self.has_persistence
+        }
         return self._meta.model.objects.filter(
-            engine=self.engine,
-            environments=env
+            **filters
         ).order_by(
             'stronger_offering__memory_size_mb',
             'stronger_offering__cpus'
@@ -775,6 +799,18 @@ class DatabaseInfra(BaseModel):
         (ALLOWTLS, "allowTLS"),
         (PREFERTLS, "preferTLS"),
         (REQUIRETLS, "requireTLS"))
+
+    # migration stage
+    NOT_STARTED = 0
+    STAGE_1 = 1
+    STAGE_2 = 2
+    STAGE_3 = 3
+
+    MIGRATION_STAGES = (
+        (NOT_STARTED, "Not Started"),
+        (STAGE_1, "Stage 1"),
+        (STAGE_2, "Stage 2"),
+        (STAGE_3, "Stage 3"))
 
     name = models.CharField(
         verbose_name=_("DatabaseInfra Name"),
@@ -891,6 +927,13 @@ class DatabaseInfra(BaseModel):
         blank=True,
         null=True,
     )
+
+    migration_stage = models.IntegerField(
+        choices=MIGRATION_STAGES,
+        verbose_name=_("Migration Stage"),
+        null=False,
+        blank=False,
+        default=NOT_STARTED)
 
     def __unicode__(self):
         return self.name
@@ -1809,6 +1852,20 @@ class VipInstanceGroup(BaseModel):
         unique_together = (
             ('vip', 'name')
         )
+
+
+class CoreReplicationTopology(BaseModel):
+    class Meta:
+        verbose_name_plural = "core replication topologies"
+
+    name = models.CharField(
+        verbose_name=_("Core topology name"), max_length=200
+    )
+    replication_topology = models.ManyToManyField(
+        ReplicationTopology, related_name='core_replication_topologies'
+    )
+
+
 
 
 ##########################################################################

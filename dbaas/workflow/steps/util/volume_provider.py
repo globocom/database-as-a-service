@@ -29,6 +29,8 @@ class VolumeProviderGetSnapshotState(VolumeProviderException):
 class VolumeProviderScpFromSnapshotCommand(VolumeProviderException):
     pass
 
+class VolumeProviderRsyncFromSnapshotCommand(VolumeProviderException):
+    pass
 
 class VolumeProviderAddHostAllowCommand(VolumeProviderException):
     pass
@@ -53,6 +55,8 @@ class VolumeProviderSnapshotHasWarningStatusError(VolumeProviderException):
 class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
+class VolumeProviderSnapshotHasErrorStatus(VolumeProviderException):
+    pass
 
 class VolumeProviderBase(BaseInstanceStep):
 
@@ -379,6 +383,25 @@ class VolumeProviderBase(BaseInstanceStep):
         response = get(url, json=data, headers=self.headers)
         if not response.ok:
             raise VolumeProviderScpFromSnapshotCommand(
+                response.content,
+                response
+            )
+        return response.json()['command']
+
+    def get_rsync_from_snapshot_command(
+         self, snapshot, source_dir, dest_ip, dest_dir):
+        url = "{}snapshots/{}/commands/rsync".format(
+            self.base_url,
+            snapshot.snapshopt_id
+        )
+        data = {
+            'source_dir': source_dir,
+            'target_ip': dest_ip,
+            'target_dir': dest_dir
+        }
+        response = get(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise VolumeProviderRsyncFromSnapshotCommand(
                 response.content,
                 response
             )
@@ -911,6 +934,18 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
             snapshot.is_automatic = False
             snapshot.save()
+
+            if snapshot.has_warning:
+                raise VolumeProviderSnapshotHasWarningStatusError(
+                    'Backup was warning'
+                )
+
+            if snapshot.was_error:
+                error = 'Backup was unsuccessful.'
+                if snapshot.error:
+                    error = '{} Error: {}'.format(error, snapshot.error)
+                    raise VolumeProviderSnapshotHasErrorStatus(error)
+
         if self.database_migrate:
             host_migrate = self.host_migrate
             host_migrate.snapshot = snapshot
@@ -1403,7 +1438,7 @@ class AddHostsAllowMigrate(VolumeProviderBase):
 
     @property
     def original_host(self):
-        return self.host_migrate.host.address
+        return self.host_migrate.host
 
     def _do_hosts_allow(self, func):
         script = func(
@@ -1445,10 +1480,7 @@ class CreatePubKeyMigrate(VolumeProviderBase):
 
     @property
     def original_host(self):
-        master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(
-            id=master_instance.id
-        ).first().hostname
+        return self.host_migrate.host
 
     def _do_pub_key(self, func):
         script = func(
@@ -1845,3 +1877,41 @@ class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
     def undo(self):
         if self.is_database_instance:
             super(DetachDataVolumeRecreateSlave, self).do()
+
+class RsyncFromSnapshotMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying (rsync) data from snapshot to new host..."
+
+    @property
+    def source_dir(self):
+        return "/data"
+
+    @property
+    def dest_dir(self):
+        return "/data"
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            snapshot = self.host_migrate.snapshot
+        else:
+            snapshot = self.step_manager.snapshot
+
+        script = self.get_rsync_from_snapshot_command(
+            snapshot,
+            self.source_dir,
+            self.host_migrate.host.future_host.address,
+            self.dest_dir
+        )
+        self.host.ssh.run_script(script)
+
+    def undo(self):
+        pass

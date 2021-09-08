@@ -39,6 +39,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         databaseinfra_endpoint = ""
         instance_port = 27017
         instance_dns = "my_instance_dns{}.com"
+        MIGRATION_STAGE = 0
         params = {
             "name": databaseinfra_name,
             "user": databaseinfra_user,
@@ -56,6 +57,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
             "instances-MAX_NUM_FORMS": NUM_INSTANCES,
+            "migration_stage": MIGRATION_STAGE,
             "cs_dbinfra_attributes-TOTAL_FORMS": 2,
             "cs_dbinfra_attributes-INITIAL_FORMS": 0,
             "cs_dbinfra_attributes-MAX_NUM_FORMS": 2,

@@ -48,6 +48,25 @@ class BaseMysql(BaseTopology):
              '.MySQLCHGBinStepRollback'),
         )
 
+    def get_configure_ssl_libs_and_folder_steps(self):
+        return (
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+        )
+
+    def get_configure_ssl_ip_steps(self):
+        return ()
+
+    def get_configure_ssl_dns_steps(self):
+        return (
+            'workflow.steps.util.ssl.CreateSSLConfForInfraEndPointIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
+        )
+
 
 class MySQLSingle(BaseMysql):
 
@@ -1875,6 +1894,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.plan.InitializationMigrate',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Reconfigure FOX': (
                 'workflow.steps.util.vip_provider.CreateInstanceGroupWithoutRollback',

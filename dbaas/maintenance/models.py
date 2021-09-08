@@ -523,6 +523,7 @@ class DatabaseMigrateEngine(DatabaseMaintenanceTask):
         verbose_name="Target", max_length=100, null=True, blank=True
     )
 
+
     def __unicode__(self):
         return "{} migrate engine".format(self.database.name)
 
@@ -943,6 +944,20 @@ class DatabaseConfigureSSL(DatabaseMaintenanceTask):
 
 
 class DatabaseMigrate(DatabaseMaintenanceTask):
+
+
+    # migration stage
+    NOT_STARTED = 0
+    STAGE_1 = 1
+    STAGE_2 = 2
+    STAGE_3 = 3
+
+    MIGRATION_STAGES = (
+        (NOT_STARTED, "Not Started"),
+        (STAGE_1, "Stage 1"),
+        (STAGE_2, "Stage 2"),
+        (STAGE_3, "Stage 3"))
+
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
         null=False, related_name="database_migrate"
@@ -959,6 +974,12 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         Offering, related_name="database_migrate", null=True, blank=True
     )
     origin_offering = models.ForeignKey(Offering, null=True, blank=True)
+    migration_stage = models.IntegerField(
+        choices=MIGRATION_STAGES,
+        verbose_name=_("Migration Stage"),
+        null=False,
+        blank=False,
+        default=NOT_STARTED)
 
     @property
     def host_migrate_snapshot(self):

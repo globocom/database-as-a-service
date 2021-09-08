@@ -2,7 +2,7 @@ import logging
 from util import get_credentials_for
 from util import get_replication_topology_instance
 from dbaas_credentials.models import CredentialType
-
+from physical.models import DatabaseInfra
 
 LOG = logging.getLogger(__name__)
 
@@ -95,10 +95,14 @@ def get_filer_migrate_steps(class_path):
 def get_host_migrate_steps(class_path):
     return get_replication_topology_instance(class_path).get_host_migrate_steps()
 
-
-def get_database_migrate_steps(class_path):
-    return get_replication_topology_instance(class_path).get_database_migrate_steps()
-
+def get_database_migrate_steps(class_path, stage):
+    object_instance = get_replication_topology_instance(class_path)
+    if stage == DatabaseInfra.STAGE_1:
+        return object_instance.get_database_migrate_steps_stage_1()
+    elif stage == DatabaseInfra.STAGE_2:
+        return object_instance.get_database_migrate_steps_stage_2()
+    elif stage == DatabaseInfra.STAGE_3:
+        return object_instance.get_database_migrate_steps_stage_3()
 
 def get_database_change_persistence_setting(class_path):
     return get_replication_topology_instance(class_path).get_database_change_persistence_steps()

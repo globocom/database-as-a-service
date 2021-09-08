@@ -153,6 +153,33 @@ class BaseMongoDB(BaseTopology):
             ),
         }]
 
+    def get_configure_ssl_libs_and_folder_steps(self):
+        return (
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+        )
+
+    def get_configure_ssl_ip_steps(self):
+        return (
+            'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
+        )
+
+    def get_configure_ssl_dns_steps(self):
+        return (
+            'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
+        )
+
 
 class MongoDBSingle(BaseMongoDB):
 
@@ -506,9 +533,6 @@ class MongoDBSingle(BaseMongoDB):
 
 
 class MongoDBReplicaset(BaseMongoDB):
-
-    def get_upgrade_steps_description(self):
-        return 'Upgrading to MongoDB 3.6'
 
     def get_filer_migrate_steps(self):
         return [{
@@ -1219,6 +1243,9 @@ class MongoGenericGCE(object):
             'Create new VM': (
                 'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
             )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
                 'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
@@ -1279,6 +1306,9 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (

@@ -9,6 +9,9 @@ if sys.getdefaultencoding() != "utf-8":
 endef
 export CHECK_SCRIPT
 
+export PWD=$(shell pwd)
+export PROJECT_PATH=$(shell dirname $$PWD)
+
 # Use make -e DBAAS_DATABASE_HOST=another_host to replace default value		 
 
 default:
@@ -144,6 +147,9 @@ dev_docker_django_shell: # run django shell
 dev_docker_app_shell:
 	@cd dev && docker-compose exec app bash
 
+dev_docker_app_celery_shell:
+	@cd dev && docker-compose exec app_celery bash
+
 dev_docker_stop:
 	@cd dev && docker-compose down
 
@@ -151,5 +157,11 @@ dev_docker_generate_migration:
 	$(eval app = $(if $(app),$(app),$(error Modo de uso: make dev_docker_generate_migration app=NOME_DA_APP)))
 	@cd dev && docker-compose run app /code/dbaas/manage.py schemamigration ${app} --auto
 
+dev_docker_restart:
+	@cd dev && docker-compose restart $(filter-out $@,$(MAKECMDGOALS))
+
+dev_docker_develop_package:
+	@cd dev && docker-compose exec app bash /code/dev/add_debug_lib.sh $(filter-out $@,$(MAKECMDGOALS))
+	@make dev_docker_restart app app_celery
 %:
 	@:
