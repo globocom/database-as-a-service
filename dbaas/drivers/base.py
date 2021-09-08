@@ -244,7 +244,7 @@ class BaseDriver(object):
     def is_replication_ok(self, instance):
         raise NotImplementedError()
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         raise NotImplementedError()
 
     def get_database_instances(self, ):
@@ -277,6 +277,20 @@ class BaseDriver(object):
                     if self.check_instance_is_master(
                             instance, default_timeout=default_timeout):
                         return instance
+            except ConnectionError:
+                continue
+
+        return None
+
+    def get_master_instance2(self, ignore_instance=None, default_timeout=False):
+        instances = self.get_database_instances()
+        if ignore_instance:
+            instances.remove(ignore_instance)
+        for instance in instances:
+            try:
+                if self.check_instance_is_master(
+                        instance, default_timeout=default_timeout):
+                    return instance
             except ConnectionError:
                 continue
 
@@ -318,11 +332,12 @@ class BaseDriver(object):
             host, "stop", no_output=no_output, raise_if_error=raise_if_error)
 
     def check_replication_and_switch(self, instance, attempts=100,
-                                     check_is_master_attempts=5):
+                                     check_is_master_attempts=5,
+                                     preferred_slave_instance=None):
         from time import sleep
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
-                self.switch_master(instance)
+                self.switch_master(instance, preferred_slave_instance)
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts_count = check_is_master_attempts

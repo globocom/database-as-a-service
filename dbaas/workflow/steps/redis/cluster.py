@@ -92,11 +92,24 @@ class BaseClusterStep(PlanStep):
             'rm -f /data/data/redis.aof',
             'rm -f /data/data/dump.rdb',
             'rm -f /data/{}'.format(self.node_config_file),
-            self.host.commands.database(
-                action='start'
-            )
+            self.host.commands.database(action='start')
         ]
         return ' && '.join(commands)
+
+    @property
+    def cluster_del_node_command_without_start(self):
+        if self.current_redis == self.REDIS4:
+            del_command = '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}'
+        elif self.current_redis == self.REDIS5:
+            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} ;echo $?'
+        commands = [
+            del_command,
+            'rm -f /data/data/redis.aof',
+            'rm -f /data/data/dump.rdb',
+            'rm -f /data/{}'.format(self.node_config_file)
+        ]
+        return ' && '.join(commands)
+
 
     @property
     def node_config_file(self):
@@ -312,7 +325,7 @@ class AddSlaveNode(BaseClusterStep):
 
     def undo(self):
         remove = RemoveNode(self.instance)
-        remove.new_host_address = self.host.address
+        remove.remove_address = self.host.address
         remove.run_script_host = self.host
         remove.do()
 
@@ -336,12 +349,15 @@ class RemoveNode(BaseClusterStep):
                 self.instance, self.remove_address, self.instance.port
             ),
         }
+    
+    @property
+    def remove_node_script(self):
+        return self.cluster_del_node_command
 
     def do(self):
-        # output = self.run_script(self.cluster_del_node_command)
         output = self.run_script_host.ssh.run_script(
             self.make_script(
-                self.cluster_del_node_command,
+                self.remove_node_script,
                 script_variables=self.script_variables
             )
         )
@@ -412,3 +428,32 @@ class CreateClusterRedisAddSlaves(BaseClusterStep):
             self.check_response(
                 '[OK] New node added correctly.', output['stdout']
             )
+
+
+class SetFutureInstanceMasterDatabaseMigrate(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Setting new master..."
+    
+    def change_master(self, old_master, new_master):
+        if not self.driver.check_instance_is_master(old_master):
+            return
+        self.driver.check_replication_and_switch(
+            instance=old_master,
+            preferred_slave_instance=new_master
+        )
+
+    def do(self):
+        self.change_master(self.instance, self.instance.future_instance)
+
+    def undo(self):
+        self.change_master(self.instance.future_instance, self.instance)
+
+
+class RemoveNodeDBMigrate(RemoveNode):
+    @property
+    def remove_node_script(self):
+        return self.cluster_del_node_command_without_start
+
+    def undo(self):
+        raise NotImplementedError

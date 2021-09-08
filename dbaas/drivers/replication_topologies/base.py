@@ -409,6 +409,7 @@ class BaseTopology(object):
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
                 'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
@@ -425,6 +426,8 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
@@ -444,23 +447,9 @@ class BaseTopology(object):
             'Configure SSL (IP)': (
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
-            #'Configure SSL lib and folder': (
-            #    'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
-            #    ('workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured'),
-            #    'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
-            #)}, {
-            #'Configure SSL (IP)':
-            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfigured'),
-            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
-            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
-            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
-            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
-            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
-            #)}, {
             'Configure and start database': (
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
@@ -478,23 +467,18 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Destroy Alarms': (
-                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
             'Update and Check DNS': (
-                'workflow.steps.util.dns.ChangeEndpoint',
-                'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.infra.UpdateEndpointMigrateRollback',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+                'workflow.steps.util.infra.UpdateEndpointMigrate',
             )}, {
             'Configure SSL (DNS)': (
                 ) + self.get_configure_ssl_dns_steps() + (
             )}, {
-            #'Configure SSL': (
-            #    ('workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfigured'),
-            #    'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
-            #    ('workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured'),
-            #    ('workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfigured'),
-            #    'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
-            #    'workflow.steps.util.ssl.UpdateExpireAtDate',
-            #)}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -503,8 +487,14 @@ class BaseTopology(object):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
             )}, {
+            'Stop source database and start the migrated database': (
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                #'workflow.steps.util.database.Start',
+            )}, {
             'Recreate Alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             #)}, {
             #'Raise Test Migrate Exception': (

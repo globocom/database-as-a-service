@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 
-from .factory import EnvironmentFactory, PlanFactory
+from .factory import EnvironmentFactory, PlanFactory, EnvironmentProdFactory
 
 
 class EnvironmentTestCase(TestCase):
@@ -51,3 +51,33 @@ class EnvironmentTestCase(TestCase):
         self.assertEqual(len(migrate_to), 2)
         self.assertIn(env_dest_1, migrate_to)
         self.assertIn(env_dest_2, migrate_to)
+
+    def test_get_stage_by_id_dev(self):
+        env = EnvironmentFactory()
+        stage_test = env.get_stage_by_id(1)
+
+        self.assertEqual(stage_test, "Dev")
+
+    def test_get_stage_by_id_prod(self):
+        env = EnvironmentFactory()
+        stage_test = env.get_stage_by_id(2)
+
+        self.assertEqual(stage_test, "Prod")
+
+    def test_get_stage_by_id_invalid(self):
+        env = EnvironmentFactory()
+        stage_test = env.get_stage_by_id(0)
+
+        self.assertEqual(stage_test, None)
+
+    def test_get_dev_envs(self):
+        env = EnvironmentFactory()
+        env_get = env.dev_envs()
+
+        self.assertIn(env.name, env_get)
+
+    def test_get_prod_envs(self):
+        env = EnvironmentProdFactory()
+        env_get = env.prod_envs()
+
+        self.assertIn(env.name, env_get)

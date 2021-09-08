@@ -266,7 +266,9 @@ class Redis(BaseDriver):
         return True
 
     def check_instance_is_master(self, instance, default_timeout=False):
-        return True
+        if instance.is_active:
+            return True
+        return False
 
     def deprecated_files(self,):
         return ["*.pid", ]
@@ -274,7 +276,7 @@ class Redis(BaseDriver):
     def data_dir(self, ):
         return '/data/'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         pass
 
     def get_database_agents(self):
@@ -478,6 +480,9 @@ class RedisSentinel(Redis):
     def check_instance_is_master(self, instance, default_timeout=False):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
+        
+        if not instance.is_active:
+            return False
 
         masters_for_sentinel = []
         sentinels = self.get_non_database_instances()
@@ -504,7 +509,7 @@ class RedisSentinel(Redis):
 
         return False
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         sentinel_instance = self.instances_filtered.first()
         host = sentinel_instance.hostname
 
@@ -698,6 +703,9 @@ class RedisCluster(Redis):
                 return info['role'] == 'slave'
 
     def check_instance_is_master(self, instance, default_timeout=False):
+        if not instance.is_active:
+            return False
+
         with self.redis(instance=instance, default_timeout=default_timeout) as client:
             try:
                 info = client.info()
@@ -708,11 +716,11 @@ class RedisCluster(Redis):
             else:
                 return info['role'] == 'master'
 
-    def switch_master(self, instance=None):
+    def switch_master(self, instance=None, preferred_slave_instance=None):
         if instance is None:
             raise Exception('Cannot switch master in a redis cluster without instance.')
 
-        slave_instance = self.get_slave_for(instance)
+        slave_instance = self.get_slave_for(instance, preferred_slave_instance)
         if not slave_instance:
             raise Exception('There is no slave for {}'.format(instance))
         host = slave_instance.hostname
@@ -760,6 +768,17 @@ class RedisCluster(Redis):
 
         return masters
 
+    def get_master_instance2(self):
+        masters = []
+        for instance in self.get_database_instances():
+            try:
+                if self.check_instance_is_master(instance, default_timeout=False):
+                    masters.append(instance)
+            except ConnectionError:
+                continue
+
+        return masters
+
     def get_slave_instances(self, ):
         instances = self.get_database_instances()
         masters = self.get_master_instance()
@@ -781,7 +800,7 @@ class RedisCluster(Redis):
                 ))
 
             if info['role'] != 'slave':
-                return
+                return instance
 
             address = info['master_host']
             port = info['master_port']
@@ -790,10 +809,10 @@ class RedisCluster(Redis):
                 hostname__address=address, port=port
             ).first()
 
-    def get_slave_for(self, instance):
+    def get_slave_for(self, instance, preferred_slave_instance=None):
         with self.redis(instance=instance) as client:
             try:
-                info = client.info()
+                info = client.info('replication')
             except Exception as e:
                 raise ConnectionError('Error connection to infra {}: {}'.format(
                     self.databaseinfra, str(e)
@@ -802,9 +821,21 @@ class RedisCluster(Redis):
             if info['role'] != 'master':
                 return
 
-            address = info['slave0']['ip']
-            port = info['slave0']['port']
+            connected_slaves = info['connected_slaves']
+            if connected_slaves == 0:
+                return
+            
+            if preferred_slave_instance is None:
+                address = info['slave0']['ip']
+                port = info['slave0']['port']
 
+            for i in range(connected_slaves):
+                address = info['slave{}'.format(i)]['ip']
+                port = info['slave{}'.format(i)]['port']
+                if (address == preferred_slave_instance.address
+                    and port == preferred_slave_instance.port):
+                    break
+                   
             return self.databaseinfra.instances.filter(
                 hostname__address=address, port=port
             ).first()

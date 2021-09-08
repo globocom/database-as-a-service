@@ -232,6 +232,8 @@ class InstanceSSLDNS(SSL):
     def ssl_dns(self):
         if self.certificate_type == 'IP':
             return self.host.address
+        elif self.host_migrate and self.instance.future_instance:
+                return self.instance.future_instance.dns
         else:
             return self.instance.dns
 

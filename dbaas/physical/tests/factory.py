@@ -17,6 +17,14 @@ class EnvironmentFactory(factory.DjangoModelFactory):
     cloud = factory.SubFactory(CloudFactory)
 
 
+class EnvironmentProdFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Environment
+
+    name = factory.Sequence(lambda n: 'env-{0}'.format(n))
+    cloud = factory.SubFactory(CloudFactory)
+    stage = 2
+
+
 class EngineTypeFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.EngineType
     FACTORY_DJANGO_GET_OR_CREATE = ('name',)
