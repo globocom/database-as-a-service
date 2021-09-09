@@ -734,7 +734,7 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
             return
 
         self.provider.destroy_host(origin_host)
-                
+
         for instance in origin_host.instances.all():
             if instance.future_instance:
                 instance.delete()
