@@ -58,7 +58,8 @@ class ServiceRemove(APIView):
         try:
             dbaas_user.team_set.get(name=dbaas_team.name)
         except ObjectDoesNotExist as e:
-            msg = "The user is not on {} team.".format(dbaas_team.name)
+            msg = "User {} is not on {} team.".format(
+                dbaas_user, dbaas_team.name)
             return log_and_response(
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
