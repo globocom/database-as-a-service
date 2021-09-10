@@ -1093,6 +1093,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configure Eligible Master': (

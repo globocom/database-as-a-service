@@ -682,6 +682,10 @@ class RedisSentinel(BaseRedis):
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
+            'Restart telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
