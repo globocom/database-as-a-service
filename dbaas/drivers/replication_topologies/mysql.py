@@ -1324,6 +1324,105 @@ class MySQLFoxHA(MySQLSingle):
                 ) + self.get_host_migrate_steps_cleaning_up()
         }]
 
+    def get_database_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIP',
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.plan.Configure',
+            )}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            #'Replicate ACL': (
+            #    'workflow.steps.util.acl.ReplicateAclsMigrate',
+            #    'workflow.steps.util.acl.BindNewInstance',
+            #)}, {
+            'Start database and configure replication': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+                #'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+                #'workflow.steps.util.infra.EnableFutureInstances',
+                #'workflow.steps.mongodb.database.SetFutureInstanceNotEligibleWithouUndo',
+            )}, {
+
+            'Backup and restore': (
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate2',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrate2',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate2',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrate2',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate2',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.ConfigureLogForNewInfra',
+                'workflow.steps.util.mysql.SetServeridMigrate',
+                'workflow.steps.util.mysql.SetFilePermission',
+                'workflow.steps.util.mysql.DisableReplication',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.mysql.SetReplicationLastInstanceMigrate',
+                'workflow.steps.util.mysql.EnableReplication',
+                'workflow.steps.util.base.BaseRaiseTestException2',
+                'workflow.steps.util.base.BaseRaiseTestException2',
+
+            )}, {
+
+            'Creating VIP': (
+                'workflow.steps.util.vip_provider.CreateInstanceGroup',
+                'workflow.steps.util.base.BaseRaiseTestException',
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.vip_provider.CreateHeathcheck',
+                'workflow.steps.util.vip_provider.CreateBackendService',
+                #'workflow.steps.util.vip_provider.AllocateIP',
+                #'workflow.steps.util.vip_provider.AllocateDNS',
+                'workflow.steps.util.vip_provider.CreateForwardingRule',
+                'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
+                'workflow.steps.util.base.BaseRaiseTestException',
+                #'workflow.steps.util.dns.RegisterDNSVip',
+            )}, {
+
+
+            #'Start telegraf and rsyslog': (
+            #    'workflow.steps.util.database.StartRsyslog',
+            #    'workflow.steps.util.metric_collector.RestartTelegraf',
+            #)}, {
+            #'Wait replication': (
+            #    'workflow.steps.util.database.WaitForReplication',
+            #)}, {
+            'Raise Test Migrate Exception': (
+                'workflow.steps.util.base.BaseRaiseTestException',
+        )}]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
