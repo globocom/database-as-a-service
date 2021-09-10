@@ -564,6 +564,18 @@ class BaseRaiseTestException(BaseInstanceStep):
         return "Raise a test exception..."
 
     def do(self):
+        #return True
+        raise Exception('Test exception!')
+
+    def undo(self):
+        pass
+
+
+class BaseRaiseTestException2(BaseInstanceStep):
+    def __unicode__(self):
+        return "Raise a test exception..."
+
+    def do(self):
         return True
         #raise Exception('Test exception!')
 
