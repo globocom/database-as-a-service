@@ -1753,6 +1753,10 @@ class Vip(BaseModel):
     original_vip = models.ForeignKey(
         "Vip", null=True, blank=True, on_delete=models.SET_NULL
     )
+    vip_ip = models.CharField(
+        verbose_name=_("Ip address"), max_length=200,
+        null=True, blank=True,
+    )
 
     def __unicode__(self):
         return 'Vip of infra {}'.format(self.infra.name)

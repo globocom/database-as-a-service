@@ -165,10 +165,10 @@ class Provider(object):
         vip = Vip()
         vip.identifier = content["identifier"]
         vip.infra = infra
+        vip.vip_ip = content["ip"]
         if original_vip:
             vip.original_vip = original_vip
         vip.save()
-        vip.vip_ip = content["ip"]
 
         return vip
 
@@ -832,10 +832,14 @@ class AllocateIP(CreateVip):
         if not self.is_valid:
             return
 
-        ip = self.provider.allocate_ip(self.current_vip)
+        vip = self.current_vip
+        ip = self.provider.allocate_ip(vip)
 
         self.infra.endpoint = "{}:{}".format(ip, 3306)
         self.infra.save()
+
+        vip.vip_ip = ip
+        vip.save()
 
         return True
 
