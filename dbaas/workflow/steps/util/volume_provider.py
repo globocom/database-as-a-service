@@ -1473,6 +1473,19 @@ class AddHostsAllowDatabaseMigrate(AddHostsAllowMigrate):
         ).first().hostname
 
 
+class AddHostsAllowDatabaseMigrate2(AddHostsAllowMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def original_host(self):
+        return self.snapshot.instance.hostname
+
+
 class CreatePubKeyMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -1512,6 +1525,19 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         self.remove_pub_key()
 
 
+class CreatePubKeyMigrate2(CreatePubKeyMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def original_host(self):
+        return self.snapshot.instance.hostname
+
+
 class RemovePubKeyMigrate(CreatePubKeyMigrate):
 
     def __unicode__(self):
@@ -1524,6 +1550,10 @@ class RemovePubKeyMigrate(CreatePubKeyMigrate):
         self.create_pub_key()
 
 
+class RemovePubKeyMigrate2(RemovePubKeyMigrate, CreatePubKeyMigrate2):
+    pass
+
+
 class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
 
     def __unicode__(self):
@@ -1534,6 +1564,10 @@ class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
 
     def undo(self):
         self.add_hosts_allow()
+
+
+class RemoveHostsAllowMigrate2(RemoveHostsAllowMigrate, AddHostsAllowDatabaseMigrate2):
+    pass
 
 
 class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
@@ -1878,6 +1912,7 @@ class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
         if self.is_database_instance:
             super(DetachDataVolumeRecreateSlave, self).do()
 
+
 class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -1915,3 +1950,16 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class RsyncFromSnapshotMigrate2(RsyncFromSnapshotMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def host(self):
+        return self.snapshot.instance.hostname

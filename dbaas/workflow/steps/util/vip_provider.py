@@ -460,7 +460,8 @@ class VipProviderStep(BaseInstanceStep):
     @property
     def equipments(self):
         equipments = []
-        for instance in self.infra.instances.all():
+        ## TODO CHECK
+        for instance in self.infra.instances.filter(future_instance=None):
             host = instance.hostname
             if host.future_host:
                 host = host.future_host
@@ -512,6 +513,12 @@ class CreateVip(VipProviderStep):
         return "Creating vip..."
 
     @property
+    def target_instance(self):
+        if self.host_migrate and self.instance.future_instance:
+            return self.instance.future_instance
+        return self.instance
+
+    @property
     def is_valid(self):
         return self.instance == self.infra.instances.first() or\
                 self.host_migrate
@@ -527,7 +534,9 @@ class CreateVip(VipProviderStep):
             return
 
         vip = self.provider.create_vip(
-            self.infra, self.instance.port, self.team,
+            #TODO CHECK
+            #self.infra, self.instance.port, self.team,
+            self.infra, self.target_instance.port, self.team,
             self.equipments, self.vip_dns)
         dns = add_dns_record(
             self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
@@ -749,7 +758,9 @@ class CreateInstanceGroup(CreateVip):
             return
 
         return self.provider.create_instance_group(
-                    self.infra, self.instance.port, self.team,
+                    # TODO CHECK
+                    #self.infra, self.instance.port, self.team,
+                    self.infra, self.target_instance.port, self.team,
                     self.equipments, self.vip_dns)
 
     def undo(self):
