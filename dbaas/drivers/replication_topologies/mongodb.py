@@ -1364,6 +1364,9 @@ class MongoGenericGCE(object):
             'Create new VM': (
                 'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
             )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
             'Configure instance': (
                 'workflow.steps.util.volume_provider.MoveDisk',
                 'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
@@ -1424,6 +1427,9 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (

@@ -7,7 +7,9 @@ services:
     image: dbaas_dev
     volumes:
       - ..:/code
-    command: /code/run_dev.sh
+      - $PROJECT_PATH:/opt/lib
+      - /etc/ssl/certs:/etc/ssl/certsg
+    command: /code/dev/run.sh
     ports:
       - "8000:8000"
     depends_on:
@@ -24,13 +26,16 @@ services:
         - DBAAS_DATABASE_PASSWORD=123
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
+        - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks: 
       - gntw
   app_celery:
     image: dbaas_dev
     volumes:
       - ..:/code
-    command: /code/run_dev_celery.sh
+      - $PROJECT_PATH:/opt/lib
+      - /etc/ssl/certs:/etc/ssl/certsg
+    command: /code/dev/run_celery.sh
     depends_on:
         - dev_mysqldb57
         - dev_mongodb
@@ -46,6 +51,7 @@ services:
         - DBAAS_DATABASE_PASSWORD=123
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
+        - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks: 
       - gntw
   dev_redisdb:
@@ -53,13 +59,11 @@ services:
         container_name: dev_redis32
         networks: 
             - gntw
-
   dev_mongodb:
         image: mongo:3.4
         container_name: dev_mongo34
         networks: 
           - gntw
-
   dev_mysqldb57:
         platform: linux/x86_64
         image: mysql:5.7

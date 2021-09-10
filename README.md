@@ -44,7 +44,7 @@ Setup docker and docker-compose
 
 * Install [Docker](https://docs.docker.com/engine/installation/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-Go to the project path and these the following commands:
+Go to the project path and run these following commands:
 
 ```
 # create python container
@@ -53,6 +53,8 @@ $make dev_docker_setup [optional_mysql_dump_file_path]
 $make dev_docker_migrate 
 $make dev_docker_run
 ```
+
+You can explore spacific docker settings in [this link](./doc/dockerconfs.md)
 
 ### without docker
 
@@ -135,6 +137,8 @@ Documentation
 [Troubleshooting](./doc/troubleshooting.md)
 -------------------------------------------
 
+[Docker Settings](./doc/dockerconfs.md)
+-------------------------------------------
 ## License
 
 This project is licensed under the BSD 3-Clause "New" or "Revised" License - read [LICENSE](LICENSE) file for details.
