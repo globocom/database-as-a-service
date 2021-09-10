@@ -828,14 +828,14 @@ class RedisCluster(Redis):
             if preferred_slave_instance is None:
                 address = info['slave0']['ip']
                 port = info['slave0']['port']
+            else:
+                for i in range(connected_slaves):
+                    address = info['slave{}'.format(i)]['ip']
+                    port = info['slave{}'.format(i)]['port']
+                    if (address == preferred_slave_instance.address
+                        and port == preferred_slave_instance.port):
+                        break
 
-            for i in range(connected_slaves):
-                address = info['slave{}'.format(i)]['ip']
-                port = info['slave{}'.format(i)]['port']
-                if (address == preferred_slave_instance.address
-                    and port == preferred_slave_instance.port):
-                    break
-                   
             return self.databaseinfra.instances.filter(
                 hostname__address=address, port=port
             ).first()
