@@ -1394,7 +1394,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.SetReplicationLastInstanceMigrate',
                 'workflow.steps.util.mysql.EnableReplication',
                 'workflow.steps.util.base.BaseRaiseTestException2',
-                'workflow.steps.util.base.BaseRaiseTestException2',
 
             )}, {
 
