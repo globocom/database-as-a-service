@@ -6,4 +6,6 @@ from django.contrib import admin
 class VipAdmin(admin.ModelAdmin):
     search_fields = ("identifier", "infra")
     list_display = ("identifier", "infra", "vip_ip", "original_vip")
-    save_on_top = True 
+    search_fields = ('infra__name',)
+    list_filter = ('infra',)
+    #save_on_top = True 
