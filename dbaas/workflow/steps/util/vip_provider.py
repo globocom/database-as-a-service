@@ -520,8 +520,12 @@ class CreateVip(VipProviderStep):
 
     @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first() or\
+        '''return self.instance == self.infra.instances.first() or\
                 self.host_migrate
+        '''
+        if self.host_migrate and self.instance.future_instance is None:
+            return True
+        return self.instance == self.infra.instances.first()
 
     @property
     def vip_dns(self):
