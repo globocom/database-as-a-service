@@ -11,7 +11,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest, GetCredentialException
 from physical.models import Vip
-
+#from maintenance.models import DatabaseMigrate
 
 LOG = logging.getLogger(__name__)
 CHECK_SECONDS = 10
@@ -155,6 +155,14 @@ class BaseInstanceStep(object):
         migrate = self.instance.hostname.migrate.last()
         if migrate and migrate.is_running:
             return migrate
+
+    @property
+    def database_migrating(self):
+        migrating = DatabaseMigrate.objects.filter(database=self.database)
+        if not migrating.exists():
+            return None
+
+        return migrating[0]
 
     @property
     def reinstall_vm(self):

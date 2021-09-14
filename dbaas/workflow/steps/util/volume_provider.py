@@ -96,8 +96,20 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def base_url(self):
         return "{}/{}/{}/".format(
-            self.credential.endpoint, self.provider, self.environment
+            self.credential.endpoint, self.provider_volume, self.environment_volume
         )
+
+    @property
+    def environment_volume(self):
+        return "gcp-lab-dev"
+        # if self.database_migrating is not None:
+        #     return self.database_migrating.environment
+
+        # return self.environment
+
+    @property
+    def provider_volume(self):
+        return "gce"
 
     @property
     def headers(self):
