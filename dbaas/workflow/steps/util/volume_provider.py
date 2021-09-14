@@ -8,7 +8,7 @@ from workflow.steps.util.base import HostProviderClient
 from util import get_credentials_for
 from physical.models import Volume
 from base import BaseInstanceStep
-
+from maintenance.models import DatabaseMigrate
 
 class VolumeProviderException(Exception):
     pass
@@ -55,8 +55,14 @@ class VolumeProviderSnapshotHasWarningStatusError(VolumeProviderException):
 class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
+
 class VolumeProviderSnapshotHasErrorStatus(VolumeProviderException):
     pass
+
+
+class InvalidEnvironmentException(VolumeProviderException):
+    pass
+
 
 class VolumeProviderBase(BaseInstanceStep):
 
@@ -78,6 +84,20 @@ class VolumeProviderBase(BaseInstanceStep):
         return self._credential
 
     @property
+    def credential_volume(self):
+        if not self.infra.migration_in_progress:
+            return self.credential
+
+        return self.credential_by_env(self.environment_volume)
+
+    def credential_by_env(self, env=None):
+        if not env:
+            raise InvalidEnvironmentException()
+        return get_credentials_for(
+            env, CredentialType.VOLUME_PROVIDER
+        )
+
+    @property
     def volume(self):
         return self.host.volumes.get(is_active=True)
 
@@ -96,20 +116,27 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def base_url(self):
         return "{}/{}/{}/".format(
-            self.credential.endpoint, self.provider_volume, self.environment_volume
+            self.credential_volume.endpoint,
+            self.provider_volume,
+            self.environment_volume
         )
 
     @property
     def environment_volume(self):
-        return "gcp-lab-dev"
-        # if self.database_migrating is not None:
-        #     return self.database_migrating.environment
+        if not self.infra.migration_in_progress:
+            return self.environment
 
-        # return self.environment
+        migration = DatabaseMigrate.objects.filter(
+                     database=self.database).last()
+
+        return migration.environment
 
     @property
     def provider_volume(self):
-        return "gce"
+        if not self.infra.migration_in_progress:
+            return self.provider
+
+        return self.credential_volume.project
 
     @property
     def headers(self):
