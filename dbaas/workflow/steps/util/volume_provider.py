@@ -85,7 +85,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def credential_volume(self):
-        if not self.infra.migration_in_progress:
+        if not self.migration_in_progress:
             return self.credential
 
         return self.credential_by_env(self.environment_volume)
@@ -123,7 +123,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def environment_volume(self):
-        if not self.infra.migration_in_progress:
+        if not self.migration_in_progress:
             return self.environment
 
         migration = DatabaseMigrate.objects.filter(
@@ -133,10 +133,14 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def provider_volume(self):
-        if not self.infra.migration_in_progress:
+        if not self.migration_in_progress:
             return self.provider
 
         return self.credential_volume.project
+
+    @property
+    def migration_in_progress(self):
+        return self.infra.migration_in_progress
 
     @property
     def headers(self):
@@ -481,6 +485,18 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
     @property
     def environment(self):
         return self.infra.environment
+
+    @property
+    def environment_volume(self):
+        return self.environment
+
+    @property
+    def provider_volume(self):
+        return self.provider
+
+    @property
+    def credential_volume(self):
+        return self.credential
 
 
 class NewVolume(VolumeProviderBase):
@@ -927,6 +943,18 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
         return "Doing backup for copy..."
+
+    @property
+    def environment_volume(self):
+        return self.environment
+
+    @property
+    def provider_volume(self):
+        return self.provider
+
+    @property
+    def credential_volume(self):
+        return self.credential
 
     @property
     def is_database_migrate(self):
@@ -1561,6 +1589,18 @@ class RemovePubKeyMigrate(CreatePubKeyMigrate):
 
     def undo(self):
         self.create_pub_key()
+    
+    @property
+    def environment_volume(self):
+        return self.environment
+
+    @property
+    def provider_volume(self):
+        return self.provider
+
+    @property
+    def credential_volume(self):
+        return self.credential
 
 
 class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
@@ -1573,6 +1613,18 @@ class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
 
     def undo(self):
         self.add_hosts_allow()
+
+    @property
+    def environment_volume(self):
+        return self.environment
+
+    @property
+    def provider_volume(self):
+        return self.provider
+
+    @property
+    def credential_volume(self):
+        return self.credential
 
 
 class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
@@ -1933,6 +1985,18 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
     @property
     def environment(self):
         return self.infra.environment
+    
+    @property
+    def environment_volume(self):
+        return self.environment
+
+    @property
+    def provider_volume(self):
+        return self.provider
+
+    @property
+    def credential_volume(self):
+        return self.credential
 
     @property
     def host(self):
