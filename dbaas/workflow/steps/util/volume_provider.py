@@ -69,6 +69,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
         self._credential = None
+        self.force_environment = None
         self.host_prov_client = HostProviderClient(self.environment)
 
     @property
@@ -114,7 +115,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return self.credential.project
 
     @property
-    def base_url(self):
+    def base_uri(self):
         return "{}/{}/{}/".format(
             self.credential_volume.endpoint,
             self.provider_volume,
@@ -123,6 +124,9 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def environment_volume(self):
+        if self.force_environment is not None:
+            return self.force_environment
+
         if not self.migration_in_progress:
             return self.environment
 
@@ -167,7 +171,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None):
-        url = self.base_url + "volume/new"
+        url = self.base_uri + "volume/new"
 
         data = {
             "group": group,
@@ -198,14 +202,14 @@ class VolumeProviderBase(BaseInstanceStep):
         for snapshot in volume.backups.filter(purge_at__isnull=True):
             remove_snapshot_backup(snapshot, self)
 
-        url = "{}volume/{}".format(self.base_url, volume.identifier)
+        url = "{}volume/{}".format(self.base_uri, volume.identifier)
         response = delete(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
         volume.delete()
 
     def move_disk(self, volume, zone):
-        url = "{}move/{}".format(self.base_url, volume.identifier)
+        url = "{}move/{}".format(self.base_uri, volume.identifier)
         data = {
             'zone': zone
         }
@@ -217,7 +221,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def detach_disk(self, volume):
-        url = "{}detach/{}/".format(self.base_url, volume.identifier)
+        url = "{}detach/{}/".format(self.base_uri, volume.identifier)
         response = post(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -225,7 +229,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def attach_disk(self, volume):
-        url = "{}attach/{}/".format(self.base_url, volume.identifier)
+        url = "{}attach/{}/".format(self.base_uri, volume.identifier)
         data = {
             'host_vm': self.host_vm.name,
             'host_zone': self.host_vm.zone
@@ -236,7 +240,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def get_volume(self, volume):
-        url = "{}volume/{}".format(self.base_url, volume.identifier)
+        url = "{}volume/{}".format(self.base_uri, volume.identifier)
         response = get(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -266,7 +270,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return output
 
     def take_snapshot(self):
-        url = "{}snapshot/{}".format(self.base_url, self.volume.identifier)
+        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
@@ -279,8 +283,10 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def delete_snapshot(self, snapshot, force):
+        self.force_environment = snapshot.environment
+
         url = "{}snapshot/{}?force={}".format(
-            self.base_url,
+            self.base_uri,
             snapshot.snapshopt_id,
             force
         )
@@ -291,7 +297,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def restore_snapshot(self, snapshot, vm_name, vm_zone):
         url = "{}snapshot/{}/restore".format(
-            self.base_url, snapshot.snapshopt_id
+            self.base_uri, snapshot.snapshopt_id
         )
 
         data = {
@@ -308,7 +314,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def add_access(self, volume, host, access_type=None):
-        url = "{}access/{}".format(self.base_url, volume.identifier)
+        url = "{}access/{}".format(self.base_uri, volume.identifier)
         data = {
             "to_address": host.address
         }
@@ -321,7 +327,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def get_snapshot_state(self, snapshot):
         url = "{}snapshot/{}/state".format(
-            self.base_url, snapshot.snapshopt_id
+            self.base_uri, snapshot.snapshopt_id
         )
         response = get(url, headers=self.headers)
         if not response.ok:
@@ -335,7 +341,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()['command']
 
     def get_create_pub_key_command(self, host_ip):
-        url = "{}commands/create_pub_key".format(self.base_url)
+        url = "{}commands/create_pub_key".format(self.base_uri)
         return self._get_command(
             url,
             {'host_ip': host_ip},
@@ -343,7 +349,7 @@ class VolumeProviderBase(BaseInstanceStep):
         )
 
     def get_remove_pub_key_command(self, host_ip):
-        url = "{}commands/remove_pub_key".format(self.base_url)
+        url = "{}commands/remove_pub_key".format(self.base_uri)
         return self._get_command(
             url,
             {'host_ip': host_ip},
@@ -351,7 +357,7 @@ class VolumeProviderBase(BaseInstanceStep):
         )
 
     def get_add_hosts_allow_command(self, host_ip):
-        url = "{}commands/add_hosts_allow".format(self.base_url)
+        url = "{}commands/add_hosts_allow".format(self.base_uri)
         return self._get_command(
             url,
             {'host_ip': host_ip},
@@ -359,7 +365,7 @@ class VolumeProviderBase(BaseInstanceStep):
         )
 
     def get_remove_hosts_allow_command(self, host_ip):
-        url = "{}commands/remove_hosts_allow".format(self.base_url)
+        url = "{}commands/remove_hosts_allow".format(self.base_uri)
         return self._get_command(
             url,
             {'host_ip': host_ip},
@@ -367,7 +373,7 @@ class VolumeProviderBase(BaseInstanceStep):
         )
 
     def get_resize2fs_command(self, volume):
-        url = "{}commands/{}/resize2fs".format(self.base_url, volume.identifier)
+        url = "{}commands/{}/resize2fs".format(self.base_uri, volume.identifier)
         response = post(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -375,7 +381,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def remove_access(self, volume, host):
         url = "{}access/{}/{}".format(
-            self.base_url,
+            self.base_uri,
             volume.identifier,
             host.address
         )
@@ -385,7 +391,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def get_mount_command(self, volume, data_directory="/data", fstab=True):
-        url = "{}commands/{}/mount".format(self.base_url, volume.identifier)
+        url = "{}commands/{}/mount".format(self.base_uri, volume.identifier)
         data = {
             'with_fstab': fstab,
             'data_directory': data_directory,
@@ -400,7 +406,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def get_copy_files_command(self, snapshot, source_dir, dest_dir,
                                snap_dir=''):
         # snap = volume.backups.order_by('created_at').first()
-        url = "{}commands/copy_files".format(self.base_url)
+        url = "{}commands/copy_files".format(self.base_uri)
         data = {
             'snap_identifier': snapshot.snapshopt_id,
             'source_dir': source_dir,
@@ -415,7 +421,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def get_scp_from_snapshot_command(self, snapshot, source_dir, dest_ip,
                                       dest_dir):
         url = "{}snapshots/{}/commands/scp".format(
-            self.base_url,
+            self.base_uri,
             snapshot.snapshopt_id
         )
         data = {
@@ -434,7 +440,7 @@ class VolumeProviderBase(BaseInstanceStep):
     def get_rsync_from_snapshot_command(
          self, snapshot, source_dir, dest_ip, dest_dir):
         url = "{}snapshots/{}/commands/rsync".format(
-            self.base_url,
+            self.base_uri,
             snapshot.snapshopt_id
         )
         data = {
@@ -451,7 +457,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()['command']
 
     def get_umount_command(self, volume, data_directory="/data"):
-        url = "{}commands/{}/umount".format(self.base_url, volume.identifier)
+        url = "{}commands/{}/umount".format(self.base_uri, volume.identifier)
         data = {
             'data_directory': data_directory
         }
@@ -461,7 +467,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()['command']
 
     def clean_up(self, volume):
-        url = "{}commands/{}/cleanup".format(self.base_url, volume.identifier)
+        url = "{}commands/{}/cleanup".format(self.base_uri, volume.identifier)
         response = get(url, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -1314,7 +1320,7 @@ class ResizeVolume(VolumeProviderBase):
         if not self.instance.is_database:
             return
 
-        url = "{}resize/{}".format(self.base_url, self.volume.identifier)
+        url = "{}resize/{}".format(self.base_uri, self.volume.identifier)
         data = {
             "new_size_kb": self.infra.disk_offering.size_kb,
         }

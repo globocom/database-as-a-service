@@ -92,7 +92,8 @@ class BackupInfo(BaseModel):
     def create(cls, instance, group, volume):
         from maintenance.models import DatabaseMigrate
         environment = instance.databaseinfra.environment
-        if instance.databaseinfra.migration_in_progress:
+        if (instance.databaseinfra.migration_in_progress
+           and not instance.databaseinfra.databases.first().plan.is_ha):
             environment = DatabaseMigrate.objects.filter(
                             database=instance.databaseinfra.databases.first()
                           ).last().environment
