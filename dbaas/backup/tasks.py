@@ -88,14 +88,17 @@ def unlock_instance(driver, instance, client):
 def make_instance_snapshot_backup(instance, error, group,
                                   provider_class=VolumeProviderBase,
                                   target_volume=None,
-                                  current_hour=None):
+                                  current_hour=None,
+                                  environment=None):
     LOG.info("Make instance backup for {}".format(instance))
     provider = provider_class(instance)
     infra = instance.databaseinfra
     database = infra.databases.first()
 
     snapshot = Snapshot.create(
-        instance, group, target_volume or provider.volume
+        instance, group,
+        target_volume or provider.volume,
+        environment=environment
     )
 
     snapshot_final_status = Snapshot.SUCCESS

@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import exception
 from time import sleep
 
 from requests import post, delete, get
@@ -951,18 +952,6 @@ class TakeSnapshotMigrate(VolumeProviderBase):
         return "Doing backup for copy..."
 
     @property
-    def environment_volume(self):
-        return self.environment
-
-    @property
-    def provider_volume(self):
-        return self.provider
-
-    @property
-    def credential_volume(self):
-        return self.credential
-
-    @property
     def is_database_migrate(self):
         return self.host_migrate and self.host_migrate.database_migrate
 
@@ -982,10 +971,21 @@ class TakeSnapshotMigrate(VolumeProviderBase):
     def target_volume(self):
         return None
 
+    @property
+    def environment_volume(self):
+        if not self.migration_in_progress:
+            return self.environment
+
+        migration = DatabaseMigrate.objects.filter(
+                     database=self.database).last()
+
+        return migration.origin_environment
+
     def do(self):
         from backup.tasks import make_instance_snapshot_backup
         from backup.models import BackupGroup
-        if (self.database_migrate
+
+        if (self.database_migrate 
                 and self.database_migrate.host_migrate_snapshot):
             snapshot = self.database_migrate.host_migrate_snapshot
         else:
@@ -996,7 +996,8 @@ class TakeSnapshotMigrate(VolumeProviderBase):
                 {},
                 group,
                 provider_class=self.provider_class,
-                target_volume=self.target_volume
+                target_volume=self.target_volume,
+                environment=self.environment_volume
             )
 
             if not snapshot:
