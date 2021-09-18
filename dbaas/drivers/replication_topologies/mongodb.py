@@ -1069,9 +1069,6 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Wait replication': (
                 'workflow.steps.util.database.WaitForReplication',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
@@ -1119,9 +1116,6 @@ class MongoDBReplicaset(BaseMongoDB):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     def get_database_migrate_steps_stage_3(self):
@@ -1129,13 +1123,11 @@ class MongoDBReplicaset(BaseMongoDB):
             'Remove instance from replica set': (
                 'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetWithouUndo',
                 'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 

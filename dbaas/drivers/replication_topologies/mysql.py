@@ -1363,64 +1363,135 @@ class MySQLFoxHA(MySQLSingle):
             #    'workflow.steps.util.acl.ReplicateAclsMigrate',
             #    'workflow.steps.util.acl.BindNewInstance',
             #)}, {
-            'Start database and configure replication': (
+            'Start database and check access': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
-                #'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-                #'workflow.steps.util.infra.EnableFutureInstances',
-                #'workflow.steps.mongodb.database.SetFutureInstanceNotEligibleWithouUndo',
             )}, {
-
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
                 'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
-                'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate2',
-                'workflow.steps.util.volume_provider.CreatePubKeyMigrate2',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
                 'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
-                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrate2',
-                'workflow.steps.util.volume_provider.RemovePubKeyMigrate2',
-                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate2',
+                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.mysql.SetServeridMigrate',
                 'workflow.steps.util.mysql.SetFilePermission',
-                'workflow.steps.util.mysql.DisableReplication',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.mysql.SetReplicationLastInstanceMigrate',
-                'workflow.steps.util.mysql.EnableReplication',
-                'workflow.steps.util.base.BaseRaiseTestException2',
-
+                'workflow.steps.util.infra.EnableFutureInstances',
             )}, {
-
             'Creating VIP': (
                 'workflow.steps.util.vip_provider.CreateInstanceGroup',
-                'workflow.steps.util.base.BaseRaiseTestException',
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
-                #'workflow.steps.util.vip_provider.AllocateIP',
-                #'workflow.steps.util.vip_provider.AllocateDNS',
+                'workflow.steps.util.vip_provider.AllocateIPMigrate',                
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
-                'workflow.steps.util.base.BaseRaiseTestException',
-                #'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
-
-
-            #'Start telegraf and rsyslog': (
-            #    'workflow.steps.util.database.StartRsyslog',
-            #    'workflow.steps.util.metric_collector.RestartTelegraf',
-            #)}, {
+            'Start rsyslog': (
+                'workflow.steps.util.database.StartRsyslog',
+            )}, {
+            'Reconfigure FOX nodes': (
+                'workflow.steps.util.fox.MigrationAddNodeDestinyInstanceDisabled',
+            )}, {
             #'Wait replication': (
+            # TODO CHECK IF should use WaitForReplication or CheckReplicationDBMigrate
             #    'workflow.steps.util.database.WaitForReplication',
             #)}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
+            'Check Replication': (
+                'workflow.steps.util.mysql.CheckReplicationDBMigrate',
+        )}]
+
+    def get_database_migrate_steps_stage_2(self):
+        return [{
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+                'workflow.steps.util.mysql.DestroyAlarmsVipDatabaseMigrate',
+            )}, {
+            'Check Replication': (
+                'workflow.steps.util.mysql.CheckReplicationDBMigrate',
+            )}, {
+            'Set Instances Read Only': (
+                'workflow.steps.util.mysql.SetSourceInstancesReadOnlyMigrate',
+            )}, {
+            'Check Replication': (
+                'workflow.steps.util.mysql.CheckReplicationDBMigrate',
+            )}, {
+            'Reconfigure Replication': (
+                'workflow.steps.util.mysql.ReconfigureReplicationDBMigrate',
+            )}, {
+            'Check Replication': (
+                'workflow.steps.util.mysql.CheckReplicationDBMigrate',
+            )}, {
+            'Set Instance Read Write': (
+                'workflow.steps.util.mysql.SetFirstTargetInstanceReadWriteMigrate',
+            )}, {
+            'Reconfigure FOX nodes': (
+                'workflow.steps.util.fox.MigrationAddNodeSourceInstanceEnabledRollback',
+            )}, {
+            'Check DNS when Rollback': (
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.CheckVipDMSIsReadyDBMigrateRollback',
+            )}, {
+            'Update DNS': (
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.ChangeVipEndpointDBMigrate',
+                'workflow.steps.util.dns.ChangeInfraVipEndpointDBMigrate',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+                'workflow.steps.util.dns.CheckVipDNSIsReadyDBMigrate',
+            )}, {
+            'Reconfigure FOX group': (
+                'workflow.steps.util.fox.RecreateGroupDatabaseMigrate',
+            )}, {
+            'Reconfigure FOX nodes': (
+                'workflow.steps.util.fox.MigrationAddNodeDestinyInstanceEnabled',
+            )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
+            )}, {
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMasterDatabaseMigrate',
+                'workflow.steps.util.database.CheckIfSwitchMasterDatabaseMigrate',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.StartWithoutUndo',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.mysql.CreateAlarmsVip',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+        )}]
+
+    def get_database_migrate_steps_stage_3(self):
+        return [{
+            'Remove FOX source nodes': (
+                'workflow.steps.util.fox.MigrationRemoveNodeSourceInstance',
+            )}, {
+            'Remove Source VIP': (
+                'workflow.steps.util.vip_provider.DestroySourceVipDatabaseMigrate',
+            )}, {
+            'Raise test': (
+                'workflow.steps.util.base.BaseRaiseTestException2',
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )}]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
@@ -1967,7 +2038,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                  'UpdateBackendServiceMigrateRollback'),
                 'workflow.steps.util.vip_provider.AddInstancesInGroupRollback',
                 ('workflow.steps.util.vip_provider.'
-                 'CreateInstanceGroupRollback'),
+                 'UpdateInstanceGroupRollback'),
             )}, {
             'Configure if rollback': (
                 'workflow.steps.util.plan.ConfigureLogRollback',
@@ -1995,7 +2066,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
             'Reconfigure FOX': (
-                'workflow.steps.util.vip_provider.CreateInstanceGroupWithoutRollback',
+                'workflow.steps.util.vip_provider.UpdateInstanceGroupWithoutRollback',
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.UpdateBackendServiceMigrate',
                 ('workflow.steps.util.vip_provider.'
