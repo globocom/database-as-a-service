@@ -969,13 +969,10 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.redis.cluster.AddSlaveNode',
                 'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceNotEligible',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
-            )}, {
+            #)}, {
             #'Wait replication': (
             ## RICK TODO REVIEW
             #    'workflow.steps.util.database.WaitForReplication',
-            #)}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     # RedisCluster

@@ -1484,9 +1484,6 @@ class MySQLFoxHA(MySQLSingle):
             'Remove Source VIP': (
                 'workflow.steps.util.vip_provider.DestroySourceVipDatabaseMigrate',
             )}, {
-            'Raise test': (
-                'workflow.steps.util.base.BaseRaiseTestException2',
-            )}, {
             'Cleaning up': (
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
