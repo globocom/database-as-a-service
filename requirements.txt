@@ -57,7 +57,8 @@ django-filter==0.9.1
 dbaas-aclapi==1.0.2
 dbaas_dnsapi==1.0.6
 dbaas_foreman==0.1.8
-dbaas_foxha==0.2.8
+dbaas_foxha==0.3.0
+foxha==0.9.3
 GloboNetworkAPI==0.6.24
 Dex==0.6
 click==3.3
