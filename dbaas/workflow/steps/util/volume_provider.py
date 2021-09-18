@@ -1473,7 +1473,7 @@ class AddHostsAllowDatabaseMigrate(AddHostsAllowMigrate):
         ).first().hostname
 
 
-class AddHostsAllowDatabaseMigrate2(AddHostsAllowMigrate):
+class AddHostsAllowMigrateBackupHost(AddHostsAllowMigrate):
     @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:
@@ -1525,7 +1525,7 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         self.remove_pub_key()
 
 
-class CreatePubKeyMigrate2(CreatePubKeyMigrate):
+class CreatePubKeyMigrateBackupHost(CreatePubKeyMigrate):
     @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:
@@ -1550,7 +1550,7 @@ class RemovePubKeyMigrate(CreatePubKeyMigrate):
         self.create_pub_key()
 
 
-class RemovePubKeyMigrate2(RemovePubKeyMigrate, CreatePubKeyMigrate2):
+class RemovePubKeyMigrateHostMigrate(RemovePubKeyMigrate, CreatePubKeyMigrateBackupHost):
     pass
 
 
@@ -1566,7 +1566,7 @@ class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
         self.add_hosts_allow()
 
 
-class RemoveHostsAllowMigrate2(RemoveHostsAllowMigrate, AddHostsAllowDatabaseMigrate2):
+class RemoveHostsAllowMigrateBackupHost(RemoveHostsAllowMigrate, AddHostsAllowMigrateBackupHost):
     pass
 
 
@@ -1952,7 +1952,7 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
         pass
 
 
-class RsyncFromSnapshotMigrate2(RsyncFromSnapshotMigrate):
+class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
     @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:

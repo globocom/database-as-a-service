@@ -197,6 +197,10 @@ class Start(DatabaseStep):
         self.undo_klass(self.instance).do()
 
 
+class StartWithoutUndo(Start):
+    def undo(self):
+        pass
+
 class StartCheckOnlyOsProcess(Start):
     def do(self):
         if not self.is_valid:
@@ -394,7 +398,7 @@ class CheckIfSwitchMaster(DatabaseStep):
     def is_valid(self):
         return self.infra.plan.is_ha
 
-    def do(self):
+    def check_switch_master(self, instance):
         if not self.is_valid:
             return
 
@@ -402,9 +406,9 @@ class CheckIfSwitchMaster(DatabaseStep):
         for _ in range(CHECK_ATTEMPTS):
             master = self.driver.get_master_instance()
             if isinstance(master, list):
-                if self.instance not in master:
+                if instance not in master:
                     return
-            elif master and (master != self.instance):
+            elif master and (master != instance):
                 return
             sleep(CHECK_SECONDS)
 
@@ -412,6 +416,14 @@ class CheckIfSwitchMaster(DatabaseStep):
             raise EnvironmentError('The instance is still master.')
         else:
             raise EnvironmentError('There is no master for this infra.')
+
+    def do(self):
+        self.check_switch_master(self.instance)
+
+
+class CheckIfSwitchMasterDatabaseMigrate(CheckIfSwitchMaster):
+    def do(self):
+        self.check_switch_master(self.instance.future_instance)
 
 
 class CheckIfSwitchMasterRollback(CheckIfSwitchMaster):
