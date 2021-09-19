@@ -94,6 +94,8 @@ def make_instance_snapshot_backup(instance, error, group,
     provider = provider_class(instance)
     infra = instance.databaseinfra
     database = infra.databases.first()
+    if environment is None:
+        environment = instance.databaseinfra.environment
 
     snapshot = Snapshot.create(
         instance, group,

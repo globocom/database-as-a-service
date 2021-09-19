@@ -131,10 +131,7 @@ class VolumeProviderBase(BaseInstanceStep):
         if not self.migration_in_progress:
             return self.environment
 
-        migration = DatabaseMigrate.objects.filter(
-                     database=self.database).last()
-
-        return migration.environment
+        return self.instance.databaseinfra.environment
 
     @property
     def provider_volume(self):
