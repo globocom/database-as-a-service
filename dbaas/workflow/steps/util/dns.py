@@ -2,6 +2,8 @@ from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.models import HOST, INSTANCE, FOXHA, DatabaseInfraDNSList
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
+from django.core.exceptions import ObjectDoesNotExist
+from physical.models import Vip
 from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
 import socket
@@ -25,6 +27,25 @@ class DNSStep(BaseInstanceStep):
     @property
     def credentials(self):
         return get_credentials_for(self.environment, CredentialType.DNSAPI)
+
+    '''
+    @property
+    def origin_vip(self):
+        try:
+            return Vip.objects.get(infra=self.infra, original_vip=None)
+        except ObjectDoesNotExist:
+            return None
+
+    @property
+    def destiny_vip(self):
+        try:
+            return Vip.objects.get(
+                infra=self.infra,
+                original_vip=self.origin_vip
+            )
+        except ObjectDoesNotExist:
+            return None
+    '''
 
     def do(self):
         raise NotImplementedError
@@ -126,23 +147,72 @@ class ChangeEndpointDBMigrate(DNSStep):
         destiny_instance.save()
         if self.instance.id == origin_instance.id:
             self.instance.dns = origin_instance.dns
-
         if self.instance.id == destiny_instance.id:
             self.instance.dns = destiny_instance.dns
+        if self.instance.future_instance.id == origin_instance.id:
+            self.instance.future_instance.dns = origin_instance.dns
+        if self.instance.future_instance.id == destiny_instance.id:
+            self.instance.future_instance.dns = destiny_instance.dns
 
-    def update_vip_dns(self, origin_vip, destiny_vip):
-        pass
 
     def do(self):
         self.update_host_dns(self.instance.hostname, self.host)
         for instance in self.instance.hostname.instances.all():
             self.update_instance_dns(instance, instance.future_instance)
-        #self.update_vip_dns(old_vip, new_vip)
+
     def undo(self):
         self.update_host_dns(self.host, self.instance.hostname)
         for instance in self.instance.hostname.instances.all():
             self.update_instance_dns(instance.future_instance, instance)
-        #self.update_vip_dns(new_vip, old_vip)
+
+
+class ChangeVipEndpointDBMigrate(DNSStep):
+
+    def __unicode__(self):
+        return "Changing VIP DNS endpoint..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def update_vip_dns(self, origin_vip, destiny_vip):
+        if origin_vip and destiny_vip:
+            vip_dns = self.infra.endpoint_dns.split(':')[0]
+            DNSAPIProvider.update_database_dns_content(
+                self.infra, vip_dns,
+                origin_vip.vip_ip, destiny_vip.vip_ip
+            )
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.update_vip_dns(self.vip, self.future_vip)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        self.update_vip_dns(self.future_vip, self.vip)
+
+
+class ChangeInfraVipEndpointDBMigrate(ChangeVipEndpointDBMigrate):
+    def __unicode__(self):
+        return "Changing databaseinfra VIP endpoint..."
+
+    def do(self):
+        #if not self.is_valid:
+        #    return
+        self.infra.endpoint = self.infra.endpoint.replace(
+            self.vip.vip_ip, self.future_vip.vip_ip
+        )
+        self.infra.save()
+
+    def undo(self):
+        #if not self.is_valid:
+        #    return
+        self.infra.endpoint = self.infra.endpoint.replace(
+            self.future_vip.vip_ip, self.vip.vip_ip
+        )
+        self.infra.save()
 
 
 class UpdateDNS(DNSStep):
@@ -337,7 +407,7 @@ class CheckIsReady(DNSStep):
         for instance in self.instance.hostname.instances.all():
             self._check_dns_for(instance.dns, self.host.address)
 
-
+'''
 class CheckVipIsReady(CheckIsReady):
 
     def __unicode__(self):
@@ -350,6 +420,8 @@ class CheckVipIsReady(CheckIsReady):
             self.infra.endpoint_dns.split(":")[0],
             self.future_vip.vip_ip
         )
+'''
+
 
 class CheckIsReadyDBMigrate(CheckIsReady):
 
@@ -360,10 +432,10 @@ class CheckIsReadyDBMigrate(CheckIsReady):
         for instance in self.instance.hostname.instances.all():
             future_instance = instance.future_instance
             self._check_dns_for(future_instance.dns, future_instance.address)
-        #self._check_dns_for(newvip.dns, newvip.address)
 
     def undo(self):
         pass
+
 
 class CheckIsReadyDBMigrateRollback(CheckIsReady):
 
@@ -379,4 +451,34 @@ class CheckIsReadyDBMigrateRollback(CheckIsReady):
         )
         for instance in self.instance.hostname.instances.all():
             self._check_dns_for(instance.dns, instance.address)
-        #self._check_dns_for(oldvip.dns, oldvip.address)
+
+
+class CheckVipDNSIsReadyDBMigrate(CheckIsReady):
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    @property
+    def vip_dns(self):
+        return self.infra.endpoint_dns.split(':')[0]
+
+    def do(self):
+        if not self.is_valid or not self.must_check:
+            return
+
+        self._check_dns_for(self.vip_dns, self.future_vip.vip_ip)
+
+    def undo(self):
+        pass
+
+
+class CheckVipDMSIsReadyDBMigrateRollback(CheckVipDNSIsReadyDBMigrate):
+    def do(self):
+        pass
+
+    def undo(self):
+        if not self.is_valid or not self.must_check:
+            return
+
+        self._check_dns_for(self.vip_dns, self.vip.vip_ip)

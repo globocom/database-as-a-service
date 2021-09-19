@@ -30,7 +30,9 @@ class BaseInstanceStep(object):
 
     def __init__(self, instance):
         self.instance = instance
+        #self._vip = None
         self._vip = None
+        self._future_vip = None
         self._driver = None
         self._credential = None
 
@@ -201,11 +203,17 @@ class BaseInstanceStep(object):
 
     @property
     def vip(self):
-        if self._vip:
-            return self._vip
-        vip_identifier = Vip.objects.get(infra=self.infra).identifier
-        self._vip = self._get_vip(vip_identifier, self.infra.environment)
+        if self._vip is None:
+            self._vip = Vip.objects.get(infra=self.infra, original_vip=None)
+            vip_provider = self._get_vip(self._vip.identifier, self.infra.environment)
+            if vip_provider.dscp:
+                self._vip.dscp = vip_provider.dscp
         return self._vip
+        #if self._vip:
+        #    return self._vip
+        #vip_identifier = Vip.objects.get(infra=self.infra).identifier
+        #self._vip = self._get_vip(vip_identifier, self.infra.environment)
+        #return self._vip
 
     @vip.setter
     def vip(self, vip):
@@ -213,12 +221,22 @@ class BaseInstanceStep(object):
 
     @property
     def future_vip(self):
-        original_vip = Vip.objects.get(infra=self.infra)
-        future_vip_identifier = Vip.original_objects.get(
-            infra=self.infra,
-            original_vip=original_vip
-        ).identifier
-        return self._get_vip(future_vip_identifier, self.environment)
+        if self._future_vip is None:
+            self._future_vip = Vip.objects.get(
+                infra=self.infra,
+                original_vip=self.vip
+            )
+            vip_provider = self._get_vip(self._future_vip.identifier, self.environment)
+            if vip_provider.dscp:
+                self._future_vip.dscp = vip_provider.dscp
+
+        return self._future_vip
+        #original_vip = Vip.objects.get(infra=self.infra)
+        #future_vip_identifier = Vip.original_objects.get(
+        #    infra=self.infra,
+        #    original_vip=original_vip
+        #).identifier
+        #return self._get_vip(future_vip_identifier, self.environment)
 
     def __is_instance_status(self, expected, attempts=None):
         if self.host_migrate and self.instance.hostname.future_host:
@@ -560,6 +578,18 @@ class ACLFromHellClient(object):
         return None
 
 class BaseRaiseTestException(BaseInstanceStep):
+    def __unicode__(self):
+        return "Raise a test exception..."
+
+    def do(self):
+        #return True
+        raise Exception('Test exception!')
+
+    def undo(self):
+        pass
+
+
+class BaseRaiseTestException2(BaseInstanceStep):
     def __unicode__(self):
         return "Raise a test exception..."
 
