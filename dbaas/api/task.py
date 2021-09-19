@@ -106,7 +106,6 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     chg_tasks_names = [
         'notification.tasks.destroy_database',
         'notification.tasks.create_database',
-        'notification.tasks.destroy_database',
         'notification.tasks.resize_database',
         'notification.tasks.clone_database',
         'notification.tasks.database_disk_resize',

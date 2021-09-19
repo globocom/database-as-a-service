@@ -210,3 +210,155 @@ class IsReplicationOkRollback(IsReplicationOk):
 
     def undo(self):
         return super(IsReplicationOkRollback, self).do()
+
+
+'''
+class ConfigureNodes(FoxHA):
+    def __unicode__(self):
+        return "Configuring FoxHA nodes..."
+
+    @property
+    def mode(self):
+        if self.instance == self.infra.instances.first():
+            return 'read_write'
+        else:
+            return 'read_only'
+
+    @property
+    def instance_dns(self):
+        if self.instance.dns == self.instance.address:
+            return self.instance.future_instance.dns
+        return self.instance.dns
+
+    def add_node(self, instance):
+        self.provider.add_node(
+            self.infra.name, self.instance_dns,
+            instance.address, instance.port, self.mode, 'enabled'
+        )
+
+    def add_node2(self, name, instance, mode, status):
+        self.provider.add_node(
+            self.infra.name, name, instance.address,
+            instance.port, mode, status
+        )
+
+    def delete_node(self, instance):
+        self.provider.delete_node(self.infra.name, instance.address)
+
+
+
+class AddTargetNodeDatabaseMigrate(ConfigureNodes):
+    def __unicode__(self):
+        return "Adding FoxHA node..."
+
+    def do(self):
+        self.add_node(self.instance.future_instance)
+
+    def undo(self):
+        self.delete_node(self.instance.future_instance)
+
+
+class RemoveSourceNodeDatabaseMigrate(ConfigureNodes):
+
+    def __unicode__(self):
+        return "Removing FoxHA node..."
+
+    def do(self):
+        self.delete_node(self.instance)
+
+    def undo(self):
+        self.add_node(self.instance)
+'''
+
+class RecreateGroupDatabaseMigrate(FoxHA):
+
+    def __unicode__(self):
+        return "Reconfiguring FoxHA group..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def add_group(self, vip):
+        self.provider.add_group(
+            self.infra.name, self.infra.name, vip.vip_ip,
+            self.mysql_fox_credentials.user,
+            str(self.mysql_fox_credentials.password),
+            self.mysql_replica_credentials.user,
+            str(self.mysql_replica_credentials.password)
+        )
+
+    def delete_group(self):
+        self.provider.delete_group(self.infra.name)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.delete_group()
+        self.add_group(self.future_vip)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        self.delete_group()
+        self.add_group(self.vip)
+
+
+class ConfigureNodes(FoxHA):
+    def __unicode__(self):
+        return "Configuring FoxHA nodes..."
+
+    @property
+    def mode(self):
+        if self.instance == self.infra.instances.first():
+            return 'read_write'
+        else:
+            return 'read_only'
+
+    def add_node(self, instance, mode, status):
+        self.provider.add_node(
+            self.infra.name, instance.dns, instance.address,
+            instance.port, mode, status
+        )
+
+    def delete_node(self, instance):
+        self.provider.delete_node(self.infra.name, instance.address)
+
+
+class MigrationAddNodeDestinyInstanceDisabled(ConfigureNodes):
+
+    def do(self):
+        self.add_node(self.instance.future_instance, 'read_only', 'disabled')
+
+    def undo(self):
+        self.delete_node(self.instance.future_instance)
+
+
+class MigrationAddNodeSourceInstanceEnabledRollback(ConfigureNodes):
+
+    def do(self):
+        self.delete_node(self.instance.future_instance)
+        self.delete_node(self.instance)
+
+    def undo(self):
+        self.add_node(self.instance, self.mode, 'enabled')
+        self.add_node(self.instance.future_instance, 'read_only', 'disabled')
+
+
+class MigrationAddNodeDestinyInstanceEnabled(ConfigureNodes):
+
+    def do(self):
+        self.add_node(self.instance.future_instance, self.mode, 'enabled')
+        self.add_node(self.instance, 'read_only', 'disabled')
+    def undo(self):
+        self.delete_node(self.instance.future_instance)
+        self.delete_node(self.instance)
+
+
+class MigrationRemoveNodeSourceInstance(ConfigureNodes):
+
+    def do(self):
+        self.delete_node(self.instance)
+
+    def undo(self):
+        raise NotImplementedError

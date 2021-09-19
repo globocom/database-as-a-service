@@ -1544,6 +1544,19 @@ class AddHostsAllowDatabaseMigrate(AddHostsAllowMigrate):
         ).first().hostname
 
 
+class AddHostsAllowMigrateBackupHost(AddHostsAllowMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def original_host(self):
+        return self.snapshot.instance.hostname
+
+
 class CreatePubKeyMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -1583,6 +1596,19 @@ class CreatePubKeyMigrate(VolumeProviderBase):
         self.remove_pub_key()
 
 
+class CreatePubKeyMigrateBackupHost(CreatePubKeyMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def original_host(self):
+        return self.snapshot.instance.hostname
+
+
 class RemovePubKeyMigrate(CreatePubKeyMigrate):
 
     def __unicode__(self):
@@ -1607,6 +1633,10 @@ class RemovePubKeyMigrate(CreatePubKeyMigrate):
         return self.credential
 
 
+class RemovePubKeyMigrateHostMigrate(RemovePubKeyMigrate, CreatePubKeyMigrateBackupHost):
+    pass
+
+
 class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
 
     def __unicode__(self):
@@ -1629,6 +1659,10 @@ class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
     @property
     def credential_volume(self):
         return self.credential
+
+
+class RemoveHostsAllowMigrateBackupHost(RemoveHostsAllowMigrate, AddHostsAllowMigrateBackupHost):
+    pass
 
 
 class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
@@ -1973,6 +2007,7 @@ class DetachDataVolumeRecreateSlave(AttachDataVolumeRecreateSlave):
         if self.is_database_instance:
             super(DetachDataVolumeRecreateSlave, self).do()
 
+
 class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -2022,3 +2057,16 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.host_migrate_snapshot
+        else:
+            return self.step_manager.snapshot
+
+    @property
+    def host(self):
+        return self.snapshot.instance.hostname
