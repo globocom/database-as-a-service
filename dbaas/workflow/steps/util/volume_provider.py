@@ -70,7 +70,6 @@ class VolumeProviderBase(BaseInstanceStep):
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
         self._credential = None
-        self.force_environment = None
         self.host_prov_client = HostProviderClient(self.environment)
 
     @property
@@ -118,20 +117,10 @@ class VolumeProviderBase(BaseInstanceStep):
     @property
     def base_uri(self):
         return "{}/{}/{}/".format(
-            self.credential_volume.endpoint,
-            self.provider_volume,
-            self.environment_volume
+            self.credential.endpoint,
+            self.provider,
+            self.environment
         )
-
-    @property
-    def environment_volume(self):
-        if self.force_environment is not None:
-            return self.force_environment
-
-        if not self.migration_in_progress:
-            return self.environment
-
-        return self.instance.databaseinfra.environment
 
     @property
     def provider_volume(self):
@@ -490,17 +479,6 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
     def environment(self):
         return self.infra.environment
 
-    @property
-    def environment_volume(self):
-        return self.environment
-
-    @property
-    def provider_volume(self):
-        return self.provider
-
-    @property
-    def credential_volume(self):
-        return self.credential
 
 
 class NewVolume(VolumeProviderBase):
@@ -994,7 +972,7 @@ class TakeSnapshotMigrate(VolumeProviderBase):
                 group,
                 provider_class=self.provider_class,
                 target_volume=self.target_volume,
-                environment=self.environment_volume
+                environment=self.environment
             )
 
             if not snapshot:
@@ -1619,19 +1597,6 @@ class RemovePubKeyMigrate(CreatePubKeyMigrate):
 
     def undo(self):
         self.create_pub_key()
-    
-    @property
-    def environment_volume(self):
-        return self.environment
-
-    @property
-    def provider_volume(self):
-        return self.provider
-
-    @property
-    def credential_volume(self):
-        return self.credential
-
 
 class RemovePubKeyMigrateHostMigrate(RemovePubKeyMigrate, CreatePubKeyMigrateBackupHost):
     pass
@@ -1647,19 +1612,6 @@ class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
 
     def undo(self):
         self.add_hosts_allow()
-
-    @property
-    def environment_volume(self):
-        return self.environment
-
-    @property
-    def provider_volume(self):
-        return self.provider
-
-    @property
-    def credential_volume(self):
-        return self.credential
-
 
 class RemoveHostsAllowMigrateBackupHost(RemoveHostsAllowMigrate, AddHostsAllowMigrateBackupHost):
     pass
@@ -2024,18 +1976,6 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
     @property
     def environment(self):
         return self.infra.environment
-    
-    @property
-    def environment_volume(self):
-        return self.environment
-
-    @property
-    def provider_volume(self):
-        return self.provider
-
-    @property
-    def credential_volume(self):
-        return self.credential
 
     @property
     def host(self):
@@ -2070,3 +2010,26 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
     @property
     def host(self):
         return self.snapshot.instance.hostname
+
+
+class VolumeProviderSnapshot(VolumeProviderBase):
+    def __init__(self, instance):
+        self.force_environment = None
+        super(VolumeProviderSnapshot, self).__init__(instance)
+
+    @property
+    def environment(self):
+        if self.force_environment is not None:
+            return self.force_environment
+
+        if not self.migration_in_progress:
+            return self.environment
+
+        # return self.instance.databaseinfra.environment
+        migration = DatabaseMigrate.objects.filter(
+                     database=self.database).last()
+
+        return migration.environment
+
+    # def take_snapshot(self):
+    #     raise Exception("AAAA")

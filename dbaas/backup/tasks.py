@@ -9,7 +9,7 @@ from notification.models import TaskHistory
 from physical.models import DatabaseInfra, Environment, Volume
 from system.models import Configuration
 from util.decorators import only_one
-from workflow.steps.util.volume_provider import VolumeProviderBase
+from workflow.steps.util.volume_provider import VolumeProviderSnapshot
 from models import Snapshot, BackupGroup
 from util import (get_worker_name, get_credentials_for,
                   GetCredentialException)
@@ -86,7 +86,7 @@ def unlock_instance(driver, instance, client):
 
 
 def make_instance_snapshot_backup(instance, error, group,
-                                  provider_class=VolumeProviderBase,
+                                  provider_class=VolumeProviderSnapshot,
                                   target_volume=None,
                                   current_hour=None,
                                   environment=None):
@@ -360,7 +360,7 @@ def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
         LOG.info("Removing backup for {}".format(snapshot))
 
         if not provider:
-            provider = VolumeProviderBase(snapshot.instance)
+            provider = VolumeProviderSnapshot(snapshot.instance)
         removed = provider.delete_snapshot(snapshot, force=force)
         if removed:
             snapshot.purge_at = datetime.now()
@@ -456,7 +456,7 @@ def purge_unused_exports(task=None):
         if task:
             task.add_detail('Removing: {}'.format(volume), level=2)
 
-        provider = VolumeProviderBase(volume.host.instances.first())
+        provider = VolumeProviderSnapshot(volume.host.instances.first())
         try:
             if task:
                 task.add_detail('Add access...', level=3)
