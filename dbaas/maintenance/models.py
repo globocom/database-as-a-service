@@ -1011,6 +1011,13 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
             self.database, self.environment, self.migration_stage
         )
 
+    def get_current_environment(self):
+        if all([self.migration_stage > self.NOT_STARTED,
+                self.status != self.SUCCESS]):
+            return self.origin_environment
+
+        return self.environment
+
 
 class HostMigrate(DatabaseMaintenanceTask):
     task = models.ForeignKey(

@@ -93,12 +93,9 @@ class BackupInfo(BaseModel):
         from maintenance.models import DatabaseMigrate
 
         if environment is None:
-            environment = instance.databaseinfra.environment
-            if (instance.databaseinfra.migration_in_progress
-               and not instance.databaseinfra.databases.first().plan.is_ha):
-                environment = DatabaseMigrate.objects.filter(
-                            database=instance.databaseinfra.databases.first()
-                ).last().environment
+            environment = DatabaseMigrate.objects.filter(
+                        database=instance.databaseinfra.databases.first()
+            ).last().get_current_environment()
 
         snapshot = cls()
         snapshot.start_at = datetime.now()
