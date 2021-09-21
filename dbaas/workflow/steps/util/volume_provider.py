@@ -86,20 +86,6 @@ class VolumeProviderBase(BaseInstanceStep):
         return self._credential
 
     @property
-    def credential_volume(self):
-        if not self.migration_in_progress:
-            return self.credential
-
-        return self.credential_by_env(self.environment_volume)
-
-    def credential_by_env(self, env=None):
-        if not env:
-            raise InvalidEnvironmentException()
-        return get_credentials_for(
-            env, CredentialType.VOLUME_PROVIDER
-        )
-
-    @property
     def volume(self):
         return self.host.volumes.get(is_active=True)
 
@@ -122,13 +108,6 @@ class VolumeProviderBase(BaseInstanceStep):
             self.provider,
             self.environment
         )
-
-    @property
-    def provider_volume(self):
-        if not self.migration_in_progress:
-            return self.provider
-
-        return self.credential_volume.project
 
     @property
     def migration_in_progress(self):
@@ -2003,6 +1982,18 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
 
 
 class VolumeProviderSnapshot(VolumeProviderBase):
+
+    @property
+    def credential(self):
+        if self.force_environment is not None:
+            return self.credential_by_env(self.force_environment)
+
+        return super(VolumeProviderSnapshot, self).credential
+
+    def credential_by_env(self, env=None):
+        return get_credentials_for(
+            env, CredentialType.VOLUME_PROVIDER
+        )
 
     @property
     def environment(self):

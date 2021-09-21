@@ -1020,14 +1020,13 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
             return self.environment
 
         if instance:
-            if instance.dns == instance.address:
-                if self.migration_stage > self.STAGE_1:
+            if self.migration_stage > self.STAGE_1:
+                if instance.dns == instance.address:
                     return self.origin_environment
                 return self.environment
-            else:
-                if self.migration_stage > self.STAGE_1:
-                    return self.environment
-                return self.origin_environment
+            if instance.dns == instance.address:
+                return self.environment
+            return self.origin_environment
 
         return self.environment
 
