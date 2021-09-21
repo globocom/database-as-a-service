@@ -85,6 +85,14 @@ class VolumeProviderBase(BaseInstanceStep):
             )
         return self._credential
 
+    def credential_by_env(self, env=None):
+        if not env:
+            return self.credential
+
+        return get_credentials_for(
+            env, CredentialType.VOLUME_PROVIDER
+        )
+
     @property
     def volume(self):
         return self.host.volumes.get(is_active=True)
@@ -1706,6 +1714,13 @@ class DestroyOldEnvironment(VolumeProviderBase):
         return self.infra.environment
 
     @property
+    def credential(self):
+        if self.force_environment is not None:
+            return self.credential_by_env(self.force_environment)
+
+        return super(DestroyOldEnvironment, self).credential
+
+    @property
     def host(self):
         return self.instance.hostname
 
@@ -1995,11 +2010,6 @@ class VolumeProviderSnapshot(VolumeProviderBase):
             return self.credential_by_env(self.force_environment)
 
         return super(VolumeProviderSnapshot, self).credential
-
-    def credential_by_env(self, env=None):
-        return get_credentials_for(
-            env, CredentialType.VOLUME_PROVIDER
-        )
 
     @property
     def environment(self):
