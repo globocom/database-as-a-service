@@ -1055,13 +1055,28 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
                 'workflow.steps.util.acl.BindNewInstance',
             )}, {
-            'Start database and configure replication': (
+            'Check Access': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Configure replication': (
                 'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-                'workflow.steps.util.infra.EnableFutureInstances',
                 'workflow.steps.mongodb.database.SetFutureInstanceNotEligibleWithouUndo',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrateAllInstances',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.base.BaseRaiseTestException2',
             )}, {
             'Start telegraf and rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',
