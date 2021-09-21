@@ -103,7 +103,8 @@ class CreateSnapshotTestCase(BaseTestCase):
         create_mock.assert_called_with(
             self.instance,
             self.group,
-            self.volume
+            self.volume,
+            self.dev_env
         )
 
 
