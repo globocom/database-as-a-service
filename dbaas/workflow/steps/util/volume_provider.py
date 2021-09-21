@@ -67,8 +67,9 @@ class InvalidEnvironmentException(VolumeProviderException):
 
 class VolumeProviderBase(BaseInstanceStep):
 
-    def __init__(self, instance):
+    def __init__(self, instance, force_environment=None):
         super(VolumeProviderBase, self).__init__(instance)
+        self.force_environment = force_environment
         self._credential = None
         self.host_prov_client = HostProviderClient(self.environment)
 
@@ -2002,9 +2003,6 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
 
 
 class VolumeProviderSnapshot(VolumeProviderBase):
-    def __init__(self, instance):
-        self.force_environment = None
-        super(VolumeProviderSnapshot, self).__init__(instance)
 
     @property
     def environment(self):
@@ -2014,10 +2012,6 @@ class VolumeProviderSnapshot(VolumeProviderBase):
         if not self.migration_in_progress:
             return super(VolumeProviderSnapshot, self).environment
 
-        # return self.instance.databaseinfra.environment
         migration = DatabaseMigrate.objects.filter(
                      database=self.database).last()
-        return migration.get_current_environment()
-
-    # def take_snapshot(self):
-    #     raise Exception("AAAA")
+        return migration.get_current_environment(instance=self.instance)

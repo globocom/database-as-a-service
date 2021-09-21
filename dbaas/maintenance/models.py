@@ -1011,13 +1011,32 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
             self.database, self.environment, self.migration_stage
         )
 
-    def get_current_environment(self):
-        if all([self.database.infra.migration_in_progress,
-                self.migration_stage > self.NOT_STARTED,
-                self.status != self.SUCCESS]):
+    def get_current_environment(self, instance=None):
+        if self.migration_is_running:
             return self.origin_environment
 
+        if not self.database.plan.is_ha\
+           or not self.database.infra.migration_in_progress:
+            return self.environment
+
+        if instance:
+            if instance.dns == instance.address:
+                if self.migration_stage > self.STAGE_1:
+                    return self.origin_environment
+                return self.environment
+            else:
+                if self.migration_stage > self.STAGE_1:
+                    return self.environment
+                return self.origin_environment
+
         return self.environment
+
+    @property
+    def migration_is_running(self):
+        ''' return true if migration is started and running '''
+        return all([self.database.infra.migration_in_progress,
+                    self.migration_stage > self.NOT_STARTED,
+                    self.status != self.SUCCESS])
 
 
 class HostMigrate(DatabaseMaintenanceTask):

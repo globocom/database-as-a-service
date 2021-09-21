@@ -99,6 +99,7 @@ def make_instance_snapshot_backup(instance, error, group,
         target_volume or provider.volume,
         environment=provider.environment
     )
+
     snapshot_final_status = Snapshot.SUCCESS
     locked = None
     driver = infra.get_driver()
@@ -352,11 +353,11 @@ def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
 
         if snapshot.purge_at:
             continue
-
         LOG.info("Removing backup for {}".format(snapshot))
 
         if not provider:
-            provider = VolumeProviderSnapshot(snapshot.instance)
+            provider = VolumeProviderSnapshot(
+                snapshot.instance, force_environment=snapshot.environment)
         removed = provider.delete_snapshot(snapshot, force=force)
         if removed:
             snapshot.purge_at = datetime.now()
