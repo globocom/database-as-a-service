@@ -437,7 +437,8 @@ class BaseTopology(object):
                 'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
-                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
+                #'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
             )}, {
