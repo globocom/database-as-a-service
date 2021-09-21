@@ -1012,7 +1012,8 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         )
 
     def get_current_environment(self):
-        if all([self.migration_stage > self.NOT_STARTED,
+        if all([self.database.infra.migration_in_progress,
+                self.migration_stage > self.NOT_STARTED,
                 self.status != self.SUCCESS]):
             return self.origin_environment
 

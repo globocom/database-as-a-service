@@ -90,12 +90,8 @@ class BackupInfo(BaseModel):
 
     @classmethod
     def create(cls, instance, group, volume, environment=None):
-        from maintenance.models import DatabaseMigrate
-
         if environment is None:
-            environment = DatabaseMigrate.objects.filter(
-                        database=instance.databaseinfra.databases.first()
-            ).last().get_current_environment()
+            environment = instance.databaseinfra.databases.first().environment
 
         snapshot = cls()
         snapshot.start_at = datetime.now()

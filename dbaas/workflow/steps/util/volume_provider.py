@@ -927,6 +927,10 @@ class TakeSnapshotMigrate(VolumeProviderBase):
         return "Doing backup for copy..."
 
     @property
+    def provider_class(self):
+        return VolumeProviderBaseMigrate
+
+    @property
     def is_database_migrate(self):
         return self.host_migrate and self.host_migrate.database_migrate
 
@@ -939,22 +943,8 @@ class TakeSnapshotMigrate(VolumeProviderBase):
         return self._database_migrate
 
     @property
-    def provider_class(self):
-        return VolumeProviderBaseMigrate
-
-    @property
     def target_volume(self):
         return None
-
-    @property
-    def environment_volume(self):
-        if not self.migration_in_progress:
-            return self.environment
-
-        migration = DatabaseMigrate.objects.filter(
-                     database=self.database).last()
-
-        return migration.origin_environment
 
     def do(self):
         from backup.tasks import make_instance_snapshot_backup
@@ -971,8 +961,7 @@ class TakeSnapshotMigrate(VolumeProviderBase):
                 {},
                 group,
                 provider_class=self.provider_class,
-                target_volume=self.target_volume,
-                environment=self.environment
+                target_volume=self.target_volume
             )
 
             if not snapshot:
@@ -2023,13 +2012,12 @@ class VolumeProviderSnapshot(VolumeProviderBase):
             return self.force_environment
 
         if not self.migration_in_progress:
-            return self.environment
+            return super(VolumeProviderSnapshot, self).environment
 
         # return self.instance.databaseinfra.environment
         migration = DatabaseMigrate.objects.filter(
                      database=self.database).last()
-
-        return migration.environment
+        return migration.get_current_environment()
 
     # def take_snapshot(self):
     #     raise Exception("AAAA")
