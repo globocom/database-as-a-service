@@ -104,7 +104,7 @@ class CreateSnapshotTestCase(BaseTestCase):
             self.instance,
             self.group,
             self.volume,
-            self.dev_env
+            environment=self.dev_env
         )
 
 
