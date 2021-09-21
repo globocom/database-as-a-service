@@ -167,7 +167,10 @@ class VolumeProviderBase(BaseInstanceStep):
     def destroy_volume(self, volume):
         from backup.tasks import remove_snapshot_backup
         for snapshot in volume.backups.filter(purge_at__isnull=True):
+            self.force_environment = snapshot.environment
             remove_snapshot_backup(snapshot, self)
+        
+        self.force_environment = None
 
         url = "{}volume/{}".format(self.base_uri, volume.identifier)
         response = delete(url, headers=self.headers)
@@ -1697,6 +1700,9 @@ class DestroyOldEnvironment(VolumeProviderBase):
 
     @property
     def environment(self):
+        if self.force_environment is not None:
+            return self.force_environment
+
         return self.infra.environment
 
     @property

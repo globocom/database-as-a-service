@@ -84,7 +84,7 @@ class CreateSnapshotTestCase(BaseTestCase):
            new=MagicMock())
     @patch('backup.tasks.mysql_binlog_save',
            new=MagicMock())
-    @patch('backup.tasks.VolumeProviderBase',
+    @patch('backup.tasks.VolumeProviderSnapshot',
            new=MagicMock())
     @patch('physical.ssh.HostSSH.run_script',
            new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
@@ -114,7 +114,7 @@ class CreateSnapshotTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.mysql_binlog_save',
        new=MagicMock())
-@patch('backup.tasks.VolumeProviderBase.take_snapshot')
+@patch('backup.tasks.VolumeProviderSnapshot.take_snapshot')
 @patch('physical.ssh.HostSSH.run_script',
        new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
 @patch('physical.ssh.HostSSH.connect',
@@ -179,7 +179,7 @@ class SnapshotStatusTestCase(BaseTestCase):
 @patch('backup.tasks.unlock_instance',
        new=MagicMock())
 @patch('backup.tasks.mysql_binlog_save')
-@patch('backup.tasks.VolumeProviderBase.take_snapshot',
+@patch('backup.tasks.VolumeProviderSnapshot.take_snapshot',
        new=MagicMock())
 @patch('physical.ssh.HostSSH.run_script',
        new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
@@ -246,7 +246,7 @@ class BinlogSaveTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.mysql_binlog_save',
        new=MagicMock())
-@patch('backup.tasks.VolumeProviderBase.take_snapshot',
+@patch('backup.tasks.VolumeProviderSnapshot.take_snapshot',
        new=MagicMock())
 @patch('backup.tasks.register_backup_dbmonitor',
        new=MagicMock())
@@ -289,7 +289,7 @@ class SnapshotSizeTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.mysql_binlog_save',
        new=MagicMock())
-@patch('backup.tasks.VolumeProviderBase.take_snapshot',
+@patch('backup.tasks.VolumeProviderSnapshot.take_snapshot',
        new=MagicMock())
 @patch('physical.ssh.HostSSH.run_script',
        side_effect=IndexError)
@@ -322,7 +322,7 @@ class BackupPathTestCase(BaseTestCase):
        new=MagicMock())
 @patch('backup.tasks.mysql_binlog_save',
        new=MagicMock())
-@patch('backup.tasks.VolumeProviderBase.take_snapshot',
+@patch('backup.tasks.VolumeProviderSnapshot.take_snapshot',
        new=MagicMock())
 @patch('physical.ssh.HostSSH.run_script',
        new=MagicMock(return_value=FAKE_RUN_SCRIPT_OUTPUT))
