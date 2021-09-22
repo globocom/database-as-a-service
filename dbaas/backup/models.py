@@ -89,13 +89,16 @@ class BackupInfo(BaseModel):
         self.save()
 
     @classmethod
-    def create(cls, instance, group, volume):
+    def create(cls, instance, group, volume, environment=None):
+        if environment is None:
+            environment = instance.databaseinfra.environment
+
         snapshot = cls()
         snapshot.start_at = datetime.now()
         snapshot.type = Snapshot.SNAPSHOPT
         snapshot.status = Snapshot.RUNNING
         snapshot.instance = instance
-        snapshot.environment = instance.databaseinfra.environment
+        snapshot.environment = environment
         snapshot.group = group
         snapshot.database_name = instance.databaseinfra.databases.first().name
         snapshot.volume = volume

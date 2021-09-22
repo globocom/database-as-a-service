@@ -36,10 +36,10 @@ class PurgeUnusedExports(TestCase):
     def tearDown(self):
         Volume.objects.all().delete()
 
-    @patch('backup.tasks.VolumeProviderBase.destroy_volume')
-    @patch('backup.tasks.VolumeProviderBase.detach_disk')
-    @patch('backup.tasks.VolumeProviderBase.clean_up')
-    @patch('backup.tasks.VolumeProviderBase.add_access')
+    @patch('backup.tasks.VolumeProviderSnapshot.destroy_volume')
+    @patch('backup.tasks.VolumeProviderSnapshot.detach_disk')
+    @patch('backup.tasks.VolumeProviderSnapshot.clean_up')
+    @patch('backup.tasks.VolumeProviderSnapshot.add_access')
     def test_delete_only_inactive(self, add_access, clean_up, detach_disk, destroy):
         self.assertTrue(purge_unused_exports())
 
@@ -48,10 +48,10 @@ class PurgeUnusedExports(TestCase):
         detach_disk.assert_called_once_with(self.export)
         destroy.assert_called_once_with(self.export)
 
-    @patch('backup.tasks.VolumeProviderBase.destroy_volume')
-    @patch('backup.tasks.VolumeProviderBase.detach_disk')
-    @patch('backup.tasks.VolumeProviderBase.clean_up')
-    @patch('backup.tasks.VolumeProviderBase.add_access')
+    @patch('backup.tasks.VolumeProviderSnapshot.destroy_volume')
+    @patch('backup.tasks.VolumeProviderSnapshot.detach_disk')
+    @patch('backup.tasks.VolumeProviderSnapshot.clean_up')
+    @patch('backup.tasks.VolumeProviderSnapshot.add_access')
     def test_cannot_delete_inactive_with_active_snapshot(
         self, add_access, clean_up, detach_disk, destroy
     ):
@@ -74,10 +74,10 @@ class PurgeUnusedExports(TestCase):
         detach_disk.assert_not_called()
         destroy.assert_not_called()
 
-    @patch('backup.tasks.VolumeProviderBase.destroy_volume')
-    @patch('backup.tasks.VolumeProviderBase.detach_disk')
-    @patch('backup.tasks.VolumeProviderBase.clean_up')
-    @patch('backup.tasks.VolumeProviderBase.add_access')
+    @patch('backup.tasks.VolumeProviderSnapshot.destroy_volume')
+    @patch('backup.tasks.VolumeProviderSnapshot.detach_disk')
+    @patch('backup.tasks.VolumeProviderSnapshot.clean_up')
+    @patch('backup.tasks.VolumeProviderSnapshot.add_access')
     def test_can_delete_inactive_with_inactive_snapshot(
         self, add_access, clean_up, detach_disk, destroy
     ):
@@ -95,10 +95,10 @@ class PurgeUnusedExports(TestCase):
         detach_disk.assert_called_once_with(self.export)
         destroy.assert_called_once_with(self.export)
 
-    @patch('backup.tasks.VolumeProviderBase.destroy_volume', new=MagicMock())
-    @patch('backup.tasks.VolumeProviderBase.detach_disk', new=MagicMock())
-    @patch('backup.tasks.VolumeProviderBase.clean_up', new=MagicMock())
-    @patch('backup.tasks.VolumeProviderBase.add_access', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderSnapshot.destroy_volume', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderSnapshot.detach_disk', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderSnapshot.clean_up', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderSnapshot.add_access', new=MagicMock())
     def test_task_with_success(self):
         task = mommy.make('TaskHistory')
         self.assertIsNone(task.details)
@@ -106,7 +106,7 @@ class PurgeUnusedExports(TestCase):
         self.assertIn('Removing: {}'.format(self.export), task.details)
         self.assertIn('Success', task.details)
 
-    @patch('backup.tasks.VolumeProviderBase.add_access')
+    @patch('backup.tasks.VolumeProviderSnapshot.add_access')
     def test_task_with_error(self, add_access):
         add_access.side_effect = Exception('Fake error')
 
