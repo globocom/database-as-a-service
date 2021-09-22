@@ -12,7 +12,6 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest, GetCredentialException
 from physical.models import Vip
 
-
 LOG = logging.getLogger(__name__)
 CHECK_SECONDS = 10
 CHECK_ATTEMPTS = 30
