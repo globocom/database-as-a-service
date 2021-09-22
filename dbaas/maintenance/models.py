@@ -982,10 +982,20 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
 
     @property
     def host_migrate_snapshot(self):
+        snapshots = []
+        last_snap = None
+
         for host_migrate in self.hosts.all():
             if host_migrate.snapshot:
-                return host_migrate.snapshot
-        return
+                snapshots.append(host_migrate.snapshot)
+
+        for snapshot in snapshots:
+            if last_snap is None:
+                last_snap = snapshot
+            elif snapshot.start_at > last_snap.start_at:
+                last_snap = snapshot
+
+        return last_snap
 
     def update_step(self, step):
         super(DatabaseMigrate, self).update_step(step)

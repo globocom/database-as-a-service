@@ -1,4 +1,4 @@
-from mock import patch, MagicMock
+from mock import patch, MagicMock, PropertyMock
 
 from workflow.steps.util.volume_provider import (
     VolumeProviderSnapshotHasWarningStatusError,
@@ -8,11 +8,12 @@ from backup.models import Snapshot
 from .base import SingleInstanceBaseTestCase, HABaseTestCase
 
 
+@patch('workflow.steps.util.volume_provider.TakeSnapshotMigrate.is_valid', new_callable=PropertyMock)
 class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     def test_dont_make_snapshot_again_if_has_snapshot_on_step_manager(
-            self, make_backup_mock):
+            self, make_backup_mock, is_valid_mock):
         self.host_migrate.snapshot = self.snapshot
         self.host_migrate.save()
         self.step.do()
@@ -21,7 +22,7 @@ class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup',
            new=MagicMock())
-    def test_volume_attr(self):
+    def test_volume_attr(self, is_valid_mock):
         provider = self.step.provider_class(self.master_instance)
         self.assertEqual(
             provider.volume,
@@ -29,7 +30,8 @@ class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
         )
 
     @patch('backup.tasks.make_instance_snapshot_backup')
-    def test_set_is_automatic_false_on_snapshot(self, make_backup_mock):
+    def test_set_is_automatic_false_on_snapshot(self, make_backup_mock, is_valid_mock):
+        #is_valid_mock.return_value = True
         self.snapshot.is_automatic = True
         self.snapshot.save()
         make_backup_mock.return_value = self.snapshot
@@ -40,7 +42,7 @@ class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     def test_raise_exception_when_dont_have_snapshot(
-            self, make_backup_mock):
+            self, make_backup_mock, is_valid_mock):
         make_backup_mock.return_value = None
 
         with self.assertRaises(VolumeProviderSnapshotNotFoundError):
@@ -48,7 +50,7 @@ class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     def test_raise_exception_when_snapshot_has_warning_status(
-            self, make_backup_mock):
+            self, make_backup_mock, is_valid_mock):
         self.snapshot.status = Snapshot.WARNING
         self.snapshot.save()
         make_backup_mock.return_value = self.snapshot

@@ -937,12 +937,24 @@ class TakeSnapshotMigrate(VolumeProviderBase):
     def target_volume(self):
         return None
 
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    @property
+    def only_once(self):
+        return True
+
     def do(self):
+
+        if not self.is_valid:
+            return
+
         from backup.tasks import make_instance_snapshot_backup
         from backup.models import BackupGroup
-
-        if (self.database_migrate 
-                and self.database_migrate.host_migrate_snapshot):
+        if (self.only_once and
+            self.database_migrate and
+            self.database_migrate.host_migrate_snapshot):
             snapshot = self.database_migrate.host_migrate_snapshot
         else:
             group = BackupGroup()
@@ -990,6 +1002,65 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class TakeSnapshotMigrateAllInstances(TakeSnapshotMigrate):
+
+    @property
+    def only_once(self):
+        return False
+
+    '''
+    def do(self):
+        if not self.is_valid:
+            return
+
+        from backup.tasks import make_instance_snapshot_backup
+        from backup.models import BackupGroup
+
+        group = BackupGroup()
+        group.save()
+        snapshot = make_instance_snapshot_backup(
+            self.instance,
+            {},
+            group,
+            provider_class=self.provider_class,
+            target_volume=self.target_volume
+        )
+
+        if not snapshot:
+            raise VolumeProviderSnapshotNotFoundError(
+                'Backup was unsuccessful in {}'.format(
+                    self.instance)
+            )
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+
+        if snapshot.was_error:
+            error = 'Backup was unsuccessful.'
+            if snapshot.error:
+                error = '{} Error: {}'.format(error, snapshot.error)
+                raise VolumeProviderSnapshotHasErrorStatus(error)
+
+        if self.database_migrate:
+            host_migrate = self.host_migrate
+            host_migrate.snapshot = snapshot
+            host_migrate.save()
+        else:
+            self.step_manager.snapshot = snapshot
+            self.step_manager.save()
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+    '''
 
 
 class TakeSnapshotFromMaster(TakeSnapshotMigrate):
@@ -1469,6 +1540,10 @@ class AddHostsAllowMigrate(VolumeProviderBase):
     def original_host(self):
         return self.host_migrate.host
 
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
     def _do_hosts_allow(self, func):
         script = func(
             self.original_host.address,
@@ -1487,9 +1562,13 @@ class AddHostsAllowMigrate(VolumeProviderBase):
         )
 
     def do(self):
+        if not self.is_valid:
+            return
         self.add_hosts_allow()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self.remove_hosts_allow()
 
 
@@ -1524,33 +1603,35 @@ class CreatePubKeyMigrate(VolumeProviderBase):
     def original_host(self):
         return self.host_migrate.host
 
-    def _do_pub_key(self, func):
-        script = func(
-            self.original_host.address
-        )
-        return self.original_host.ssh.run_script(script)
+    @property
+    def is_valid(self):
+        return self.is_database_instance
 
     @property
     def environment(self):
         return self.infra.environment
 
+    def _do_pub_key(self, func):
+        script = func(self.original_host.address)
+        return self.original_host.ssh.run_script(script)
+
     def create_pub_key(self):
-        output = self._do_pub_key(
-            self.get_create_pub_key_command
-        )
+        output = self._do_pub_key(self.get_create_pub_key_command)
         pub_key = output['stdout'][0]
         script = 'echo "{}" >> ~/.ssh/authorized_keys'.format(pub_key)
         self.host.ssh.run_script(script)
 
     def remove_pub_key(self):
-        self._do_pub_key(
-            self.get_remove_pub_key_command
-        )
+        self._do_pub_key(self.get_remove_pub_key_command)
 
     def do(self):
-        return self.create_pub_key()
+        if not self.is_valid:
+            return
+        self.create_pub_key()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self.remove_pub_key()
 
 
@@ -1658,6 +1739,10 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def environment(self):
         return self.infra.environment
 
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
             snapshot_state = self.get_snapshot_state(snapshot)
@@ -1676,8 +1761,10 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
             return self.step_manager.snapshot
 
     def do(self):
-        if self.is_database_instance:
-            self.waiting_be('available', self.snapshot)
+        if not self.is_valid:
+            return
+
+        self.waiting_be('available', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):
@@ -1972,6 +2059,9 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
         return self.instance.hostname
 
     def do(self):
+        if not self.is_valid:
+            return
+
         if self.host_migrate and self.host_migrate.database_migrate:
             snapshot = self.host_migrate.snapshot
         else:
@@ -2000,6 +2090,20 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
     @property
     def host(self):
         return self.snapshot.instance.hostname
+
+
+class RsyncDataFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrateBackupHost):
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    @property
+    def source_dir(self):
+        return "/data/data"
+
+    @property
+    def dest_dir(self):
+        return "/data/data"
 
 
 class VolumeProviderSnapshot(VolumeProviderBase):
