@@ -91,7 +91,7 @@ class BackupInfo(BaseModel):
     @classmethod
     def create(cls, instance, group, volume, environment=None):
         if environment is None:
-            environment = instance.databaseinfra.databases.first().environment
+            environment = instance.databaseinfra.environment
 
         snapshot = cls()
         snapshot.start_at = datetime.now()
