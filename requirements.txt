@@ -73,5 +73,5 @@ python-memcached==1.58
 dnspython==1.15.0
 kubernetes==11.0.0
 websocket-client==0.57.0
-cryptography==2.6
+cryptography==3.3.2
 cffi==1.14.6
