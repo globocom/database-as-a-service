@@ -46,35 +46,35 @@ class ReplicateAcls2NewInstance(ACLStep):
         return "Replicating ACLs..."
 
     @property
-    def source_instance(self):
+    def source_host(self):
         return self.infra.instances.filter(
             is_active=True, read_only=False
-        ).first()
+        ).first().hostname
 
     @property
-    def destination_instance(self):
-        return self.instance
+    def destination_host(self):
+        return self.instance.hostname
 
     def do(self):
         if self.acl_client is None:
             return
         replicate_acl_for(
             database=self.database,
-            old_ip=self.source_instance.address,
-            new_ip=self.destination_instance.address,
-            old_sa=self.source_instance.infra.service_account,
-            new_sa=self.destination_instance.infra.service_account
+            old_ip=self.source_host.address,
+            new_ip=self.destination_host.address,
+            old_sa=self.source_host.infra.service_account,
+            new_sa=self.destination_host.infra.service_account
         )
 
 
 class ReplicateAclsMigrate(ReplicateAcls2NewInstance):
 
     @property
-    def source_instance(self):
+    def source_host(self):
         return self.host_migrate.host
 
     @property
-    def destination_instance(self):
+    def destination_host(self):
         return self.host
 
 
