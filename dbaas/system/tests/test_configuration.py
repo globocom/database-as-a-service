@@ -74,12 +74,12 @@ class ConfigurationTest(TestCase):
             description="test"
         ).save()
 
-        get_conf = Configuration.get_by_name_as_int(conf_name)
+        get_conf = Configuration.get_by_name_as_float(conf_name)
         self.assertIsInstance(get_conf, float)
         self.assertEquals(get_conf, 1.4)
 
     def test_get_by_name(self):
         conf = self.conf_model
 
-        get_conf = Configuration.get_by_name_asget_by_name_int(conf.name)
+        get_conf = Configuration.get_by_name(conf.name)
         self.assertIsInstance(get_conf, conf.value)
