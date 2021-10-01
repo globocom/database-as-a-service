@@ -4,17 +4,18 @@ from django.test import TestCase
 from django.db import IntegrityError
 # from . import factory
 from ..models import Configuration
-
-
 import logging
+import hashlib
+import datetime
+from . import factory
 
 LOG = logging.getLogger(__name__)
 
 
 class ConfigurationTest(TestCase):
 
-    # def setUp(self):
-    #     self.new_user = factory.UserFactory()
+    def setUp(self):
+        self.conf_model = factory.ConfigurationFactory()
 
     def test_get_empty_list(self):
         """
@@ -33,4 +34,16 @@ class ConfigurationTest(TestCase):
             description="test"
         ).save()
         self.assertEquals(
-            Configuration.get_by_name_all_fields("newcfg").name, conf_name)
+            Configuration.get_by_name_all_fields(conf_name).value, "1")
+
+    def test_validate_hash(self):
+        conf = self.conf_model
+        to_hash = "%s%s%s%s" % (
+            conf.name,
+            conf.value,
+            conf.description,
+            datetime.date.strftime(datetime.date.today(), "%d%m%Y")
+        )
+
+        hash = hashlib.sha256(to_hash.encode("utf8")).hexdigest()
+        self.assertEquals(conf.hash, hash)
