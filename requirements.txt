@@ -51,10 +51,10 @@ urllib3==1.25.9
 wsgiref==0.1.2
 dbaas_credentials==1.3.3
 dbaas_nfsaas==0.7.10
-dbaas_zabbix==0.7.4
+dbaas_zabbix==0.7.5
 dbaas_dbmonitor==0.2.11
 django-filter==0.9.1
-dbaas-aclapi==1.0.3
+dbaas-aclapi==1.0.4
 dbaas_dnsapi==1.0.6
 dbaas_foreman==0.1.8
 dbaas_foxha==0.3.0
