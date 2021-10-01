@@ -47,3 +47,15 @@ class ConfigurationTest(TestCase):
 
         hash = hashlib.sha256(to_hash.encode("utf8")).hexdigest()
         self.assertEquals(conf.hash, hash)
+
+    def test_get_cache_key(self):
+        conf = self.conf_model
+        k = "cfg:%s" % conf.name
+
+        self.assertEquals(conf.get_cache_key, k)
+
+    def test_get_by_name_as_int(self):
+        conf = self.conf_model
+
+        get_conf = Configuration.get_by_name_as_int(conf.name)
+        self.assertIsInstance(get_conf, int)
