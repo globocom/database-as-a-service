@@ -82,4 +82,4 @@ class ConfigurationTest(TestCase):
         conf = self.conf_model
 
         get_conf = Configuration.get_by_name(conf.name)
-        self.assertIsInstance(get_conf, conf.value)
+        self.assertEquals(get_conf, conf.value)
