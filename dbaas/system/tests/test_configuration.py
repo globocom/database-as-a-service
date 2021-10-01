@@ -52,10 +52,16 @@ class ConfigurationTest(TestCase):
         conf = self.conf_model
         k = "cfg:%s" % conf.name
 
-        self.assertEquals(conf.get_cache_key, k)
+        self.assertEquals(conf.get_cache_key(conf.name), k)
 
     def test_get_by_name_as_int(self):
-        conf = self.conf_model
+        conf_name = "new_conf_as_int"
+        Configuration(
+            name=conf_name,
+            value="1",
+            description="test"
+        ).save()
 
-        get_conf = Configuration.get_by_name_as_int(conf.name)
+        get_conf = Configuration.get_by_name_as_int(conf_name)
         self.assertIsInstance(get_conf, int)
+        self.assertEquals(get_conf, 1)
