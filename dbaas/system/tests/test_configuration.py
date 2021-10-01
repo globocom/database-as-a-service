@@ -21,3 +21,16 @@ class ConfigurationTest(TestCase):
         Tests get empty list when variable name does not exists
         """
         self.assertEquals(Configuration.get_by_name_as_list("abc"), [])
+
+    def test_get_conf_by_name_all_fields(self):
+        """
+        Tests get conf by name with all fields method
+        """
+        conf_name = "newcfg"
+        Configuration(
+            name=conf_name,
+            value="1",
+            description="test"
+        ).save()
+        self.assertEquals(
+            Configuration.get_by_name_all_fields("newcfg").name, conf_name)

@@ -6002,3 +6002,7 @@ body.dark #dropdown-menu-notification li{
 body.dark .form-actions {
 	background-color: #222;
 }
+
+body.dark .modal-body{
+	color: #fff;
+}

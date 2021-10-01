@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+import hashlib
 from django.core.cache import cache
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -28,6 +29,17 @@ class Configuration(BaseModel):
         key = self.get_cache_key(self.name)
         cache.delete(key)
         # cache.clear()
+
+    @property
+    def hash(self):
+        to_encode = "%s%s%s%s" % (
+            self.name,
+            self.value,
+            self.description,
+            datetime.date.strftime(datetime.date.today(), "%d%m%Y")
+        )
+
+        return hashlib.sha256(to_encode.encode("utf8")).hexdigest()
 
     @classmethod
     def get_cache_key(cls, configuration_name):
@@ -67,15 +79,22 @@ class Configuration(BaseModel):
         return value
 
     @classmethod
-    def __get_by_name(cls, name):
+    def get_by_name_all_fields(cls, name):
+        return cls.__get_by_name(name, get_value_field=False)
+
+    @classmethod
+    def __get_by_name(cls, name, get_value_field=True):
         try:
-            value = Configuration.objects.get(name=name).value
+            value = Configuration.objects.get(name=name)
+            if get_value_field:
+                value = value.value
+
             LOG.debug("Configuration '%s': '%s'", name, value)
             return value
         except Configuration.DoesNotExist:
             LOG.warning("configuration %s not found" % name)
             return None
-        except Exception, e:
+        except Exception as e:
             LOG.warning(
                 "ops.. could not retrieve configuration value for %s: %s" % (name, e))
             return None
