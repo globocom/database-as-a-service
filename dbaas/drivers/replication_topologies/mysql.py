@@ -1359,10 +1359,10 @@ class MySQLFoxHA(MySQLSingle):
             'Configure SSL (IP)': (
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
-            #'Replicate ACL': (
-            #    'workflow.steps.util.acl.ReplicateAclsMigrate',
-            #    'workflow.steps.util.acl.BindNewInstance',
-            #)}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
             'Start database and check access': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
