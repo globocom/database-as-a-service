@@ -179,8 +179,10 @@ class MongoDBUpdateCertificates(SSL):
     def do(self):
         if not self.is_valid:
             return
-        script = """yum update globoi-ca-certificates
-        yum update ca-certificates
+        script = """
+        yum clean all
+        yum update -y globoi-ca-certificates
+        yum update -y ca-certificates
         """
         self.host.ssh.run_script(script)
 
