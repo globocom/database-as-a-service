@@ -78,6 +78,22 @@ class ReplicateAclsMigrate(ReplicateAcls2NewInstance):
         return self.host
 
 
+class ReplicateVipAclsMigrate(ACLStep):
+    def __unicode__(self):
+        return "Replicating VIP ACLs..."
+
+    def do(self):
+        if self.acl_client is None:
+            return
+        replicate_acl_for(
+            database=self.database,
+            old_ip=self.vip.vip_ip,
+            new_ip=self.future_vip.vip_ip,
+            old_sa=self.infra.service_account,
+            new_sa=self.infra.service_account
+        )
+
+
 class BindNewInstance(ACLStep):
 
     def __unicode__(self):
