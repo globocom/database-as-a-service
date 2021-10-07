@@ -141,7 +141,7 @@ class BindNewInstance(ACLStep):
                 continue
             apps_name.append(app_name)
             self.add_acl_for_vip(database, app_name)
-            self.add_acl_for_host(database, app_name):
+            self.add_acl_for_host(database, app_name)
 
         '''
         tsuru_rules = self.get_rule()
