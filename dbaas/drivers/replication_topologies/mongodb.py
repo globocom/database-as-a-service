@@ -1053,7 +1053,8 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                #'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Check Access': (
                 'workflow.steps.util.database.Start',

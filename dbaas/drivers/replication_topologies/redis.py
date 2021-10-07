@@ -644,7 +644,8 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                #'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Configure replication': (
                 'workflow.steps.util.database.SetSlaveDatabaseMigration',
@@ -963,7 +964,8 @@ class RedisCluster(BaseRedis):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                #'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Configure replication': (
                 'workflow.steps.redis.cluster.AddSlaveNode',
