@@ -356,8 +356,7 @@ def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
         LOG.info("Removing backup for {}".format(snapshot))
 
         if not provider:
-            provider = VolumeProviderSnapshot(
-                snapshot.instance, force_environment=snapshot.environment)
+            provider = VolumeProviderSnapshot(snapshot.instance)
         removed = provider.delete_snapshot(snapshot, force=force)
         if removed:
             snapshot.purge_at = datetime.now()

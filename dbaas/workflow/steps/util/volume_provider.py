@@ -78,7 +78,17 @@ class VolumeProviderBase(BaseInstanceStep):
         return self.infra.get_driver()
 
     @property
+    def environment(self):
+        if self.force_environment is not None:
+            return self.force_environment
+
+        return super(VolumeProviderBase, self).environment
+
+    @property
     def credential(self):
+        if self.force_environment is not None:
+            return self.credential_by_env(self.force_environment)
+
         if not self._credential:
             self._credential = get_credentials_for(
                 self.environment, CredentialType.VOLUME_PROVIDER
@@ -177,7 +187,7 @@ class VolumeProviderBase(BaseInstanceStep):
         for snapshot in volume.backups.filter(purge_at__isnull=True):
             self.force_environment = snapshot.environment
             remove_snapshot_backup(snapshot, self)
-        
+
         self.force_environment = None
 
         url = "{}volume/{}".format(self.base_uri, volume.identifier)
@@ -2107,13 +2117,6 @@ class RsyncDataFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrateBackupHost)
 
 
 class VolumeProviderSnapshot(VolumeProviderBase):
-
-    @property
-    def credential(self):
-        if self.force_environment is not None:
-            return self.credential_by_env(self.force_environment)
-
-        return super(VolumeProviderSnapshot, self).credential
 
     @property
     def environment(self):
