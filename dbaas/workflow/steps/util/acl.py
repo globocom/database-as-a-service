@@ -184,7 +184,7 @@ class BindNewInstanceDatabaseMigrate(BindNewInstance):
         vips = []
         if self.vip:
             vips.append(self.vip.vip_ip)
-        if self.future_vip
+        if self.future_vip:
             vips.append(self.future_vip.vip_ip)
         for vip_address in vips:
             resp = self.acl_from_hell_client.add_acl(
