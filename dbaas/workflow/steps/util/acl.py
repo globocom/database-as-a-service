@@ -130,18 +130,22 @@ class BindNewInstance(ACLStep):
 
     def add_acl_for(self, database):
         tsuru_rules = self.get_rule()
-        apps_name = []
-        for rule in tsuru_rules:
-            if rule.get('Removed'):
-                continue
-            app_name = rule.get('Source', {}).get('TsuruApp', {}).get('AppName')
-            if not app_name:
-                raise CantSetACLError("App name not found on data")
-            if app_name in apps_name:
-                continue
-            apps_name.append(app_name)
-            self.add_acl_for_vip(database, app_name)
-            self.add_acl_for_host(database, app_name)
+        if tsuru_rules:
+            apps_name = []
+            for rule in tsuru_rules:
+                if rule.get('Removed'):
+                    continue
+                app_name = rule.get(
+                    'Source', {}).get('TsuruApp', {}).get('AppName')
+                if not app_name:
+                    raise CantSetACLError("App name not found on data")
+                if app_name in apps_name:
+                    continue
+                apps_name.append(app_name)
+                if (self.infra.vips.exists() and
+                    self.instance == self.infra.instances.first()):
+                    self.add_acl_for_vip(database, app_name)
+                self.add_acl_for_host(database, app_name)
 
         '''
         tsuru_rules = self.get_rule()
@@ -194,7 +198,9 @@ class BindNewInstanceDatabaseMigrate(BindNewInstance):
                 raise CantSetACLError(resp.content)
 
     def add_acl_for_host(self, database, app_name):
-        hosts = [self.instance.hostname.address, self.host.hostname.address]
+        source_host = self.instance.hostname
+        future_host = source_host.future_host
+        hosts = [source_host.address, future_host.address]
         for host_address in hosts:
             resp = self.acl_from_hell_client.add_acl(
                 database, app_name, host_address
