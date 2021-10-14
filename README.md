@@ -122,23 +122,26 @@ To run celery locally use the following command:
 Documentation
 =============
 
-[Definitions](./doc/definitions.md)
--------------------------------------------
+Listed below are some articles that describe details associated with this project.
 
-[Quickstart](./doc/quickstart.md)
--------------------------------------------
+### [Definitions](./doc/definitions.md)
+This guide will help you to understand the basic DBaaS architecture.
 
-[API](./doc/API.md)
--------------------------------------------
+### [Quickstart](./doc/quickstart.md)
+The running instructions in the execution order.
 
-[Drivers](./doc/drivers.md)
--------------------------------------------
+### [API](./doc/API.md)
+The documentation of API which allows you to maintain yours databases.
 
-[Troubleshooting](./doc/troubleshooting.md)
--------------------------------------------
+### [Drivers](./doc/drivers.md)
+About drivers used to support to new databases.
 
-[Docker Settings](./doc/dockerconfs.md)
--------------------------------------------
+### [Troubleshooting](./doc/troubleshooting.md)
+Guide to avoid usual problems.
+
+### [Docker Settings](./doc/dockerconfs.md)
+Guide to use this project with containers.
+
 ## License
 
 This project is licensed under the BSD 3-Clause "New" or "Revised" License - read [LICENSE](LICENSE) file for details.
