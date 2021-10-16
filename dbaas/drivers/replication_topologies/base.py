@@ -460,7 +460,6 @@ class BaseTopology(object):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                #'workflow.steps.util.acl.BindNewInstance',
                 'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Stopping database': (
