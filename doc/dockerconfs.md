@@ -9,7 +9,7 @@ With this command the source package in docker imnage will be the host machine p
 
 You can edit/remove libs that are in debug mode manually. Just edit the file: dev/debug_lib/lib.list
 
-## to use cert files
+## To use *cert* files
 
 Docker compose already map the SSL certs path to container.
 
