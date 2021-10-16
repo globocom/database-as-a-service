@@ -143,7 +143,7 @@ class BindNewInstance(ACLStep):
 
 class BindNewInstanceDatabaseMigrate(BindNewInstance):
     def add_acl_for_vip(self, database, app_name):
-        for vip in infra.vips.all():
+        for vip in self.infra.vips.all():
             self.acl_from_hell_client.add_acl(
                 database, app_name, vip.vip_ip
             )

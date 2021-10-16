@@ -480,14 +480,15 @@ class ACLFromHellClient(object):
         return enabled_rules
 
     @staticmethod
-    def _get_vip_dns(infra):
-        return infra.endpoint_dns.split(':')[0]
+    def _get_vip_dns(databaseinfra):
+        return databaseinfra.endpoint_dns.split(':')[0]
 
     def add_acl_for_vip_if_needed(self, database, app_name):
-        if not infra.vips.exists():
+        databaseinfra = database.databaseinfra
+        if not databaseinfra.vips.exists():
             return
 
-        vip_dns = self._get_vip_dns(infra)
+        vip_dns = self._get_vip_dns(databaseinfra)
         self.add_acl(database, app_name, vip_dns)
 
     def add_acl(self, database, app_name, hostname):
