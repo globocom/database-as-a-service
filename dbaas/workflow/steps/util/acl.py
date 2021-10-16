@@ -99,22 +99,9 @@ class BindNewInstance(ACLStep):
     def __unicode__(self):
         return "Binding new instance ..."
 
-    def __init__(self, instance):
-        super(BindNewInstance, self).__init__(instance)
-        self.instances = [self.instance]
-        self.instance_address_list = [self.instance.address]
-
     @property
     def acl_from_hell_client(self):
         return ACLFromHellClient(self.environment)
-
-    def get_rule(self):
-        resp = self.acl_from_hell_client.get_rule(self.database)
-
-        if resp.ok:
-            return resp.json()
-
-        return None
 
     def add_acl_for_vip(self, database, app_name):
         self.acl_from_hell_client.add_acl_for_vip_if_needed(
@@ -122,62 +109,33 @@ class BindNewInstance(ACLStep):
         )
 
     def add_acl_for_host(self, database, app_name):
-        resp = self.acl_from_hell_client.add_acl(
+        self.acl_from_hell_client.add_acl(
             database, app_name, self.host.hostname
         )
-        if not resp.ok:
-            raise CantSetACLError(resp.content)
 
     def add_acl_for(self, database):
-        tsuru_rules = self.get_rule()
-        if tsuru_rules:
-            apps_name = []
-            for rule in tsuru_rules:
-                if rule.get('Removed'):
-                    continue
-                app_name = rule.get(
-                    'Source', {}).get('TsuruApp', {}).get('AppName')
-                if not app_name:
-                    raise CantSetACLError("App name not found on data")
-                if app_name in apps_name:
-                    continue
-                apps_name.append(app_name)
-                if (self.infra.vips.exists() and
-                    self.instance == self.infra.instances.first()):
-                    self.add_acl_for_vip(database, app_name)
-                self.add_acl_for_host(database, app_name)
+        tsuru_rules = self.acl_from_hell_client.get_enabled_rules(
+            self.database
+        )
+        if not tsuru_rules:
+            return
 
-        '''
-        tsuru_rules = self.get_rule()
-        if tsuru_rules:
-            rule = tsuru_rules[0]
-            app_name = rule.get('Source', {}).get('TsuruApp', {}).get('AppName')
-            if app_name:
-                self.acl_from_hell_client.add_acl_for_vip_if_needed(
-                    database,
-                    app_name
-                )
-                return self.acl_from_hell_client.add_acl(
-                    database,
-                    app_name,
-                    self.host.hostname
-                )
-            else:
+        apps_name = []
+        for rule in tsuru_rules:
+            app_name = rule.get(
+                'Source', {}).get('TsuruApp', {}).get('AppName')
+            if not app_name:
                 raise CantSetACLError("App name not found on data")
-        '''
-
-        return None
+            if app_name in apps_name:
+                continue
+            self.add_acl_for_vip(database, app_name)
+            self.add_acl_for_host(database, app_name)
 
     def do(self):
         if not self.database:
             return
 
         self.add_acl_for(self.database)
-        '''
-        resp = self.add_acl_for(self.database)
-        if resp and not resp.ok:
-            raise CantSetACLError(resp.content)
-        '''
 
     def undo(self):
         pass
@@ -185,25 +143,16 @@ class BindNewInstance(ACLStep):
 
 class BindNewInstanceDatabaseMigrate(BindNewInstance):
     def add_acl_for_vip(self, database, app_name):
-        vips = []
-        if self.vip:
-            vips.append(self.vip.vip_ip)
-        if self.future_vip:
-            vips.append(self.future_vip.vip_ip)
-        for vip_address in vips:
-            resp = self.acl_from_hell_client.add_acl(
-                database, app_name, vip_address
+        for vip in infra.vips.all():
+            self.acl_from_hell_client.add_acl(
+                database, app_name, vip.vip_ip
             )
-            if not resp.ok:
-                raise CantSetACLError(resp.content)
 
     def add_acl_for_host(self, database, app_name):
         source_host = self.instance.hostname
         future_host = source_host.future_host
         hosts = [source_host.address, future_host.address]
         for host_address in hosts:
-            resp = self.acl_from_hell_client.add_acl(
+            self.acl_from_hell_client.add_acl(
                 database, app_name, host_address
             )
-            if not resp.ok:
-                raise CantSetACLError(resp.content)

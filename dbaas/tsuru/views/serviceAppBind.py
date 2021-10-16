@@ -18,23 +18,8 @@ class ServiceAppBind(APIView):
 
         acl_from_hell_client = ACLFromHellClient(database.environment)
         for host in hosts:
-
-            resp = acl_from_hell_client.add_acl(
-                database,
-                app_name,
-                host.hostname
-            )
-            if not resp.ok:
-                msg = "Error for {} on {}.".format(
-                    database.name, database.environment.name
-                )
-                return log_and_response(
-                    msg=msg, e=resp.content,
-                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+            acl_from_hell_client.add_acl(database, app_name, host.hostname)
         acl_from_hell_client.add_acl_for_vip_if_needed(database, app_name)
-
-        return None
 
     @staticmethod
     def _handle_app_name(app_name):
@@ -51,10 +36,13 @@ class ServiceAppBind(APIView):
             return response
 
         database = response
-        self.add_acl_for_hosts(
-            database,
-            self._handle_app_name(data['app-name'])
-        )
+        try:
+            self.add_acl_for_hosts(
+                database,
+                self._handle_app_name(data['app-name'])
+            )
+        except Exception as e:
+            return log_and_response(str(e))
 
         hosts, ports = database.infra.get_driver().get_dns_port()
         ports = str(ports)

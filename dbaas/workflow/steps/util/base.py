@@ -445,7 +445,8 @@ class ACLFromHellClient(object):
             **kw
         )
 
-    def get_rule(self, database, app_name=None, extra_params=None):
+    def get_enabled_rules(self, database, app_name=None, extra_params=None):
+        enabled_rules = []
         params = {
             'metadata.owner': 'dbaas',
             'metadata.service-name': self.credential.project,
@@ -458,51 +459,50 @@ class ACLFromHellClient(object):
 
         LOG.debug("Tsuru get rule for {} params:{}".format(
             database.name, params))
-        return self._request(
+        resp = self._request(
             requests.get,
             self.credential.endpoint,
             params=params,
         )
 
+        if not resp.ok:
+            LOG.debug("Tsuru Status on Get Rules for database {}: {}".format(
+                database, resp.status_code))
+            return enabled_rules
+
+        all_rules = resp.json()
+        for rule in all_rules:
+            if rule.get('Removed'):
+                continue
+            enabled_rules.append(rule)
+
+        return enabled_rules
+
     @staticmethod
     def _get_vip_dns(infra):
         return infra.endpoint_dns.split(':')[0]
 
-    def _need_add_acl_for_vip(self, database, app_name):
-        infra = database.infra
-        if infra.vips.exists():
-            vip_dns = self._get_vip_dns(infra)
-            resp = self.get_rule(
-                database,
-                app_name,
-                extra_params={'destination.externaldns.name': vip_dns}
-            )
-            if resp and not resp.ok:
-                LOG.info("ACLFROMHELL Add VIP ACL for {}: {}".format(
-                    vip_dns, resp.content)
-                )
-            return not (resp and resp.ok and resp.json())
-        return False
-
     def add_acl_for_vip_if_needed(self, database, app_name):
+        if not infra.vips.exists():
+            return
 
-        if self._need_add_acl_for_vip(database, app_name):
-            vip_dns = self._get_vip_dns(database.infra)
-
-            vip_resp = self.add_acl(
-                database,
-                app_name,
-                vip_dns
-            )
-            if not vip_resp:
-                raise CantSetACLError(
-                    "Cant set acl for VIP {} error: {}".format(
-                        vip_dns,
-                        vip_resp.content
-                    )
-                )
+        vip_dns = self._get_vip_dns(infra)
+        self.add_acl(database, app_name, vip_dns)
 
     def add_acl(self, database, app_name, hostname):
+        rules = self.get_enabled_rules(
+            database,
+            app_name,
+            extra_params={'destination.externaldns.name': hostname}
+        )
+        if rules:
+            msg = "Rule already registered. Database: {}, \
+                   App Name: {}, Hostname: {} - Rules: {}".format(
+                       database, app_name, hostname, rules
+                   )
+            LOG.info(msg)
+            return
+
         infra = database.infra
         driver = infra.get_driver()
 
@@ -540,32 +540,32 @@ class ACLFromHellClient(object):
             json=payload,
         )
         if not resp.ok:
-            msg = "Error bind {} database on {} environment: {}".format(
-                database.name, self.environment, resp.content
+            error = "Cant set acl for {}:{}-{}. Error: {}".format(
+                app_name, database, hostname, resp.content
             )
-            LOG.info(msg)
+            LOG.error(msg)
+            raise CantSetACLError(error)
+
         LOG.info("Tsuru Add ACL Status for host {}: {}".format(
             hostname, resp.status_code
         ))
 
-        return resp
-
     def remove_acl(self, database, app_name):
+        rules = self.get_enabled_rules(database, app_name)
 
-        resp = self.get_rule(database, app_name)
-        if not resp.ok:
+        if not rules:
             msg = "Rule not found for {}.".format(
                 database.name)
-            LOG.error(msg)
+            LOG.debug(msg)
 
-        rules = resp.json()
         for rule in rules:
             rule_id = rule.get('RuleID')
             host = (rule.get('Destination', {})
                     .get('ExternalDNS', {})
                     .get('Name'))
             if rule_id:
-                LOG.info('Tsuru Unbind App removing rule for {}'.format(host))
+                LOG.info('Tsuru Unbind App removing rule for {}:{}-{}'.format(
+                    app_name, database, host))
                 resp = self._request(
                     requests.delete,
                     '{}/{}'.format(self.credential.endpoint, rule_id)
