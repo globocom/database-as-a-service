@@ -471,10 +471,11 @@ class ACLFromHellClient(object):
             return enabled_rules
 
         all_rules = resp.json()
-        for rule in all_rules:
-            if rule.get('Removed'):
-                continue
-            enabled_rules.append(rule)
+        if all_rules:
+            for rule in all_rules:
+                if rule.get('Removed'):
+                    continue
+                enabled_rules.append(rule)
 
         return enabled_rules
 
