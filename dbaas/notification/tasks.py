@@ -927,7 +927,6 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                 details='\nUndo NFS change for instance {}'.format(instance)
             )
             ResizeVolume(instance).do()
-            resized.append(instance)
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         database.finish_task()
