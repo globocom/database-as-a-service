@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import logging
 from datetime import datetime
 from logging import exception
 from time import sleep
@@ -10,6 +12,9 @@ from util import get_credentials_for
 from physical.models import Volume
 from base import BaseInstanceStep
 from maintenance.models import DatabaseMigrate
+
+
+LOG = logging.getLogger(__name__)
 
 class VolumeProviderException(Exception):
     pass
@@ -2144,3 +2149,53 @@ class VolumeProviderSnapshot(VolumeProviderBase):
         migration = DatabaseMigrate.objects.filter(
                      database=self.database).last()
         return migration.get_current_environment(instance=self.instance)
+
+
+class WaitRsyncFromSnapshotDatabaseMigrate(RsyncFromSnapshotMigrateBackupHost):
+
+    ATTEMPTS = 240
+    DELAY = 30
+
+    def __unicode__(self):
+        return "Waiting rsync..."
+
+    def do(self):
+        errors = 0
+        script = 'ps -ef | grep sync | grep dbaas | wc -l'
+        for attempt in range(self.ATTEMPTS):
+            msg = 'Check rsync - attempt {} of {}'.format(
+                attempt, self.ATTEMPTS
+            )
+            LOG.debug(msg)
+
+            output = self.host.ssh.run_script(script, retry=True)
+            exception_error = output.get('exception', '')
+            if exception_error:
+                if errors > 0:
+                    raise Exception(exception_error)
+                else:
+                    msg = ('There was an exception when check rsync. '
+                           'Exception: {}. '
+                           'It will try to check rsync one more time.'
+                           ''.format(exception_error))
+                errors += 1
+                sleep(self.DELAY)
+                continue
+            errors = 0
+
+            rsync_process = int(output['stdout'][0])
+            if rsync_process == 0:
+                LOG.debug('RSYNC is not running')
+                return
+
+            LOG.debug('RSYNC is still running')
+            sleep(self.DELAY)
+
+        raise EnvironmentError(
+            'RSYNC is still running.'
+            'Wait rsync process finish before retry the task.'
+        )
+
+    def undo(self):
+        pass
+

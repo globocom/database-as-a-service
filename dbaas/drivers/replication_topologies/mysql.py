@@ -1373,6 +1373,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
                 'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',

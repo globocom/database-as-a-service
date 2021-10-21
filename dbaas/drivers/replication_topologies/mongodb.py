@@ -1071,6 +1071,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
                 'workflow.steps.util.disk.CleanDataMigrate',
                 'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.EnableFutureInstances',
