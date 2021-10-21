@@ -1200,6 +1200,16 @@ class Database(BaseModel):
         return format_html(status)
 
     @property
+    def migrating_html(self):
+        html_default = '&nbsp;<span class="label label-{}">{}</span>'
+
+        if self.infra.migration_in_progress:
+            status = html_default.format("info", "Migrating")
+            return format_html(status)
+
+        return ""
+
+    @property
     def organization(self):
         return self.team.organization
 

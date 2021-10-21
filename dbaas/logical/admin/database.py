@@ -116,12 +116,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "name", "databaseinfra__name", "team__name", "project__name",
         "environment__name", "databaseinfra__engine__engine_type__name",
         "team__organization__name", "databaseinfra__backup_hour",
-        "databaseinfra__maintenance_window", "databaseinfra__maintenance_day",
+        "databaseinfra__maintenance_window", "databaseinfra__maintenance_day"
     )
     list_display_basic = [
         "name_html", "organization_admin_page", "team_admin_page",
         "engine_html", "environment",
-        "offering_html", "friendly_status", "created_dt_format"
+        "offering_html", "friendly_status_list", "created_dt_format"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
@@ -176,7 +176,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def friendly_status(self, database):
         return database.status_html
 
+    def friendly_status_list(self, database):
+        if database.migrating_html:
+            return database.status_html + database.migrating_html
+        return database.status_html
+
     friendly_status.short_description = "Status"
+    friendly_status_list.short_description = "Status"
 
     def team_admin_page(self, database):
         team_name = database.team.name
