@@ -25,6 +25,18 @@ LOG = logging.getLogger(__name__)
 
 class AccountUser(User):
 
+    def validate_unique(self, *args, **kwargs):
+        ''' Validate user is unique '''
+        super(AccountUser, self).validate_unique(*args, **kwargs)
+
+        check_mail = User.objects.filter(email=self.get_username())
+        if check_mail.exists():
+            raise ValidationError({
+                "username": [
+                    "E-mail %s already exists in DBaaS" % self.get_username()
+                ]
+            })
+
     class Meta:
         proxy = True
         verbose_name_plural = _("users")
