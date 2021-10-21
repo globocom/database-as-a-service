@@ -1349,7 +1349,22 @@ class UnmountDataVolume(UnmountActiveVolume):
         return True
 
 
-class ResizeVolume(VolumeProviderBase):
+class ResizeVolumeBase(VolumeProviderBase):
+    @property
+    def environment(self):
+
+        if not self.migration_in_progress:
+            return super(ResizeVolumeBase, self).environment
+
+        migration = DatabaseMigrate.objects.filter(
+                     database=self.database).last()
+        if self.instance.future_instance:
+            return migration.origin_environment
+        else:
+            return migration.environment
+
+
+class ResizeVolume(ResizeVolumeBase):
     def __unicode__(self):
         return "Resizing data volume..."
 
@@ -1937,7 +1952,7 @@ class MountDataVolumeWithUndo(MountDataVolume):
         UnmountDataVolume(self.instance).do()
 
 
-class Resize2fs(VolumeProviderBase):
+class Resize2fs(ResizeVolumeBase):
     def __unicode__(self):
         return "Resizing data volume to file system..."
 
