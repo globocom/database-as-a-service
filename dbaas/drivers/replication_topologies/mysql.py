@@ -1359,10 +1359,6 @@ class MySQLFoxHA(MySQLSingle):
             'Configure SSL (IP)': (
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
-            'Replicate ACL': (
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
-            )}, {
             'Start database and check access': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
@@ -1396,6 +1392,11 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vip_provider.AllocateIPMigrate',                
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.ReplicateVipAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Start rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',

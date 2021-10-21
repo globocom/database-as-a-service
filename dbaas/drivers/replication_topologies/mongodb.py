@@ -1053,7 +1053,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Check Access': (
                 'workflow.steps.util.database.Start',
@@ -1076,7 +1076,6 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.infra.EnableFutureInstances',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
-                'workflow.steps.util.base.BaseRaiseTestException2',
             )}, {
             'Start telegraf and rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',

@@ -78,56 +78,81 @@ class ReplicateAclsMigrate(ReplicateAcls2NewInstance):
         return self.host
 
 
+class ReplicateVipAclsMigrate(ACLStep):
+    def __unicode__(self):
+        return "Replicating VIP ACLs..."
+
+    def do(self):
+        if self.acl_client is None:
+            return
+        replicate_acl_for(
+            database=self.database,
+            old_ip=self.vip.vip_ip,
+            new_ip=self.future_vip.vip_ip,
+            old_sa=self.infra.service_account,
+            new_sa=self.infra.service_account
+        )
+
+
 class BindNewInstance(ACLStep):
 
     def __unicode__(self):
         return "Binding new instance ..."
 
-    def __init__(self, instance):
-        super(BindNewInstance, self).__init__(instance)
-        self.instances = [self.instance]
-        self.instance_address_list = [self.instance.address]
-
     @property
     def acl_from_hell_client(self):
         return ACLFromHellClient(self.environment)
 
-    def get_rule(self):
-        resp = self.acl_from_hell_client.get_rule(self.database)
+    def add_acl_for_vip(self, database, app_name):
+        self.acl_from_hell_client.add_acl_for_vip_if_needed(
+            database, app_name
+        )
 
-        if resp.ok:
-            return resp.json()
-
-        return None
+    def add_acl_for_host(self, database, app_name):
+        self.acl_from_hell_client.add_acl(
+            database, app_name, self.host.hostname
+        )
 
     def add_acl_for(self, database):
-        tsuru_rules = self.get_rule()
-        if tsuru_rules:
-            rule = tsuru_rules[0]
-            app_name = rule.get('Source', {}).get('TsuruApp', {}).get('AppName')
-            if app_name:
-                self.acl_from_hell_client.add_acl_for_vip_if_needed(
-                    database,
-                    app_name
-                )
-                return self.acl_from_hell_client.add_acl(
-                    database,
-                    app_name,
-                    self.host.hostname
-                )
-            else:
-                raise CantSetACLError("App name not found on data")
+        tsuru_rules = self.acl_from_hell_client.get_enabled_rules(
+            self.database
+        )
+        if not tsuru_rules:
+            return
 
-        return None
+        apps_name = []
+        for rule in tsuru_rules:
+            app_name = rule.get(
+                'Source', {}).get('TsuruApp', {}).get('AppName')
+            if not app_name:
+                raise CantSetACLError("App name not found on data")
+            if app_name in apps_name:
+                continue
+            self.add_acl_for_vip(database, app_name)
+            self.add_acl_for_host(database, app_name)
 
     def do(self):
         if not self.database:
             return
 
-        resp = self.add_acl_for(self.database)
-        if resp and not resp.ok:
-            raise CantSetACLError(resp.content)
+        self.add_acl_for(self.database)
 
     def undo(self):
-        if not self.database:
-            return
+        pass
+
+
+class BindNewInstanceDatabaseMigrate(BindNewInstance):
+    def add_acl_for_vip(self, database, app_name):
+        for vip in self.infra.vips.all():
+            self.acl_from_hell_client.add_acl(
+                database, app_name, vip.vip_ip
+            )
+
+    def add_acl_for_host(self, database, app_name):
+        source_host = self.instance.hostname
+        future_host = source_host.future_host
+        hosts = [source_host.address, future_host.address]
+        for host_address in hosts:
+            self.acl_from_hell_client.add_acl(
+                database, app_name, host_address
+            )
