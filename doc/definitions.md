@@ -28,7 +28,7 @@ Users in the system. The user must have a team for usage.
 
 ![](./img/audits_app.png "Audits APP View")
 
-View the main actions that the users have done on DBaaS
+View the main actions that the users have done on DBaaS.
 
 
 ## 3. Logical APP
@@ -36,7 +36,7 @@ View the main actions that the users have done on DBaaS
 ![](./img/logical_app.png "Logical APP View")
 
 ### 3.1 Databases
-Manage the databases and their credentials
+Manage the databases and their credentials.
 
 ### 3.2 Projects
 It's possible to organize your databases logically by project.
@@ -50,19 +50,19 @@ It's possible to organize your databases logically by project.
 It's a group of host(s) will be used for the same purpose, like a cluster/replica set.
 More details about each field:
 
-* databaseinfra name: whatever you want to call
-* databaseinfra user/password: it's your admin user in mongodb or root in mysql
-* engine/plan/environment: self description fields :)
+* databaseinfra name: whatever you want to call.
+* databaseinfra user/password: it's your admin user in mongodb or root in mysql.
+* engine/plan/environment: self description fields. :)
 * capacity: how many databases the currently databaseinfra can hold.
-* max database size: it's an account about capacity and how big the database can be
-* Instances: all siblings servers
+* max database size: it's an account about capacity and how big the database can be.
+* Instances: all siblings servers.
 
 ### 4.2 Engine Types
-In other words, the drivers DBaaS supports
+In other words, the drivers DBaaS supports.
 
 ### 4.3 Engines
 It is a composite key: engine type + db version.
-eg: mongodb + 2.4.5
+eg: mongodb + 2.4.5.
 
 ### 4.4 Environments
 Projects usually have at least two environments: development and production.
@@ -85,11 +85,11 @@ You can input/change some system parameters dynamically, it's a key/value parame
 
 * `email_addr_from`: (__mandatory__)
 
-    The entity who sends the e-mail to `new_user_notify_email`
+    The entity who sends the e-mail to `new_user_notify_email`.
 
 * `new_user_notify_email`: (__mandatory__)
 
-    Destination address for DBaaS notifications, like a new user, etc
+    Destination address for DBaaS notifications, like a new user, etc.
 
 * `quarantine_retention_days`: (__default: 7__)
 
