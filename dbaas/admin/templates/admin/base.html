@@ -112,6 +112,13 @@ if(addsDark)
                     
                 </div>
             </div>
+            
+        {% endif %}
+        {% get_config "alert_message" as config_alert_message %}
+        {% if config_alert_message  and config_alert_message.value == "1" %}
+        <div class="alert alert-warning alert-center">
+            <p>{{config_alert_message.description}}</p>
+        </div>
         {% endif %}
     </div>
     <!-- END Header -->
@@ -196,33 +203,6 @@ if(addsDark)
 </script>
 
 {% block js_footer %}{% endblock js_footer %}
-{% get_config "popup_message" as config_popup_message %}
-{% if config_popup_message  and config_popup_message.value == "1" %}
-    <div id="configPopupModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="configPopupModalLabel" aria-hidden="true">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="configPopupModalLabel">Atenção</h3>
-    </div>
-    <div class="modal-body">
-        <p>{{config_popup_message.description}}</p>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" data-dismiss="modal" id="dismissPopupModal">OK</button>
-    </div>
-    </div>
-
-    <script>
-        var msgHash = "{{ config_popup_message.hash }}"; // msg hash to cache
-        var hasRead = localStorage.getItem(msgHash);
-
-        if (hasRead != 1)
-            django.jQuery("#configPopupModal").modal();
-        
-        django.jQuery("#dismissPopupModal").click(function(){
-            localStorage.setItem(msgHash, 1);
-        })
-    </script>
-{% endif %}
 
 <!-- JAVASCRIPTS -->
 </body>

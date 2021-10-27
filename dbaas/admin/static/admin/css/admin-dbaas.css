@@ -110,3 +110,7 @@
     width: 100px;
     display: flex;
 }
+
+.alert-center{
+    text-align: center;
+}
