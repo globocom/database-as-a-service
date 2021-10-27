@@ -60,7 +60,7 @@ class HostSSH(object):
         self.output = {
             'stdout': self.stdout,
             'stderr': self.stderr,
-            'exeption': '',
+            'exception': '',
         }
         self.script_file_dir = ''
         self.script_file_name = ''
@@ -92,7 +92,7 @@ class HostSSH(object):
         self.output.update({
             'stdout': self.stdout,
             'stderr': self.stderr,
-            'exeption': '',
+            'exception': '',
             'exit_code': self.script_exit_code
         })
 

@@ -62,7 +62,7 @@ class DecoratorConnectHostTestCase(TestCase):
                   side_effect=BadHostKeyException(
                       'fake_hostname', MagicMock(), MagicMock()
                   ))
-    def test_call_connect_bad_host_exeption(self, connect_mock):
+    def test_call_connect_bad_host_exception(self, connect_mock):
         output = self.decorated(self.host_ssh)
 
         self.assertTrue(connect_mock.called)
@@ -77,7 +77,7 @@ class DecoratorConnectHostTestCase(TestCase):
                   side_effect=SSHException(
                       'fake err msg'
                   ))
-    def test_call_connect_ssh_exeption(self, connect_mock):
+    def test_call_connect_ssh_exception(self, connect_mock):
         output = self.decorated(self.host_ssh)
 
         self.assertTrue(connect_mock.called)
@@ -92,7 +92,7 @@ class DecoratorConnectHostTestCase(TestCase):
                   side_effect=AuthenticationException(
                       'fake err msg'
                   ))
-    def test_call_connect_auth_exeption(self, connect_mock):
+    def test_call_connect_auth_exception(self, connect_mock):
         output = self.decorated(self.host_ssh)
 
         self.assertTrue(connect_mock.called)
@@ -107,7 +107,7 @@ class DecoratorConnectHostTestCase(TestCase):
                   side_effect=socker_err(
                       'fake err msg'
                   ))
-    def test_call_connect_socket_exeption(self, connect_mock):
+    def test_call_connect_socket_exception(self, connect_mock):
         output = self.decorated(self.host_ssh)
 
         self.assertTrue(connect_mock.called)
@@ -181,7 +181,7 @@ class RunScriptTestCase(TestCase):
         self.assertTrue(self.host_ssh.client.exec_command.called)
         expected_output = {
             'stderr': '',
-            'exeption': '',
+            'exception': '',
             'stdout': 'fake_stdout',
             'exit_code': 0
         }
@@ -208,7 +208,7 @@ class RunScriptTestCase(TestCase):
         self.assertTrue(self.host_ssh.client.exec_command.called)
         expected_output = {
             'stderr': 'fake stderr',
-            'exeption': '',
+            'exception': '',
             'stdout': 'error',
             'exit_code': 88
         }
