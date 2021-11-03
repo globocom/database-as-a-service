@@ -867,7 +867,7 @@ def database_metrics(request, context, database):
     dashboard = dashboard.format(engine_type)
     hostname = instance.hostname.hostname
     if 'globoi.com' in hostname:
-        hostname = hostname.split('.')[0],
+        hostname = hostname.split('.')[0]
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
         credential.endpoint,
         dashboard,

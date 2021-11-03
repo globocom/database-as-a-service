@@ -42,8 +42,11 @@ class MetricsCollector(BaseInstanceStep):
             from workflow.steps.util.ssl import InfraSSLBaseName
             infra_ssl = InfraSSLBaseName(self.instance)
             master_ssl_ca = infra_ssl.master_ssl_ca
+        hostname = self.host.hostname
+        if 'globoi.com' in hostname:
+            hostname = hostname.split('.')[0]
         variables = {
-            'HOSTNAME': self.host.hostname.split('.')[0],
+            'HOSTNAME': hostname,
             'HOSTADDRESS': self.host.address,
             'PORT': self.instance.port,
             'USER': user,
