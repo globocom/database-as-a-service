@@ -806,12 +806,12 @@ def database_change_parameters_retry(request, context, database):
 
 @database_view('metrics')
 def database_metrics(request, context, database):
-    context['hostname'] = request.GET.get(
-        'hostname',
-        database.infra.instances.filter(
-            is_active=True
-        ).first().hostname.hostname.split('.')[0]
-    )
+    hostname = database.infra.instances.filter(
+        is_active=True
+    ).first().hostname.hostname
+    if 'globoi.com' in hostname:
+        hostname = hostname.split('.')[0]
+    context['hostname'] = request.GET.get('hostname', hostname)
 
     context['source'] = request.GET.get('source', 'zabbix')
 
@@ -820,18 +820,15 @@ def database_metrics(request, context, database):
     else:
         context['second_source'] = 'sofia'
 
-    user = request.user
-    if len(user.team_set.filter(organization__external=False)) > 0:
-        context['can_show_sofia_metrics'] = True
-    else:
-        context['can_show_sofia_metrics'] = False
-
     context['hosts'] = []
     for host in Host.objects.filter(
             instances__databaseinfra=database.infra,
             instances__is_active=True
         ).distinct():
-        context['hosts'].append(host.hostname.split('.')[0])
+        hostname = host.hostname
+        if 'globoi.com' in hostname:
+            hostname = hostname.split('.')[0]
+        context['hosts'].append(hostname)
 
     credential = get_credentials_for(
         environment=database.databaseinfra.environment,
@@ -841,13 +838,8 @@ def database_metrics(request, context, database):
         hostname__hostname__contains=context['hostname'],
     ).first()
 
-    organization = database.team.organization
-    if organization and organization.external:
-        endpoint = organization.grafana_endpoint
-        datasource = organization.grafana_datasource
-    else:
-        endpoint = credential.endpoint
-        datasource = credential.get_parameter_by_name('environment')
+    endpoint = credential.endpoint
+    datasource = credential.get_parameter_by_name('environment')
 
     engine_type = (
         database.engine_type if not database.engine_type == "mysql_percona"
@@ -866,22 +858,20 @@ def database_metrics(request, context, database):
         datasource
     )
 
-    if organization and organization.external:
-        grafana_url_zabbix += "&orgId={}".format(organization.grafana_orgid)
-
     context['grafana_url_zabbix'] = grafana_url_zabbix
-
-    print("grafana_url_zabbix:{}", grafana_url_zabbix)
 
     dashboard = credential.get_parameter_by_name(
                 'sofia_dbaas_database_dashboard'
                 )
 
     dashboard = dashboard.format(engine_type)
+    hostname = instance.hostname.hostname
+    if 'globoi.com' in hostname:
+        hostname = hostname.split('.')[0]
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
         credential.endpoint,
         dashboard,
-        instance.hostname.hostname.split('.')[0],
+        hostname,
         credential.get_parameter_by_name('datasource'),
         )
 

@@ -660,6 +660,12 @@ class RedisSentinel(BaseRedis):
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
@@ -679,9 +685,11 @@ class RedisSentinel(BaseRedis):
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
-            'Restart telegraf': (
+            'Configure Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
@@ -981,6 +989,12 @@ class RedisCluster(BaseRedis):
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
@@ -996,9 +1010,11 @@ class RedisCluster(BaseRedis):
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
-            'Restart telegraf': (
+            'Configure Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
