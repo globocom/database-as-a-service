@@ -105,6 +105,17 @@ class ConfigureTelegrafRollback(ConfigureTelegraf):
         super(ConfigureTelegrafRollback, self).do()
 
 
+class ConfigureTelegrafSourceDBMigrate(ConfigureTelegraf):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+class ConfigureTelegrafSourceDBMigrateRollback(ConfigureTelegrafRollback):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+
 class InstallTelegraf(MetricsCollector):
     def __unicode__(self):
         return "Installing Telegraf..."
@@ -138,6 +149,18 @@ class RestartTelegrafRollback(RestartTelegraf):
 
     def undo(self):
         super(RestartTelegrafRollback, self).do()
+
+
+class RestartTelegrafSourceDBMigrate(RestartTelegraf):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+
+class RestartTelegrafSourceDBMigrateRollback(RestartTelegrafRollback):
+    @property
+    def host(self):
+        return self.instance.hostname
 
 
 class StopTelegraf(MetricsCollector):

@@ -1092,6 +1092,12 @@ class MongoDBReplicaset(BaseMongoDB):
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
@@ -1105,8 +1111,12 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configure Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Configure Eligible Master': (
                 'workflow.steps.mongodb.database.SetFutureInstanceEligible',
