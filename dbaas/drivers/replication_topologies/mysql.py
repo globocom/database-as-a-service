@@ -1399,8 +1399,9 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.acl.ReplicateVipAclsMigrate',
                 'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
-            'Start rsyslog': (
+            'Start telegraf and rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Reconfigure FOX nodes': (
                 'workflow.steps.util.fox.MigrationAddNodeDestinyInstanceDisabled',
