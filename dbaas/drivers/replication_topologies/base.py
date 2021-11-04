@@ -448,6 +448,10 @@ class BaseTopology(object):
             'Configure SSL (IP)': (
                 ) + self.get_configure_ssl_ip_steps() + (
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
             'Configure and start database': (
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.Configure',
@@ -489,9 +493,13 @@ class BaseTopology(object):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )}, {
+            'Configure Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
