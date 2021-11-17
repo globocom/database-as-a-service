@@ -1,13 +1,18 @@
 from backup.tasks import mysql_binlog_save
 from workflow.steps.mysql.util import get_replication_information_from_file, \
     change_master_to, start_slave, build_uncomment_skip_slave_script,\
-    build_comment_skip_slave_script
+    build_comment_skip_slave_script, get_replication_info
 from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
     RestoreSnapshot, UnmountActiveVolume, DetachActiveVolume, \
     AttachDataVolumeRestored
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
+from time import sleep
+
+
+CHECK_REPLICATION_ATTEMPS = 12
+CHECK_REPLICATION_WAIT = 10
 
 
 class MySQLStep(BaseInstanceStep):
@@ -81,19 +86,39 @@ class SetReadOnlyMigrate(MySQLStep):
     def is_valid(self):
         return self.instance == self.infra.instances.last()
 
-    def _change_variable(self, field, value):
+    def change_variable(self, instance, field, value):
         if not self.is_valid:
             return
-        self.driver.set_configuration(
-            self.instance, field, value
-        )
+        self.driver.set_configuration(instance, field, value)
 
     def do(self):
-        return self._change_variable('read_only', 'ON')
+        self.change_variable(self.instance, 'read_only', 'ON')
 
     def undo(self):
-        return self._change_variable('read_only', 'OFF')
+        self.change_variable(self.instance, 'read_only', 'OFF')
 
+
+class SetSourceInstancesReadOnlyMigrate(SetReadOnlyMigrate):
+    @property
+    def is_valid(self):
+        return True
+
+    def undo(self):
+        if self.instance == self.infra.instances.first():
+            self.change_variable(self.instance, 'read_only', 'OFF')
+
+
+class SetFirstTargetInstanceReadWriteMigrate(SetSourceInstancesReadOnlyMigrate):
+
+    def do(self):
+        if self.instance == self.infra.instances.first():
+            self.change_variable(
+                self.instance.future_instance, 'read_only', 'OFF'
+            )
+    def undo(self):
+        self.change_variable(
+            self.instance.future_instance, 'read_only', 'ON'
+        )
 
 class SetReadWriteMigrate(SetReadOnlyMigrate):
     def __unicode__(self):
@@ -300,6 +325,21 @@ class DestroyAlarmsVip(ZabbixVip):
         CreateAlarmsVip(self.instance).do()
 
 
+class CreateAlarmsVipDatabaseMigrate(CreateAlarmsVip):
+    @property
+    def environment(self):
+        return self.infra.environment
+
+
+class DestroyAlarmsVipDatabaseMigrate(DestroyAlarmsVip):
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    def undo(self):
+        CreateAlarmsVipDatabaseMigrate(self.instance).do()
+
+
 class SetFilePermission(MySQLStep):
     def __unicode__(self):
         return "Setting file permition..."
@@ -501,3 +541,68 @@ class SetReplicationFirstInstanceMigrate(SetReplicationLastInstanceMigrate):
         log_pos = row[0]['Position']
         change_master_to(self.master_instance, self.host.address,
                          log_file, log_pos)
+
+
+class CheckReplicationDBMigrate(MySQLStep):
+    def __unicode__(self):
+        return "Checking replication..."
+
+    def check_replication(self):
+        for _ in range(CHECK_REPLICATION_ATTEMPS):
+            if (self.driver.is_replication_ok(self.instance) and
+                self.driver.is_replication_ok(self.instance.future_instance)):
+                return True
+            sleep(CHECK_REPLICATION_WAIT)
+
+    def do(self):
+        self.check_replication()
+
+    def undo(self):
+        self.check_replication()
+
+
+class ReconfigureReplicationDBMigrate(MySQLStep):
+    def __unicode__(self):
+        return "Reconfiguring replication..."
+
+    @property
+    def source_instances(Self):
+        return self.infra.instances.filter(future_instance__isnull=False)
+
+    @property
+    def target_instances(Self):
+        return self.infra.instances.filter(future_instance__isnull=True)
+
+    def get_new_master_same_env(self, instance):
+        if instance.future_instance:
+            return self.infra.instances.filter(
+                future_instance__isnull=False
+            ).exclude(id=instance.id)[0]
+        else:
+            return self.infra.instances.filter(
+                future_instance__isnull=True
+            ).exclude(id=instance.id)[0]
+
+    def get_new_master_new_env(self, instance):
+        if instance.future_instance:
+            return instance.future_instance
+        else:
+            return self.infra.instances.get(future_instance=instance)
+
+    def _change_master_to(self, instance, master):
+        log_file, log_position = get_replication_info(master)
+        change_master_to(instance, master.address, log_file, log_position)
+
+    def do(self):
+        master = self.get_new_master_new_env(self.instance)
+        self._change_master_to(self.instance, master)
+
+        master = self.get_new_master_same_env(self.instance.future_instance)
+        self._change_master_to(self.instance.future_instance, master)
+
+    def undo(self):
+        master = self.get_new_master_same_env(self.instance)
+        self._change_master_to(self.instance, master)
+
+        master = self.get_new_master_new_env(self.instance.future_instance)
+        self._change_master_to(self.instance.future_instance, master)

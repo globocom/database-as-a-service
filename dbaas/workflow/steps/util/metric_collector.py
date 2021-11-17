@@ -42,8 +42,11 @@ class MetricsCollector(BaseInstanceStep):
             from workflow.steps.util.ssl import InfraSSLBaseName
             infra_ssl = InfraSSLBaseName(self.instance)
             master_ssl_ca = infra_ssl.master_ssl_ca
+        hostname = self.host.hostname
+        if 'globoi.com' in hostname:
+            hostname = hostname.split('.')[0]
         variables = {
-            'HOSTNAME': self.host.hostname.split('.')[0],
+            'HOSTNAME': hostname,
             'HOSTADDRESS': self.host.address,
             'PORT': self.instance.port,
             'USER': user,
@@ -102,6 +105,17 @@ class ConfigureTelegrafRollback(ConfigureTelegraf):
         super(ConfigureTelegrafRollback, self).do()
 
 
+class ConfigureTelegrafSourceDBMigrate(ConfigureTelegraf):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+class ConfigureTelegrafSourceDBMigrateRollback(ConfigureTelegrafRollback):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+
 class InstallTelegraf(MetricsCollector):
     def __unicode__(self):
         return "Installing Telegraf..."
@@ -135,6 +149,18 @@ class RestartTelegrafRollback(RestartTelegraf):
 
     def undo(self):
         super(RestartTelegrafRollback, self).do()
+
+
+class RestartTelegrafSourceDBMigrate(RestartTelegraf):
+    @property
+    def host(self):
+        return self.instance.hostname
+
+
+class RestartTelegrafSourceDBMigrateRollback(RestartTelegrafRollback):
+    @property
+    def host(self):
+        return self.instance.hostname
 
 
 class StopTelegraf(MetricsCollector):

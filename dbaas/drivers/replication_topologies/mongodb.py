@@ -1053,15 +1053,30 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
-            'Start database and configure replication': (
+            'Check Access': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Configure replication': (
                 'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-                'workflow.steps.util.infra.EnableFutureInstances',
                 'workflow.steps.mongodb.database.SetFutureInstanceNotEligibleWithouUndo',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrateAllInstances',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
             )}, {
             'Start telegraf and rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',
@@ -1069,9 +1084,6 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Wait replication': (
                 'workflow.steps.util.database.WaitForReplication',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
@@ -1079,6 +1091,12 @@ class MongoDBReplicaset(BaseMongoDB):
         return [{
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
             )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
@@ -1093,7 +1111,12 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Configure Eligible Master': (
                 'workflow.steps.mongodb.database.SetFutureInstanceEligible',
@@ -1118,9 +1141,6 @@ class MongoDBReplicaset(BaseMongoDB):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     def get_database_migrate_steps_stage_3(self):
@@ -1128,13 +1148,11 @@ class MongoDBReplicaset(BaseMongoDB):
             'Remove instance from replica set': (
                 'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetWithouUndo',
                 'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 

@@ -26,7 +26,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     readonly_fields = (
         "host", "zone", "environment", "link_task", "link_database_migrate",
         "started_at", "finished_at", "status", "task_schedule",
-        "maintenance_action", "database_migrate"
+        "maintenance_action", "database_migrate", "snapshot"
     )
     ordering = ["-started_at"]
 

@@ -1022,10 +1022,10 @@ class DatabaseInfra(BaseModel):
     @property
     def set_require_ssl_for_databaseinfra(self):
         return self.get_driver().set_require_ssl_for_databaseinfra
-    
+
     @property
     def migration_in_progress(self):
-        return self.migration_stage > NOT_STARTED
+        return self.migration_stage > self.NOT_STARTED
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
@@ -1737,33 +1737,37 @@ class TopologyParameterCustomValue(BaseModel):
         unique_together = ('topology', 'parameter')
 
 
-class VipWithoutFutureVip(models.Manager):
+'''class VipWithoutFutureVip(models.Manager):
     def get_queryset(self):
         return super(VipWithoutFutureVip, self).get_queryset().exclude(
             original_vip__isnull=False
-        )
+        )'''
 
 
 class Vip(BaseModel):
-    objects = VipWithoutFutureVip()
-    original_objects = models.Manager()
+    #objects = VipWithoutFutureVip()
+    #original_objects = models.Manager()
     infra = models.ForeignKey(
         DatabaseInfra, related_name="vips")
     identifier = models.CharField(verbose_name=_("Identifier"), max_length=200)
     original_vip = models.ForeignKey(
         "Vip", null=True, blank=True, on_delete=models.SET_NULL
     )
+    vip_ip = models.CharField(
+        verbose_name=_("Ip address"), max_length=200,
+        null=True, blank=True,
+    )
 
     def __unicode__(self):
-        return 'Vip of infra {}'.format(self.infra.name)
+        return 'Vip {} of infra {}'.format(self.vip_ip, self.infra.name)
 
-    @classmethod
+    '''@classmethod
     def get_vip_from_databaseinfra(cls, databaseinfra):
         from workflow.steps.util.base import VipProviderClient
         vip_identifier = cls.objects.get(infra=databaseinfra).identifier
         client = VipProviderClient(databaseinfra.environment)
 
-        return client.get_vip(vip_identifier)
+        return client.get_vip(vip_identifier)'''
 
 
 class Cloud(BaseModel):

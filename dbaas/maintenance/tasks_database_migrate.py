@@ -95,7 +95,7 @@ def database_environment_migrate(
                 status=DatabaseMigrate.SUCCESS
             ).last()
             instances = rebuild_hosts_migrate(database_migrate, last_db_migrate)
-    instances = sorted(instances, key=lambda k: k.dns)
+    instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, infra.migration_stage)
     result = steps_for_instances(
         steps, instances, task, database_migrate.update_step, since_step,
@@ -132,7 +132,7 @@ def rollback_database_environment_migrate(step_manager, task):
 
     database_migrate = rebuild_database_migrate(task, step_manager)
     instances = rebuild_hosts_migrate(database_migrate, step_manager)
-    instances = sorted(instances, key=lambda k: k.dns)
+    instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, migration_stage)
 
     result = rollback_for_instances_full(

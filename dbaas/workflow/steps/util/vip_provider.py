@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, put, patch
+from requests.models import parse_header_links
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
 from physical.models import Vip, VipInstanceGroup
@@ -165,10 +166,10 @@ class Provider(object):
         vip = Vip()
         vip.identifier = content["identifier"]
         vip.infra = infra
+        vip.vip_ip = content["ip"]
         if original_vip:
             vip.original_vip = original_vip
         vip.save()
-        vip.vip_ip = content["ip"]
 
         return vip
 
@@ -193,16 +194,16 @@ class Provider(object):
 
         return True
 
-    def create_instance_group(self, infra, port, team_name, equipments,
-                              vip_dns, database_name='', future_vip=False):
-        url = "{}/{}/{}/instance-group".format(
-            self.credential.endpoint, self.provider, self.environment
+    def create_instance_group(
+        self, infra, port, equipments,
+        vip_identifier, new_intance_group):
+        url = "{}/{}/{}/instance-group/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, vip_identifier
         )
         data = {
             "group": infra.name,
             "port": port,
-            "team_name": team_name,
-            "vip_dns": vip_dns,
             "equipments": equipments
         }
 
@@ -213,22 +214,28 @@ class Provider(object):
 
         content = response.json()
 
-        try:
-            original_vip = Vip.objects.get(infra=infra)
-        except Vip.DoesNotExist:
-            original_vip = None
-        vip = Vip()
-        vip.identifier = content["vip_identifier"]
-        vip.infra = infra
-        if original_vip:
-            vip.original_vip = original_vip
-        vip.save()
+        if new_intance_group:
+            vip = Vip()
+            try:
+                original_vip = Vip.objects.get(infra=infra)
+                vip.original_vip = original_vip
+            except Vip.DoesNotExist:
+                pass
+
+            vip.identifier = content["vip_identifier"]
+            vip.infra = infra
+            vip.save()
+        else:
+            vip = Vip.objects.get(infra=infra)
 
         for g in content['groups']:
-            vg = VipInstanceGroup(vip=vip)
-            vg.name = g['name']
-            vg.identifier = g['identifier']
-            vg.save()
+            vg, created = VipInstanceGroup.objects.get_or_create(
+                vip=vip,
+                name=g['name'],
+                defaults={'identifier': g['identifier']}
+            )
+            if created:
+                vg.save()
 
         return vip
 
@@ -460,7 +467,8 @@ class VipProviderStep(BaseInstanceStep):
     @property
     def equipments(self):
         equipments = []
-        for instance in self.infra.instances.all():
+        ## TODO CHECK
+        for instance in self.infra.instances.filter(future_instance=None):
             host = instance.hostname
             if host.future_host:
                 host = host.future_host
@@ -512,9 +520,19 @@ class CreateVip(VipProviderStep):
         return "Creating vip..."
 
     @property
+    def target_instance(self):
+        if self.host_migrate and self.instance.future_instance:
+            return self.instance.future_instance
+        return self.instance
+
+    @property
     def is_valid(self):
-        return self.instance == self.infra.instances.first() or\
+        '''return self.instance == self.infra.instances.first() or\
                 self.host_migrate
+        '''
+        if self.host_migrate and self.instance.future_instance is None:
+            return True
+        return self.instance == self.infra.instances.first()
 
     @property
     def vip_dns(self):
@@ -527,7 +545,9 @@ class CreateVip(VipProviderStep):
             return
 
         vip = self.provider.create_vip(
-            self.infra, self.instance.port, self.team,
+            #TODO CHECK
+            #self.infra, self.instance.port, self.team,
+            self.infra, self.target_instance.port, self.team,
             self.equipments, self.vip_dns)
         dns = add_dns_record(
             self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
@@ -613,7 +633,7 @@ class UpdateVipReals(VipProviderStep):
     def vip(self):
         original_vip = Vip.objects.get(infra=self.infra)
         try:
-            future_vip = Vip.original_objects.get(
+            future_vip = Vip.objects.get(
                 infra_id=self.infra.id,
                 original_vip=original_vip
             )
@@ -744,13 +764,23 @@ class CreateInstanceGroup(CreateVip):
     def __unicode__(self):
         return "Creating instance group..."
 
+    @property
+    def vip_identifier(self):
+        return ''
+
+    @property
+    def new_intance_group(self):
+        return True
+
     def do(self):
         if not self.is_valid:
             return
 
         return self.provider.create_instance_group(
-                    self.infra, self.instance.port, self.team,
-                    self.equipments, self.vip_dns)
+            self.infra, self.target_instance.port,
+            self.equipments, self.vip_identifier,
+            self.new_intance_group
+        )
 
     def undo(self):
         if not self.is_valid:
@@ -758,6 +788,43 @@ class CreateInstanceGroup(CreateVip):
 
         return self.provider.delete_instance_group(
                     self.equipments, self.current_vip)
+
+
+class UpdateInstanceGroupRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Updating instance group rollback..."
+
+    @property
+    def vip_identifier(self):
+        return self.current_vip.identifier
+
+    @property
+    def new_intance_group(self):
+        return False
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(UpdateInstanceGroupRollback, self).do()
+
+
+class UpdateInstanceGroupWithoutRollback(CreateInstanceGroup):
+
+    def __unicode__(self):
+        return "Updating instance group without rollback..."
+
+    @property
+    def vip_identifier(self):
+        return self.current_vip.identifier
+
+    @property
+    def new_intance_group(self):
+        return False
+
+    def undo(self):
+        pass
 
 
 class AddInstancesInGroup(CreateVip):
@@ -817,14 +884,23 @@ class AllocateIP(CreateVip):
     def __unicode__(self):
         return "Allocating ip to vip..."
 
+    def update_infra_endpoint(self, ip):
+        infra = self.infra
+        infra.endpoint = "{}:{}".format(ip, 3306)
+        infra.save()
+
+    def update_vip_ip(self, ip):
+        vip = self.current_vip
+        vip.vip_ip = ip
+        vip.save()
+
     def do(self):
         if not self.is_valid:
             return
 
         ip = self.provider.allocate_ip(self.current_vip)
-
-        self.infra.endpoint = "{}:{}".format(ip, 3306)
-        self.infra.save()
+        self.update_infra_endpoint(ip)
+        self.update_vip_ip(ip)
 
         return True
 
@@ -833,6 +909,11 @@ class AllocateIP(CreateVip):
             return
 
         return self.provider.allocate_ip(self.current_vip, destroy=True)
+
+
+class AllocateIPMigrate(AllocateIP):
+    def update_infra_endpoint(self, ip):
+        pass
 
 
 class AllocateDNS(CreateVip):
@@ -937,18 +1018,6 @@ class UpdateBackendServiceMigrateRollback(UpdateBackendServiceMigrate):
         super(UpdateBackendServiceMigrateRollback, self).do()
 
 
-class CreateInstanceGroupRollback(CreateInstanceGroup):
-
-    def __unicode__(self):
-        return "Creating instance group rollback..."
-
-    def do(self):
-        pass
-
-    def undo(self):
-        super(CreateInstanceGroupRollback, self).do()
-
-
 class AddInstancesInGroupRollback(AddInstancesInGroup):
     def __unicode__(self):
         return "Adding instances in groups rollback..."
@@ -958,15 +1027,6 @@ class AddInstancesInGroupRollback(AddInstancesInGroup):
 
     def undo(self):
         super(AddInstancesInGroupRollback, self).do()
-
-
-class CreateInstanceGroupWithoutRollback(CreateInstanceGroup):
-
-    def __unicode__(self):
-        return "Creating instance group without rollback..."
-
-    def undo(self):
-        pass
 
 
 class AddLoadBalanceLabels(CreateForwardingRule):
@@ -980,8 +1040,34 @@ class AddLoadBalanceLabels(CreateForwardingRule):
         return self.provider.add_labels(
             self.current_vip, team_name=self.team,
             engine_name=self.engine.name.split("_")[0],
-            database_name=self.create.name,
+            database_name=(self.database.name if self.database
+                else self.create.name),
             infra_name=self.infra.name)
 
     def undo(self):
         pass
+
+class DestroySourceVipDatabaseMigrate(VipProviderStep):
+
+    def __unicode__(self):
+        return "Destroying old vip..."
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.destroy_vip(self.vip.identifier)
+        self.future_vip.original_vip = None
+        self.future_vip.save()
+        self.vip.delete()
+
+    def undo(self):
+        raise NotImplementedError

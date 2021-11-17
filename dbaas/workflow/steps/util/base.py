@@ -12,7 +12,6 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest, GetCredentialException
 from physical.models import Vip
 
-
 LOG = logging.getLogger(__name__)
 CHECK_SECONDS = 10
 CHECK_ATTEMPTS = 30
@@ -30,7 +29,9 @@ class BaseInstanceStep(object):
 
     def __init__(self, instance):
         self.instance = instance
+        #self._vip = None
         self._vip = None
+        self._future_vip = None
         self._driver = None
         self._credential = None
 
@@ -201,11 +202,17 @@ class BaseInstanceStep(object):
 
     @property
     def vip(self):
-        if self._vip:
-            return self._vip
-        vip_identifier = Vip.objects.get(infra=self.infra).identifier
-        self._vip = self._get_vip(vip_identifier, self.infra.environment)
+        if self._vip is None:
+            self._vip = Vip.objects.get(infra=self.infra, original_vip=None)
+            vip_provider = self._get_vip(self._vip.identifier, self.infra.environment)
+            if vip_provider.dscp:
+                self._vip.dscp = vip_provider.dscp
         return self._vip
+        #if self._vip:
+        #    return self._vip
+        #vip_identifier = Vip.objects.get(infra=self.infra).identifier
+        #self._vip = self._get_vip(vip_identifier, self.infra.environment)
+        #return self._vip
 
     @vip.setter
     def vip(self, vip):
@@ -213,12 +220,22 @@ class BaseInstanceStep(object):
 
     @property
     def future_vip(self):
-        original_vip = Vip.objects.get(infra=self.infra)
-        future_vip_identifier = Vip.original_objects.get(
-            infra=self.infra,
-            original_vip=original_vip
-        ).identifier
-        return self._get_vip(future_vip_identifier, self.environment)
+        if self._future_vip is None:
+            self._future_vip = Vip.objects.get(
+                infra=self.infra,
+                original_vip=self.vip
+            )
+            vip_provider = self._get_vip(self._future_vip.identifier, self.environment)
+            if vip_provider.dscp:
+                self._future_vip.dscp = vip_provider.dscp
+
+        return self._future_vip
+        #original_vip = Vip.objects.get(infra=self.infra)
+        #future_vip_identifier = Vip.original_objects.get(
+        #    infra=self.infra,
+        #    original_vip=original_vip
+        #).identifier
+        #return self._get_vip(future_vip_identifier, self.environment)
 
     def __is_instance_status(self, expected, attempts=None):
         if self.host_migrate and self.instance.hostname.future_host:
@@ -428,7 +445,8 @@ class ACLFromHellClient(object):
             **kw
         )
 
-    def get_rule(self, database, app_name=None, extra_params=None):
+    def get_enabled_rules(self, database, app_name=None, extra_params=None):
+        enabled_rules = []
         params = {
             'metadata.owner': 'dbaas',
             'metadata.service-name': self.credential.project,
@@ -441,51 +459,52 @@ class ACLFromHellClient(object):
 
         LOG.debug("Tsuru get rule for {} params:{}".format(
             database.name, params))
-        return self._request(
+        resp = self._request(
             requests.get,
             self.credential.endpoint,
             params=params,
         )
 
-    @staticmethod
-    def _get_vip_dns(infra):
-        return infra.endpoint_dns.split(':')[0]
+        if not resp.ok:
+            LOG.debug("Tsuru Status on Get Rules for database {}: {}".format(
+                database, resp.status_code))
+            return enabled_rules
 
-    def _need_add_acl_for_vip(self, database, app_name):
-        infra = database.infra
-        if infra.vips.exists():
-            vip_dns = self._get_vip_dns(infra)
-            resp = self.get_rule(
-                database,
-                app_name,
-                extra_params={'destination.externaldns.name': vip_dns}
-            )
-            if resp and not resp.ok:
-                LOG.info("ACLFROMHELL Add VIP ACL for {}: {}".format(
-                    vip_dns, resp.content)
-                )
-            return not (resp and resp.ok and resp.json())
-        return False
+        all_rules = resp.json()
+        if all_rules:
+            for rule in all_rules:
+                if rule.get('Removed'):
+                    continue
+                enabled_rules.append(rule)
+
+        return enabled_rules
+
+    @staticmethod
+    def _get_vip_dns(databaseinfra):
+        return databaseinfra.endpoint_dns.split(':')[0]
 
     def add_acl_for_vip_if_needed(self, database, app_name):
+        databaseinfra = database.databaseinfra
+        if not databaseinfra.vips.exists():
+            return
 
-        if self._need_add_acl_for_vip(database, app_name):
-            vip_dns = self._get_vip_dns(database.infra)
-
-            vip_resp = self.add_acl(
-                database,
-                app_name,
-                vip_dns
-            )
-            if not vip_resp:
-                raise CantSetACLError(
-                    "Cant set acl for VIP {} error: {}".format(
-                        vip_dns,
-                        vip_resp.content
-                    )
-                )
+        vip_dns = self._get_vip_dns(databaseinfra)
+        self.add_acl(database, app_name, vip_dns)
 
     def add_acl(self, database, app_name, hostname):
+        rules = self.get_enabled_rules(
+            database,
+            app_name,
+            extra_params={'destination.externaldns.name': hostname}
+        )
+        if rules:
+            msg = "Rule already registered. Database: {}, \
+                   App Name: {}, Hostname: {} - Rules: {}".format(
+                       database, app_name, hostname, rules
+                   )
+            LOG.info(msg)
+            return
+
         infra = database.infra
         driver = infra.get_driver()
 
@@ -523,32 +542,32 @@ class ACLFromHellClient(object):
             json=payload,
         )
         if not resp.ok:
-            msg = "Error bind {} database on {} environment: {}".format(
-                database.name, self.environment, resp.content
+            error = "Cant set acl for {}:{}-{}. Error: {}".format(
+                app_name, database, hostname, resp.content
             )
-            LOG.info(msg)
+            LOG.error(msg)
+            raise CantSetACLError(error)
+
         LOG.info("Tsuru Add ACL Status for host {}: {}".format(
             hostname, resp.status_code
         ))
 
-        return resp
-
     def remove_acl(self, database, app_name):
+        rules = self.get_enabled_rules(database, app_name)
 
-        resp = self.get_rule(database, app_name)
-        if not resp.ok:
+        if not rules:
             msg = "Rule not found for {}.".format(
                 database.name)
-            LOG.error(msg)
+            LOG.debug(msg)
 
-        rules = resp.json()
         for rule in rules:
             rule_id = rule.get('RuleID')
             host = (rule.get('Destination', {})
                     .get('ExternalDNS', {})
                     .get('Name'))
             if rule_id:
-                LOG.info('Tsuru Unbind App removing rule for {}'.format(host))
+                LOG.info('Tsuru Unbind App removing rule for {}:{}-{}'.format(
+                    app_name, database, host))
                 resp = self._request(
                     requests.delete,
                     '{}/{}'.format(self.credential.endpoint, rule_id)
@@ -558,14 +577,3 @@ class ACLFromHellClient(object):
                         rule_id, host)
                     LOG.error(msg)
         return None
-
-class BaseRaiseTestException(BaseInstanceStep):
-    def __unicode__(self):
-        return "Raise a test exception..."
-
-    def do(self):
-        return True
-        #raise Exception('Test exception!')
-
-    def undo(self):
-        pass

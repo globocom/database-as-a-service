@@ -1,5 +1,6 @@
 {% load admin_static admin_urls bootstrap_template_tags %}
 {% load flatpages notification_tags %}
+{% load config_tags %}
 {% get_flatpages as flatpages %}
 
 <!DOCTYPE html>
@@ -48,10 +49,9 @@ var addsDark = localStorage.getItem('darkmode');
 addsDark = (addsDark === "true" || addsDark === true)
 if(addsDark)
     element.classList.add("dark");
+
 </script>
 {% endblock %}
-
-
 {% if not is_popup %}
     <!-- Header -->
     <div id="header" class="navbar navbar-inverse navbar-fixed-top">
@@ -112,6 +112,13 @@ if(addsDark)
                     
                 </div>
             </div>
+            
+        {% endif %}
+        {% get_config "alert_message" as config_alert_message %}
+        {% if config_alert_message  and config_alert_message.value == "1" %}
+        <div class="alert alert-warning alert-center">
+            <p>{{config_alert_message.description}}</p>
+        </div>
         {% endif %}
     </div>
     <!-- END Header -->
@@ -196,6 +203,7 @@ if(addsDark)
 </script>
 
 {% block js_footer %}{% endblock js_footer %}
+
 <!-- JAVASCRIPTS -->
 </body>
 </html>

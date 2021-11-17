@@ -125,9 +125,12 @@ class CleanDataRecreateSlave(CleanData):
 
 
 class CleanDataMigrate(CleanData):
+    def __unicode__(self):
+        return "Removing data..."
+
     @property
     def is_valid(self):
-        return True
+        return self.is_database_instance
 
 
 class CleanReplRecreateSlave(CleanData):

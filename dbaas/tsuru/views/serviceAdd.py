@@ -180,7 +180,8 @@ class ServiceAdd(APIView):
         try:
             self.dbaas_user.team_set.get(name=self.team_param)
         except ObjectDoesNotExist as e:
-            msg = "The user is not on {} team.".format(self.team_param)
+            msg = "User {} is not on {} team.".format(
+                self.dbaas_user, self.team_param)
             return log_and_response(
                 msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )

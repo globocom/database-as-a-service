@@ -126,6 +126,12 @@ class ChangeMaster(VmStep):
         raise error
 
 
+class ChangeMasterDatabaseMigrate(ChangeMaster):
+    @property
+    def target_instance(self):
+        return self.instance.future_instance
+
+
 class ChangeMasterRollback(ChangeMaster):
     def __unicode__(self):
         return "Changing master node if rollback..."
@@ -161,6 +167,7 @@ class ChangeMasterMigrate(ChangeMaster):
     def is_valid(self):
         is_valid = super(ChangeMasterMigrate, self).is_valid
         return is_valid and self.instance == self.infra.instances.first()
+
 
 
 class InstanceIsSlave(ChangeMaster):

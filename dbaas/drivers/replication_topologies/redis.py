@@ -644,7 +644,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Configure replication': (
                 'workflow.steps.util.database.SetSlaveDatabaseMigration',
@@ -652,9 +652,6 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Wait replication': (
                 'workflow.steps.util.database.WaitForReplication',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     # RedisSentinel
@@ -662,6 +659,12 @@ class RedisSentinel(BaseRedis):
         return [{
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
             )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
@@ -682,12 +685,15 @@ class RedisSentinel(BaseRedis):
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
+            )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
             )}]
 
     # RedisSentinel
@@ -695,14 +701,12 @@ class RedisSentinel(BaseRedis):
         return [{
             'Cleaning up': (
                 'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )}, {
             'Resetting Sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
-           # )}, {
-           # 'Raise Test Migrate Exception': (
-           #     'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
 
@@ -967,19 +971,16 @@ class RedisCluster(BaseRedis):
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
             )}, {
             'Configure replication': (
                 'workflow.steps.redis.cluster.AddSlaveNode',
                 'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceNotEligible',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
-            )}, {
+            #)}, {
             #'Wait replication': (
             ## RICK TODO REVIEW
             #    'workflow.steps.util.database.WaitForReplication',
-            #)}, {
-            'Raise Test Migrate Exception': (
-                'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 
     # RedisCluster
@@ -988,49 +989,50 @@ class RedisCluster(BaseRedis):
             'Destroy Alarms': (
                 'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
             'Update and Check DNS': (
                 'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
                 'workflow.steps.util.dns.ChangeEndpointDBMigrate',
                 'workflow.steps.util.dns.CheckIsReadyDBMigrate',
             )}, {
-            ## RICK TODO REVIEW
-            # 'Change Master Rollback': (
-                ## RICK REVER ISSO AQUI
-                #'workflow.steps.util.database.CheckIfSwitchMasterRollback',
-            #    'workflow.steps.util.vm.ChangeMasterMigrateRollback',
-            #)}, {
             'Configure Eligible Master': (
                 'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceEligible',
                 'workflow.steps.redis.horizontal_elasticity.database.SetSourceInstanceNotEligible',
             )}, {
             'Change Master': (
+                #'workflow.steps.util.database.CheckIfSwitchSourceInstanceMasterMigrate',
                 'workflow.steps.redis.cluster.SetFutureInstanceMasterDatabaseMigrate',
                 ## RICK TODO REVIEW
                 #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
+            )}, {
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
             )}]
 
     # RedisCluster
     def get_database_migrate_steps_stage_3(self):
         return [{
             'Cleaning up': (
-                'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.redis.cluster.RemoveNodeDBMigrate',
-                'workflow.steps.util.base.BaseRaiseTestException',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
             )}, {
             'Cleaning up 2': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-            #)}, {
-            #'Raise Test Migrate Exception': (
-            #    'workflow.steps.util.base.BaseRaiseTestException',
         )}]
 class RedisGenericGCE(object):
     def get_single_host_migrate_steps(self):

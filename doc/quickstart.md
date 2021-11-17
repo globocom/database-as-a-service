@@ -1,5 +1,4 @@
-## A Step by step guide to make your DBaaS running :)
-
+# A step by step guide to get your DBaaS running :)
 
 Have you already read [readme](../README.md) and [definitions](./definitions.md)?
 Not yet? Please do that before go ahead.
