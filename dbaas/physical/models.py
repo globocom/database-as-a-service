@@ -514,6 +514,9 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+    environments = models.ManyToManyField(
+        'Environment', verbose_name=_("Environments"), related_name='diskofferings'
+    )
 
     def size_gb(self):
         if self.size_kb:
