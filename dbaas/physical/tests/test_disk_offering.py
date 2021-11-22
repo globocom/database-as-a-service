@@ -4,7 +4,7 @@ import logging
 from django.core.cache import cache
 from django.test import TestCase
 from django.contrib import admin
-from physical.tests.factory import DiskOfferingFactory
+from physical.tests.factory import DiskOfferingFactory, EnvironmentFactory
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 from system.models import Configuration
 from ..admin.disk_offering import DiskOfferingAdmin
@@ -13,7 +13,7 @@ from ..models import DiskOffering
 
 LOG = logging.getLogger(__name__)
 SEARCH_FIELDS = ('name', )
-LIST_FIELDS = ('name', 'size_gb')
+LIST_FIELDS = ('name', 'size_gb', 'selected_environments')
 SAVE_ON_TOP = True
 UNICODE_FORMAT = '{}'
 
@@ -46,6 +46,7 @@ class DiskOfferingTestCase(TestCase):
             name='auto_resize_max_size_in_gb', value=100
         )
         self.auto_resize_max_size_in_gb.save()
+        self.environment = EnvironmentFactory()
 
     def tearDown(self):
         if self.auto_resize_max_size_in_gb.id:
@@ -65,6 +66,7 @@ class DiskOfferingTestCase(TestCase):
             data={
                 'name': 'disk_offering_small',
                 'size_gb': 0.5,
+                'environments': [self.environment.id]
             }
         )
         self.assertTrue(disk_offering_form.is_valid())
@@ -87,6 +89,7 @@ class DiskOfferingTestCase(TestCase):
             data={
                 'name': disk_offering.name,
                 'size_gb': 1.5,
+                'environments': [self.environment.id]
             },
             instance=disk_offering
         )
