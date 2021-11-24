@@ -70,6 +70,7 @@ class RedisSingle(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -122,6 +123,7 @@ class RedisSingle(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -427,6 +429,7 @@ class RedisSentinel(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -484,6 +487,7 @@ class RedisSentinel(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -597,6 +601,7 @@ class RedisSentinel(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Resetting Sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinelRolllback',
@@ -738,6 +743,7 @@ class RedisCluster(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -927,6 +933,7 @@ class RedisCluster(BaseRedis):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',

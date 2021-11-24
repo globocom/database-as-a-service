@@ -405,6 +405,7 @@ class BaseTopology(object):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
