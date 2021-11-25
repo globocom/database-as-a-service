@@ -1,6 +1,6 @@
 <h2>Database {{database.name}} disk was resized</h2>
 
-{% if new_disk_offering.is_last_auto_resize_offering %}
+{% if is_last_auto_resize_offering %}
 <font color="red">This is the <b><u>final</u></b> disk auto resize. You must contact your DBA.</font>
 <br><br>
 {% endif %}

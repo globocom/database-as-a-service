@@ -1,6 +1,6 @@
 Database {{database.name}} disk was resized
 
-{% if new_disk_offering.is_last_auto_resize_offering %}
+{% if is_last_auto_resize_offering %}
 This is the FINAL disk auto resize. You must contact your DBA.
 {% endif %}
 

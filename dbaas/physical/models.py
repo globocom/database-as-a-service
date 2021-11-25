@@ -514,6 +514,9 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+    environments = models.ManyToManyField(
+        'Environment', verbose_name=_("Environments"), related_name='diskofferings'
+    )
 
     def size_gb(self):
         if self.size_kb:
@@ -543,9 +546,10 @@ class DiskOffering(BaseModel):
         return '{}'.format(self.name)
 
     @classmethod
-    def first_greater_than(cls, base_size, exclude_id=None):
+    def first_greater_than(cls, base_size, environment, exclude_id=None):
         disks = DiskOffering.objects.filter(
-            size_kb__gt=base_size
+            size_kb__gt=base_size,
+            environments=environment
         ).exclude(
             id=exclude_id
         ).order_by('size_kb')
@@ -556,7 +560,7 @@ class DiskOffering(BaseModel):
         return disks[0]
 
     @classmethod
-    def last_offering_available_for_auto_resize(cls):
+    def last_offering_available_for_auto_resize(cls, environment):
         parameter_in_kb = cls.converter_gb_to_kb(
             Configuration.get_by_name_as_int(
                 name='auto_resize_max_size_in_gb', default=100
@@ -564,7 +568,8 @@ class DiskOffering(BaseModel):
         )
 
         disks = DiskOffering.objects.filter(
-            size_kb__lte=parameter_in_kb
+            size_kb__lte=parameter_in_kb,
+            environments=environment
         ).order_by('-size_kb')
 
         if not disks:
@@ -584,11 +589,10 @@ class DiskOffering(BaseModel):
 
         return True
 
-    @property
-    def is_last_auto_resize_offering(self):
+    def is_last_auto_resize_offering(self, environment):
         try:
-            last_offering = (
-                DiskOffering.last_offering_available_for_auto_resize()
+            last_offering = self.last_offering_available_for_auto_resize(
+                environment
             )
         except NoDiskOfferingLesserError:
             return False
