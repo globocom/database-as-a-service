@@ -135,7 +135,7 @@ def disk_resize_notification(database, new_disk, usage_percentage):
     )
 
     subject = _('[DBaaS] Database {} auto disk resize to {}')
-    if new_disk.is_last_auto_resize_offering:
+    if new_disk.is_last_auto_resize_offering(database.environment):
         subject = _('[DBaaS] Database {} final auto disk resize to {}')
     subject = subject.format(database.name, new_disk)
 
@@ -146,6 +146,8 @@ def disk_resize_notification(database, new_disk, usage_percentage):
         'database': database,
         'usage_percentage': usage_percentage,
         'new_disk_offering': new_disk,
+        'is_last_auto_resize_offering': new_disk.is_last_auto_resize_offering(
+            database.environment),
         'database_url': get_database_url(database.id)
     }
 
