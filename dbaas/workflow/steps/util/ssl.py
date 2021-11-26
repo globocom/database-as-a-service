@@ -217,6 +217,10 @@ class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
     pass
 
 
+class CreateSSLFolderRollbackIfRunningIfConfigured(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidator):
+    pass
+
+
 class InstanceSSLBaseName(SSL):
     @property
     def ssl_file_basename(self):
