@@ -38,7 +38,7 @@ pycrypto==2.6
 pymongo==3.9.0
 python-gnupg==0.3.6
 python-keyczar==0.71c
-python-ldap==2.3.13
+python-ldap==3.4.0
 python-slugify==4.0.1
 pytz==2013.7
 raven==3.5.0
