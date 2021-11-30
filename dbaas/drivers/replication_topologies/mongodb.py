@@ -219,6 +219,7 @@ class MongoDBSingle(BaseMongoDB):
 
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -381,6 +382,7 @@ class MongoDBSingle(BaseMongoDB):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -668,6 +670,7 @@ class MongoDBReplicaset(BaseMongoDB):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -738,6 +741,7 @@ class MongoDBReplicaset(BaseMongoDB):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -1018,6 +1022,7 @@ class MongoDBReplicaset(BaseMongoDB):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -1261,6 +1266,7 @@ class MongoDBSingleK8s(MongoDBSingle):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating k8s Service': (
                 'workflow.steps.util.k8s.NewServiceK8S',
