@@ -74,6 +74,7 @@ class MySQLSingle(BaseMysql):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -141,6 +142,7 @@ class MySQLSingle(BaseMysql):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -476,6 +478,7 @@ class MySQLFoxHA(MySQLSingle):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -586,6 +589,7 @@ class MySQLFoxHA(MySQLSingle):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -1328,6 +1332,7 @@ class MySQLFoxHA(MySQLSingle):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
@@ -1509,6 +1514,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
@@ -2210,6 +2216,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
         return [{
             'Creating Service Account': (
                 'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',

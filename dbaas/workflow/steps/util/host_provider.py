@@ -66,6 +66,10 @@ class HostProviderCreateServiceAccountException(HostProviderException):
     pass
 
 
+class HostProviderSetRoleServiceAccountException(HostProviderException):
+    pass
+
+
 class HostProviderDestroyServiceAccountException(HostProviderException):
     pass
 
@@ -382,6 +386,20 @@ class Provider(BaseInstanceStep):
         if content:
             return content['service_account']
         return None
+
+    def set_roles_service_account(self, sa):
+        url = "{}/{}/{}/sa-set-role/{}".format(
+            self.credential.endpoint, self.provider,
+            self.environment, sa
+        )
+
+        response = self._request(post, url, timeout=600)
+        if not response.ok:
+            raise HostProviderSetRoleServiceAccountException(
+                response.content, response
+            )
+
+        return True
 
     def destroy_service_account(self, service_account):
         url = "{}/{}/{}/sa/{}".format(
@@ -918,3 +936,16 @@ class CreateServiceAccount(HostProviderStep):
             self.infra.service_account = None
             self.infra.save()
 
+
+class SetServiceAccountRoles(HostProviderStep):
+
+    def __unicode__(self):
+        return "Set roles in service account..."
+
+    def do(self):
+        return self.provider.set_roles_service_account(
+            self.infra.service_account
+        )
+
+    def undo(self):
+        pass
