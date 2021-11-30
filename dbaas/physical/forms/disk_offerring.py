@@ -10,7 +10,7 @@ class DiskOfferingForm(forms.ModelForm):
 
     class Meta:
         model = DiskOffering
-        fields = ("name", "size_gb")
+        fields = ("name", "size_gb", "environments")
 
     def __init__(self, *args, **kwargs):
         super(DiskOfferingForm, self).__init__(*args, **kwargs)

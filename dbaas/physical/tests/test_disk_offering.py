@@ -4,7 +4,7 @@ import logging
 from django.core.cache import cache
 from django.test import TestCase
 from django.contrib import admin
-from physical.tests.factory import DiskOfferingFactory
+from physical.tests.factory import DiskOfferingFactory, EnvironmentFactory
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 from system.models import Configuration
 from ..admin.disk_offering import DiskOfferingAdmin
@@ -13,7 +13,7 @@ from ..models import DiskOffering
 
 LOG = logging.getLogger(__name__)
 SEARCH_FIELDS = ('name', )
-LIST_FIELDS = ('name', 'size_gb')
+LIST_FIELDS = ('name', 'size_gb', 'selected_environments')
 SAVE_ON_TOP = True
 UNICODE_FORMAT = '{}'
 
@@ -30,14 +30,17 @@ class DiskOfferingTestCase(TestCase):
 
         self.bigger = DiskOfferingFactory()
         self.bigger.size_kb *= 30
+        self.bigger.environments.add(self.environment)
         self.bigger.save()
 
         self.medium = DiskOfferingFactory()
         self.medium.size_kb *= 20
+        self.medium.environments.add(self.environment)
         self.medium.save()
 
         self.smaller = DiskOfferingFactory()
         self.smaller.size_kb *= 10
+        self.smaller.environments.add(self.environment)
         self.smaller.save()
 
     def setUp(self):
@@ -46,6 +49,7 @@ class DiskOfferingTestCase(TestCase):
             name='auto_resize_max_size_in_gb', value=100
         )
         self.auto_resize_max_size_in_gb.save()
+        self.environment = EnvironmentFactory()
 
     def tearDown(self):
         if self.auto_resize_max_size_in_gb.id:
@@ -65,6 +69,7 @@ class DiskOfferingTestCase(TestCase):
             data={
                 'name': 'disk_offering_small',
                 'size_gb': 0.5,
+                'environments': [self.environment.id]
             }
         )
         self.assertTrue(disk_offering_form.is_valid())
@@ -87,6 +92,7 @@ class DiskOfferingTestCase(TestCase):
             data={
                 'name': disk_offering.name,
                 'size_gb': 1.5,
+                'environments': [self.environment.id]
             },
             instance=disk_offering
         )
@@ -149,10 +155,12 @@ class DiskOfferingTestCase(TestCase):
     def test_can_found_greater_disk(self):
         self.create_basic_disks()
 
-        found = DiskOffering.first_greater_than(self.smaller.size_kb)
+        found = DiskOffering.first_greater_than(
+            self.smaller.size_kb, self.environment)
         self.assertEqual(self.medium, found)
 
-        found = DiskOffering.first_greater_than(self.medium.size_kb)
+        found = DiskOffering.first_greater_than(
+            self.medium.size_kb, self.environment)
         self.assertEqual(self.bigger, found)
 
     def test_cannot_found_greater_disk(self):
@@ -160,14 +168,14 @@ class DiskOfferingTestCase(TestCase):
 
         self.assertRaises(
             NoDiskOfferingGreaterError,
-            DiskOffering.first_greater_than, self.bigger.size_kb
+            DiskOffering.first_greater_than, self.bigger.size_kb, self.environment
         )
 
     def test_can_found_greater_disk_with_exclude(self):
         self.create_basic_disks()
 
         found = DiskOffering.first_greater_than(
-            self.smaller.size_kb, exclude_id=self.medium.id
+            self.smaller.size_kb, self.environment, exclude_id=self.medium.id
         )
         self.assertEqual(self.bigger, found)
 
@@ -176,12 +184,14 @@ class DiskOfferingTestCase(TestCase):
 
         self.auto_resize_max_size_in_gb.value = int(self.bigger.size_gb())
         self.auto_resize_max_size_in_gb.save()
-        found = DiskOffering.last_offering_available_for_auto_resize()
+        found = DiskOffering.last_offering_available_for_auto_resize(
+            self.environment)
         self.assertEqual(self.bigger, found)
 
         self.auto_resize_max_size_in_gb.value = int(self.bigger.size_gb()) - 1
         self.auto_resize_max_size_in_gb.save()
-        found = DiskOffering.last_offering_available_for_auto_resize()
+        found = DiskOffering.last_offering_available_for_auto_resize(
+            self.environment)
         self.assertEqual(self.medium, found)
 
     def test_cannot_found_disk_for_auto_resize(self):
@@ -191,7 +201,7 @@ class DiskOfferingTestCase(TestCase):
         self.auto_resize_max_size_in_gb.save()
         self.assertRaises(
             NoDiskOfferingLesserError,
-            DiskOffering.last_offering_available_for_auto_resize
+            DiskOffering.last_offering_available_for_auto_resize, self.environment
         )
 
     def test_compare_disks(self):
@@ -214,14 +224,26 @@ class DiskOfferingTestCase(TestCase):
         self.auto_resize_max_size_in_gb.value = int(self.medium.size_gb()) + 1
         self.auto_resize_max_size_in_gb.save()
 
-        self.assertFalse(self.smaller.is_last_auto_resize_offering)
-        self.assertTrue(self.medium.is_last_auto_resize_offering)
-        self.assertFalse(self.bigger.is_last_auto_resize_offering)
+        self.assertFalse(
+            self.smaller.is_last_auto_resize_offering(self.environment)
+        )
+        self.assertTrue(
+            self.medium.is_last_auto_resize_offering(self.environment)
+        )
+        self.assertFalse(
+            self.bigger.is_last_auto_resize_offering(self.environment)
+        )
 
     def test_disk_is_last_offering_without_param(self):
         self.create_basic_disks()
         self.auto_resize_max_size_in_gb.delete()
 
-        self.assertFalse(self.smaller.is_last_auto_resize_offering)
-        self.assertFalse(self.medium.is_last_auto_resize_offering)
-        self.assertTrue(self.bigger.is_last_auto_resize_offering)
+        self.assertFalse(
+            self.smaller.is_last_auto_resize_offering(self.environment)
+        )
+        self.assertFalse(
+            self.medium.is_last_auto_resize_offering(self.environment)
+        )
+        self.assertTrue(
+            self.bigger.is_last_auto_resize_offering(self.environment)
+        )

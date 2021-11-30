@@ -28,11 +28,13 @@ class DiskResizeTestCase(EmailBaseTest):
             'DiskOffering',
             size_kb=200
         )
+        self.greater_disk.environments.add(self.database.environment)
 
         self.disk = mommy.make(
             'DiskOffering',
             size_kb=100
         )
+        self.disk.environments.add(self.database.environment)
 
     def test_can_get_domain(self):
         my_domain = Site.objects.get(id=1).domain

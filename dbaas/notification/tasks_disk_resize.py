@@ -188,9 +188,14 @@ def update_disk(database, address, total_size, used_size, task):
 def disk_auto_resize(database, current_size, usage_percentage):
     from notification.tasks import TaskRegister
 
-    disk = DiskOffering.first_greater_than(current_size + 1024)
+    disk = DiskOffering.first_greater_than(
+        current_size + 1024,
+        database.environment
+    )
 
-    if disk > DiskOffering.last_offering_available_for_auto_resize():
+    if disk > DiskOffering.last_offering_available_for_auto_resize(
+        environment=database.environment
+    ):
         raise DiskOfferingMaxAutoResize()
 
     if database.is_being_used_elsewhere():
