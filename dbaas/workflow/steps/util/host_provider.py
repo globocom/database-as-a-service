@@ -937,15 +937,16 @@ class CreateServiceAccount(HostProviderStep):
             self.infra.save()
 
 
-class SetServiceAccountRoles(HostProviderStep):
+class SetServiceAccountRoles(CreateServiceAccount):
 
     def __unicode__(self):
         return "Set roles in service account..."
 
     def do(self):
-        return self.provider.set_roles_service_account(
-            self.infra.service_account
-        )
+        if self.infra_service_account:
+            return self.provider.set_roles_service_account(
+                self.infra_service_account
+            )
 
     def undo(self):
         pass
