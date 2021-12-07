@@ -18,6 +18,7 @@ from .core_replication_topology import CoreReplicationTopologyAdmin
 from .ip import IpAdmin
 from .vip import VipAdmin
 from .vip_instance_group import VipInstanceGroupAdmin
+from .script import ScriptAdmin
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
 admin.site.register(models.Engine, EngineAdmin)
@@ -31,7 +32,7 @@ admin.site.register(models.ReplicationTopology, ReplicationTopologyAdmin)
 admin.site.register(models.DiskOffering, DiskOfferingAdmin)
 admin.site.register(models.Parameter, ParameterAdmin)
 admin.site.register(models.Cloud, CloudAdmin)
-admin.site.register(models.Script)
+admin.site.register(models.Script, ScriptAdmin)
 admin.site.register(models.Pool, PoolAdmin)
 admin.site.register(models.CoreReplicationTopology, CoreReplicationTopologyAdmin)
 admin.site.register(models.Ip, IpAdmin)
