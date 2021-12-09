@@ -1104,11 +1104,10 @@ def database_resizes(request, context, database):
     if not disk_used_size_kb:
         disk_used_size_kb = database.used_size_in_kb
     context['disk_offerings'] = list(
-        database.environment.diskofferings.filter(size_kb__gt=disk_used_size_kb)
+        database.environment.diskofferings.filter(size_kb__gt=disk_used_size_kb).order_by('size_kb')
     )
     if database.infra.disk_offering not in context['disk_offerings']:
         context['disk_offerings'].insert(0, database.infra.disk_offering)
-
     return render_to_response(
         "logical/database/details/resizes_tab.html",
         context, RequestContext(request)

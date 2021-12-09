@@ -13,6 +13,7 @@ class OfferingAdmin(services_admin.DjangoServicesAdmin):
     list_display = (
        'name', 'cpus', 'memory_size_mb', 'selected_environments'
     )
+    list_filter = ("cpus", "memory_size_mb", "environments")
 
     def selected_environments(self, obj):
         return ",".join(obj.environments.values_list('name', flat=True))
