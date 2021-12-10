@@ -1,0 +1,22 @@
+# File : .pep8speaks.yml
+
+scanner:
+    diff_only: True 
+    linter: pycodestyle
+
+pycodestyle:
+    max-line-length: 100
+    ignore:
+        - W504  # line break after binary operator
+        - E731  # do not assign a lambda expression, use a def
+        - C406  # Unnecessary list literal - rewrite as a dict literal.
+        - E741  # ambiguous variable name
+
+message: 
+    opened: 
+        header: "Hello @{name}! Thanks for opening this PR. "
+        footer: "Do see the [Hitchhiker's guide to code style](https://goo.gl/hqbW4r)"
+    updated:  
+        header: "Hello @{name}! Thanks for updating this PR. "
+        footer: ""
+    no_errors: "There are currently no PEP 8 issues detected in this Pull Request. Cheers! :beers: "
