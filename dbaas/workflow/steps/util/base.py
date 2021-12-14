@@ -47,10 +47,6 @@ class BaseInstanceStep(object):
         return self._driver
 
     @property
-    def credential(self):
-        raise NotImplementedError
-
-    @property
     def should_skip(self):
         skip = ""
         if hasattr(self, "credential") and self.credential is not None:
