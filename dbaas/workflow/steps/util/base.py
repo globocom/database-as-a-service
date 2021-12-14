@@ -47,6 +47,21 @@ class BaseInstanceStep(object):
         return self._driver
 
     @property
+    def credential(self):
+        raise NotImplementedError
+
+    @property
+    def should_skip(self):
+        skip = ""
+        if hasattr(self, "credential") and self.credential is not None:
+            skip = self.credential.get_parameter_by_name(
+                "skip"
+            )
+            skip = str(skip)
+
+        return skip == "1" or skip.lower() == "true"
+
+    @property
     def database(self):
         return self.infra.databases.first()
 

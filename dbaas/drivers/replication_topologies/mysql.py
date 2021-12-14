@@ -1399,13 +1399,15 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.infra.EnableFutureInstances',
             )}, {
             'Creating VIP': (
+                'workflow.steps.util.vip_provider.CreateVip',
                 'workflow.steps.util.vip_provider.CreateInstanceGroup',
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
-                'workflow.steps.util.vip_provider.AllocateIPMigrate',                
+                'workflow.steps.util.vip_provider.AllocateIPMigrate',
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
+                #'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',

@@ -154,8 +154,11 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
 
-        if response.status_code != 201:
+        if response.status_code not in [200, 201]:
             raise VipProviderCreateVIPException(response.content, response)
+
+        if response.status_code == 200:
+            return None
 
         content = response.json()
 
@@ -185,7 +188,7 @@ class Provider(object):
         }
 
         response = self._request(delete, url, json=data, timeout=600)
-        if response.status_code != 204:
+        if response.status_code not in [200, 204]:
             raise VipProviderDeleteInstanceGroupException(
                     response.content, response)
 
@@ -549,6 +552,10 @@ class CreateVip(VipProviderStep):
             #self.infra, self.instance.port, self.team,
             self.infra, self.target_instance.port, self.team,
             self.equipments, self.vip_dns)
+
+        if vip is None:
+            return
+
         dns = add_dns_record(
             self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
