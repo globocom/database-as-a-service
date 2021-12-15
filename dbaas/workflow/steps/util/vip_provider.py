@@ -188,6 +188,10 @@ class Provider(object):
         }
 
         response = self._request(delete, url, json=data, timeout=600)
+
+        if response.status_code == 404:
+            return
+
         if response.status_code not in [200, 204]:
             raise VipProviderDeleteInstanceGroupException(
                     response.content, response)
@@ -199,7 +203,7 @@ class Provider(object):
 
     def create_instance_group(
         self, infra, port, equipments,
-        vip_identifier, new_intance_group):
+        vip_identifier, new_instance_group):
         url = "{}/{}/{}/instance-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip_identifier
@@ -211,13 +215,16 @@ class Provider(object):
         }
 
         response = self._request(post, url, json=data, timeout=600)
-        if response.status_code != 201:
+        if response.status_code not in [200, 201]:
             raise VipProviderCreateInstanceGroupException(
                     response.content, response)
 
+        if response.status_code == 200:
+            return None
+
         content = response.json()
 
-        if new_intance_group:
+        if new_instance_group:
             vip = Vip()
             try:
                 original_vip = Vip.objects.get(infra=infra)
@@ -346,6 +353,10 @@ class Provider(object):
 
         response = self._request(
             post if not destroy else delete, url, timeout=600)
+
+        if response.status_code == 200:
+            return True
+
         if response.status_code != (201 if not destroy else 204):
             raise VipProviderAllocateIpException(
                     response.content, response)
@@ -776,7 +787,7 @@ class CreateInstanceGroup(CreateVip):
         return ''
 
     @property
-    def new_intance_group(self):
+    def new_instance_group(self):
         return True
 
     def do(self):
@@ -786,7 +797,7 @@ class CreateInstanceGroup(CreateVip):
         return self.provider.create_instance_group(
             self.infra, self.target_instance.port,
             self.equipments, self.vip_identifier,
-            self.new_intance_group
+            self.new_instance_group
         )
 
     def undo(self):
@@ -807,7 +818,7 @@ class UpdateInstanceGroupRollback(CreateInstanceGroup):
         return self.current_vip.identifier
 
     @property
-    def new_intance_group(self):
+    def new_instance_group(self):
         return False
 
     def do(self):
@@ -827,7 +838,7 @@ class UpdateInstanceGroupWithoutRollback(CreateInstanceGroup):
         return self.current_vip.identifier
 
     @property
-    def new_intance_group(self):
+    def new_instance_group(self):
         return False
 
     def undo(self):
@@ -840,7 +851,8 @@ class AddInstancesInGroup(CreateVip):
 
     @property
     def is_valid(self):
-        return True
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
 
     def do(self):
         if not self.is_valid:
@@ -856,6 +868,14 @@ class AddInstancesInGroup(CreateVip):
 class CreateHeathcheck(CreateVip):
     def __unicode__(self):
         return "Add healthcheck..."
+
+    @property
+    def is_valid(self):
+        if not super(CreateHeathcheck, self).is_valid:
+            return False
+
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
 
     def do(self):
         if not self.is_valid:
@@ -873,6 +893,14 @@ class CreateHeathcheck(CreateVip):
 class CreateBackendService(CreateVip):
     def __unicode__(self):
         return "Add backend service..."
+
+    @property
+    def is_valid(self):
+        if not super(CreateBackendService, self).is_valid:
+            return False
+
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
 
     def do(self):
         if not self.is_valid:
@@ -901,11 +929,23 @@ class AllocateIP(CreateVip):
         vip.vip_ip = ip
         vip.save()
 
+    @property
+    def is_valid(self):
+        if not super(AllocateIP, self).is_valid:
+            return False
+
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
+
     def do(self):
         if not self.is_valid:
             return
 
         ip = self.provider.allocate_ip(self.current_vip)
+
+        if ip is None:
+            return
+
         self.update_infra_endpoint(ip)
         self.update_vip_ip(ip)
 
@@ -931,6 +971,14 @@ class AllocateDNS(CreateVip):
     def vip_ip(self):
         return self.infra.endpoint.split(":")[0]
 
+    @property
+    def is_valid(self):
+        if not super(AllocateDNS, self).is_valid:
+            return False
+
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
+
     def do(self):
         if not self.is_valid:
             return
@@ -938,6 +986,10 @@ class AllocateDNS(CreateVip):
         dns = add_dns_record(
             self.infra, self.infra.name,
             self.vip_ip, FOXHA, is_database=False)
+
+        if dns is None:
+            return
+
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
         self.infra.save()
 
@@ -948,6 +1000,14 @@ class AllocateDNS(CreateVip):
 class CreateForwardingRule(CreateVip):
     def __unicode__(self):
         return "Add Forwarding rule..."
+
+    @property
+    def is_valid(self):
+        if not super(CreateForwardingRule, self).is_valid:
+            return False
+
+        return VipInstanceGroup.objects.filter(
+                vip=self.current_vip).exists()
 
     def do(self):
         if not self.is_valid:
