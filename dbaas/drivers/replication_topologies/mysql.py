@@ -1418,6 +1418,20 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
+             'Check puppet': (
+                 'workflow.steps.util.puppet.WaitingBeStarted',
+                 'workflow.steps.util.puppet.WaitingBeDone',
+                 'workflow.steps.util.puppet.ExecuteIfProblem',
+                 'workflow.steps.util.puppet.WaitingBeDone',
+                 'workflow.steps.util.puppet.CheckStatus',
+             )}, {
+             'Configure foreman': (
+                 'workflow.steps.util.foreman.SetupDSRC',
+             )}, {
+             'Running puppet': (
+                 'workflow.steps.util.puppet.Execute',
+                 'workflow.steps.util.puppet.CheckStatus',
+             )}, {
             'Reconfigure FOX nodes': (
                 'workflow.steps.util.fox.MigrationAddNodeDestinyInstanceDisabled',
             )}, {
