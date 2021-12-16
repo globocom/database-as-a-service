@@ -23,6 +23,13 @@ class Puppet(BaseInstanceStep):
         pass
 
     @property
+    def is_valid(self):
+        if not super(Puppet, self).is_valid or self.should_skip:
+            return False
+
+        return True
+
+    @property
     def credential(self):
         if self._credential == "":
             self._credential = get_or_none_credentials_for(
@@ -64,7 +71,7 @@ class Execute(Puppet):
         return "Executing puppet-setup..."
 
     def do(self):
-        if self.should_skip:
+        if not self.is_valid:
             return
         script = 'puppet-setup'
         self.host.ssh.run_script(script)
@@ -76,7 +83,7 @@ class ExecuteIfProblem(Execute):
         return "Executing puppet-setup if problem..."
 
     def do(self):
-        if self.should_skip:
+        if not self.is_valid:
             return
         if self.is_running_bootstrap:
             LOG.debug('ExecuteIfProblem - Bootstrap is running!')
@@ -96,7 +103,7 @@ class WaitingBeDone(Puppet):
         return "Waiting puppet-setup be done..."
 
     def do(self):
-        if self.should_skip:
+        if not self.is_valid:
             return
         for _ in range(CHECK_ATTEMPTS):
             if not self.is_running_bootstrap:
@@ -114,7 +121,7 @@ class WaitingBeStarted(Puppet):
         return "Waiting puppet-setup be starded..."
 
     def do(self):
-        if self.should_skip:
+        if not self.is_valid:
             return
         for _ in range(CHECK_ATTEMPTS):
             if self.has_bootstrap_started:
@@ -133,7 +140,7 @@ class CheckStatus(Puppet):
         return "Checking puppet status..."
 
     def do(self):
-        if self.should_skip:
+        if not self.is_valid:
             return
         puppet_code_status, output = self.puppet_code_status
         if puppet_code_status != 0:
