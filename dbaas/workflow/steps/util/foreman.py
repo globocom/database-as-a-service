@@ -71,7 +71,7 @@ class SetupDSRC(Foreman):
         return "Foreman registering DSRC class..."
 
     def do(self):
-        if not self.is_valid:
+        if not self.is_valid():
             return
 
         self.provider.setup_database_dscp(

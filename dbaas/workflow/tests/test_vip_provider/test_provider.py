@@ -134,19 +134,21 @@ class CreateVipTestCase(BaseProviderTestCase):
 
     def test_200(self, post_mock):
         post_mock.return_value = self._create_fake_response(status_code=200)
-        with self.assertRaises(VipProviderCreateVIPException):
-            self.provider.create_vip(
-                infra=self.infra,
-                port=999,
-                team_name='fake_team',
-                equipments={
-                    'host_address': self.host.address,
-                    'port': self.instance.port,
-                    'identifier': 'fake_identifier'
-                },
-                vip_dns='fake_vip_dns',
-                database_name=''
-            )
+
+        create = self.provider.create_vip(
+            infra=self.infra,
+            port=999,
+            team_name='fake_team',
+            equipments={
+                'host_address': self.host.address,
+                'port': self.instance.port,
+                'identifier': 'fake_identifier'
+            },
+            vip_dns='fake_vip_dns',
+            database_name=''
+        )
+
+        self.assertEqual(create, None)
 
     def test_404(self, post_mock):
         post_mock.return_value = self._create_fake_response(status_code=404)
