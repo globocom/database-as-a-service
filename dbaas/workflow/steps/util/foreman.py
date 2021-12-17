@@ -55,6 +55,7 @@ class Foreman(BaseInstanceStep):
             return reverse_ip
         return self.fqdn
 
+    @property
     def is_valid(self):
         return self.credentials is not None
 
