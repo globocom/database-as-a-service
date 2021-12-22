@@ -306,6 +306,24 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def restore_snapshot_to_rsync(self, snapshot, vm_name, vm_zone):
+        url = "{}snapshot/{}/restore-to-rsync".format(
+            self.base_uri, snapshot.snapshopt_id
+        )
+
+        data = {
+            'vm_name': vm_name,
+            'zone': vm_zone,
+            'engine': self.engine.name,
+            'db_name': self.database_name,
+            'team_name': self.team_name
+        }
+
+        response = post(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return True
+
     def add_access(self, volume, host, access_type=None):
         url = "{}access/{}".format(self.base_uri, volume.identifier)
         data = {
@@ -517,6 +535,7 @@ class NewVolume(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
+
 
         self.create_volume(
             self.infra.name,
@@ -2073,8 +2092,12 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
         return "Copying (rsync) data from snapshot to new host..."
 
     @property
-    def source_dir(self):
+    def source_root_restore(self):
         return "/data"
+
+    @property
+    def source_dir(self):
+        return self.source_root_restore
 
     @property
     def dest_dir(self):
@@ -2129,7 +2152,7 @@ class RsyncDataFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrateBackupHost)
 
     @property
     def source_dir(self):
-        return "/data/data"
+        return "{}/data".format(self.source_root_restore)
 
     @property
     def dest_dir(self):
@@ -2197,5 +2220,34 @@ class WaitRsyncFromSnapshotDatabaseMigrate(RsyncFromSnapshotMigrateBackupHost):
         )
 
     def undo(self):
-        pass
+        pass 
 
+
+class CreateVolumeToRsync(NewVolumeMigrate):
+    pass
+
+
+class MountNewVolumeToRsync(MountDataVolume):
+    @property
+    def directory(self):
+        return "/data-rsync"
+
+    @property
+    def volume(self):
+        raise Exception("ERR")
+
+    def do(self):
+        script = self.get_mount_command(
+            self.volume,
+            data_directory=self.directory,
+            fstab=False
+        )
+        self.host.ssh.run_script(script)
+
+    def undo(self):
+        script = self.get_umount_command(
+            self.volume,
+            data_directory=self.directory,
+        )
+        # self.run_script(script)
+        self.host.ssh.run_script(script)

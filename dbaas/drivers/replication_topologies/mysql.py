@@ -1385,6 +1385,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.CreateVolumeToRsync',
+                'workflow.steps.util.volume_provider.MountNewVolumeToRsync',
                 'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
@@ -1409,6 +1411,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
                 #'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
+                
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
                 'workflow.steps.util.acl.ReplicateVipAclsMigrate',
