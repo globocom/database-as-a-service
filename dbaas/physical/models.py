@@ -600,6 +600,19 @@ class DiskOffering(BaseModel):
             return self.id == last_offering.id
 
 
+class DiskOfferingType(BaseModel):
+
+    name = models.CharField(
+        verbose_name=_("OfferingType"), max_length=255, unique=True)
+    environments = models.ManyToManyField(
+        'Environment', verbose_name=_("Environments"), related_name='diskofferingstypes'
+    )
+    type = models.CharField(verbose_name=_("Disk Type"), max_length=255, unique=True)
+
+    def __unicode__(self):
+        return '{}'.format(self.name)
+
+
 class Plan(BaseModel):
 
     PREPROVISIONED = 0
@@ -646,6 +659,10 @@ class Plan(BaseModel):
     disk_offering = models.ForeignKey(
         DiskOffering, related_name="plans",
         on_delete=models.PROTECT, null=True, blank=True
+    )
+    disk_offering_type = models.ForeignKey(
+        DiskOfferingType, related_name="plans",
+        on_delete=models.DO_NOTHING, null=True, blank=True
     )
     migrate_plan = models.ForeignKey(
         "Plan", related_name='migrate_to', null=True, blank=True
@@ -868,6 +885,10 @@ class DatabaseInfra(BaseModel):
     disk_offering = models.ForeignKey(
         DiskOffering, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True
+    )
+    disk_offering_type = models.ForeignKey(
+        DiskOfferingType, related_name="databaseinfras",
+        on_delete=models.DO_NOTHING, null=True, blank=True
     )
     database_key = models.CharField(
         verbose_name=_("Database Key"), max_length=255, blank=True, null=True,
@@ -1362,6 +1383,7 @@ class Volume(BaseModel):
     is_active = models.BooleanField(default=True)
     total_size_kb = models.IntegerField(null=True, blank=True)
     used_size_kb = models.IntegerField(null=True, blank=True)
+    disk_offering_type = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         name = "Volume: {}".format(self.identifier)
