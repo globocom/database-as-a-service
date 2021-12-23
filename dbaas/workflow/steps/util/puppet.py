@@ -1,5 +1,7 @@
 from time import sleep
 from base import BaseInstanceStep
+from util import get_or_none_credentials_for
+from dbaas_credentials.models import CredentialType
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -10,11 +12,32 @@ CHECK_SECONDS = 30
 
 class Puppet(BaseInstanceStep):
 
+    def __init__(self, *args, **kwargs):
+        super(Puppet, self).__init__(*args, **kwargs)
+        self._credential = ""
+
     def do(self):
         raise NotImplementedError
 
     def undo(self):
         pass
+
+    @property
+    def is_valid(self):
+        if not super(Puppet, self).is_valid or self.should_skip:
+            return False
+
+        return True
+
+    @property
+    def credential(self):
+        if self._credential == "":
+            self._credential = get_or_none_credentials_for(
+                self.environment,
+                CredentialType.PUPPET
+            )
+
+        return self._credential
 
     @property
     def is_running_bootstrap(self):
@@ -48,6 +71,8 @@ class Execute(Puppet):
         return "Executing puppet-setup..."
 
     def do(self):
+        if not self.is_valid:
+            return
         script = 'puppet-setup'
         self.host.ssh.run_script(script)
 
@@ -58,6 +83,8 @@ class ExecuteIfProblem(Execute):
         return "Executing puppet-setup if problem..."
 
     def do(self):
+        if not self.is_valid:
+            return
         if self.is_running_bootstrap:
             LOG.debug('ExecuteIfProblem - Bootstrap is running!')
             return
@@ -76,6 +103,8 @@ class WaitingBeDone(Puppet):
         return "Waiting puppet-setup be done..."
 
     def do(self):
+        if not self.is_valid:
+            return
         for _ in range(CHECK_ATTEMPTS):
             if not self.is_running_bootstrap:
                 LOG.debug('Bootstrap is not running!')
@@ -92,6 +121,8 @@ class WaitingBeStarted(Puppet):
         return "Waiting puppet-setup be starded..."
 
     def do(self):
+        if not self.is_valid:
+            return
         for _ in range(CHECK_ATTEMPTS):
             if self.has_bootstrap_started:
                 LOG.debug('Bootstrap has already been started!')
@@ -109,6 +140,8 @@ class CheckStatus(Puppet):
         return "Checking puppet status..."
 
     def do(self):
+        if not self.is_valid:
+            return
         puppet_code_status, output = self.puppet_code_status
         if puppet_code_status != 0:
             error = "Puppet-setup returned an error on {}. Output: {}".format(
