@@ -77,6 +77,7 @@ class VolumeProviderBase(BaseInstanceStep):
         self.force_environment = force_environment
         self._credential = None
         self.host_prov_client = HostProviderClient(self.environment)
+        self._host_vm = None
 
     @property
     def driver(self):
@@ -146,7 +147,10 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def host_vm(self):
-        return self.host_prov_client.get_vm_by_host(self.host)
+        if self._host_vm is None:
+            self._host_vm = self.host_prov_client.get_vm_by_host(self.host)
+
+        return self._host_vm
 
     @property
     def master_host_vm(self):
@@ -220,6 +224,14 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
 
         return response.json()
+
+    def should_migrate_with_new_disk(self):
+        url = "{}new-disk-migration".format(
+                self.base_uri)
+        response = get(url, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return bool(response.json()["create_new_disk"])
 
     def attach_disk(self, volume):
         url = "{}attach/{}/".format(self.base_uri, volume.identifier)
@@ -515,6 +527,10 @@ class NewVolume(VolumeProviderBase):
         return True
 
     @property
+    def is_valid(self):
+        return True
+
+    @property
     def has_snapshot_on_step_manager(self):
         return (self.host_migrate and hasattr(self, 'step_manager')
                 and self.host_migrate == self.step_manager)
@@ -527,6 +543,9 @@ class NewVolume(VolumeProviderBase):
         return False
 
     def do(self):
+        if not self.is_valid:
+            return
+
         if not self.instance.is_database:
             return
         snapshot = None
@@ -2220,34 +2239,56 @@ class WaitRsyncFromSnapshotDatabaseMigrate(RsyncFromSnapshotMigrateBackupHost):
         )
 
     def undo(self):
-        pass 
+        pass
 
 
-class CreateVolumeToRsync(NewVolumeMigrate):
-    pass
-
-
-class MountNewVolumeToRsync(MountDataVolume):
-    @property
-    def directory(self):
-        return "/data-rsync"
-
+class AttachDataLatestVolumeMigrate(AttachDataVolume):
     @property
     def volume(self):
-        raise Exception("ERR")
+        return self.latest_disk
 
-    def do(self):
-        script = self.get_mount_command(
-            self.volume,
-            data_directory=self.directory,
-            fstab=False
-        )
-        self.host.ssh.run_script(script)
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def is_valid(self):
+        if not super(AttachDataLatestVolumeMigrate, self).is_valid:
+            return False
+        return self.should_migrate_with_new_disk()
+
+
+class MountDataLatestVolumeMigrate(MountDataLatestVolume):
+    @property
+    def volume(self):
+        return self.latest_disk
+
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    @property
+    def environment(self):
+        return self.infra.environment
+    
+    @property
+    def is_valid(self):
+        if not super(MountDataLatestVolumeMigrate, self).is_valid:
+            return False
+        return self.should_migrate_with_new_disk()
+
+
+class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
+    @property
+    def is_valid(self):
+        if not super(NewVolumeMigrateOriginalHost, self).is_valid:
+            return False
+        return self.should_migrate_with_new_disk()
 
     def undo(self):
-        script = self.get_umount_command(
-            self.volume,
-            data_directory=self.directory,
-        )
-        # self.run_script(script)
-        self.host.ssh.run_script(script)
+        if self.is_valid:
+            self._remove_volume(self.latest_disk, self.host)
