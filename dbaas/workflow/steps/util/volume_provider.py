@@ -2112,6 +2112,8 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     @property
     def source_root_restore(self):
+        if self.should_migrate_with_new_disk():
+            return "/data_latest_volume"
         return "/data"
 
     @property
