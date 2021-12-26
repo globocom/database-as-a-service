@@ -578,13 +578,13 @@ class CreateVip(VipProviderStep):
         if not self.is_valid:
             return
 
-        try:
-            vip = Vip.objects.get(infra=self.infra)
-        except ObjectDoesNotExist:
+        vip = Vip.objects.filter(infra=self.infra)
+        if not vip.exists():
             return
-        else:
-            self.provider.destroy_vip(vip.identifier)
-            vip.delete()
+
+        vip = vip.last()
+        self.provider.destroy_vip(vip.identifier)
+        vip.delete()
 
 
 class CreateVipMigrate(CreateVip):
