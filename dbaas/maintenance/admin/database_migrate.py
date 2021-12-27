@@ -21,14 +21,14 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "database", "origin_environment", "environment",
         "origin_offering", "offering", "migration_stage", "current_step",
         "friendly_status", "maintenance_action", "link_task",
-        "started_at", "finished_at"
+        "created_at", "started_at", "finished_at"
     )
     readonly_fields = (
         "database", "origin_environment", "environment", "origin_offering",
         "offering", "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule"
     )
-    ordering = ["-started_at"]
+    ordering = ["-created_at"]
 
     def maintenance_action(self, maintenance_task):
         if not maintenance_task.is_status_error:
