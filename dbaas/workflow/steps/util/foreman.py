@@ -76,7 +76,7 @@ class SetupDSRC(Foreman):
             return
 
         self.provider.setup_database_dscp(
-            self.fqdn, self.vip.vip_ip, self.vip.dscp, self.instance.port
+            self.fqdn, self.vip.vip_ip, self.vip.dscp, self.instance.portz
         )
 
 

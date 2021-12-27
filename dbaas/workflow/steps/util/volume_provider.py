@@ -2154,6 +2154,9 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
 
 class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
+    def __unicode__(self):
+        return "Copying (rsync) from snapshot to new host..."
+
     @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:
@@ -2164,6 +2167,14 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
     @property
     def host(self):
         return self.snapshot.instance.hostname
+
+    @property
+    def source_root_restore(self):
+        if not self.is_database_instance:
+            return "/data"
+
+        return super(RsyncFromSnapshotMigrateBackupHost, self)\
+            .source_root_restore
 
 
 class RsyncDataFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrateBackupHost):
@@ -2276,10 +2287,11 @@ class MountDataLatestVolumeMigrate(MountDataLatestVolume):
     @property
     def environment(self):
         return self.infra.environment
-    
+
     @property
     def is_valid(self):
-        if not super(MountDataLatestVolumeMigrate, self).is_valid:
+        if not super(MountDataLatestVolumeMigrate, self).is_valid\
+         or not self.instance.is_database:
             return False
         return self.should_migrate_with_new_disk()
 

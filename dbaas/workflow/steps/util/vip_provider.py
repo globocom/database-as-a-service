@@ -567,12 +567,12 @@ class CreateVip(VipProviderStep):
         if vip is None:
             return
 
-        dns = add_dns_record(
-            self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
-
-        self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
-        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
-        self.infra.save()
+        if not vip.original_vip:
+            dns = add_dns_record(
+                self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
+            self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
+            self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
+            self.infra.save()
 
     def undo(self):
         if not self.is_valid:

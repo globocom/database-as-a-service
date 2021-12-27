@@ -1412,7 +1412,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
                 #'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
-                
             'Replicate ACL': (
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
                 'workflow.steps.util.acl.ReplicateVipAclsMigrate',
@@ -1430,7 +1429,7 @@ class MySQLFoxHA(MySQLSingle):
                  'workflow.steps.util.puppet.CheckStatus',
              )}, {
              'Configure foreman': (
-                 'workflow.steps.util.foreman.SetupDSRC',
+                 'workflow.steps.util.foreman.SetupDSRCMigrate',
              )}, {
              'Running puppet': (
                  'workflow.steps.util.puppet.Execute',
