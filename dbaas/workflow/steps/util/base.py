@@ -116,6 +116,10 @@ class BaseInstanceStep(object):
         return self.instance.hostname.volumes.last()
 
     @property
+    def first_disk(self):
+        return self.instance.hostname.volumes.first()
+
+    @property
     def resize(self):
         resize = self.database.resizes.last()
         if resize and resize.is_running:

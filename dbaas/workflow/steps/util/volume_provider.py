@@ -225,6 +225,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
         return response.json()
 
+    @property
     def should_migrate_with_new_disk(self):
         url = "{}new-disk-migration".format(
                 self.base_uri)
@@ -1880,6 +1881,10 @@ class DestroyOldEnvironment(VolumeProviderBase):
         return self.instance.hostname
 
     @property
+    def is_valid(self):
+        return not self.should_migrate_with_new_disk
+
+    @property
     def can_run(self):
         if not self.instance.is_database:
             return False
@@ -1888,12 +1893,14 @@ class DestroyOldEnvironment(VolumeProviderBase):
         return super(DestroyOldEnvironment, self).can_run
 
     def do(self):
+        if not self.is_valid:
+            return
+
         for volume in self.host.volumes.all():
             self.destroy_volume(volume)
 
     def undo(self):
         raise NotImplementedError
-
 
 class DetachDataVolume(VolumeProviderBase):
     def __unicode__(self):
@@ -2112,7 +2119,7 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
 
     @property
     def source_root_restore(self):
-        if self.should_migrate_with_new_disk():
+        if self.should_migrate_with_new_disk:
             return "/data_latest_volume"
         return "/data"
 
@@ -2158,6 +2165,10 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
         return "Copying (rsync) from snapshot to new host..."
 
     @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:
             return self.host_migrate.database_migrate.host_migrate_snapshot
@@ -2166,7 +2177,8 @@ class RsyncFromSnapshotMigrateBackupHost(RsyncFromSnapshotMigrate):
 
     @property
     def host(self):
-        return self.snapshot.instance.hostname
+        if self.is_database_instance:
+            return self.snapshot.instance.hostname
 
     @property
     def source_root_restore(self):
@@ -2214,7 +2226,14 @@ class WaitRsyncFromSnapshotDatabaseMigrate(RsyncFromSnapshotMigrateBackupHost):
     def __unicode__(self):
         return "Waiting rsync..."
 
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
     def do(self):
+        if not self.is_valid:
+            return
+
         errors = 0
         script = 'ps -ef | grep sync | grep dbaas | wc -l'
         for attempt in range(self.ATTEMPTS):
@@ -2272,7 +2291,7 @@ class AttachDataLatestVolumeMigrate(AttachDataVolume):
     def is_valid(self):
         if not super(AttachDataLatestVolumeMigrate, self).is_valid:
             return False
-        return self.should_migrate_with_new_disk()
+        return self.should_migrate_with_new_disk
 
 
 class MountDataLatestVolumeMigrate(MountDataLatestVolume):
@@ -2293,7 +2312,7 @@ class MountDataLatestVolumeMigrate(MountDataLatestVolume):
         if not super(MountDataLatestVolumeMigrate, self).is_valid\
          or not self.instance.is_database:
             return False
-        return self.should_migrate_with_new_disk()
+        return self.should_migrate_with_new_disk
 
 
 class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
@@ -2301,7 +2320,7 @@ class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
     def is_valid(self):
         if not super(NewVolumeMigrateOriginalHost, self).is_valid:
             return False
-        return self.should_migrate_with_new_disk()
+        return self.should_migrate_with_new_disk
 
     def undo(self):
         if self.is_valid:

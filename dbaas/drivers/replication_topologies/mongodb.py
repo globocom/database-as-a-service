@@ -1076,7 +1076,6 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
                 'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
                 'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
-                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.database.Start',

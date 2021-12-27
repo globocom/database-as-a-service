@@ -82,6 +82,9 @@ class SetupDSRC(Foreman):
 
 class SetupDSRCMigrate(SetupDSRC):
     def do(self):
+        if not self.is_valid:
+            return
+
         vip = self.future_vip
         self.provider.setup_database_dscp(
             self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
