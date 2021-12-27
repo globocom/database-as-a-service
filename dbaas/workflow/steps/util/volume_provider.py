@@ -753,6 +753,9 @@ class MountDataLatestVolume(MountDataVolume):
         return "/data_latest_volume"
 
     def do(self):
+        if not self.is_valid:
+            return
+
         script = self.get_mount_command(
             self.latest_disk,
             data_directory=self.directory,
@@ -2154,6 +2157,7 @@ class RsyncFromSnapshotMigrate(VolumeProviderBase):
             self.host_migrate.host.future_host.address,
             self.dest_dir
         )
+
         self.host.ssh.run_script(script)
 
     def undo(self):
