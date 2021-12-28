@@ -7,6 +7,7 @@ from exceptions.error_codes import DBAAS_0001
 from logical.models import Database
 from physical.models import DatabaseInfra, Instance
 from system.models import Configuration
+from copy import copy
 
 LOG = logging.getLogger(__name__)
 
@@ -288,11 +289,18 @@ def rollback_for_instances_full(groups, instances, task, step_current_method,
 
 
 def get_current_step_for_instances(
-    list_of_groups_of_steps, instances, since_step, undo=False):
+    list_of_groups_of_steps, instances, current_step, undo=False):
+
+    groups_of_steps = copy(list_of_groups_of_steps)
     if undo:
-        list_of_groups_of_steps.reverse()
+        groups_of_steps.reverse()
+        steps_total = total_of_steps(groups_of_steps, instances)
+        since_step = (steps_total - current_step) + 1
+    else:
+        since_step = current_step
+
     step_current = 0
-    for group_of_steps in list_of_groups_of_steps:
+    for group_of_steps in groups_of_steps:
         steps = list(group_of_steps.items()[0][1])
         if undo:
             steps.reverse()
