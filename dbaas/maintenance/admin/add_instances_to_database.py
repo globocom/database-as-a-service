@@ -12,15 +12,16 @@ class AddInstancesToDatabaseAdmin(DatabaseMaintenanceTaskAdmin):
     ]
 
     list_display = (
-        "database", "database_team", "number_of_instances", "number_of_instances_before",
-        "current_step", "friendly_status", "maintenance_action", "link_task",
-        "started_at", "finished_at"
+        "database", "database_team", "number_of_instances",
+        "number_of_instances_before", "current_step", "friendly_status",
+        "maintenance_action", "link_task", "started_at", "finished_at"
     )
 
     readonly_fields = (
-        "database", "number_of_instances", "number_of_instances_before",
-        "link_task", "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "current_step_class", "database", "number_of_instances",
+        "number_of_instances_before", "link_task", "started_at",
+        "finished_at", "current_step", "status",
+        "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance):

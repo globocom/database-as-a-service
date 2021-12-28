@@ -24,7 +24,7 @@ class RecreateSlaveAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at"
     )
     readonly_fields = (
-        "host", "link_task", "snapshot",
+        "current_step_class", "host", "link_task", "snapshot",
         "started_at", "finished_at", "status",
         "maintenance_action", "task_schedule"
     )

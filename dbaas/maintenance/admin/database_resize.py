@@ -15,9 +15,10 @@ class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "source_offer", "source_offer_name", "target_offer",
-        "target_offer_name", "link_task", "started_at", "finished_at",
-        "status", "maintenance_action", "task_schedule"
+        "current_step_class", "database", "source_offer", "source_offer_name",
+        "target_offer", "target_offer_name", "link_task",
+        "started_at", "finished_at", "status", "maintenance_action",
+        "task_schedule"
     )
 
     def maintenance_action(self, maintenance):
