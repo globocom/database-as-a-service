@@ -108,7 +108,7 @@ def steps_for_instances(
                 step_current += 1
 
                 if step_counter_method:
-                    step_counter_method(step_current)
+                    step_counter_method(step_current, step)
 
                 try:
                     step_class = import_by_path(step)
@@ -285,3 +285,21 @@ def rollback_for_instances_full(groups, instances, task, step_current_method,
     step_counter_method(missing_undo_steps)
 
     return result
+
+
+def get_current_step_for_instances(
+    list_of_groups_of_steps, instances, since_step, undo=False):
+    if undo:
+        list_of_groups_of_steps.reverse()
+    step_current = 0
+    for group_of_steps in list_of_groups_of_steps:
+        steps = list(group_of_steps.items()[0][1])
+        if undo:
+            steps.reverse()
+        for instance in instances:
+            for step in steps:
+                step_current += 1
+                if step_current < since_step:
+                    continue
+                return step
+    return None
