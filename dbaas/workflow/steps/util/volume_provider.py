@@ -164,7 +164,7 @@ class VolumeProviderBase(BaseInstanceStep):
         )
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
-                      is_active=True, zone=None, vm_name=None):
+                      is_active=True, zone=None, vm_name=None, disk_offering_type=None):
         url = self.base_uri + "volume/new"
 
         data = {
@@ -176,7 +176,8 @@ class VolumeProviderBase(BaseInstanceStep):
             "vm_name": vm_name,
             "team_name": self.team_name,
             "engine": self.engine.name,
-            "db_name": self.database_name
+            "db_name": self.database_name,
+            "disk_offering_type": disk_offering_type
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -188,6 +189,7 @@ class VolumeProviderBase(BaseInstanceStep):
         volume.identifier = response.json()['identifier']
         volume.total_size_kb = self.infra.disk_offering.size_kb
         volume.is_active = is_active
+        volume.disk_offering_type = disk_offering_type
         volume.save()
         return volume
 
@@ -564,7 +566,8 @@ class NewVolume(VolumeProviderBase):
             snapshot_id=snapshot.snapshopt_id if snapshot else None,
             is_active=self.active_volume,
             zone=self.host_vm.zone,
-            vm_name=self.host_vm.name
+            vm_name=self.host_vm.name,
+            disk_offering_type=self.infra.disk_offering_type.type if self.infra.disk_offering_type else None,
         )
 
     def undo(self):

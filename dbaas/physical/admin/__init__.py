@@ -38,3 +38,4 @@ admin.site.register(models.CoreReplicationTopology, CoreReplicationTopologyAdmin
 admin.site.register(models.Ip, IpAdmin)
 admin.site.register(models.Vip, VipAdmin)
 admin.site.register(models.VipInstanceGroup, VipInstanceGroupAdmin)
+admin.site.register(models.DiskOfferingType)

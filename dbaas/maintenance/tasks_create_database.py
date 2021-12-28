@@ -27,6 +27,7 @@ def get_or_create_infra(base_name, plan, environment, backup_hour=None,
         infra.engine = plan.engine
         infra.plan = plan
         infra.disk_offering = plan.disk_offering
+        infra.disk_offering_type = plan.disk_offering_type
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
