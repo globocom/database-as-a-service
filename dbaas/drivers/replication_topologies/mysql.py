@@ -1385,6 +1385,9 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
+                'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
                 'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
@@ -1426,7 +1429,7 @@ class MySQLFoxHA(MySQLSingle):
                  'workflow.steps.util.puppet.CheckStatus',
              )}, {
              'Configure foreman': (
-                 'workflow.steps.util.foreman.SetupDSRC',
+                 'workflow.steps.util.foreman.SetupDSRCMigrate',
              )}, {
              'Running puppet': (
                  'workflow.steps.util.puppet.Execute',

@@ -47,17 +47,6 @@ class BaseInstanceStep(object):
         return self._driver
 
     @property
-    def should_skip(self):
-        skip = ""
-        if hasattr(self, "credential") and self.credential is not None:
-            skip = self.credential.get_parameter_by_name(
-                "skip"
-            )
-            skip = str(skip)
-
-        return skip == "1" or skip.lower() == "true"
-
-    @property
     def database(self):
         return self.infra.databases.first()
 
@@ -125,6 +114,10 @@ class BaseInstanceStep(object):
     @property
     def latest_disk(self):
         return self.instance.hostname.volumes.last()
+
+    @property
+    def first_disk(self):
+        return self.instance.hostname.volumes.first()
 
     @property
     def resize(self):

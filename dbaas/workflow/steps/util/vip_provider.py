@@ -567,24 +567,24 @@ class CreateVip(VipProviderStep):
         if vip is None:
             return
 
-        dns = add_dns_record(
-            self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
-
-        self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
-        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
-        self.infra.save()
+        if not vip.original_vip:
+            dns = add_dns_record(
+                self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
+            self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
+            self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
+            self.infra.save()
 
     def undo(self):
         if not self.is_valid:
             return
 
-        try:
-            vip = Vip.objects.get(infra=self.infra)
-        except ObjectDoesNotExist:
+        vip = Vip.objects.filter(infra=self.infra)
+        if not vip.exists():
             return
-        else:
-            self.provider.destroy_vip(vip.identifier)
-            vip.delete()
+
+        vip = vip.last()
+        self.provider.destroy_vip(vip.identifier)
+        vip.delete()
 
 
 class CreateVipMigrate(CreateVip):

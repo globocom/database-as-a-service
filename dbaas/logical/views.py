@@ -2299,7 +2299,6 @@ def database_migrate(request, context, database):
     migrates = HostMigrate.objects.filter(host__in=hosts)
     db_migrates = DatabaseMigrate.objects.filter(database=database).last()
     context["last_host_migrate"] = migrates.last()
-    context["valid_provisioners"] = [Environment.CLOUDSTACK]
     context["last_db_migrate"] = db_migrates
     stage_info = {
         "total_stage": 3 if database.plan.is_ha else 2,
