@@ -35,6 +35,12 @@ class MySQLStep(BaseInstanceStep):
                 )
             )
 
+    def get_instance_server_id(self, instance):
+        query = "show variables like 'server_id'"
+        instance_result = self.driver.query(query, instance)
+        instance_server_id = int(instance_result[0]['Value'])
+        return instance_server_id
+
 
 class SetMasterRestore(MySQLStep):
 
@@ -462,8 +468,11 @@ class SetServerid(MySQLStep):
 class SetServeridMigrate(SetServerid):
     @property
     def serverid(self):
-        serverid = super(SetServeridMigrate, self).serverid
-        return serverid + 2
+        server_id = super(SetServeridMigrate, self).serverid
+        source_server_id = self.get_instance_server_id(self.instance)
+        if source_server_id == server_id:
+            server_id += 2
+        return server_id
 
 
 class SetReplicationHostMigrate(MySQLStep):
