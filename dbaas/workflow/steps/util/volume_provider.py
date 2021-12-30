@@ -290,7 +290,7 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['removed']
 
-    def restore_snapshot(self, snapshot, vm_name, vm_zone):
+    def restore_snapshot(self, snapshot, vm_name, vm_zone, disk_offering_type):
         url = "{}snapshot/{}/restore".format(
             self.base_uri, snapshot.snapshopt_id
         )
@@ -300,7 +300,8 @@ class VolumeProviderBase(BaseInstanceStep):
             'zone': vm_zone,
             'engine': self.engine.name,
             'db_name': self.database_name,
-            'team_name': self.team_name
+            'team_name': self.team_name,
+            'disk_offering_type': disk_offering_type
         }
 
         response = post(url, json=data, headers=self.headers)
@@ -1429,7 +1430,8 @@ class RestoreSnapshot(VolumeProviderBase):
         response = self.restore_snapshot(
             snapshot,
             self.vm_name,
-            self.vm_zone
+            self.vm_zone,
+            self.infra.disk_offering_type.type,
         )
 
         volume = self.latest_disk
@@ -1437,6 +1439,7 @@ class RestoreSnapshot(VolumeProviderBase):
         volume.is_active = False
         volume.id = None
         volume.host = self.disk_host
+        volume.disk_offering_type = self.infra.disk_offering_type.type
         volume.save()
 
     def undo(self):
