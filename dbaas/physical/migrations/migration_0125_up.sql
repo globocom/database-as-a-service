@@ -1,14 +1,14 @@
-INSERT INTO physical_diskofferingtype (created_at, updated_at, name, type)
-VALUES (now(), now(), 'STANDARD', 'pd-standard');
+INSERT INTO physical_diskofferingtype (id, created_at, updated_at, name, type)
+VALUES (1, now(), now(), 'STANDARD', 'pd-standard');
 
-INSERT INTO physical_diskofferingtype (created_at, updated_at, name, type)
-VALUES (now(), now(), 'BALANCED', 'pd-balanced');
+INSERT INTO physical_diskofferingtype (id, created_at, updated_at, name, type)
+VALUES (2, now(), now(), 'BALANCED', 'pd-balanced');
 
-INSERT INTO physical_diskofferingtype (created_at, updated_at, name, type)
-VALUES (now(), now(), 'SSD', 'pd-ssd');
+INSERT INTO physical_diskofferingtype (id, created_at, updated_at, name, type)
+VALUES (3, now(), now(), 'SSD', 'pd-ssd');
 
-INSERT INTO physical_diskofferingtype (created_at, updated_at, name, type)
-VALUES (now(), now(), 'DEFAULT', 'default');
+INSERT INTO physical_diskofferingtype (id, created_at, updated_at, name, type)
+VALUES (4, now(), now(), 'DEFAULT', 'default');
 
 INSERT INTO physical_diskofferingtype_environments (diskofferingtype_id, environment_id)
 SELECT (SELECT id FROM physical_diskofferingtype WHERE type = 'pd-standard'), physical_environment.id

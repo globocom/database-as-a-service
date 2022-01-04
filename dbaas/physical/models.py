@@ -672,7 +672,7 @@ class Plan(BaseModel):
     )
     disk_offering_type = models.ForeignKey(
         DiskOfferingType, related_name="plans",
-        on_delete=models.DO_NOTHING, default=DiskOfferingType.objects.get(type='default')
+        on_delete=models.DO_NOTHING, default=4
     )
     migrate_plan = models.ForeignKey(
         "Plan", related_name='migrate_to', null=True, blank=True
@@ -898,7 +898,7 @@ class DatabaseInfra(BaseModel):
     )
     disk_offering_type = models.ForeignKey(
         DiskOfferingType, related_name="databaseinfras",
-        on_delete=models.DO_NOTHING, default=DiskOfferingType.objects.get(type='default')
+        on_delete=models.DO_NOTHING, default=4
     )
     database_key = models.CharField(
         verbose_name=_("Database Key"), max_length=255, blank=True, null=True,
