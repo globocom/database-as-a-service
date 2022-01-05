@@ -100,6 +100,10 @@ class BindNewInstance(ACLStep):
         return "Binding new instance ..."
 
     @property
+    def is_valid(self):
+        return self.acl_from_hell_client.credential is not None
+
+    @property
     def acl_from_hell_client(self):
         return ACLFromHellClient(self.environment)
 
@@ -132,7 +136,7 @@ class BindNewInstance(ACLStep):
             self.add_acl_for_host(database, app_name)
 
     def do(self):
-        if not self.database:
+        if not self.database or not self.is_valid:
             return
 
         self.add_acl_for(self.database)
