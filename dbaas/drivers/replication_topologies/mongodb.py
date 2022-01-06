@@ -1159,7 +1159,9 @@ class MongoDBReplicaset(BaseMongoDB):
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-        )}]
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}]
 
 
 class MongoDBReplicaset40(MongoDBReplicaset):

@@ -950,3 +950,27 @@ class SetServiceAccountRoles(CreateServiceAccount):
 
     def undo(self):
         pass
+
+
+class DestroyIPMigrate(AllocateIP):
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    def do(self):
+        super(DestroyIPMigrate, self).undo()
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class DestroyServiceAccountMigrate(CreateServiceAccount):
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    def do(self):
+        super(DestroyServiceAccountMigrate, self).undo()
+
+    def undo(self):
+        raise NotImplementedError
