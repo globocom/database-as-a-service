@@ -15,7 +15,7 @@ anyjson==0.3.3
 astroid==1.0.0
 billiard==3.3.0.19
 bootstrap-admin==0.2.5
-celery==3.1.17
+celery==5.2.2
 django-adminplus==0.3
 django-auth-ldap==1.1.4
 django-ckeditor-updated==4.4
