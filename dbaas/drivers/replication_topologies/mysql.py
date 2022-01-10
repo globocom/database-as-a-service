@@ -1534,6 +1534,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
         )}]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
