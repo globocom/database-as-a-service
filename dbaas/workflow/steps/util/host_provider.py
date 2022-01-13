@@ -953,6 +953,10 @@ class SetServiceAccountRoles(CreateServiceAccount):
 
 
 class DestroyIPMigrate(AllocateIP):
+
+    def __unicode__(self):
+        return "Destroy IP migrate host..."
+
     @property
     def environment(self):
         return self.infra.environment
@@ -965,6 +969,10 @@ class DestroyIPMigrate(AllocateIP):
 
 
 class DestroyServiceAccountMigrate(CreateServiceAccount):
+
+    def __unicode__(self):
+        return "Detroy SA migrate host..."
+
     @property
     def environment(self):
         return self.infra.environment
