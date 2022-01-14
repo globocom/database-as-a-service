@@ -393,17 +393,24 @@ class DatabaseMaintenanceTask(BaseModel):
         null=True, blank=True, unique=False,
         related_name="%(app_label)s_%(class)s_related"
     )
+    current_step_class = models.CharField(
+        verbose_name="Current Step Class",
+        max_length=255,
+        null=True,
+        blank=True
+    )
     objects = DatabaseMaintenanceTaskManager()
 
     def get_current_step(self):
         return self.current_step
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         if not self.started_at:
             self.started_at = datetime.now()
 
         self.status = self.RUNNING
         self.current_step = step
+        self.current_step_class = step_class
         self.save()
 
     def update_final_status(self, status):
@@ -691,12 +698,12 @@ class DatabaseCreate(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'infra': self.infra}
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         if self.id:
             maintenance = self.__class__.objects.get(id=self.id)
             self.database = maintenance.database
 
-        super(DatabaseCreate, self).update_step(step)
+        super(DatabaseCreate, self).update_step(step, step_class)
 
     def save(self, *args, **kwargs):
         if self.plan:
@@ -736,12 +743,12 @@ class DatabaseClone(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'infra': self.infra}
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         if self.id:
             maintenance = self.__class__.objects.get(id=self.id)
             self.database = maintenance.database
 
-        super(DatabaseClone, self).update_step(step)
+        super(DatabaseClone, self).update_step(step, step_class)
 
 
 class DatabaseDestroy(DatabaseMaintenanceTask):
@@ -781,12 +788,12 @@ class DatabaseDestroy(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'infra': self.infra}
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         if self.id:
             maintenance = self.__class__.objects.get(id=self.id)
             self.database = maintenance.database
 
-        super(DatabaseDestroy, self).update_step(step)
+        super(DatabaseDestroy, self).update_step(step, step_class)
 
     def save(self, *args, **kwargs):
         if self.plan:
@@ -997,10 +1004,10 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
 
         return last_snap
 
-    def update_step(self, step):
-        super(DatabaseMigrate, self).update_step(step)
+    def update_step(self, step, step_class=None):
+        super(DatabaseMigrate, self).update_step(step, step_class)
         for host in self.hosts.all():
-            host.update_step(step)
+            host.update_step(step, step_class)
 
     def update_final_status(self, status):
         super(DatabaseMigrate, self).update_final_status(status)
@@ -1075,10 +1082,10 @@ class HostMigrate(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'host': self.host}
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         current_data = self._meta.model.objects.get(pk=self.id)
         self.host = current_data.host
-        super(HostMigrate, self).update_step(step)
+        super(HostMigrate, self).update_step(step, step_class)
 
 
 class RecreateSlave(DatabaseMaintenanceTask):
@@ -1100,10 +1107,10 @@ class RecreateSlave(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'host': self.host}
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         current_data = self._meta.model.objects.get(pk=self.id)
         self.host = current_data.host
-        super(RecreateSlave, self).update_step(step)
+        super(RecreateSlave, self).update_step(step, step_class)
 
 
 class FilerMigrate(DatabaseMaintenanceTask):
@@ -1186,13 +1193,13 @@ class RemoveInstanceDatabase(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "Remove instances from database: {}".format(self.database)
 
-    def update_step(self, step):
+    def update_step(self, step, step_class=None):
         try:
             if self.instance:
                 Instance.objects.get(id=self.instance.id)
         except Instance.DoesNotExist:
             self.instance = None
-        super(RemoveInstanceDatabase, self).update_step(step)
+        super(RemoveInstanceDatabase, self).update_step(step, step_class)
 
     def update_final_status(self, status):
         if status == DatabaseMaintenanceTask.SUCCESS:

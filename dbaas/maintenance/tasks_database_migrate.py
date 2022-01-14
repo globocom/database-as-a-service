@@ -1,6 +1,11 @@
 from maintenance.models import DatabaseMigrate, HostMigrate
 from util.providers import get_database_migrate_steps
-from workflow.workflow import steps_for_instances, rollback_for_instances_full
+from workflow.workflow import (
+    steps_for_instances,
+    rollback_for_instances_full,
+    get_current_step_for_instances,
+    lock_databases_for
+)
 from copy import copy
 from datetime import datetime
 from physical.models import DiskOfferingType
@@ -100,6 +105,10 @@ def database_environment_migrate(
             instances = rebuild_hosts_migrate(database_migrate, last_db_migrate)
     instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, infra.migration_stage)
+    if not can_migrate_check_steps(
+        steps, instances, since_step, database_migrate, task, False):
+        return
+
     result = steps_for_instances(
         steps, instances, task, database_migrate.update_step, since_step,
         step_manager=step_manager
@@ -138,6 +147,11 @@ def rollback_database_environment_migrate(step_manager, task):
     instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, migration_stage)
 
+    if not can_migrate_check_steps(
+        steps, instances, database_migrate.get_current_step(),
+        database_migrate, task, True):
+        return
+
     result = rollback_for_instances_full(
         steps, instances, task, database_migrate.get_current_step,
         database_migrate.update_step
@@ -156,3 +170,31 @@ def rollback_database_environment_migrate(step_manager, task):
             'Could not do rollback\n'
             'Please check error message and do retry'
         )
+
+def can_migrate_check_steps(
+    steps, instances, since_step, database_migrate, task, rollback):
+
+    if not since_step:
+        return True
+    if not database_migrate.current_step_class:
+        return True
+
+    current_step = get_current_step_for_instances(
+        steps, instances, since_step, rollback
+    )
+
+    if current_step != database_migrate.current_step_class:
+        lock_databases_for(instances, task, True)
+        database_migrate.set_error()
+        task.set_status_error(
+            "Could not migrate database. \n" \
+            "Last step in last migration was '{}'\n" \
+            "It is trying to execute '{}'.\n" \
+            "Probably there was a deploy after last migration.\n" \
+            "Try to fix the 'Current Step' and 'Current Step Class' " \
+            "on migration admin." \
+            "".format(database_migrate.current_step_class, current_step)
+        )
+        return False
+
+    return True

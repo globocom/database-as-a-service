@@ -24,7 +24,8 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at"
     )
     readonly_fields = (
-        "host", "zone", "environment", "link_task", "link_database_migrate",
+        "current_step_class", "host", "zone", "zone_origin", 
+        "environment", "link_task", "link_database_migrate",
         "started_at", "finished_at", "status", "task_schedule",
         "maintenance_action", "database_migrate", "snapshot"
     )

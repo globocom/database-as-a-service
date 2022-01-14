@@ -15,8 +15,9 @@ class DatabaseReinstallVMAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "instance", "link_task", "started_at",
-        "finished_at", "status", "maintenance_action", "task_schedule"
+        "current_step_class", "database", "instance", "link_task",
+        "started_at", "finished_at", "status", "maintenance_action",
+        "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):

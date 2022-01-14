@@ -21,8 +21,8 @@ class DatabaseMaintenanceTaskAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
-        "database", "link_task", "started_at", "finished_at",
-        "current_step", "status", "maintenance_action"
+        "current_step_class", "database", "link_task", "started_at", "finished_at",
+        "current_step", "status", "maintenance_action", "task_schedule"
     )
 
     ordering = ["-started_at"]

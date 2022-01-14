@@ -18,8 +18,9 @@ class DatabaseUpgradeAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "source_plan", "source_plan_name", "target_plan",
-        "target_plan_name", "link_task", "started_at", "finished_at",
+        "current_step_class", "database",
+        "source_plan", "source_plan_name", "target_plan", "target_plan_name",
+        "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule"
     )
 
