@@ -3,6 +3,7 @@ from util.providers import get_database_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from copy import copy
 from datetime import datetime
+from physical.models import DiskOfferingType
 
 
 def get_migrate_steps(database, stage):
@@ -77,6 +78,8 @@ def database_environment_migrate(
     step_manager=None
 ):
     infra = database.infra
+    database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(new_environment)
+    database.save()
     if step_manager:
         database_migrate = rebuild_database_migrate(task, step_manager)
         instances = rebuild_hosts_migrate(database_migrate, step_manager)

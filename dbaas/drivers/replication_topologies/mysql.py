@@ -1526,15 +1526,24 @@ class MySQLFoxHA(MySQLSingle):
             'Remove FOX source nodes': (
                 'workflow.steps.util.fox.MigrationRemoveNodeSourceInstance',
             )}, {
+            'Disable and Stop Source instance':(
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.infra.DisableSourceInstances',
+            )}, {
             'Remove Source VIP': (
+                'workflow.steps.util.vip_provider.DestroySourceForwardingRuleMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceBackendServiceMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceHeathcheckMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceInstanceGroupMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceIPMigrateMigrate',
                 'workflow.steps.util.vip_provider.DestroySourceVipDatabaseMigrate',
             )}, {
             'Cleaning up': (
-                'workflow.steps.util.infra.DisableSourceInstances',
-                'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-        )}]
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):

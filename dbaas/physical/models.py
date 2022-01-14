@@ -608,9 +608,19 @@ class DiskOfferingType(BaseModel):
         'Environment', verbose_name=_("Environments"), related_name='diskofferingstypes'
     )
     type = models.CharField(verbose_name=_("Disk Type"), max_length=255, unique=True)
+    identifier = models.CharField(verbose_name=_("Identifier"), max_length=255)
+    is_default = models.BooleanField(verbose_name=_("Default"), default=False)
 
     def __unicode__(self):
         return '{}'.format(self.name)
+
+    def get_type_to(self, environment_to):
+        disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
+                                                             identifier=self.identifier).first()
+        if not disk_offering_type:
+            disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
+                                                                 is_default=True).first()
+        return disk_offering_type
 
 
 class Plan(BaseModel):
@@ -662,7 +672,7 @@ class Plan(BaseModel):
     )
     disk_offering_type = models.ForeignKey(
         DiskOfferingType, related_name="plans",
-        on_delete=models.DO_NOTHING, null=True, blank=True
+        on_delete=models.DO_NOTHING, default=4
     )
     migrate_plan = models.ForeignKey(
         "Plan", related_name='migrate_to', null=True, blank=True
@@ -888,7 +898,7 @@ class DatabaseInfra(BaseModel):
     )
     disk_offering_type = models.ForeignKey(
         DiskOfferingType, related_name="databaseinfras",
-        on_delete=models.DO_NOTHING, null=True, blank=True
+        on_delete=models.DO_NOTHING, default=4
     )
     database_key = models.CharField(
         verbose_name=_("Database Key"), max_length=255, blank=True, null=True,

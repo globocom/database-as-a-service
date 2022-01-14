@@ -176,7 +176,8 @@ class Provider(object):
 
         return vip
 
-    def delete_instance_group(self, equipments, vip, future_vip=False):
+    def delete_instance_group(self, equipments, vip,
+                              future_vip=False, delete_object=True):
         url = "{}/{}/{}/instance-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
@@ -184,7 +185,7 @@ class Provider(object):
 
         data = {
             "equipments": equipments,
-            "destroy_vip": True
+            "destroy_vip": delete_object
         }
 
         response = self._request(delete, url, json=data, timeout=600)
@@ -196,8 +197,9 @@ class Provider(object):
             raise VipProviderDeleteInstanceGroupException(
                     response.content, response)
 
-        VipInstanceGroup.objects.filter(vip=vip).delete()
-        vip.delete()
+        if delete_object:
+            VipInstanceGroup.objects.filter(vip=vip).delete()
+            vip.delete()
 
         return True
 
@@ -1138,3 +1140,59 @@ class DestroySourceVipDatabaseMigrate(VipProviderStep):
 
     def undo(self):
         raise NotImplementedError
+
+
+class DestroySourceInstanceGroupMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip instance group..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.delete_instance_group(None,
+                                            self.vip, delete_object=False)
+
+
+class DestroySourceForwardingRuleMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip forwarding rule..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.forwarding_rule(self.vip, destroy=True)
+
+
+class DestroySourceIPMigrateMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip IP..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.allocate_ip(self.vip, destroy=True)
+
+
+class DestroySourceBackendServiceMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip Backend service..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.backend_service(self.vip, destroy=True)
+
+
+class DestroySourceHeathcheckMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip healthcheck..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.healthcheck(self.vip, destroy=True)

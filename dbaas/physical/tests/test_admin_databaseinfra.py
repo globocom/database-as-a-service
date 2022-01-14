@@ -47,6 +47,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "engine": self.engine.pk,
             "plan": self.plan.pk,
             "disk_offering": self.disk_offering.pk,
+            "disk_offering_type": 4,
             "environment": self.environment.pk,
             "capacity": 1,
             "backup_hour": 0,
