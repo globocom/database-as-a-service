@@ -131,6 +131,8 @@ def database_environment_migrate(
 
 def rollback_database_environment_migrate(step_manager, task):
     database = step_manager.database
+    database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(database.environment)
+    database.save()
     migration_stage = database.infra.migration_stage
 
     database_migrate = rebuild_database_migrate(task, step_manager)
