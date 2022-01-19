@@ -36,7 +36,9 @@ def rebuild_hosts_migrate(current_db_migrate,
     previous_hosts_migrate = previous_db_migrate.hosts.all()
 
     for previous_host_migrate in previous_hosts_migrate:
-        if validate_hosts and previous_host_migrate.host.first_instance_dns != previous_host_migrate.host.address:
+        if (validate_hosts and
+            previous_host_migrate.host.first_instance_dns !=
+                previous_host_migrate.host.address):
             continue
         host = previous_host_migrate.host
         zone = previous_host_migrate.zone
