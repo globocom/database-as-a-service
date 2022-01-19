@@ -103,6 +103,8 @@ def can_migrate(database, task, migration_stage, rollback):
         )
         return False
 
+    '''
+    TODO: REVIEW
     if not rollback and migration_stage == completed_migration_stage:
         task.set_status_error(
             "Could not run migration. The migration stage " \
@@ -117,6 +119,7 @@ def can_migrate(database, task, migration_stage, rollback):
             "".format(completed_migration_stage, migration_stage)
         )
         return False
+    '''
 
     return True
 
