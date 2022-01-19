@@ -708,6 +708,8 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            )}, {
+            'Cleaning up 2': (
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )}, {
             'Resetting Sentinel': (
