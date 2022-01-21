@@ -7,7 +7,7 @@ from ..utils import (log_and_response, get_url_env, LOG, check_database_status)
 from rest_framework import status
 
 
-class AclFromHellMissingCredentialException(Exception):
+class AclFromHellNotAllowerForEnvException(Exception):
     pass
 
 
@@ -21,12 +21,13 @@ class ServiceAppBind(APIView):
         hosts = infra.hosts
 
         acl_from_hell_client = ACLFromHellClient(database.environment)
-        if not acl_from_hell_client.credential:
-            raise AclFromHellMissingCredentialException(
+        if not acl_from_hell_client.aclfromhell_allowed:
+            raise AclFromHellNotAllowerForEnvException(
                 "ACL from hell credential not found for env {}".format(
                     database.environment
                 )
             )
+
         for host in hosts:
             acl_from_hell_client.add_acl(database, app_name, host.hostname)
         acl_from_hell_client.add_acl_for_vip_if_needed(database, app_name)

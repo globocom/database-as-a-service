@@ -9,8 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
 
 from dbaas_credentials.models import CredentialType
-from util import (get_or_none_credentials_for, AuthRequest,
-                  get_credentials_for)
+from util import get_credentials_for, AuthRequest, GetCredentialException
 from physical.models import Vip
 
 LOG = logging.getLogger(__name__)
@@ -429,11 +428,27 @@ class ACLFromHellClient(object):
     @property
     def credential(self):
         if not self._credential:
-            self._credential = get_or_none_credentials_for(
-                self.environment, CredentialType.ACLFROMHELL
-            )
+            try:
+                self._credential = get_credentials_for(
+                    self.environment, CredentialType.ACLFROMHELL
+                )
+            except (IndexError, GetCredentialException):
+                raise Exception(
+                    "Credential ACLFROMHELL for env {} not found".format(
+                        self.environment.name
+                    )
+                )
 
         return self._credential
+
+    @property
+    def aclfromhell_allowed(self):
+        allowed_status = self.credential.get_parameter_by_name(
+            'aclfromhell_allowed'
+        )
+        if allowed_status and allowed_status.lower() == 'false':
+            return False
+        return True
 
     def _request(self, action, url, **kw):
         return action(
