@@ -18,6 +18,7 @@ from .core_replication_topology import CoreReplicationTopologyAdmin
 from .ip import IpAdmin
 from .vip import VipAdmin
 from .vip_instance_group import VipInstanceGroupAdmin
+from .disk_offering_type import DiskOfferingTypeAdmin
 from .script import ScriptAdmin
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
@@ -38,5 +39,6 @@ admin.site.register(models.CoreReplicationTopology, CoreReplicationTopologyAdmin
 admin.site.register(models.Ip, IpAdmin)
 admin.site.register(models.Vip, VipAdmin)
 admin.site.register(models.VipInstanceGroup, VipInstanceGroupAdmin)
-admin.site.register(models.DiskOfferingType)
+admin.site.register(models.DiskOfferingType, DiskOfferingTypeAdmin)
 admin.site.register(models.Volume)
+
