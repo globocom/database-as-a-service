@@ -1066,6 +1066,14 @@ class DatabaseInfra(BaseModel):
     def total_stages_migration(self):
         return 3 if self.plan.is_ha else 2
 
+    @property
+    def in_last_migration_stage(self):
+        if not self.migration_in_progress:
+            return False
+
+        return (self.plan.is_ha and self.migration_stage == self.STAGE_3) or\
+               (not self.plan.is_ha and self.migration_stage == self.STAGE_2)
+
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
         """
@@ -1333,6 +1341,13 @@ class Host(BaseModel):
         for instance in self.instances.all():
             if not instance.is_database:
                 return instance
+
+        return None
+
+    @property
+    def first_instance_dns(self):
+        for instance in self.instances.all():
+            return instance.dns
 
         return None
 

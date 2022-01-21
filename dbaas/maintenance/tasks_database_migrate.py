@@ -36,10 +36,16 @@ def build_hosts_migrate(hosts_zones, database_migrate):
     return instances
 
 
-def rebuild_hosts_migrate(current_db_migrate, previous_db_migrate):
+def rebuild_hosts_migrate(current_db_migrate,
+                          previous_db_migrate, validate_hosts=False):
     instances = []
     previous_hosts_migrate = previous_db_migrate.hosts.all()
+
     for previous_host_migrate in previous_hosts_migrate:
+        if (validate_hosts and
+            previous_host_migrate.host.first_instance_dns !=
+                previous_host_migrate.host.address):
+            continue
         host = previous_host_migrate.host
         zone = previous_host_migrate.zone
         snapshot = previous_host_migrate.snapshot
@@ -143,7 +149,8 @@ def database_environment_migrate(
         if not can_migrate(database, task, migration_stage, False):
             return
         database_migrate = rebuild_database_migrate(task, step_manager)
-        instances = rebuild_hosts_migrate(database_migrate, step_manager)
+        instances = rebuild_hosts_migrate(database_migrate, step_manager,
+                                          infra.in_last_migration_stage)
     else:
         infra.migration_stage += 1
         if not can_migrate(database, task, infra.migration_stage, False):
@@ -161,7 +168,8 @@ def database_environment_migrate(
                 database=database,
                 status=DatabaseMigrate.SUCCESS
             ).last()
-            instances = rebuild_hosts_migrate(database_migrate, last_db_migrate)
+            instances = rebuild_hosts_migrate(database_migrate, last_db_migrate,
+                                              infra.in_last_migration_stage)
     instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, infra.migration_stage)
     if not can_migrate_check_steps(
@@ -176,14 +184,11 @@ def database_environment_migrate(
     if result:
         database = database_migrate.database
         infra = database.infra
-        is_ha = infra.plan.is_ha
         migration_stage = infra.migration_stage
-        if ((is_ha and migration_stage == infra.STAGE_3) or
-           (not is_ha and migration_stage == infra.STAGE_2)):
-        
+        if infra.in_last_migration_stage:
             database.environment = database_migrate.environment
             database.save()
-        
+
             infra.environment = database_migrate.environment
             infra.plan = infra.plan.get_equivalent_plan_for_env(
                 database_migrate.environment
