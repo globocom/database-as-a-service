@@ -24,9 +24,10 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at"
     )
     readonly_fields = (
-        "database", "origin_environment", "environment", "origin_offering",
+        "current_step_class", "migration_stage", "database", 
+        "origin_environment", "environment", "origin_offering",
         "offering", "link_task", "started_at", "finished_at",
-        "status", "maintenance_action", "task_schedule"
+        "status", "maintenance_action", "task_schedule",
     )
     ordering = ["-started_at"]
 
