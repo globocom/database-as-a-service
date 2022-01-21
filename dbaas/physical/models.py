@@ -1062,6 +1062,10 @@ class DatabaseInfra(BaseModel):
     def migration_in_progress(self):
         return self.migration_stage > self.NOT_STARTED
 
+    @property
+    def total_stages_migration(self):
+        return 3 if self.plan.is_ha else 2
+
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
         """

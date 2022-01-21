@@ -9,7 +9,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
 
 from dbaas_credentials.models import CredentialType
-from util import get_credentials_for, AuthRequest, GetCredentialException
+from util import (get_or_none_credentials_for, AuthRequest,
+                  get_credentials_for)
 from physical.models import Vip
 
 LOG = logging.getLogger(__name__)
@@ -29,7 +30,6 @@ class BaseInstanceStep(object):
 
     def __init__(self, instance):
         self.instance = instance
-        #self._vip = None
         self._vip = None
         self._future_vip = None
         self._driver = None
@@ -45,17 +45,6 @@ class BaseInstanceStep(object):
             self._driver = self.infra.get_driver()
 
         return self._driver
-
-    @property
-    def should_skip(self):
-        skip = ""
-        if hasattr(self, "credential") and self.credential is not None:
-            skip = self.credential.get_parameter_by_name(
-                "skip"
-            )
-            skip = str(skip)
-
-        return skip == "1" or skip.lower() == "true"
 
     @property
     def database(self):
@@ -125,6 +114,10 @@ class BaseInstanceStep(object):
     @property
     def latest_disk(self):
         return self.instance.hostname.volumes.last()
+
+    @property
+    def first_disk(self):
+        return self.instance.hostname.volumes.first()
 
     @property
     def resize(self):
@@ -436,16 +429,9 @@ class ACLFromHellClient(object):
     @property
     def credential(self):
         if not self._credential:
-            try:
-                self._credential = get_credentials_for(
-                    self.environment, CredentialType.ACLFROMHELL
-                )
-            except (IndexError, GetCredentialException):
-                raise Exception(
-                    "Credential ACLFROMHELL for env {} not found".format(
-                        self.environment.name
-                    )
-                )
+            self._credential = get_or_none_credentials_for(
+                self.environment, CredentialType.ACLFROMHELL
+            )
 
         return self._credential
 

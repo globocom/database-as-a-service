@@ -40,6 +40,17 @@ class Puppet(BaseInstanceStep):
         return self._credential
 
     @property
+    def should_skip(self):
+        skip = ""
+        if hasattr(self, "credential") and self.credential is not None:
+            skip = self.credential.get_parameter_by_name(
+                "skip"
+            )
+            skip = str(skip)
+
+        return skip == "1" or skip.lower() == "true"
+
+    @property
     def is_running_bootstrap(self):
         script = "ps -ef | grep bootstrap-puppet3-loop.sh | grep -v grep | wc -l"
         output = self.host.ssh.run_script(script)
