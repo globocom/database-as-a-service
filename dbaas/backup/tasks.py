@@ -210,7 +210,7 @@ def update_ssl(self):
 
 
 @app.task(bind=True)
-@only_one(key="makedatabasebackupkey", timeout=60*60*2)
+@only_one(key="makedatabasebackupkey", timeout=60*60*4)
 def make_databases_backup(self):
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
