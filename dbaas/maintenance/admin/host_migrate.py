@@ -21,7 +21,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     list_display = (
         "host", "zone", "environment", "current_step", "friendly_status",
         "maintenance_action", "link_task", "link_database_migrate",
-        "started_at", "finished_at"
+        "created_at", "started_at", "finished_at"
     )
     readonly_fields = (
         "current_step_class", "host", "zone", "zone_origin", 
@@ -29,7 +29,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "started_at", "finished_at", "status", "task_schedule",
         "maintenance_action", "database_migrate", "snapshot"
     )
-    ordering = ["-started_at"]
+    ordering = ["-created_at"]
 
     def link_database_migrate(self, maintenance_task):
         database_migrate = maintenance_task.database_migrate

@@ -78,18 +78,77 @@ def rebuild_database_migrate(
     return database_migrate
 
 
+def can_migrate(database, task, migration_stage, rollback):
+
+    last_mig = DatabaseMigrate.objects.filter(database=database).last()
+    if not last_mig:
+        return True
+
+    if last_mig.status == DatabaseMigrate.WAITING:
+        task.set_status_error(
+            "Could not run migration. Found a 'Waiting' " \
+            "database migration: '{}'".format(last_mig)
+        )
+        return False
+    elif last_mig.status == DatabaseMigrate.RUNNING:
+        task.set_status_error(
+            "Could not run migration. Found a 'Running' " \
+            "database migration: '{}'".format(last_mig)
+        )
+        return False
+    elif last_mig.status == DatabaseMigrate.SUCCESS:
+        completed_migration_stage = last_mig.migration_stage
+    elif last_mig.status == DatabaseMigrate.ERROR:
+        completed_migration_stage = last_mig.migration_stage - 1
+    elif last_mig.status == DatabaseMigrate.ROLLBACK:
+        completed_migration_stage = last_mig.migration_stage - 1
+    else:
+        task.set_status_error(
+            "Unknown database migration status: '{}'. For migration: '{}'" \
+            "".format(last_mig.status, last_mig)
+        )
+        return False
+
+    '''
+    TODO: REVIEW
+    if not rollback and migration_stage == completed_migration_stage:
+        task.set_status_error(
+            "Could not run migration. The migration stage " \
+            "'{}' for database '{}' is already completed." \
+            "".format(migration_stage, database)
+        )
+        return False
+    if rollback and migration_stage != completed_migration_stage:
+        task.set_status_error(
+            "Could not run rollback migration. The rollback stage should be " \
+            "{}, but it is {}" \
+            "".format(completed_migration_stage, migration_stage)
+        )
+        return False
+    '''
+
+    return True
+
+
 def database_environment_migrate(
     database, new_environment, new_offering, task, hosts_zones, since_step=None,
     step_manager=None
 ):
+
     infra = database.infra
     database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(new_environment)
     database.save()
     if step_manager:
+        migration_stage = step_manager.migration_stage
+        if not can_migrate(database, task, migration_stage, False):
+            return
         database_migrate = rebuild_database_migrate(task, step_manager)
         instances = rebuild_hosts_migrate(database_migrate, step_manager)
     else:
         infra.migration_stage += 1
+        if not can_migrate(database, task, infra.migration_stage, False):
+            return
+
         infra.save()
         database_migrate = build_database_migrate(
             task, database, new_environment, new_offering,
@@ -143,6 +202,9 @@ def rollback_database_environment_migrate(step_manager, task):
     database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(database.environment)
     database.save()
     migration_stage = database.infra.migration_stage
+
+    if not can_migrate(database, task, migration_stage, True):
+        return
 
     database_migrate = rebuild_database_migrate(task, step_manager)
     instances = rebuild_hosts_migrate(database_migrate, step_manager)
