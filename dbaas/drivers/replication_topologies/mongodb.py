@@ -1073,6 +1073,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
                 'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
                 'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
+                'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
                 'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.database.Start',
@@ -1156,7 +1159,9 @@ class MongoDBReplicaset(BaseMongoDB):
             'Cleaning up': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-        )}]
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}]
 
 
 class MongoDBReplicaset40(MongoDBReplicaset):

@@ -17,8 +17,8 @@ LIST_DISPLAY = (
     "started_at", "finished_at"
 )
 READONLY_FIELDS = (
-    "database", "link_task", "started_at",
-    "finished_at", "current_step", "status", "maintenance_action"
+    "current_step_class", "database", "link_task", "started_at", "finished_at",
+    "current_step", "status", "maintenance_action", "task_schedule"
 )
 EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]

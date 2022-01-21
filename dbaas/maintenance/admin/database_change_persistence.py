@@ -18,9 +18,9 @@ class DatabaseChangePersistenceAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "link_task", "started_at", "finished_at",
-        "status", "maintenance_action", "task_schedule",
-        "source_plan", "target_plan",
+        "current_step_class", "database", "link_task",
+        "started_at", "finished_at", "status", "maintenance_action",
+        "task_schedule", "source_plan", "target_plan",
     )
 
     def maintenance_action(self, maintenance_task):

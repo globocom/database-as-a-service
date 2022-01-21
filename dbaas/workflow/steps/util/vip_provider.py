@@ -176,7 +176,8 @@ class Provider(object):
 
         return vip
 
-    def delete_instance_group(self, equipments, vip, future_vip=False):
+    def delete_instance_group(self, equipments, vip,
+                              future_vip=False, delete_object=True):
         url = "{}/{}/{}/instance-group/{}".format(
             self.credential.endpoint, self.provider,
             self.environment, vip.identifier
@@ -184,7 +185,7 @@ class Provider(object):
 
         data = {
             "equipments": equipments,
-            "destroy_vip": True
+            "destroy_vip": delete_object
         }
 
         response = self._request(delete, url, json=data, timeout=600)
@@ -196,8 +197,9 @@ class Provider(object):
             raise VipProviderDeleteInstanceGroupException(
                     response.content, response)
 
-        VipInstanceGroup.objects.filter(vip=vip).delete()
-        vip.delete()
+        if delete_object:
+            VipInstanceGroup.objects.filter(vip=vip).delete()
+            vip.delete()
 
         return True
 
@@ -567,24 +569,24 @@ class CreateVip(VipProviderStep):
         if vip is None:
             return
 
-        dns = add_dns_record(
-            self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
-
-        self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
-        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
-        self.infra.save()
+        if not vip.original_vip:
+            dns = add_dns_record(
+                self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
+            self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
+            self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
+            self.infra.save()
 
     def undo(self):
         if not self.is_valid:
             return
 
-        try:
-            vip = Vip.objects.get(infra=self.infra)
-        except ObjectDoesNotExist:
+        vip = Vip.objects.filter(infra=self.infra)
+        if not vip.exists():
             return
-        else:
-            self.provider.destroy_vip(vip.identifier)
-            vip.delete()
+
+        vip = vip.last()
+        self.provider.destroy_vip(vip.identifier)
+        vip.delete()
 
 
 class CreateVipMigrate(CreateVip):
@@ -1138,3 +1140,59 @@ class DestroySourceVipDatabaseMigrate(VipProviderStep):
 
     def undo(self):
         raise NotImplementedError
+
+
+class DestroySourceInstanceGroupMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip instance group..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.delete_instance_group(None,
+                                            self.vip, delete_object=False)
+
+
+class DestroySourceForwardingRuleMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip forwarding rule..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.forwarding_rule(self.vip, destroy=True)
+
+
+class DestroySourceIPMigrateMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip IP..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.allocate_ip(self.vip, destroy=True)
+
+
+class DestroySourceBackendServiceMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip Backend service..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.backend_service(self.vip, destroy=True)
+
+
+class DestroySourceHeathcheckMigrate(DestroySourceVipDatabaseMigrate):
+    def __unicode__(self):
+        return "Destroying old vip healthcheck..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        return self.provider.healthcheck(self.vip, destroy=True)

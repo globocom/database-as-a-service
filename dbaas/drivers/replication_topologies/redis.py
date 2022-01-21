@@ -711,6 +711,8 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Cleaning up 2': (
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
             )}, {
             'Resetting Sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
@@ -1042,6 +1044,8 @@ class RedisCluster(BaseRedis):
             'Cleaning up 2': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
         )}]
 class RedisGenericGCE(object):
     def get_single_host_migrate_steps(self):

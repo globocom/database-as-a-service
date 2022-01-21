@@ -19,7 +19,8 @@ class DatabaseUpgradePatchAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "source_patch", "source_patch_full_version",
+        "current_step_class", "database",
+        "source_patch", "source_patch_full_version",
         "target_patch", "target_patch_full_version",
         "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule"

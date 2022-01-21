@@ -62,6 +62,27 @@ class DiskOfferingFactory(factory.DjangoModelFactory):
     size_kb = 1048576  # 1gb
 
 
+class DiskOfferingTypeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DiskOfferingType
+
+    name = factory.Sequence(lambda n: 'disk-offering-type-{0}'.format(n))
+    type = 'default'
+    identifier = 'HDD'
+
+    @factory.post_generation
+    def environments(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for env in extracted:
+                self.environments.add(env)
+        else:
+            self.environments.add(EnvironmentFactory())
+
+
 class ReplicationTopologyFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.ReplicationTopology
 

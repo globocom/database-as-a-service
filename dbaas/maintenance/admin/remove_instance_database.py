@@ -18,9 +18,9 @@ class RemoveInstanceDatabaseAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "instance",
+        "current_step_class", "database", "instance",
         "link_task", "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):

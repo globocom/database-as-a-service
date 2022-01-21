@@ -1204,7 +1204,8 @@ class Database(BaseModel):
         html_default = '&nbsp;<span class="label label-{}">{}</span>'
 
         if self.infra.migration_in_progress:
-            status = html_default.format("info", "Migrating")
+            status = html_default.format("info", "Migrating ({} of {})".format(
+                self.infra.migration_stage, self.infra.total_stages_migration))
             return format_html(status)
 
         return ""

@@ -1385,6 +1385,9 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.StopWithoutUndo',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
+                'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
                 'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
@@ -1426,7 +1429,7 @@ class MySQLFoxHA(MySQLSingle):
                  'workflow.steps.util.puppet.CheckStatus',
              )}, {
              'Configure foreman': (
-                 'workflow.steps.util.foreman.SetupDSRC',
+                 'workflow.steps.util.foreman.SetupDSRCMigrate',
              )}, {
              'Running puppet': (
                  'workflow.steps.util.puppet.Execute',
@@ -1523,15 +1526,24 @@ class MySQLFoxHA(MySQLSingle):
             'Remove FOX source nodes': (
                 'workflow.steps.util.fox.MigrationRemoveNodeSourceInstance',
             )}, {
+            'Disable and Stop Source instance':(
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.infra.DisableSourceInstances',
+            )}, {
             'Remove Source VIP': (
+                'workflow.steps.util.vip_provider.DestroySourceForwardingRuleMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceBackendServiceMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceHeathcheckMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceInstanceGroupMigrate',
+                'workflow.steps.util.vip_provider.DestroySourceIPMigrateMigrate',
                 'workflow.steps.util.vip_provider.DestroySourceVipDatabaseMigrate',
             )}, {
             'Cleaning up': (
-                'workflow.steps.util.infra.DisableSourceInstances',
-                'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
-        )}]
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
