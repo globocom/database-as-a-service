@@ -1156,8 +1156,10 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
             )}, {
-            'Cleaning up': (
+            'Removing Disks': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            )}, {
+            'Cleaning up': (
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',

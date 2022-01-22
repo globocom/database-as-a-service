@@ -1040,9 +1040,9 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.redis.cluster.CheckClusterStatus',
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             )}, {
             'Cleaning up 2': (
-                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
