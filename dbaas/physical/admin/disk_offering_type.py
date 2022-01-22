@@ -10,7 +10,6 @@ class DiskOfferingTypeAdmin(services_admin.DjangoServicesAdmin):
     search_fields = ('name', 'type', 'identifier')
     list_display = ('name', 'type', 'identifier', 'is_default', 'selected_environments')
     list_filter = ('name', 'type', 'identifier', 'is_default', 'environments')
-    
 
     def selected_environments(self, obj):
         return ",".join(obj.environments.values_list('name', flat=True))
