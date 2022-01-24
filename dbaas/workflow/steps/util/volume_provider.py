@@ -546,6 +546,15 @@ class NewVolume(VolumeProviderBase):
     def restore_snapshot_from_master(self):
         return False
 
+    @property
+    def disk_offering_type(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            offering_type = self.infra.disk_offering_type.get_type_to(
+                self.environment)
+        else:
+            offering_type = self.infra.disk_offering_type
+        return offering_type.type
+
     def do(self):
         if not self.is_valid:
             return
@@ -568,7 +577,7 @@ class NewVolume(VolumeProviderBase):
             is_active=self.active_volume,
             zone=self.host_vm.zone,
             vm_name=self.host_vm.name,
-            disk_offering_type=self.infra.disk_offering_type.type if self.infra.disk_offering_type else None,
+            disk_offering_type=self.disk_offering_type
         )
 
     def undo(self):
@@ -2332,6 +2341,11 @@ class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
             return False
         return self.should_migrate_with_new_disk
 
+    @property
+    def disk_offering_type(self):
+        return self.infra.disk_offering_type.type
+
     def undo(self):
         if self.is_valid:
-            self._remove_volume(self.latest_disk, self.host)
+            if not self.latest_disk.is_active:
+                self._remove_volume(self.latest_disk, self.host)
