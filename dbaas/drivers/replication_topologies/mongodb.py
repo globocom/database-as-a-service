@@ -1083,6 +1083,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.infra.EnableFutureInstances',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.UmountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DetachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DeleteVolumeMigrateOriginalHost',
             )}, {
             'Start telegraf and rsyslog': (
                 'workflow.steps.util.database.StartRsyslog',

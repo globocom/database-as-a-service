@@ -2308,9 +2308,46 @@ class AttachDataLatestVolumeMigrate(AttachDataVolume):
 
     @property
     def is_valid(self):
-        if not super(AttachDataLatestVolumeMigrate, self).is_valid:
+        if not super(AttachDataLatestVolumeMigrate, self).is_valid\
+         or not self.instance.is_database:
             return False
         return self.should_migrate_with_new_disk
+
+    def undo(self):
+        if self.is_valid and self.latest_disk and\
+         not self.latest_disk.is_active:
+            self.detach_disk(self.volume)
+
+
+class DetachDataLatestVolumeMigrate(DetachDataVolume):
+    @property
+    def volume(self):
+        return self.latest_disk
+
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def is_valid(self):
+        if not super(DetachDataLatestVolumeMigrate, self).is_valid\
+         or not self.instance.is_database:
+            return False
+        return self.should_migrate_with_new_disk and\
+            self.latest_disk and not self.latest_disk.is_active
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.detach_disk(self.volume)
+
+    def undo(self):
+        pass
 
 
 class MountDataLatestVolumeMigrate(MountDataLatestVolume):
@@ -2333,11 +2370,48 @@ class MountDataLatestVolumeMigrate(MountDataLatestVolume):
             return False
         return self.should_migrate_with_new_disk
 
+    def undo(self):
+        pass
+
+
+class UmountDataLatestVolumeMigrate(UnmountDataLatestVolume):
+    @property
+    def volume(self):
+        return self.latest_disk
+
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def is_valid(self):
+        if not super(UmountDataLatestVolumeMigrate, self).is_valid\
+         or not self.instance.is_database:
+            return False
+        return self.should_migrate_with_new_disk and\
+            self.latest_disk and not self.latest_disk.is_active
+
+    def do(self):
+        if self.is_valid:
+            script = self.get_umount_command(
+                self.latest_disk,
+                data_directory=self.directory,
+            )
+            self.host.ssh.run_script(script)
+
+    def undo(self):
+        pass
+
 
 class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
     @property
     def is_valid(self):
-        if not super(NewVolumeMigrateOriginalHost, self).is_valid:
+        if not super(NewVolumeMigrateOriginalHost, self).is_valid\
+         or not self.instance.is_database:
             return False
         return self.should_migrate_with_new_disk
 
@@ -2347,5 +2421,25 @@ class NewVolumeMigrateOriginalHost(NewVolumeMigrate):
 
     def undo(self):
         if self.is_valid:
-            if not self.latest_disk.is_active:
+            if self.latest_disk and not self.latest_disk.is_active:
                 self._remove_volume(self.latest_disk, self.host)
+
+
+class DeleteVolumeMigrateOriginalHost(NewVolumeMigrateOriginalHost):
+
+    def __unicode__(self):
+        return "Delete volume migrate..."
+
+    @property
+    def is_valid(self):
+        if not super(DeleteVolumeMigrateOriginalHost, self).is_valid\
+         or not self.instance.is_database:
+            return False
+        return self.latest_disk and not self.latest_disk.is_active
+
+    def do(self):
+        if self.is_valid:
+            self._remove_volume(self.latest_disk, self.host)
+
+    def undo(self):
+        pass
