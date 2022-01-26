@@ -426,9 +426,10 @@ class BaseTopology(object):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.Initialization',
-                'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.plan.Configure',
             )}, {
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',

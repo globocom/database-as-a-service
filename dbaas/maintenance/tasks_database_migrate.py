@@ -115,6 +115,8 @@ def can_migrate(database, task, migration_stage, rollback):
         )
         return False
 
+    '''
+    TODO: REVIEW
     if not rollback and migration_stage == completed_migration_stage:
         task.set_status_error(
             "Could not run migration. The migration stage " \
@@ -129,6 +131,7 @@ def can_migrate(database, task, migration_stage, rollback):
             "".format(completed_migration_stage, migration_stage)
         )
         return False
+    '''
 
     return True
 
@@ -139,8 +142,8 @@ def database_environment_migrate(
 ):
 
     infra = database.infra
-    database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(new_environment)
-    database.save()
+    #database.infra.disk_offering_type = database.infra.disk_offering_type.get_type_to(new_environment)
+    #database.save()
     if step_manager:
         migration_stage = step_manager.migration_stage
         if not can_migrate(database, task, migration_stage, False):
@@ -190,6 +193,7 @@ def database_environment_migrate(
             infra.plan = infra.plan.get_equivalent_plan_for_env(
                 database_migrate.environment
             )
+            infra.disk_offering_type = infra.disk_offering_type.get_type_to(new_environment)
             infra.migration_stage = infra.NOT_STARTED
             infra.save()
         database_migrate.set_success()

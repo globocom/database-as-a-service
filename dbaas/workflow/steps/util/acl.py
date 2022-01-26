@@ -101,7 +101,7 @@ class BindNewInstance(ACLStep):
 
     @property
     def is_valid(self):
-        return self.acl_from_hell_client.credential is not None
+        return self.acl_from_hell_client.aclfromhell_allowed
 
     @property
     def acl_from_hell_client(self):
