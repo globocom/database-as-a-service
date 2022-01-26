@@ -446,6 +446,9 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.UmountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DetachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DeleteVolumeMigrateOriginalHost',
             )}, {
             'Configure SSL lib and folder': (
                 ) + self.get_configure_ssl_libs_and_folder_steps() + (
