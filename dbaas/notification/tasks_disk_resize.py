@@ -80,7 +80,7 @@ def zabbix_collect_used_disk(task):
                 except ZabbixMetricsError as error:
                     ret = host_mount_data_percentage(host.address, task)
                     if ret != (None, None, None):
-                        zabbix_percentage, zabbix_used, zabbix_size = (0, 0, 0)
+                        zabbix_percentage, zabbix_used, zabbix_size = ret
                     else:
                         problems += 1
                         task.add_detail(message='Error: {}'.format(error), level=3)
