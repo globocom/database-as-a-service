@@ -78,9 +78,13 @@ def zabbix_collect_used_disk(task):
                     zabbix_used = metrics.get_current_disk_data_used(host)
                     zabbix_percentage = (zabbix_used * 100)/zabbix_size
                 except ZabbixMetricsError as error:
-                    problems += 1
-                    task.add_detail(message='Error: {}'.format(error), level=3)
-                    status = TaskHistory.STATUS_WARNING
+                    ret = for_zabbix(host.address, task)
+                    if ret != (None, None, None):
+                        zabbix_percentage, zabbix_used, zabbix_size = (0, 0, 0)
+                    else:
+                        problems += 1
+                        task.add_detail(message='Error: {}'.format(error), level=3)
+                        status = TaskHistory.STATUS_WARNING
                     continue
 
                 task.add_detail(
@@ -236,6 +240,35 @@ def host_mount_data_percentage(address, task):
         'used': int(values[1]),
         'free': int(values[2]),
         'percentage': int(values[3].replace('%', ''))
+    }
+
+    task.add_detail(
+        message='Mount /data: {}% ({}kb/{}kb)'.format(
+            values['percentage'], values['used'], values['total']
+        ),
+        level=3
+    )
+
+    return values['percentage'], values['used'], values['total']
+
+def for_zabbix(address, task):
+    host = Host.objects.filter(address=address).first()
+
+    try:
+        output = host.ssh.run_script('df -hk | grep /data')
+    except ScriptFailedException as err:
+        task.add_detail(
+            message='Could not load mount size: {}'.format(str(err)),
+            level=4
+        )
+        return None, None, None
+
+    values = output['stdout'][0].strip().split()
+    values = {
+        'total': int(values[1]),
+        'used': int(values[2]),
+        'free': int(values[3]),
+        'percentage': int(values[4].replace('%', ''))
     }
 
     task.add_detail(
