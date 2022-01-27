@@ -78,7 +78,7 @@ def zabbix_collect_used_disk(task):
                     zabbix_used = metrics.get_current_disk_data_used(host)
                     zabbix_percentage = (zabbix_used * 100)/zabbix_size
                 except ZabbixMetricsError as error:
-                    ret = for_zabbix(host.address, task)
+                    ret = host_mount_data_percentage(host.address, task)
                     if ret != (None, None, None):
                         zabbix_percentage, zabbix_used, zabbix_size = (0, 0, 0)
                     else:
@@ -235,23 +235,28 @@ def host_mount_data_percentage(address, task):
         return None, None, None
 
     values = output['stdout'][0].strip().split()
-    values = {
-        'total': int(values[0]),
-        'used': int(values[1]),
-        'free': int(values[2]),
-        'percentage': int(values[3].replace('%', ''))
+
+    i = 0 if host.is_ol6 else 1
+
+    rvalues = {
+        'total': int(values[i]),
+        'used': int(values[i+1]),
+        'free': int(values[i+1]),
+        'percentage': int(values[i+1].replace('%', ''))
     }
 
     task.add_detail(
         message='Mount /data: {}% ({}kb/{}kb)'.format(
-            values['percentage'], values['used'], values['total']
+            rvalues['percentage'], rvalues['used'], rvalues['total']
         ),
         level=3
     )
 
-    return values['percentage'], values['used'], values['total']
 
-def for_zabbix(address, task):
+    return rvalues['percentage'], rvalues['used'], rvalues['total']
+
+
+def host_mount_data_percentage(address, task):
     host = Host.objects.filter(address=address).first()
 
     try:
@@ -265,10 +270,10 @@ def for_zabbix(address, task):
 
     values = output['stdout'][0].strip().split()
     values = {
-        'total': int(values[1]),
-        'used': int(values[2]),
-        'free': int(values[3]),
-        'percentage': int(values[4].replace('%', ''))
+        'total': int(values[0]),
+        'used': int(values[1]),
+        'free': int(values[2]),
+        'percentage': int(values[3].replace('%', ''))
     }
 
     task.add_detail(
