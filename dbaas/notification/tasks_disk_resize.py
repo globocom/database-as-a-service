@@ -122,7 +122,7 @@ def zabbix_collect_used_disk(task):
                     try:
                         task_resize = disk_auto_resize(
                             database=database,
-                            current_size=current_size,
+                            current_size=size_metadata,
                             usage_percentage=current_percentage,
                         )
                         database_resized = True
@@ -209,6 +209,8 @@ def disk_auto_resize(database, current_size, usage_percentage):
     email_notifications.disk_resize_notification(
         database=database, new_disk=disk, usage_percentage=usage_percentage
     )
+
+    return task
 
 
 def host_mount_data_percentage(host, task):
