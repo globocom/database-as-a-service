@@ -1168,6 +1168,18 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
             )}]
 
+    def get_reinstallvm_ssl_steps(self):
+        return (
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIPIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfiguredArbiterOnly',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredArbiterOnly',
+        )
+
 
 class MongoDBReplicaset40(MongoDBReplicaset):
 
