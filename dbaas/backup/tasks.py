@@ -626,7 +626,13 @@ def run_backups():
     work = []
 
     # part of rotine which reads the database environment to backup
-    envs = [] #need to determine the environments
+    environments = Environment.objects.all()
+    prod_envs = Environment.prod_envs()
+    dev_envs = Environment.dev_envs()
+    envs = list(prod_envs) + list(dev_envs)
+    if not envs:
+        envs = [env.name for env in environments]
+
     for env in envs:
         pass
 
