@@ -587,6 +587,57 @@ def make_database_backup(self, database, task):
     return True
 
 
+def new_back(self, instance, error, group):
+    try:
+        current_hour = datetime.now()
+        snapshot = make_instance_snapshot_backup(
+            instance=instance, error=error, group=group,
+            current_hour=current_hour
+        )
+        if snapshot and snapshot.was_successful:
+            msg = "Backup for %s was successful" % (str(instance))
+            LOG.info(msg)
+        elif snapshot and snapshot.was_error:
+            status = TaskHistory.STATUS_ERROR
+            msg = "Backup for %s was unsuccessful. Error: %s" % (
+                str(instance), error['errormsg'])
+            LOG.error(msg)
+        else:
+            status = TaskHistory.STATUS_WARNING
+            msg = "Backup for %s has warning" % (str(instance))
+            LOG.info(msg)
+    except Exception as e:
+        status = TaskHistory.STATUS_ERROR
+        msg = "Backup for %s was unsuccessful. Error: %s" % (
+            str(instance), str(e))
+        LOG.error(msg)
+        return False
+
+    return True
+
+@app.task(bind=True)
+def run_backups():
+    from multiprocessing import Pool
+
+    worker_name = get_worker_name()
+
+    nro_threads = 10
+    pool = Pool(nro_threads)
+    work = []
+
+    # part of rotine which reads the database environment to backup
+    envs = [] #need to determine the environments
+    for env in envs:
+        pass
+
+    pool.map(new_back, work)
+
+  
+
+
+
+
+
 @app.task(bind=True)
 def remove_database_backup(self, task, snapshot):
     worker_name = get_worker_name()
@@ -603,4 +654,6 @@ def remove_database_backup(self, task, snapshot):
         return False
     else:
         task.set_status_success('Backup deleted with success')
-        return True
+
+
+    return True
