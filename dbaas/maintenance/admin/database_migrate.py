@@ -24,7 +24,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         "created_at", "started_at", "finished_at"
     )
     readonly_fields = (
-        "migration_stage", "database", 
+        "migration_stage", "database",
         "origin_environment", "environment", "origin_offering",
         "offering", "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule",
