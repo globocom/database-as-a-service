@@ -587,45 +587,17 @@ def make_database_backup(self, database, task):
     return True
 
 
-def new_back(self, instance, error, group):
-    try:
-        current_hour = datetime.now()
-        snapshot = make_instance_snapshot_backup(
-            instance=instance, error=error, group=group,
-            current_hour=current_hour
-        )
-        if snapshot and snapshot.was_successful:
-            msg = "Backup for %s was successful" % (str(instance))
-            LOG.info(msg)
-        elif snapshot and snapshot.was_error:
-            status = TaskHistory.STATUS_ERROR
-            msg = "Backup for %s was unsuccessful. Error: %s" % (
-                str(instance), error['errormsg'])
-            LOG.error(msg)
-        else:
-            status = TaskHistory.STATUS_WARNING
-            msg = "Backup for %s has warning" % (str(instance))
-            LOG.info(msg)
-    except Exception as e:
-        status = TaskHistory.STATUS_ERROR
-        msg = "Backup for %s was unsuccessful. Error: %s" % (
-            str(instance), str(e))
-        LOG.error(msg)
-        return False
-
-    return True
-
 @app.task(bind=True)
-def run_backups():
-    from multiprocessing import Pool
-
+def make_backups_paralel(self):
+    LOG.info('#>' * 40)
     worker_name = get_worker_name()
-
-    nro_threads = 10
-    pool = Pool(nro_threads)
-    work = []
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, user=None
+    )
+    task_history.relevance = TaskHistory.RELEVANCE_ERROR
 
     # part of rotine which reads the database environment to backup
+    status = TaskHistory.STATUS_SUCCESS
     environments = Environment.objects.all()
     prod_envs = Environment.prod_envs()
     dev_envs = Environment.dev_envs()
@@ -633,15 +605,155 @@ def run_backups():
     if not envs:
         envs = [env.name for env in environments]
 
-    for env in envs:
-        pass
+    current_time = datetime.now()
+    current_hour = current_time.hour
 
-    pool.map(new_back, work)
+    # Get all infras with a backup today until the current hour
+    infras_with_backup_today = DatabaseInfra.objects.filter(
+        instances__backup_instance__status=Snapshot.SUCCESS,
+        backup_hour__lt=current_hour,
+        plan__has_persistence=True,
+        instances__backup_instance__end_at__year=current_time.year,
+        instances__backup_instance__end_at__month=current_time.month,
+        instances__backup_instance__end_at__day=current_time.day).distinct()
 
-  
+    # Get all infras with pending backups based on infras_with_backup_today
+    infras_pending_backup = DatabaseInfra.objects.filter(
+        backup_hour__lt=current_hour,
+        plan__has_persistence=True,
+    ).exclude(pk__in=[infra.pk for infra in infras_with_backup_today])
+
+    # Get all infras to backup on the current hour
+    infras_current_hour = DatabaseInfra.objects.filter(
+        plan__has_persistence=True,
+        backup_hour=current_time.hour
+    )
+
+    # Merging pending and current infras to backup list
+    infras = infras_current_hour | infras_pending_backup
+
+    MAX_BATCH = 10
+    c_batch = 0
+    for env_name in envs:
+        try:
+            env = environments.get(name=env_name)
+        except Environment.DoesNotExist:
+            continue
+
+        msg = '\nStarting Backup for env {}'.format(env.name)
+        task_history.update_details(persist=True, details=msg)
+        databaseinfras_by_env = infras.filter(environment=env)
+        error = {}
+        backup_number = 0
+        backups_per_group = len(infras) / 12
+        for infra in databaseinfras_by_env:
+
+            if not infra.databases.first():
+                continue
+
+            group = BackupGroup()
+            group.save()
+
+            instances_backup = infra.instances.filter(
+                read_only=False, is_active=True
+            )
+            for instance in instances_backup:
+                if c_batch == MAX_BATCH:
+                    sleep(5)
+                    c_batch = 0
+                else:
+                    c_batch += 1
+                try:
+                    driver = instance.databaseinfra.get_driver()
+                    is_eligible = driver.check_instance_is_eligible_for_backup(
+                        instance
+                    )
+                    if not is_eligible:
+                        LOG.info(
+                            'Instance {} is not eligible for backup'.format(
+                                instance
+                            )
+                        )
+                        continue
+                except Exception as e:
+                    status = TaskHistory.STATUS_ERROR
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (
+                        str(instance), str(e))
+                    LOG.error(msg)
+
+                time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
+                start_msg = "\n{} - Starting backup for {} ...".format(
+                    time_now, instance
+                )
+                task_history.update_details(persist=True, details=start_msg)
+                try:
+                    pars = instance, error, group
+                    snapshot = make_backup_database.delay(*pars)
+
+                    msg = 'snapshot ok' if snapshot else 'snapshot fail'
+                except Exception as e:
+                    status = TaskHistory.STATUS_ERROR
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (
+                        str(instance), str(e))
+                    LOG.error(msg)
+
+                time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
+                msg = "\n{} - {}".format(time_now, msg)
+                task_history.update_details(persist=True, details=msg)
+    task_history.update_status_for(status, details="\nBackup finished")
+    LOG.info('<#' * 40)
+    return
 
 
+@app.task(bind=True)
+def make_backup_database(self, instance, error, group):
+    LOG.info('>' * 80)
+    LOG.info((instance, error, group))
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, user=None
+    )
 
+    LOG.info("Worker # %s" % (worker_name))
+    LOG.info("Instance # {}".format(instance))
+
+    # task_history.relevance = TaskHistory.RELEVANCE_ERROR
+    c_attempts = 0
+    while c_attempts < 3:
+        try:
+            current_hour = datetime.now()
+            snapshot = make_instance_snapshot_backup(
+                instance=instance, error=error, group=group,
+                current_hour=current_hour
+            )
+            if snapshot and snapshot.was_successful:
+                status = TaskHistory.STATUS_SUCCESS
+                msg = "1 - Backup for %s was successful" % (str(instance))
+                LOG.info(msg)
+            elif snapshot and snapshot.was_error:
+                status = TaskHistory.STATUS_ERROR
+                msg = "2 - Backup for %s was unsuccessful. Error: %s" % (
+                    str(instance), error['errormsg'])
+                LOG.error(msg)
+                if 'HttpError 502' in error['errormsg']:
+                    c_attempts += 1
+                    continue
+            else:
+                status = TaskHistory.STATUS_WARNING
+                msg = "3 - Backup for %s has warning" % (str(instance))
+                LOG.info(msg)
+            break
+        except Exception as e:
+            status = TaskHistory.STATUS_ERROR
+            msg = "4 - Backup for %s was unsuccessful. Error: %s" % (
+                str(instance), str(e))
+            LOG.error(msg)
+            LOG.info('<' * 80)
+            return False
+
+    LOG.info('<' * 80)
+    task_history.update_status_for(status, details="\nBackup finished")
+    return True
 
 
 @app.task(bind=True)
