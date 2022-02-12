@@ -96,7 +96,7 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
     urlpatterns += patterns(
         '',
         url(r'^accounts/login/ldap/$', LDAPLogin.as_view(), name='ldap_login'),
-        url(r'^accounts/login/ldap/$', LDAPLogin2.as_view(), name='ldap_login2'),
+        url(r'^accounts/login/ldap2/$', LDAPLogin2.as_view(), name='ldap_login2'),
         url(r'^accounts/callback/(?P<provider>backstage)/$',
             DBaaSBackstageOAuthCallback.as_view(), name='allaccess-callback'),
         url(r'^accounts/', include('backstage_oauth2.urls')),
