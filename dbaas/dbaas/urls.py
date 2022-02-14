@@ -52,6 +52,7 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
             })
             return user_metadata
 
+    '''
     class LDAPLogin(View):
 
         @staticmethod
@@ -84,19 +85,26 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
                     )
 
             return django_login_view(self.request, **kw)
+    
 
         def post(self, *args, **kw):
             return django_login_view(self.request, **kw)
+    '''
 
-    class LDAPLogin2(LDAPLogin):
-        @staticmethod
-        def can_login(user):
-            return True
+    class LDAPLogin(View):
+
+        def get(self, *args, **kw):
+            user = self.request.user
+            if user.is_authenticated():
+                return HttpResponseRedirect(reverse('admin:index'))
+            return django_login_view(self.request, **kw)
+    
+        def post(self, *args, **kw):
+            return django_login_view(self.request, **kw)
 
     urlpatterns += patterns(
         '',
         url(r'^accounts/login/ldap/$', LDAPLogin.as_view(), name='ldap_login'),
-        url(r'^accounts/login/ldap2/$', LDAPLogin2.as_view(), name='ldap_login2'),
         url(r'^accounts/callback/(?P<provider>backstage)/$',
             DBaaSBackstageOAuthCallback.as_view(), name='allaccess-callback'),
         url(r'^accounts/', include('backstage_oauth2.urls')),
