@@ -773,5 +773,4 @@ def remove_database_backup(self, task, snapshot):
     else:
         task.set_status_success('Backup deleted with success')
 
-
     return True
