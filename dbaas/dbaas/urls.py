@@ -80,7 +80,6 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
                     )
 
             return django_login_view(self.request, **kw)
-    
 
         def post(self, *args, **kw):
             return django_login_view(self.request, **kw)
