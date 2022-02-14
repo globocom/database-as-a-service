@@ -45,6 +45,13 @@ def zabbix_collect_used_disk(task):
             database_resized = False
             task.add_detail(message="Database: {}".format(database.name), level=1)
 
+            if database.is_locked:
+                message = ("Skip updating disk used size for database {}. "
+                           "It is used by another task."
+                ).format(database)
+                task.add_detail(message, level=2)
+                continue
+                
             zabbix_provider = factory_for(
                 databaseinfra=database.databaseinfra, credentials=credentials
             )

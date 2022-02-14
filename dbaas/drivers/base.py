@@ -152,7 +152,7 @@ class BaseDriver(object):
                 )
                 instance.total_size_in_bytes = (
                     self.get_total_size_from_instance(instance))
-                instance.save()
+                instance.save(update_fields=['used_size_in_bytes', 'total_size_in_bytes'])
                 updated_instances.append("{} - OK\n".format(instance.dns))
             else:
                 updated_instances.append("{} - ERROR\n".format(instance.dns))

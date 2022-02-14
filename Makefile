@@ -138,6 +138,9 @@ dev_docker_migrate:
 dev_docker_mysql_shell:
 	@cd dev && docker-compose exec dev_mysqldb57 bash -c "mysql dbaas -u root -p123"
 
+dev_docker_redis_shell:
+	@cd dev && docker-compose exec dev_redisdb bash -c "redis-cli"
+
 dev_docker_run:
 	@cd dev && docker-compose up
 
