@@ -348,11 +348,15 @@ class BaseTopology(object):
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
+                ) + self.get_reinstallvm_ssl_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
+
+    def get_reinstallvm_ssl_steps(self):
+        return ()
 
     def get_reinstallvm_steps_final(self):
         return [{
@@ -426,10 +430,9 @@ class BaseTopology(object):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.Initialization',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',

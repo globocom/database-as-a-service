@@ -56,13 +56,9 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
 
         @staticmethod
         def can_login(user):
-            from account.models import Role
-
-            role_dba = Role.objects.get(name='role_dba')
-
-            dba_groups = role_dba.team_set.values_list('id', flat=True)
-            return (user.is_superuser or
-                    user.team_set.filter(id__in=dba_groups))
+            if user.is_staff and user.is_active:
+                return True
+            return False 
 
         def get(self, *args, **kw):
             user = self.request.user
