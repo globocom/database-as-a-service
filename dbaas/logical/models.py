@@ -330,6 +330,13 @@ class Database(BaseModel):
         if lock:
             return lock.task
 
+    @property
+    def is_locked(self):
+        lock = self.lock.first()
+        if lock:
+            return True
+        return False
+
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
             LOG.warning(
@@ -826,7 +833,7 @@ class Database(BaseModel):
             volume.total_size_kb = total_size_kb
 
         volume.used_size_kb = used_size_kb
-        volume.save()
+        volume.save(update_fields=['total_size_kb','used_size_kb'])
         return volume
 
     def can_be_cloned(self, database_view_button=False):
