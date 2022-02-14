@@ -52,6 +52,7 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
             })
             return user_metadata
 
+    '''
     class LDAPLogin(View):
 
         @staticmethod
@@ -84,7 +85,20 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
                     )
 
             return django_login_view(self.request, **kw)
+    
 
+        def post(self, *args, **kw):
+            return django_login_view(self.request, **kw)
+    '''
+
+    class LDAPLogin(View):
+
+        def get(self, *args, **kw):
+            user = self.request.user
+            if user.is_authenticated():
+                return HttpResponseRedirect(reverse('admin:index'))
+            return django_login_view(self.request, **kw)
+    
         def post(self, *args, **kw):
             return django_login_view(self.request, **kw)
 
