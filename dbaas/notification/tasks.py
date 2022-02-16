@@ -439,6 +439,14 @@ def update_database_status(self):
         databases = Database.objects.all()
         msgs = []
         for database in databases:
+            if database.is_locked:
+                msg = ("\nSkip updating database status for {}. "
+                       "Database is locked by another task."
+                ).format(database)
+                msgs.append(msg)
+                LOG.info(msg)
+                continue
+
             if database.database_status and database.database_status.is_alive:
                 database.status = Database.ALIVE
 
@@ -486,7 +494,14 @@ def check_databases_status(self, wait=60):
     )
     try:
         for database in databases:
-            check_database_is_alive.delay(database, wait=wait)
+            if database.is_locked:
+                msg = ("Skip checking if {} is alive. "
+                    "Database is locked by another task."
+                ).format(database)
+                LOG.info(msg)
+                continue
+            else:
+                check_database_is_alive.delay(database, wait=wait)
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details="All databases were checked."
         )
@@ -497,6 +512,12 @@ def check_databases_status(self, wait=60):
 
 @app.task(bind=True)
 def check_database_is_alive(self, database, wait=60, retries=3):
+    if database.is_locked:
+        msg = ("Skip checking if {} is alive. "
+               "Database is locked by another task."
+        ).format(database)
+        LOG.info(msg)
+        return
     LOG.info("Checking {} status".format(database))
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -580,9 +601,14 @@ def update_infra_instances_sizes(self):
         databases = Database.objects.all()
         msgs = []
         for database in databases:
-            updated_instances = database.driver.update_infra_instances_sizes()
-            msg = ("\nUpdating used size in bytes for database: {}:\n\n"
-                   "{}").format(database, "".join(updated_instances))
+            if database.is_locked:
+                msg = ("\nSkip updating used size in bytes for database {}. "
+                    "It is locked by another task").format(database)
+            else:
+                driver = database.driver
+                updated_instances = driver.update_infra_instances_sizes()
+                msg = ("\nUpdating used size in bytes for database: {}:\n\n"
+                    "{}").format(database, "".join(updated_instances))
             msgs.append(msg)
             LOG.info(msg)
 
@@ -610,15 +636,22 @@ def update_instances_status(self):
         infras = DatabaseInfra.objects.all()
         msgs = []
         for databaseinfra in infras:
-            LOG.info("Retrieving all instances for {}".format(databaseinfra))
+            database = databaseinfra.databases.first()
+            if database and database.is_locked:
+                msg = ("\nSkip updating instance status for {}. "
+                       "Database is locked by another task."
+                ).format(databaseinfra)
+                msgs.append(msg)
+                LOG.info(msg)
+                continue
 
+            LOG.info("Retrieving all instances for {}".format(databaseinfra))
             for instance in Instance.objects.filter(
                     databaseinfra=databaseinfra):
                 instance.update_status()
 
                 msg = ("\nUpdating instance status, instance: {}, "
-                       "status: {}").format(
-                    instance, instance.status)
+                       "status: {}").format(instance, instance.status)
                 msgs.append(msg)
                 LOG.info(msg)
 
