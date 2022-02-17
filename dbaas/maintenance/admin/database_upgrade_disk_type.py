@@ -11,7 +11,7 @@ from ..models import DatabaseUpgradeDiskType
 from notification.tasks import TaskRegister
 
 
-class DatabaseRestoreAdmin(DatabaseMaintenanceTaskAdmin):
+class DatabaseUpgradeDiskTypeAdmin(DatabaseMaintenanceTaskAdmin):
     search_fields = (
         "database__name", "database__databaseinfra__name", "task__id",
         "task__task_id", "disk_offering_type", "origin_disk_offering_type"
@@ -23,7 +23,7 @@ class DatabaseRestoreAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "current_step_class", "database", "task", "group", "new_group",
+        "current_step_class", "database", "task",
         "started_at", "link_task", "finished_at", "status",
         "maintenance_action", "task_schedule"
     )
@@ -43,7 +43,7 @@ class DatabaseRestoreAdmin(DatabaseMaintenanceTaskAdmin):
         return format_html(html)
 
     def get_urls(self):
-        base = super(DatabaseRestoreAdmin, self).get_urls()
+        base = super(DatabaseUpgradeDiskTypeAdmin, self).get_urls()
 
         admin = patterns(
             '',
