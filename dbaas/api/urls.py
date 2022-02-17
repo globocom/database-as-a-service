@@ -34,6 +34,8 @@ from .restart_database import RestartDatabaseAPI
 from .databaase_migrate_engine import DatabaseMigrateEngineAPI
 from .remove_readonly import RemoveInstanceDatabaseAPI
 from .pool import PoolAPI
+from .database_list import DatabaseListAPI
+from .team_list import TeamListAPI
 
 
 router = DefaultRouter()
@@ -70,6 +72,9 @@ router.register(r'database_destroy', DatabaseDestroyAPI)
 router.register(r'update_ssl', UpdateSslAPI)
 router.register(r'restart_database', RestartDatabaseAPI)
 router.register(r'database_migrate_engine', DatabaseMigrateEngineAPI)
+router.register(r'database_list', DatabaseListAPI)
+router.register(r'team_list', TeamListAPI)
+
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
