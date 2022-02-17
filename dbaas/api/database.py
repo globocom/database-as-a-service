@@ -143,7 +143,10 @@ class DatabaseAPI(viewsets.ModelViewSet):
         params = self.request.GET.dict()
         from_teams = Team.objects.filter(users=self.request.user)
         valid_params = {}
-        queryset = queryset.filter(team__in=from_teams)
+        if not self.request.user.is_superuser or\
+           not self.request.user.is_staff:
+            queryset = queryset.filter(team__in=from_teams)
+
         for field in params.keys():
             if field.split('__')[0] in self.filter_fields:
                 valid_params[field] = params[field]
