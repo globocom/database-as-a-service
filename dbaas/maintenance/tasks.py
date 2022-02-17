@@ -234,7 +234,7 @@ def upgrade_disk_type_database(self, database, new_disk_type_upgrade, task, user
         worker_name=get_worker_name()
     )
 
-    from tasks_upgrade_type_disk import task_upgrade_disk_type
+    from task_upgrade_type_disk import task_upgrade_disk_type
     task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from)
 
 

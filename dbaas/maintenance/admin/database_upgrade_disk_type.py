@@ -48,7 +48,7 @@ class DatabaseUpgradeDiskTypeAdmin(DatabaseMaintenanceTaskAdmin):
         admin = patterns(
             '',
             url(
-                r'^/?(?P<upgrade_type_disk_type_id>\d+)/retry/$',
+                r'^/?(?P<upgrade_disk_type_id>\d+)/retry/$',
                 self.admin_site.admin_view(self.retry_view),
                 name="upgrade_disk_type_database_retry"
             ),
@@ -84,7 +84,7 @@ class DatabaseUpgradeDiskTypeAdmin(DatabaseMaintenanceTaskAdmin):
 
         TaskRegister.upgrade_disk_type(
             database=retry_from.database,
-            disk_offering_type=retry_from.disk_offering_type,
+            new_disk_type_upgrade=retry_from.disk_offering_type.id,
             user=request.user,
             retry_from=retry_from
         )

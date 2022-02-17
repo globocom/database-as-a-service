@@ -1880,6 +1880,14 @@ class TakeSnapshotUpgradeDiskType(VolumeProviderBase):
         return self.is_database_instance
 
     @property
+    def provider_class(self):
+        return VolumeProviderBase
+
+    @property
+    def target_volume(self):
+        return self.volume
+
+    @property
     def group(self):
         from backup.models import BackupGroup
         group = BackupGroup()
@@ -1923,8 +1931,8 @@ class TakeSnapshotUpgradeDiskType(VolumeProviderBase):
                 error = '{} Error: {}'.format(error, snapshot.error)
                 raise VolumeProviderSnapshotHasErrorStatus(error)
 
-        self.step_manager.snapshot = snapshot
-        self.step_manager.save()
+        # self.step_manager.snapshot = snapshot
+        # self.step_manager.save()
 
         self.upgrade_disk_type.set_instance_snapshot_dict(self.instance, snapshot)
 
@@ -2073,11 +2081,15 @@ class DestroyOldVolume(VolumeProviderBase):
     def __unicode__(self):
         return "Remove old volumes..."
 
+    @property
+    def first_inactive_disk(self):
+        return self.first_disk if not self.first_disk.is_active else None
+
     def do(self):
-        if not self.is_valid:
+        if not self.is_valid and self.first_inactive_disk:
             return
 
-        self.destroy_volume(self.first_disk)
+        self.destroy_volume(self.first_inactive_disk)
 
     def undo(self):
         raise NotImplementedError
