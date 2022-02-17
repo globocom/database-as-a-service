@@ -611,6 +611,21 @@ class Database(BaseModel):
         )
 
     @classmethod
+    def upgrade_disk_type(cls, database, disk_offering_type, user):
+        from notification.tasks import TaskRegister
+
+        LOG.info(
+            ("Changing database volume with params: "
+             "database {}, new_disk_type: {}, user: {}").format(
+                database, disk_offering_type, user
+            )
+        )
+        TaskRegister.upgrade_disk_type(
+            database=database, new_disk_type_upgrade=disk_offering_type, user=user
+        )
+
+
+    @classmethod
     def resize(cls, database, offering, user):
         from notification.tasks import TaskRegister
 
@@ -858,6 +873,19 @@ class Database(BaseModel):
 
         if self.status != self.ALIVE or self.is_dead:
             return False, "Database is not alive and cannot be restored"
+
+        if self.is_being_used_elsewhere():
+            return False, ("Database is being used by another task, please "
+                           "check your tasks")
+
+        return True, None
+
+    def can_be_disk_type_upgraded(self):
+        if self.is_in_quarantine:
+            return False, "Database in quarantine cannot be upgraded"
+
+        if self.status != self.ALIVE or self.is_dead:
+            return False, "Database is not alive and cannot be upgraded"
 
         if self.is_being_used_elsewhere():
             return False, ("Database is being used by another task, please "

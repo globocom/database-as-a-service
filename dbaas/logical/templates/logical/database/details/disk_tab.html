@@ -1,0 +1,136 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .resize_button {
+        margin-left: 20px
+    }
+
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <div class="control-label"><label>Disk offering:</label></div>
+    <div class="controls">
+      <select id="id_disk_offering" name="disk_offering">
+        {% for disk_offering in disk_offerings %}
+          <option value="{{disk_offering.id}}"
+            {% if disk_offering == database.infra.disk_offering %}
+              selected="selected">*
+            {% else %}
+              >
+            {% endif %}
+            {{disk_offering}}
+          </option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>
+      </label>
+      <p class="help-block">When marked, the disk will be resized automatically.</p>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Disk offering type:</label></div>
+    <div class="controls">
+      <select id="id_disk_offering_type" name="disk_offering_type">
+        {% for disk_offering_type in disk_offerings_types %}
+          <option value="{{disk_offering_type.id}}"
+            {% if disk_offering_type == database.infra.disk_offering_type %}
+              selected="selected">*
+            {% else %}
+              >
+            {% endif %}
+            {{disk_offering_type}}
+          </option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" id="disk_offering_type_btn" data-target="#upgrade_disk_type">Upgrade Disk Type</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Help:</label></div>
+    <div class="controls">
+      <p class="readonly help-block">Offering with "*" is the current offering</p>
+    </div>
+  </div>
+</fieldset>
+
+{% include "admin/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="upgrade_disk_type" confirmation_message="Are you sure you want to upgrade the disk type?" box_title="Upgrading the disk type" button_type="submit" button_value="Upgrade Disk Type" button_name="upgrade_disk_type" id_optional="id=id_upgrade_disk_type_btn_modal" %}
+
+
+{% endblock %}
+
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  function status_resize(btn_id, current_value, selected_value) {
+    btn = document.getElementById(btn_id)
+    btn.disabled = current_value == selected_value
+    if (btn.disabled){
+      btn.className = 'resize_button btn';
+    } else {
+      btn.className = 'resize_button btn btn-primary';
+    }
+  }
+
+  function status_upgrade(btn_id, current_value, selected_value) {
+    btn = document.getElementById(btn_id)
+    if (current_value == selected_value){
+      btn.style.display = "none";
+    } else {
+      btn.style.display = "inline";
+    }
+    btn.disabled = current_value == selected_value
+    if (btn.disabled){
+      btn.className = 'resize_button btn';
+    } else {
+      btn.className = 'resize_button btn btn-primary';
+    }
+  }
+
+  jQuery(document).ready(function($) {
+    var currentForm;
+
+    $("#id_disk_offering").on("change", function() {
+      status_resize("disk_resize_btn", {{ database.infra.disk_offering.id }}, $(this).val())
+    });
+    $("#id_disk_offering").change()
+
+
+    $("#id_disk_offering_type").on("change", function() {
+      status_upgrade("disk_offering_type_btn", {{ database.infra.disk_offering_type.id }}, $(this).val())
+    });
+    $("#id_disk_offering_type").change()
+
+    $("#disk_resize_btn").click(function() {
+      var $new_disk_size = $("#id_disk_offering").find(":selected").text().trim()
+      $("#resize_disk .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering.name  }}> to <' + $new_disk_size + '>?')
+    });
+
+    $("#disk_offering_type_btn").click(function() {
+      var $new_disk_type = $("#id_disk_offering_type").find(":selected").text().trim()
+      $("#upgrade_disk_type .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering_type.name  }}> to <' + $new_disk_type + '>?')
+    });
+
+  })
+</script>
+
+{% endblock %}

@@ -355,6 +355,10 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
+        }, {
+            'Destroy Old Volumes': (
+                'workflow.steps.util.volume_provider.DestroyOldVolume',
+            )
         }]
 
     def get_filer_migrate_steps(self):

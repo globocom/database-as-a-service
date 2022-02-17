@@ -42,7 +42,7 @@ from logical.views import database_details, DatabaseHostsView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
     RemoveInstanceDatabaseRetryView, database_history, \
     database_set_ssl_required, database_set_ssl_required_retry, \
-    database_set_ssl_not_required, database_set_ssl_not_required_retry
+    database_set_ssl_not_required, database_set_ssl_not_required_retry, database_upgrades
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -695,6 +695,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/resizes/$',
                 self.admin_site.admin_view(database_resizes),
                 name="logical_database_resizes"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/upgrade_disk/$',
+                self.admin_site.admin_view(database_upgrades),
+                name="logical_database_upgrade_disk"
             ),
             url(
                 r'^/?(?P<id>\d+)/maintenance/$',

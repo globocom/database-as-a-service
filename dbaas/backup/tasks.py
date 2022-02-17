@@ -189,6 +189,98 @@ def make_instance_snapshot_backup(instance, error, group,
     return snapshot
 
 
+def make_instance_snapshot_backup_upgrade_disk(instance, error, group, provider_class=VolumeProviderSnapshot,
+                                               target_volume=None,
+                                               current_hour=None):
+    LOG.info("Make instance backup for {}".format(instance))
+    provider = provider_class(instance)
+    infra = instance.databaseinfra
+    database = infra.databases.first()
+
+    snapshot = Snapshot.create(
+        instance, group,
+        target_volume or provider.volume,
+        environment=provider.environment
+    )
+
+    snapshot_final_status = Snapshot.SUCCESS
+    try:
+        current_time = datetime.now()
+        has_snapshot = Snapshot.objects.filter(
+            status=Snapshot.WARNING,
+            instance=instance,
+            end_at__year=current_time.year,
+            end_at__month=current_time.month,
+            end_at__day=current_time.day
+        )
+        backup_hour_list = Configuration.get_by_name_as_list(
+            'make_database_backup_hour'
+            )
+        if (snapshot_final_status == Snapshot.WARNING and has_snapshot):
+            if str(current_hour) in backup_hour_list:
+                raise Exception(
+                    "Backup with WARNING already created today."
+                    )
+        else:
+            response = provider.take_snapshot()
+            snapshot.done(response)
+            snapshot.save()
+    except Exception as e:
+        errormsg = "Error creating snapshot: {}".format(e)
+        error['errormsg'] = errormsg
+        set_backup_error(infra, snapshot, errormsg)
+        return snapshot
+    finally:
+        pass
+
+    if not snapshot.size:
+        command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
+            snapshot.snapshot_name
+        )
+        try:
+            output = instance.hostname.ssh.run_script(command)
+            size = int(output['stdout'][0])
+            snapshot.size = size
+        except Exception as e:
+            snapshot.size = 0
+            LOG.error("Error exec remote command {}".format(e))
+
+    backup_path = database.backup_path
+    if backup_path:
+        now = datetime.now()
+        target_path = "{}/{}/{}/{}/{}".format(
+            backup_path,
+            now.strftime("%Y_%m_%d"),
+            instance.hostname.hostname.split('.')[0],
+            now.strftime("%Y%m%d%H%M%S"),
+            infra.name
+        )
+        snapshot_path = "/data/.snapshot/{}/data/".format(
+            snapshot.snapshot_name
+        )
+        command = """
+        if [ -d "{backup_path}" ]
+        then
+            rm -rf {backup_path}/20[0-9][0-9]_[0-1][0-9]_[0-3][0-9] &
+            mkdir -p {target_path}
+            cp -r {snapshot_path} {target_path} &
+        fi
+        """.format(backup_path=backup_path,
+                   target_path=target_path,
+                   snapshot_path=snapshot_path)
+        try:
+            instance.hostname.ssh.run_script(command)
+        except Exception as e:
+            LOG.error("Error exec remote command {}".format(e))
+
+    snapshot.status = snapshot_final_status
+    snapshot.end_at = datetime.now()
+    snapshot.save()
+    register_backup_dbmonitor(infra, snapshot)
+
+    return snapshot
+
+
 @app.task(bind=True)
 @only_one(key="updatesslkey")
 def update_ssl(self):

@@ -8,8 +8,8 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-      - /etc/ssl/certs:/etc/ssl/certsg
-    command: /code/dev/run.sh
+      - ./etc/ssl/certsg:/etc/ssl/certsg
+    command: bash -c "cd /code && touch /code/dev/log && make run"
     ports:
       - "8000:8000"
     depends_on:
@@ -27,15 +27,15 @@ services:
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
-    networks: 
+    networks:
       - gntw
   app_celery:
     image: dbaas_dev
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-      - /etc/ssl/certs:/etc/ssl/certsg
-    command: /code/dev/run_celery.sh
+      - ./etc/ssl/certsg:/etc/ssl/certsg
+    command: bash -c "cd /code && make run_celery"
     depends_on:
         - dev_mysqldb57
         - dev_mongodb
@@ -52,17 +52,17 @@ services:
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
-    networks: 
+    networks:
       - gntw
   dev_redisdb:
         image: redis:3.2
         container_name: dev_redis32
-        networks: 
+        networks:
             - gntw
   dev_mongodb:
         image: mongo:3.4
         container_name: dev_mongo34
-        networks: 
+        networks:
           - gntw
   dev_mysqldb57:
         platform: linux/x86_64
@@ -75,6 +75,5 @@ services:
             - MYSQL_USER=rute
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
-        networks: 
+        networks:
             - gntw
-    

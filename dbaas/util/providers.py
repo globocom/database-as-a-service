@@ -31,6 +31,10 @@ def get_restore_snapshot_settings(class_path):
     return get_replication_topology_instance(class_path).get_restore_snapshot_steps()
 
 
+def get_upgrade_disk_type_settings(class_path):
+    return get_replication_topology_instance(class_path).get_upgrade_disk_type_steps()
+
+
 def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 

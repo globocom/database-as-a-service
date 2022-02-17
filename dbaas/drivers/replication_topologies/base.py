@@ -62,6 +62,32 @@ class BaseTopology(object):
             'workflow.steps.util.zabbix.EnableAlarms',
         )}]
 
+    def get_upgrade_disk_type_steps(self):
+        return [{
+            'Upgrading disk type database': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.TakeSnapshotUpgradeDiskType',
+                'workflow.steps.util.volume_provider.CreateVolumeDiskTypeUpgrade',
+                'workflow.steps.util.volume_provider.AddAccessUpgradedDiskTypeVolume',
+                'workflow.steps.util.volume_provider.UnmountActiveVolumeUpgradeDiskType',
+                'workflow.steps.util.volume_provider.AttachDataVolumeUpgradeDiskType',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.volume_provider.UpdateActiveDiskTypeUpgrade',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.volume_provider.DestroyOldVolume',
+            )}]
+
     def get_restore_snapshot_steps(self):
         raise NotImplementedError
 

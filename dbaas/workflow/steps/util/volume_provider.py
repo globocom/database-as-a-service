@@ -520,6 +520,47 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
         return self.infra.environment
 
 
+class CreateVolumeDiskTypeUpgrade(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Creating Volume"
+
+    def _remove_volume(self, volume):
+        self.destroy_volume(volume)
+
+    @property
+    def snapshot(self):
+        if self.upgrade_disk_type:
+            return self.upgrade_disk_type.get_instance_snapshot_dict().get(self.instance.id)
+        else:
+            return None
+
+    @property
+    def is_valid(self):
+        if self.instance.is_database and self.snapshot and self.upgrade_disk_type:
+            return True
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.create_volume(
+            self.infra.name,
+            self.disk_offering.size_kb,
+            self.host.address,
+            snapshot_id=self.snapshot,
+            is_active=False,
+            zone=self.host_vm.zone,
+            vm_name=self.host_vm.name,
+            disk_offering_type=self.upgrade_disk_type.disk_offering_type.type
+        )
+
+    def undo(self):
+        if not self.instance.is_database or not self.host:
+            return
+
+        self._remove_volume(self.latest_disk)
+
 
 class NewVolume(VolumeProviderBase):
 
@@ -744,6 +785,27 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class MountDataVolumeUpgradeDiskType(MountDataVolume):
+
+    def __unicode__(self):
+        return "Mounting {} volume...".format(self.directory)
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        script = self.get_mount_command(self.latest_disk)
+        self.host.ssh.run_script(script)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        script = self.get_umount_command(self.latest_disk)
+        if script:
+            self.host.ssh.run_script(script)
 
 
 class MountDataNewVolume(MountDataVolume):
@@ -1403,6 +1465,28 @@ class UnmountActiveVolume(VolumeProviderBase):
         pass
 
 
+class UnmountActiveVolumeUpgradeDiskType(UnmountActiveVolume):
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        script = self.get_umount_command(self.volume)
+        if script:
+            self.host.ssh.run_script(script)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        script = self.get_mount_command(self.volume)
+        if script:
+            self.host.ssh.run_script(script)
+
+
 class UnmountDataVolume(UnmountActiveVolume):
     @property
     def is_valid(self):
@@ -1477,7 +1561,6 @@ class RestoreSnapshot(VolumeProviderBase):
         snapshot = self.snapshot
         if not snapshot:
             return
-
         response = self.restore_snapshot(
             snapshot,
             self.vm_name,
@@ -1527,6 +1610,20 @@ class AddAccess(VolumeProviderBase):
         if not self.is_valid:
             return
         self.add_access(self.volume, self.host)
+
+
+class AddAccessUpgradedDiskTypeVolume(AddAccess):
+    @property
+    def disk_time(self):
+        return "restored"
+
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    @property
+    def volume(self):
+        return self.latest_disk
 
 
 class AddAccessRestoredVolume(AddAccess):
@@ -1774,6 +1871,72 @@ class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
         ).first().hostname
 
 
+class TakeSnapshotUpgradeDiskType(VolumeProviderBase):
+    def __unicode__(self):
+        return "Doing backup of old data to upgrade disk..."
+
+    @property
+    def is_valid(self):
+        return self.is_database_instance
+
+    @property
+    def group(self):
+        from backup.models import BackupGroup
+        group = BackupGroup()
+        group.save()
+        return group
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        from backup.tasks import make_instance_snapshot_backup_upgrade_disk
+        from backup.models import BackupGroup
+
+        group = BackupGroup()
+        group.save()
+        snapshot = make_instance_snapshot_backup_upgrade_disk(
+            self.instance,
+            {},
+            group,
+            provider_class=self.provider_class,
+            target_volume=self.target_volume
+        )
+
+        if not snapshot:
+            raise VolumeProviderSnapshotNotFoundError(
+                'Backup was unsuccessful in {}'.format(
+                    self.instance)
+            )
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+
+        if snapshot.was_error:
+            error = 'Backup was unsuccessful.'
+            if snapshot.error:
+                error = '{} Error: {}'.format(error, snapshot.error)
+                raise VolumeProviderSnapshotHasErrorStatus(error)
+
+        self.step_manager.snapshot = snapshot
+        self.step_manager.save()
+
+        self.upgrade_disk_type.set_instance_snapshot_dict(self.instance, snapshot)
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+
+    def undo(self):
+        pass
+
+
 class TakeSnapshot(VolumeProviderBase):
     def __unicode__(self):
         return "Doing backup of old data..."
@@ -1875,6 +2038,51 @@ class UpdateActiveDisk(VolumeProviderBase):
         pass
 
 
+class UpdateActiveDiskTypeUpgrade(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Updating meta data..."
+
+    def do(self):
+        if not self.instance.is_database:
+            return
+
+        old_disk = self.first_disk
+        new_disk = self.latest_disk
+        if old_disk != new_disk:
+            old_disk.is_active = False
+            new_disk.is_active = True
+            old_disk.save()
+            new_disk.save()
+
+    def undo(self):
+        if not self.instance.is_database:
+            return
+
+        old_disk = self.latest_disk
+        new_disk = self.first_disk
+        if old_disk != new_disk:
+            old_disk.is_active = False
+            new_disk.is_active = True
+            old_disk.save()
+            new_disk.save()
+
+
+class DestroyOldVolume(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Remove old volumes..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.destroy_volume(self.first_disk)
+
+    def undo(self):
+        raise NotImplementedError
+
+
 class DestroyOldEnvironment(VolumeProviderBase):
 
     def __unicode__(self):
@@ -1919,6 +2127,7 @@ class DestroyOldEnvironment(VolumeProviderBase):
 
     def undo(self):
         raise NotImplementedError
+
 
 class DetachDataVolume(VolumeProviderBase):
     def __unicode__(self):
@@ -2054,6 +2263,26 @@ class AttachDataVolume(VolumeProviderBase):
         if not self.is_valid:
             return
         self.detach_disk(self.volume)
+
+
+class AttachDataVolumeUpgradeDiskType(VolumeProviderBase):
+    def __unicode__(self):
+        return "Attach disk in VM..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.attach_disk(self.latest_disk)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        self.detach_disk(self.latest_disk)
 
 
 class AttachDataVolumeWithUndo(AttachDataVolume):
