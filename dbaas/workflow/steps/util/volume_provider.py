@@ -2168,25 +2168,6 @@ class DetachDataVolume(VolumeProviderBase):
             AttachDataVolume(self.instance).do()
 
 
-class DetachDataVolumeUpgradeDiskType(VolumeProviderBase):
-    def __unicode__(self):
-        return "Detaching disk from VM..."
-
-    @property
-    def is_valid(self):
-        return self.instance.is_database
-
-    def do(self):
-        from physical.models import Volume
-        volume = Volume.objects.get(identifier=8748570187245653676)
-        if not self.is_valid:
-            return
-        self.detach_disk(volume)
-
-    def undo(self):
-        pass
-
-
 class DetachActiveVolume(DetachDataVolume):
 
     def __unicode__(self):
