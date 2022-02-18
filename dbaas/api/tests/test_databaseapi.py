@@ -30,6 +30,12 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.project = ProjectFactory()
         self.environment = self.datainfra.environment
 
+    def test_get(self):
+        pass
+
+    def test_get_returns_a_list_of_all_objecs_with_pagination(self):
+        pass
+
     def model_new(self):
         return factory.DatabaseFactory.build(
             databaseinfra=self.datainfra, team=self.team, project=self.project,
