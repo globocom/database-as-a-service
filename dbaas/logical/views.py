@@ -1126,6 +1126,10 @@ def database_resizes(request, context, database):
 
 @database_view('upgrade_disk')
 def database_upgrades(request, context, database):
+    # from workflow.steps.util.volume_provider import DetachDataVolumeUpgradeDiskType
+    # instance = database.infra.instances.all()[0]
+    # DetachDataVolumeUpgradeDiskType(instance).do()
+
     if request.method == 'POST':
         print(request.POST)
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):

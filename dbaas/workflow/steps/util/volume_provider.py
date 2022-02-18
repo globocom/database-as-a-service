@@ -165,6 +165,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None, disk_offering_type=None):
+        print('entrouu na funcao de criar o disco!!!!')
         url = self.base_uri + "volume/new"
 
         data = {
@@ -523,7 +524,7 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
 class CreateVolumeDiskTypeUpgrade(VolumeProviderBase):
 
     def __unicode__(self):
-        return "Creating Volume"
+        return "Creating Volume..."
 
     def _remove_volume(self, volume):
         self.destroy_volume(volume)
@@ -539,11 +540,14 @@ class CreateVolumeDiskTypeUpgrade(VolumeProviderBase):
     def is_valid(self):
         if self.instance.is_database and self.snapshot and self.upgrade_disk_type:
             return True
+        else:
+            return False
 
     def do(self):
+        print('akiiiiiiiiiiiiiiiiiiiiii create disk')
         if not self.is_valid:
             return
-
+        print('akiiiiiiiiiiiiiiiiiiiiii create disk passou')
         self.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
@@ -2162,6 +2166,25 @@ class DetachDataVolume(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
+
+
+class DetachDataVolumeUpgradeDiskType(VolumeProviderBase):
+    def __unicode__(self):
+        return "Detaching disk from VM..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        from physical.models import Volume
+        volume = Volume.objects.get(identifier=8748570187245653676)
+        if not self.is_valid:
+            return
+        self.detach_disk(volume)
+
+    def undo(self):
+        pass
 
 
 class DetachActiveVolume(DetachDataVolume):
