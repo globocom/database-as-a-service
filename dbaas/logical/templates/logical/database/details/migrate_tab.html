@@ -37,11 +37,13 @@
         <select id="migrate_environment" class="environments" name="migrate_environment">
         {% if current_stage == 1 %}
           {% for env in environments %}
-              {% if env == current_environment %}
-                <option value="{{env.id}}" selected="selected">---------</option>
-              {% else %}
-                {% if env.provisioner != current_environment.provisioner %}
-                <option value="{{env.id}}">{{env}}</option>
+              {% if not env.hide_migration %}
+                {% if env == current_environment %}
+                  <option value="{{env.id}}" selected="selected">---------</option>
+                {% else %}
+                  {% if env.provisioner != current_environment.provisioner %}
+                  <option value="{{env.id}}">{{env}}</option>
+                  {% endif %}
                 {% endif %}
               {% endif %}
           {% endfor %}

@@ -110,6 +110,13 @@ class Environment(BaseModel):
             "Check this option if this environment can be deployed by tsuru")
     )
 
+    hide_migration = models.BooleanField(
+        verbose_name="Hide in migration",
+        default=False,
+        help_text=(
+            "Hide this environment in database migration")
+    )
+
     def __unicode__(self):
         return '%s' % (self.name)
 
