@@ -263,6 +263,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Creating Database': (
@@ -286,7 +287,7 @@ class MongoDBSingle(BaseMongoDB):
     def get_host_migrate_steps(self):
         return [{
             'Creating virtual machine': (
-                ('workflow.steps.util.host_provider.CreateVirtualMachineMigrate'),
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
@@ -373,9 +374,11 @@ class MongoDBSingle(BaseMongoDB):
                 ('workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate'),
             )}, {
             'Cleaning up': (
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
-                ('workflow.steps.util.host_provider.DestroyVirtualMachineMigrate'),
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )}]
 
     def get_clone_steps(self):
@@ -426,6 +429,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Creating Database': (
@@ -623,6 +627,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.database.StartCheckOnlyOsProcess',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.database.StartRsyslog',
         )
 
     def get_resize_oplog_steps(self):
@@ -713,6 +718,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Check Database': (
                 'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
@@ -784,6 +790,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Check Database': (
                 'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
@@ -909,7 +916,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
             )}, {
             'Creating virtual machine': (
-                ('workflow.steps.util.host_provider.CreateVirtualMachineMigrate'),
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',
@@ -1005,9 +1012,11 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
                 'workflow.steps.util.disk.CleanDataNonDatabaseInstanceRollback',
                 'workflow.steps.util.database.StopNonDatabaseInstanceRollback',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
-                ('workflow.steps.util.host_provider.DestroyVirtualMachineMigrate'),
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )}]
 
     def get_database_migrate_steps(self):
@@ -1158,6 +1167,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetWithouUndo',
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
             )}, {
             'Removing Disks': (
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
