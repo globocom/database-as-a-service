@@ -18,9 +18,14 @@ delete from maintenance_databasecreate;
 delete from logical_credential;
 delete from logical_database;
 delete from backup_snapshot;
+delete from physical_ip;
+delete from physical_vipinstancegroup;
+delete from physical_vip;
 delete from physical_instance;
 delete from physical_volume;
 delete from physical_host;
+delete from physical_databaseinfraparameter;
+delete from dbaas_dnsapi_databaseinfradnslist;
 delete from physical_databaseinfra;" | docker-compose exec -T dev_mysqldb57 mysql -u root -p123 dbaas
 
 docker-compose down 
