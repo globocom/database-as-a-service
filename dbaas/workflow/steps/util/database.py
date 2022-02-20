@@ -269,7 +269,7 @@ class StopRsyslogIfRunning(StopRsyslog):
     @property
     def is_valid(self):
         if self.vm_is_up():
-            return super(StopIfRunningAndVMUp, self).is_valid
+            return super(StopRsyslogIfRunning, self).is_valid
         return False
 
 
