@@ -6,7 +6,6 @@ from physical.models import DiskOfferingType
 
 def task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from=None):
     try:
-        print(new_disk_type_upgrade)
         upgrade_disk_type = DatabaseUpgradeDiskType()
         upgrade_disk_type.task = task
         upgrade_disk_type.database = database
@@ -20,6 +19,9 @@ def task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from=Non
         if steps_for_instances(
                 steps, upgrade_disk_type.instances, task, upgrade_disk_type.update_step, since_step=since_step
         ):
+            infra = database.infra
+            infra.disk_offering_type = upgrade_disk_type.disk_offering_type
+            infra.save()
             upgrade_disk_type.set_success()
             task.set_status_success('Upgrade Disk Type is done')
         else:
@@ -29,4 +31,6 @@ def task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from=Non
                 'Please check error message and do retry'
             )
     except Exception as erro:
-        print(erro)
+        task.set_status_error('Error: {erro}.\n'
+                              'To create task task_upgrade_disk_type!\n'
+                              'Please check error message and start new task.'.format(erro=erro))

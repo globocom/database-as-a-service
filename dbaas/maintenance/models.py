@@ -811,7 +811,6 @@ class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
                                           null=False, related_name="database_upgrade_disk_type")
     origin_disk_offering_type = models.ForeignKey(DiskOfferingType, verbose_name="Origin Disk Offering Type",
                                                   null=False, related_name="database_upgrade_disk_type_new")
-    instance_snapshot = models.TextField(verbose_name="Dict Instance Snapshot", null=False, blank=False, default="{}")
 
     def __unicode__(self):
         return "Change Disk Type of database: {} to {}".format(
@@ -825,15 +824,6 @@ class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
             instances.append(instance)
 
         return instances
-
-    def set_instance_snapshot_dict(self, instance, snapshot):
-        dict_instance_snapshot = self.get_instance_snapshot_dict()
-        dict_instance_snapshot[instance.id] = snapshot.snapshopt_id
-        self.instance_snapshot = dict_instance_snapshot
-        self.save()
-
-    def get_instance_snapshot_dict(self):
-        return eval(self.instance_snapshot)
 
 
 class DatabaseRestore(DatabaseMaintenanceTask):

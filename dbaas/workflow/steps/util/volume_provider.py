@@ -165,7 +165,6 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def create_volume(self, group, size_kb, to_address='', snapshot_id=None,
                       is_active=True, zone=None, vm_name=None, disk_offering_type=None):
-        print('entrouu na funcao de criar o disco!!!!')
         url = self.base_uri + "volume/new"
 
         data = {
@@ -532,7 +531,8 @@ class CreateVolumeDiskTypeUpgrade(VolumeProviderBase):
     @property
     def snapshot(self):
         if self.upgrade_disk_type:
-            return self.upgrade_disk_type.get_instance_snapshot_dict().get(self.instance.id)
+            snapshot = Snapshot.objects.filter(instance=self.instance).last()
+            return snapshot.snapshopt_id
         else:
             return None
 
@@ -544,10 +544,9 @@ class CreateVolumeDiskTypeUpgrade(VolumeProviderBase):
             return False
 
     def do(self):
-        print('akiiiiiiiiiiiiiiiiiiiiii create disk')
         if not self.is_valid:
             return
-        print('akiiiiiiiiiiiiiiiiiiiiii create disk passou')
+
         self.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
@@ -1935,16 +1934,6 @@ class TakeSnapshotUpgradeDiskType(VolumeProviderBase):
                 error = '{} Error: {}'.format(error, snapshot.error)
                 raise VolumeProviderSnapshotHasErrorStatus(error)
 
-        # self.step_manager.snapshot = snapshot
-        # self.step_manager.save()
-
-        self.upgrade_disk_type.set_instance_snapshot_dict(self.instance, snapshot)
-
-        if snapshot.has_warning:
-            raise VolumeProviderSnapshotHasWarningStatusError(
-                'Backup was warning'
-            )
-
     def undo(self):
         pass
 
@@ -2078,25 +2067,6 @@ class UpdateActiveDiskTypeUpgrade(VolumeProviderBase):
             new_disk.is_active = True
             old_disk.save()
             new_disk.save()
-
-
-class DestroyOldVolume(VolumeProviderBase):
-
-    def __unicode__(self):
-        return "Remove old volumes..."
-
-    @property
-    def first_inactive_disk(self):
-        return self.first_disk if not self.first_disk.is_active else None
-
-    def do(self):
-        if not self.is_valid and self.first_inactive_disk:
-            return
-
-        self.destroy_volume(self.first_inactive_disk)
-
-    def undo(self):
-        raise NotImplementedError
 
 
 class DestroyOldEnvironment(VolumeProviderBase):

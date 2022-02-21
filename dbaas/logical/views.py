@@ -921,7 +921,6 @@ def _upgrade_disk_type(request, database):
     Database.upgrade_disk_type(database=database, disk_offering_type=disk_offering_type, user=request.user)
 
 
-
 def _vm_resize(request, database):
     try:
         check_is_database_dead(database.id, 'VM resize')
@@ -1127,9 +1126,7 @@ def database_resizes(request, context, database):
 @database_view('upgrade_disk')
 def database_upgrades(request, context, database):
     if request.method == 'POST':
-        print(request.POST)
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            print(request.POST.get('disk_offering'))
             _disk_resize(request, database)
         elif 'upgrade_disk_type' in request.POST and request.POST.get('disk_offering_type'):
             _upgrade_disk_type(request, database)

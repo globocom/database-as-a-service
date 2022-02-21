@@ -74,7 +74,6 @@ class BaseTopology(object):
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.volume_provider.TakeSnapshotUpgradeDiskType',
-                # 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.volume_provider.CreateVolumeDiskTypeUpgrade',
                 'workflow.steps.util.volume_provider.AddAccessUpgradedDiskTypeVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolumeUpgradeDiskType',
@@ -86,7 +85,6 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.UpdateActiveDiskTypeUpgrade',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
-                'workflow.steps.util.volume_provider.DestroyOldVolume',
             )}]
 
     def get_restore_snapshot_steps(self):
