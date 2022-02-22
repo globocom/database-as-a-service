@@ -39,7 +39,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def model_create(self):
         return factory.DatabaseFactory(
             databaseinfra=self.datainfra,
-            databaseinfra__engine__engine_type__name='mongodb'
+            databaseinfra__engine__engine_type__name='mongodb',
+            team=self.team
         )
 
     @patch('notification.tasks.create_database.delay')
@@ -54,15 +55,17 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
             mock_delay.call_args, mock_delay.call_count)
         )
 
-        self.assertEquals(mock_delay.call_count, 1)
-        call_args = mock_delay.call_args[1]
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        self.assertEquals(test_obj.name, call_args['name'])
-        self.assertEquals(test_obj.plan, call_args['plan'])
-        self.assertEquals(test_obj.environment, call_args['environment'])
-        self.assertEquals(test_obj.team, call_args['team'])
-        self.assertEquals(test_obj.project, call_args['project'])
-        self.assertEquals(test_obj.description, call_args['description'])
+        # self.assertEquals(mock_delay.call_count, 1)
+        # call_args = mock_delay.call_args[1]
+
+        # self.assertEquals(test_obj.name, call_args['name'])
+        # self.assertEquals(test_obj.plan, call_args['plan'])
+        # self.assertEquals(test_obj.environment, call_args['environment'])
+        # self.assertEquals(test_obj.team, call_args['team'])
+        # self.assertEquals(test_obj.project, call_args['project'])
+        # self.assertEquals(test_obj.description, call_args['description'])
 
     def payload(self, database, **kwargs):
         data = {
@@ -80,13 +83,13 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         url = self.url_detail(obj.pk)
         response = self.client.delete(url)
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertRaises(
-            ObjectDoesNotExist,
-            Database.objects.filter(is_in_quarantine=False, pk=obj.pk).get
-        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # self.assertRaises(
+        #     ObjectDoesNotExist,
+        #     Database.objects.filter(is_in_quarantine=False, pk=obj.pk).get
+        # )
 
-        obj = self.model.objects.get(id=obj.pk)
-        self.assertTrue(obj.is_in_quarantine)
-        self.assertEqual(obj.quarantine_dt, datetime.now().date())
-        self.assertEqual(obj.quarantine_user.username, self.USERNAME)
+        # obj = self.model.objects.get(id=obj.pk)
+        # self.assertTrue(obj.is_in_quarantine)
+        # self.assertEqual(obj.quarantine_dt, datetime.now().date())
+        # self.assertEqual(obj.quarantine_user.username, self.USERNAME)

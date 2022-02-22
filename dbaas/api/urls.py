@@ -34,10 +34,14 @@ from .restart_database import RestartDatabaseAPI
 from .databaase_migrate_engine import DatabaseMigrateEngineAPI
 from .remove_readonly import RemoveInstanceDatabaseAPI
 from .pool import PoolAPI
+from .list_database import DatabaseListAPI
+from .list_team import TeamListAPI
 
 
 router = DefaultRouter()
 urlpatterns = []
+
+
 
 # physical
 router.register(r'environment', EnvironmentAPI)
@@ -65,11 +69,15 @@ router.register(r'database_reinstall_vm', DatabaseReinstallVMAPI)
 router.register(r'recreate_slave', RecreateSlaveAPI)
 router.register(r'database_upgrade', DatabaseUpgradeAPI)
 router.register(r'database_upgrade_patch', DatabaseUpgradePatchAPI)
-router.register(r'database_clone', DatabaseCloneAPI)
+router.register(r'database_clone', DatabaseCloneAPI )
 router.register(r'database_destroy', DatabaseDestroyAPI)
 router.register(r'update_ssl', UpdateSslAPI)
 router.register(r'restart_database', RestartDatabaseAPI)
 router.register(r'database_migrate_engine', DatabaseMigrateEngineAPI)
+
+# open API
+router.register(r'list_databases', DatabaseListAPI, base_name="list_databases")
+router.register(r'list_teams', TeamListAPI, base_name="list_teans")
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
