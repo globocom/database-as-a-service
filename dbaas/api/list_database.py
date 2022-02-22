@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, status, filters
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
 import logging
 from logical.models import Database
 from physical import models as physical_models
@@ -45,7 +45,7 @@ class DatabaseListAPI(viewsets.ReadOnlyModelViewSet):
     *   ### __List databases__
         __GET__ /api/database_list/
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     model = Database
     serializer_class = DatabaseSerializer
     # queryset = Database.objects.all()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
 from rest_framework.response import Response
 from account import models
 import logging
@@ -28,7 +28,7 @@ class TeamListAPI(viewsets.ViewSet):
     """
     Environment API
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     serializer_class = TeamApiSerializer
     http_method_names = ['get']
     queryset = models.Team.objects.all().prefetch_related()
