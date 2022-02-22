@@ -49,6 +49,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.agents.Stop',
             'workflow.steps.util.database.StopSlave',
+            'workflow.steps.util.database.StopRsyslog',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ResizeConfigure',
             'workflow.steps.util.plan.ConfigureLog',
@@ -87,6 +88,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
@@ -97,6 +99,7 @@ class BaseTopology(object):
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()
@@ -144,6 +147,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
@@ -331,6 +335,7 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
@@ -521,6 +526,8 @@ class BaseTopology(object):
     def get_database_migrate_steps_stage_2(self):
         return [{
             'Cleaning up': (
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',

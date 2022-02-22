@@ -117,6 +117,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.StartMonit',
             )}, {
             'Creating Database': (
@@ -186,6 +187,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.StartMonit',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -554,6 +556,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
 
             )}, {
@@ -665,6 +668,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -831,6 +835,7 @@ class MySQLFoxHA(MySQLSingle):
                  'checkAndFixMySQLReplicationIfRunning'),
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
@@ -880,6 +885,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
                 'workflow.steps.util.host_provider.Stop',
@@ -920,6 +926,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
@@ -1089,6 +1096,8 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
+            'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            'workflow.steps.util.database.StopRsyslogMigrate',
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
@@ -1532,6 +1541,7 @@ class MySQLFoxHA(MySQLSingle):
             'Disable and Stop Source instance':(
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
                 'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopRsyslogMigrate',
             )}, {
             'Remove Source VIP': (
                 'workflow.steps.util.vip_provider.DestroySourceForwardingRuleMigrate',
@@ -1609,6 +1619,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Check database': (
@@ -1704,6 +1715,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -1747,6 +1759,8 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
+            'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            'workflow.steps.util.database.StopRsyslogMigrate',
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
@@ -2051,6 +2065,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
@@ -2160,6 +2175,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
@@ -2228,6 +2244,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                  'checkAndFixMySQLReplicationIfRunning'),
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',

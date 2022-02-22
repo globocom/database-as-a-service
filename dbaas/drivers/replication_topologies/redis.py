@@ -96,6 +96,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
@@ -149,6 +150,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
@@ -216,6 +218,8 @@ class RedisSingle(BaseRedis):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
+            'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            'workflow.steps.util.database.StopRsyslogMigrate',
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
@@ -330,6 +334,7 @@ class RedisSentinel(BaseRedis):
             ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.database.StartRsyslog',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
 
@@ -457,6 +462,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.StartSentinel',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
@@ -515,6 +521,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.StartSentinel',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
@@ -544,6 +551,8 @@ class RedisSentinel(BaseRedis):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
+            'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            'workflow.steps.util.database.StopRsyslogMigrate',
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
@@ -707,6 +716,7 @@ class RedisSentinel(BaseRedis):
             'Cleaning up': (
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             )}, {
             'Cleaning up 2': (
@@ -773,6 +783,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartRsyslog',
             )}, {
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
@@ -881,6 +892,8 @@ class RedisCluster(BaseRedis):
         return (
             'workflow.steps.redis.cluster.RemoveNode',
             'workflow.steps.redis.cluster.CheckClusterStatus',
+            'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            'workflow.steps.util.database.StopRsyslogMigrate',
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
@@ -1040,6 +1053,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.redis.cluster.CheckClusterStatus',
                 'workflow.steps.util.infra.DisableSourceInstances',
                 'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             )}, {
             'Cleaning up 2': (
