@@ -133,10 +133,13 @@ dev_docker_manage: # execute manage.py commands
 	@cd dev && docker-compose run app /code/dbaas/manage.py $(filter-out $@,$(MAKECMDGOALS))
 
 dev_docker_migrate:
-	@cd dev && docker-compose run app python dbaas/manage.py migrate
+	@cd dev && docker-compose run app /code/dbaas/manage.py migrate
 
 dev_docker_mysql_shell:
 	@cd dev && docker-compose exec dev_mysqldb57 bash -c "mysql dbaas -u root -p123"
+
+dev_docker_redis_shell:
+	@cd dev && docker-compose exec dev_redisdb bash -c "redis-cli"
 
 dev_docker_run:
 	@cd dev && docker-compose up

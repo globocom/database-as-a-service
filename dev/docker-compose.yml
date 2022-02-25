@@ -8,8 +8,8 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-      - ./etc/ssl/certsg:/etc/ssl/certsg
-    command: bash -c "cd /code && touch /code/dev/log && make run"
+      - /etc/ssl/certs:/etc/ssl/certsg
+    command: /code/dev/run.sh
     ports:
       - "8000:8000"
     depends_on:
@@ -34,8 +34,8 @@ services:
     volumes:
       - ..:/code
       - $PROJECT_PATH:/opt/lib
-      - ./etc/ssl/certsg:/etc/ssl/certsg
-    command: bash -c "cd /code && make run_celery"
+      - /etc/ssl/certs:/etc/ssl/certsg
+    command: /code/dev/run_celery.sh
     depends_on:
         - dev_mysqldb57
         - dev_mongodb

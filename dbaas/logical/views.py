@@ -1088,9 +1088,7 @@ def _upgrade_patch_retry(request, database):
 @database_view('resizes')
 def database_resizes(request, context, database):
     if request.method == 'POST':
-        if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            _disk_resize(request, database)
-        elif (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
+        if (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
                 'vm_offering'
              )):
             _vm_resize(request, database)
@@ -1109,14 +1107,6 @@ def database_resizes(request, context, database):
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
 
-    disk_used_size_kb = database.infra.disk_used_size_in_kb
-    if not disk_used_size_kb:
-        disk_used_size_kb = database.used_size_in_kb
-    context['disk_offerings'] = list(
-        database.environment.diskofferings.filter(size_kb__gt=disk_used_size_kb).order_by('size_kb')
-    )
-    if database.infra.disk_offering not in context['disk_offerings']:
-        context['disk_offerings'].insert(0, database.infra.disk_offering)
     return render_to_response(
         "logical/database/details/resizes_tab.html",
         context, RequestContext(request)
@@ -1144,6 +1134,7 @@ def database_upgrades(request, context, database):
     if database.infra.disk_offering not in context['disk_offerings']:
         context['disk_offerings'].insert(0, database.infra.disk_offering)
 
+    context['last_upgrade_disk_type'] = database.database_upgrade_disk_type.last()
     context['disk_offerings_types'] = list(database.environment.diskofferingstypes.all())
     if database.infra.disk_offering_type not in context['disk_offerings_types']:
         context['disk_offerings_types'].insert(0, database.infra.disk_offering_type)

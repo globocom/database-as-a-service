@@ -2044,12 +2044,20 @@ class UpdateActiveDiskTypeUpgrade(VolumeProviderBase):
     def __unicode__(self):
         return "Updating meta data..."
 
+    @property
+    def new_disk(self):
+        return self.latest_disk
+
+    @property
+    def old_disk(self):
+        return self.host.volumes.filter(is_active=True).first()
+
     def do(self):
         if not self.instance.is_database:
             return
 
-        old_disk = self.first_disk
-        new_disk = self.latest_disk
+        old_disk = self.old_disk
+        new_disk = self.new_disk
         if old_disk != new_disk:
             old_disk.is_active = False
             new_disk.is_active = True
@@ -2060,8 +2068,8 @@ class UpdateActiveDiskTypeUpgrade(VolumeProviderBase):
         if not self.instance.is_database:
             return
 
-        old_disk = self.latest_disk
-        new_disk = self.first_disk
+        old_disk = self.new_disk
+        new_disk = self.old_disk
         if old_disk != new_disk:
             old_disk.is_active = False
             new_disk.is_active = True

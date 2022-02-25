@@ -59,6 +59,10 @@
         {% endfor %}
       </select>
       <button data-toggle="modal" id="disk_offering_type_btn" data-target="#upgrade_disk_type">Upgrade Disk Type</button>
+      {%if last_upgrade_disk_type and last_upgrade_disk_type.is_status_error %}
+        <a class="resize_button btn btn-warning" href="{% url 'admin:upgrade_disk_type_database_retry' last_upgrade_disk_type.id %}" title="Go to disk resize page">Retry</a>
+        <p><a href="{% url 'admin:maintenance_databaseupgradedisktype_change' last_upgrade_disk_type.id %}" target='_blank'>Last upgrade disk type </a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade_disk_type.task.id %}" target='_blank'>task</a> and do retry of upgrade disk type by clicking in one of above buttons</p>
+      {% endif %}
     </div>
   </div>
   <div class="control-group">
@@ -71,8 +75,7 @@
 
 {% include "admin/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
 
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_disk_type" confirmation_message="Are you sure you want to upgrade the disk type?" box_title="Upgrading the disk type" button_type="submit" button_value="Upgrade Disk Type" button_name="upgrade_disk_type" id_optional="id=id_upgrade_disk_type_btn_modal" %}
-
+{% include "admin/confirmation_modal_input.html" with modal_id="upgrade_disk_type" title="Upgrading the disk type" body_text="logical/modal/upgrade_disk_type_body.html" input_name="upgrade_disk_type_yes" submit_button_value="Upgrade Disk Type" submit_button_name="upgrade_disk_type" submit_button_id="id_upgrade_disk_type_btn_modal" class="btn-primary"%}
 
 {% endblock %}
 
@@ -130,14 +133,27 @@
     });
     $("#id_disk_offering_type").change()
 
+    $("#id_upgrade_disk_type_yes").keyup(function() {
+      btn = document.getElementById("id_upgrade_disk_type_btn_modal");
+      btn.disabled = $(this).val() != "yes";
+      if (btn.disabled) {
+        $(btn).removeClass ('btn-primary');
+      } else {
+        $(btn).addClass('btn-primary');
+      }
+    });
+    $("#id_upgrade_disk_type_yes").keyup()
+
+    $("#database_form").submit(function (e) {
+        //disable resize vm submit button
+        $("#id_resize_vm_btn_modal").attr("disabled", true);
+
+        return true;
+    });
+
     $("#disk_resize_btn").click(function() {
       var $new_disk_size = $("#id_disk_offering").find(":selected").text().trim()
       $("#resize_disk .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering.name  }}> to <' + $new_disk_size + '>?')
-    });
-
-    $("#disk_offering_type_btn").click(function() {
-      var $new_disk_type = $("#id_disk_offering_type").find(":selected").text().trim()
-      $("#upgrade_disk_type .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering_type.name  }}> to <' + $new_disk_type + '>?')
     });
 
   })

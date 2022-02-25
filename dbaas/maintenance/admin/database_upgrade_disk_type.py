@@ -23,6 +23,7 @@ class DatabaseUpgradeDiskTypeAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
+        "disk_offering_type", "origin_disk_offering_type",
         "current_step_class", "database", "task",
         "started_at", "link_task", "finished_at", "status",
         "maintenance_action", "task_schedule"
