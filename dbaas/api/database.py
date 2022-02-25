@@ -141,7 +141,12 @@ class DatabaseAPI(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.model.objects.all()
         params = self.request.GET.dict()
+        from_teams = Team.objects.filter(users=self.request.user)
         valid_params = {}
+        if not self.request.user.is_superuser or\
+           not self.request.user.is_staff:
+            queryset = queryset.filter(team__in=from_teams)
+
         for field in params.keys():
             if field.split('__')[0] in self.filter_fields:
                 valid_params[field] = params[field]
@@ -160,6 +165,15 @@ class DatabaseAPI(viewsets.ModelViewSet):
             backup_hour, maintenance_hour, maintenance_day = (
                 DatabaseForm.randomize_backup_and_maintenance_hour()
             )
+
+            from_teams = [x.id for x in Team.objects.filter(
+                users=self.request.user)]
+
+            if data['team'].id not in from_teams:
+                return Response(
+                    {"reason": "forbidden"}, status=status.HTTP_403_FORBIDDEN,
+                )
+
             LOG.error("{}".format(data))
             result = TaskRegister.database_create(
                 name=data['name'], plan=data['plan'],
@@ -188,6 +202,14 @@ class DatabaseAPI(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         UserMiddleware.set_current_user(request.user)
+
+        from_teams = [x.id for x in Team.objects.filter(
+                users=self.request.user)]
+
+        if instance.team not in from_teams:
+            return Response(
+                {"reason": "forbidden"}, status=status.HTTP_403_FORBIDDEN,
+            )
 
         if instance.is_in_quarantine or instance.is_protected:
             return Response(status=status.HTTP_401_UNAUTHORIZED)

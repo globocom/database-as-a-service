@@ -29,9 +29,7 @@ def zabbix_collect_used_disk(task):
 
     integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
     for environment in Environment.objects.all():
-        task.add_detail(
-            'Execution for environment: {}'.format(environment.name)
-        )
+        task.add_detail("Execution for environment: {}".format(environment.name))
         try:
             credentials = Credential.get_credentials(
                 environment=environment, integration=integration
@@ -39,18 +37,21 @@ def zabbix_collect_used_disk(task):
         except IndexError:
             task.update_status_for(
                 TaskHistory.STATUS_ERROR,
-                'There is no Zabbix credential for {} environment.'.format(
-                    environment
-                )
+                "There is no Zabbix credential for {} environment.".format(environment),
             )
             return
 
         for database in Database.objects.filter(environment=environment):
             database_resized = False
-            task.add_detail(
-                message='Database: {}'.format(database.name), level=1
-            )
+            task.add_detail(message="Database: {}".format(database.name), level=1)
 
+            if database.is_locked:
+                message = ("Skip updating disk used size for database {}. "
+                           "It is used by another task."
+                ).format(database)
+                task.add_detail(message, level=2)
+                continue
+                
             zabbix_provider = factory_for(
                 databaseinfra=database.databaseinfra, credentials=credentials
             )
@@ -62,93 +63,104 @@ def zabbix_collect_used_disk(task):
             non_database_instances = driver.get_non_database_instances()
 
             for host in zabbix_provider.hosts:
-                instance = database.databaseinfra.instances.filter(address=host.address).first()
+                instance = database.databaseinfra.instances.filter(
+                    address=host.address
+                ).first()
                 if instance in non_database_instances:
                     continue
 
                 collected += 1
                 task.add_detail(
-                    message='Host: {} ({})'.format(
-                        host.hostname, host.address
-                    ), level=2
+                    message="Host: {} ({})".format(host.hostname, host.address), level=2
                 )
 
                 try:
                     zabbix_size = metrics.get_current_disk_data_size(host)
                     zabbix_used = metrics.get_current_disk_data_used(host)
-                    zabbix_percentage = (zabbix_used * 100)/zabbix_size
+                    zabbix_percentage = (zabbix_used * 100) / zabbix_size
                 except ZabbixMetricsError as error:
-                    problems += 1
-                    task.add_detail(message='Error: {}'.format(error), level=3)
-                    status = TaskHistory.STATUS_WARNING
-                    continue
+                    ret = host_mount_data_percentage(host, task)
+                    if ret != (None, None, None):
+                        zabbix_percentage, zabbix_used, zabbix_size = ret
+                    else:
+                        problems += 1
+                        task.add_detail(message="Error: {}".format(error), level=3)
+                        status = TaskHistory.STATUS_WARNING
+                        continue
 
                 task.add_detail(
-                    message='Zabbix /data: {}% ({}kb/{}kb)'.format(
+                    message="Zabbix /data: {}% ({}kb/{}kb)".format(
                         zabbix_percentage, zabbix_used, zabbix_size
-                    ), level=3
+                    ),
+                    level=3,
                 )
 
                 current_percentage = zabbix_percentage
                 current_used = zabbix_used
                 current_size = zabbix_size
                 if zabbix_percentage >= threshold_disk_resize:
-                    current_percentage, current_used, current_size = host_mount_data_percentage(
-                        address=host.address, task=task
-                    )
+                    (
+                        current_percentage,
+                        current_used,
+                        current_size,
+                    ) = host_mount_data_percentage(host=host, task=task)
                     if zabbix_percentage > current_percentage:
                         problems += 1
                         status = TaskHistory.STATUS_WARNING
                         task.add_detail(
-                            message='Error: Zabbix metrics not updated',
-                            level=4
+                            message="Error: Zabbix metrics not updated", level=4
                         )
 
                 size_metadata = database.databaseinfra.disk_offering.size_kb
                 if has_difference_between(size_metadata, current_size):
                     problems += 1
                     task.add_detail(
-                        message='Error: Disk size different: {}kb'.format(
+                        message="Error: Disk size different: {}kb".format(
                             size_metadata
                         ),
-                        level=4
+                        level=4,
                     )
                     status = TaskHistory.STATUS_WARNING
-                elif current_percentage >= threshold_disk_resize and \
-                        database.disk_auto_resize and \
-                        not database_resized:
+                elif (
+                    current_percentage >= threshold_disk_resize
+                    and database.disk_auto_resize
+                    and not database_resized
+                ):
                     try:
                         task_resize = disk_auto_resize(
                             database=database,
-                            current_size=current_size,
-                            usage_percentage=current_percentage
+                            current_size=size_metadata,
+                            usage_percentage=current_percentage,
                         )
                         database_resized = True
                     except Exception as e:
                         problems += 1
                         status = TaskHistory.STATUS_WARNING
                         task.add_detail(
-                            message='Error: Could not do resize. {}'.format(e),
-                            level=4
+                            message="Error: Could not do resize. {}".format(e), level=4
                         )
                     else:
                         resizes += 1
                         task.add_detail(
-                            message='Executing Resize... Task: {}'.format(
+                            message="Executing Resize... Task: {}".format(
                                 task_resize.id
-                            ), level=4
+                            ),
+                            level=4,
                         )
 
                 if not update_disk(
-                    database=database, address=host.address, task=task,
-                    total_size=current_size, used_size=current_used
+                    database=database,
+                    address=host.address,
+                    task=task,
+                    total_size=current_size,
+                    used_size=current_used,
                 ):
                     problems += 1
                     status = TaskHistory.STATUS_WARNING
 
             zabbix_provider.logout()
 
-    details = 'Collected: {} | Resize: {} | Problems: {}'.format(
+    details = "Collected: {} | Resize: {} | Problems: {}".format(
         collected, resizes, problems
     )
     task.update_status_for(status=status, details=details)
@@ -157,30 +169,23 @@ def zabbix_collect_used_disk(task):
 def update_disk(database, address, total_size, used_size, task):
     try:
         volume = database.update_host_disk_used_size(
-            host_address=address,
-            used_size_kb=used_size,
-            total_size_kb=total_size
+            host_address=address, used_size_kb=used_size, total_size_kb=total_size
         )
         if not volume:
-            raise EnvironmentError(
-                'Instance {} do not have disk'.format(address)
-            )
+            raise EnvironmentError("Instance {} do not have disk".format(address))
     except ObjectDoesNotExist:
         task.add_detail(
-            message='{} not found for: {}'.format(address, database.name),
-            level=3
+            message="{} not found for: {}".format(address, database.name), level=3
         )
         return False
     except Exception as error:
         task.add_detail(
-            message='Could not update disk size used: {}'.format(error),
-            level=3
+            message="Could not update disk size used: {}".format(error), level=3
         )
         return False
 
     task.add_detail(
-        message='Used disk size updated. NFS: {}'.format(volume.identifier),
-        level=3
+        message="Used disk size updated. NFS: {}".format(volume.identifier), level=3
     )
     return True
 
@@ -188,10 +193,7 @@ def update_disk(database, address, total_size, used_size, task):
 def disk_auto_resize(database, current_size, usage_percentage):
     from notification.tasks import TaskRegister
 
-    disk = DiskOffering.first_greater_than(
-        current_size + 1024,
-        database.environment
-    )
+    disk = DiskOffering.first_greater_than(current_size + 1024, database.environment)
 
     if disk > DiskOffering.last_offering_available_for_auto_resize(
         environment=database.environment
@@ -201,14 +203,14 @@ def disk_auto_resize(database, current_size, usage_percentage):
     if database.is_being_used_elsewhere():
         raise BusyDatabaseError("")
 
-    user = AccountUser.objects.get(username='admin')
+    user = AccountUser.objects.get(username="admin")
 
     task = TaskRegister.database_disk_resize(
         database=database,
         user=user,
         disk_offering=disk,
-        task_name='database_disk_auto_resize',
-        register_user=False
+        task_name="database_disk_auto_resize",
+        register_user=False,
     )
 
     email_notifications.disk_resize_notification(
@@ -218,34 +220,33 @@ def disk_auto_resize(database, current_size, usage_percentage):
     return task
 
 
-def host_mount_data_percentage(address, task):
-    host = Host.objects.filter(address=address).first()
-
+def host_mount_data_percentage(host, task):
     try:
-        output = host.ssh.run_script('df -hk | grep /data')
+        output = host.ssh.run_script("df -hk | grep /data")
     except ScriptFailedException as err:
         task.add_detail(
-            message='Could not load mount size: {}'.format(str(err)),
-            level=4
+            message="Could not load mount size: {}".format(str(err)), level=4
         )
         return None, None, None
 
-    values = output['stdout'][0].strip().split()
-    values = {
-        'total': int(values[0]),
-        'used': int(values[1]),
-        'free': int(values[2]),
-        'percentage': int(values[3].replace('%', ''))
+    values = output["stdout"][0].strip().split()
+
+    i = 0 if host.is_ol6 else 1
+
+    rvalues = {
+        "total": int(values[i]),
+        "used": int(values[i + 1]),
+        "free": int(values[i + 2]),
+        "percentage": int(values[i + 3].replace("%", "")),
     }
 
     task.add_detail(
-        message='Mount /data: {}% ({}kb/{}kb)'.format(
-            values['percentage'], values['used'], values['total']
+        message="Mount /data: {}% ({}kb/{}kb)".format(
+            rvalues["percentage"], rvalues["used"], rvalues["total"]
         ),
-        level=3
+        level=3,
     )
-
-    return values['percentage'], values['used'], values['total']
+    return rvalues["percentage"], rvalues["used"], rvalues["total"]
 
 
 def has_difference_between(metadata, collected):
@@ -253,7 +254,7 @@ def has_difference_between(metadata, collected):
         "threshold_disk_size_difference", default=1.0
     )
 
-    difference = (metadata * threshold)/100
+    difference = (metadata * threshold) / 100
     max_value = metadata + difference
     min_value = metadata - difference
 

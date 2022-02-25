@@ -227,6 +227,10 @@ class StartRsyslog(DatabaseStep):
         )
         self.host.ssh.run_script(script)
 
+    @property
+    def is_valid(self):
+        return True
+
     def _start(self):
         return self._exec_command('start')
 
@@ -234,9 +238,13 @@ class StartRsyslog(DatabaseStep):
         return self._exec_command('stop')
 
     def do(self):
+        if not self.is_valid:
+            return
         return self._start()
 
     def undo(self):
+        if not self.is_valid:
+            return
         return self._stop()
 
 
@@ -246,10 +254,30 @@ class StopRsyslog(StartRsyslog):
         return "Stopping rsyslog..."
 
     def do(self):
+        if not self.is_valid:
+            return
         self._stop()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self._start()
+
+
+class StopRsyslogIfRunning(StopRsyslog):
+
+    @property
+    def is_valid(self):
+        if self.vm_is_up():
+            return super(StopRsyslogIfRunning, self).is_valid
+        return False
+
+
+class StopRsyslogMigrate(StopRsyslog):
+
+    @property
+    def host(self):
+        return self.instance.hostname
 
 
 class OnlyInSentinel(DatabaseStep):

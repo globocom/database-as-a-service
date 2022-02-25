@@ -49,6 +49,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.agents.Stop',
             'workflow.steps.util.database.StopSlave',
+            'workflow.steps.util.database.StopRsyslog',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ResizeConfigure',
             'workflow.steps.util.plan.ConfigureLog',
@@ -112,6 +113,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallNewTemplate',
@@ -122,6 +124,7 @@ class BaseTopology(object):
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()
@@ -169,6 +172,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
@@ -356,6 +360,7 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.StopRsyslogIfRunning',
                 'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.volume_provider.DetachDataVolume',
                 'workflow.steps.util.host_provider.ReinstallTemplate',
@@ -373,11 +378,15 @@ class BaseTopology(object):
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
+                ) + self.get_reinstallvm_ssl_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
+
+    def get_reinstallvm_ssl_steps(self):
+        return ()
 
     def get_reinstallvm_steps_final(self):
         return [{
@@ -451,10 +460,9 @@ class BaseTopology(object):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.Initialization',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Backup and restore': (
                 'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
@@ -471,6 +479,9 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
                 'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
                 'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.UmountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DetachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DeleteVolumeMigrateOriginalHost',
             )}, {
             'Configure SSL lib and folder': (
                 ) + self.get_configure_ssl_libs_and_folder_steps() + (
@@ -540,6 +551,8 @@ class BaseTopology(object):
     def get_database_migrate_steps_stage_2(self):
         return [{
             'Cleaning up': (
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
                 'workflow.steps.util.volume_provider.DestroyOldEnvironment',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',

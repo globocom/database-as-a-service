@@ -861,3 +861,43 @@ class SetMongoDBRequireTLSParameter(SetMongoDBTSLParameter):
         if self.plan.is_ha:
             self.client.admin.command(
                 'setParameter', 1, clusterAuthMode='x509')
+
+
+class ReinstallVMSSLArbiterOnly(IfConguredSSLValidator):
+    @property
+    def is_valid(self):
+        if self.is_database_instance:
+            return False
+        return super(ReinstallVMSSLArbiterOnly, self).is_valid
+
+
+class UpdateOpenSSlLibIfConfiguredArbiterOnly(UpdateOpenSSlLibIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class MongoDBUpdateCertificatesIfConfiguredArbiterOnly(MongoDBUpdateCertificatesIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class CreateSSLFolderIfConfiguredArbiterOnly(CreateSSLFolderIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class MongoDBCreateSSLConfForInfraIPIfConfiguredArbiterOnly(MongoDBCreateSSLConfForInfraIPIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class RequestSSLForInfraIfConfiguredArbiterOnly(RequestSSLForInfraIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class CreateJsonRequestFileInfraIfConfiguredArbiterOnly(CreateJsonRequestFileInfraIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
+
+
+class CreateCertificateInfraMongoDBIfConfiguredArbiterOnly(CreateCertificateInfraMongoDBIfConfigured,ReinstallVMSSLArbiterOnly ):
+    pass
+
+
+class SetSSLFilesAccessMongoDBIfConfiguredArbiterOnly(SetSSLFilesAccessMongoDBIfConfigured, ReinstallVMSSLArbiterOnly):
+    pass
