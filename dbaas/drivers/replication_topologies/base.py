@@ -79,7 +79,7 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.AddAccessUpgradedDiskTypeVolume',
                 'workflow.steps.util.volume_provider.UnmountActiveVolumeUpgradeDiskType',
                 'workflow.steps.util.volume_provider.AttachDataVolumeUpgradeDiskType',
-                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolumeUpgradeDiskType',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
