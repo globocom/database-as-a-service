@@ -817,14 +817,6 @@ class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
             self.database, self.disk_offering_type.name
         )
 
-    @property
-    def instances(self):
-        instances = []
-        for instance in self.database.infra.instances.all():
-            instances.append(instance)
-
-        return instances
-
 
 class DatabaseRestore(DatabaseMaintenanceTask):
     database = models.ForeignKey(

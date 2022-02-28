@@ -16,8 +16,9 @@ def task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from=Non
         steps = get_upgrade_disk_type_settings(topology_path)
 
         since_step = retry_from.current_step if retry_from else None
+        instances_to_upgrade_disk = database.infra.get_driver().get_database_instances()
         if steps_for_instances(
-                steps, upgrade_disk_type.instances, task, upgrade_disk_type.update_step, since_step=since_step
+                steps, instances_to_upgrade_disk, task, upgrade_disk_type.update_step, since_step=since_step
         ):
             infra = database.infra
             infra.disk_offering_type = upgrade_disk_type.disk_offering_type
