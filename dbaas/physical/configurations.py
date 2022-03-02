@@ -326,7 +326,11 @@ class ConfigurationRedis(ConfigurationBase):
             save_list2.append(item)
         return save_list2
 
-
+    @property
+    def cluster_node_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 5000
+        return self.get_parameter(parameter_name, default)
 
 
 class ConfigurationMySQL(ConfigurationBase):

@@ -596,7 +596,7 @@ cluster-config-file /data/nodes.conf
 # for it to be considered in failure state.
 # Most other internal time limits are multiple of the node timeout.
 #
-cluster-node-timeout 5000
+cluster-node-timeout {{ configuration.cluster_node_timeout.value }}
 
 # A slave of a failing master will avoid to start a failover if its data
 # looks too old.
