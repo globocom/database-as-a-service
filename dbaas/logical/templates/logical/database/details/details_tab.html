@@ -123,6 +123,15 @@
       </div>
       <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
     </div>
+
+    <div class="control-group">
+      <div class="control-label"><label>Disk Type:</label></div>
+      <div class="controls">
+        <p class="readonly">
+          {{ database.infra.disk_offering_type.name }}
+        </p>
+      </div>
+    </div>
   {% endif %}
 
   {% if database.is_in_memory %}

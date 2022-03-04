@@ -27,7 +27,7 @@ services:
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
-    networks: 
+    networks:
       - gntw
   app_celery:
     image: dbaas_dev
@@ -52,17 +52,17 @@ services:
         - TESTS_MONGODB_HOST=dev_mongodb
         - RUNNING_IN_DOCKER=1
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
-    networks: 
+    networks:
       - gntw
   dev_redisdb:
         image: redis:3.2
         container_name: dev_redis32
-        networks: 
+        networks:
             - gntw
   dev_mongodb:
         image: mongo:3.4
         container_name: dev_mongo34
-        networks: 
+        networks:
           - gntw
   dev_mysqldb57:
         platform: linux/x86_64
@@ -75,6 +75,5 @@ services:
             - MYSQL_USER=rute
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
-        networks: 
+        networks:
             - gntw
-    

@@ -17,7 +17,7 @@ class VolumeInline(admin.TabularInline):
         if obj:
             return self.readonly_fields + (
                 'identifier', 'total_size_kb', 'used_size_kb', 'is_active',
-                'path'
+                'path', 'disk_offering_type'
             )
         return self.readonly_fields
 

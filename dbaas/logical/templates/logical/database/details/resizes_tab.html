@@ -42,33 +42,33 @@
         </div>
       </div>
   {% endif %}
-  <div class="control-group">
-    <div class="control-label"><label>Disk offering:</label></div>
-    <div class="controls">
-      <select id="id_disk_offering" name="disk_offering">
-        {% for disk_offering in disk_offerings %}
-          <option value="{{disk_offering.id}}"
-            {% if disk_offering == database.infra.disk_offering %}
-              selected="selected">*
-            {% else %}
-              >
-            {% endif %}
-            {{disk_offering}}
-          </option>
-        {% endfor %}
-      </select>
-      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>
-    </div>
-  </div>
-  <div class="control-group">
-    <div class="controls">
-      <label class="checkbox">
-        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>
-        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>
-      </label>
-      <p class="help-block">When marked, the disk will be resized automatically.</p>
-    </div>
-  </div>
+<!--  <div class="control-group">-->
+<!--    <div class="control-label"><label>Disk offering:</label></div>-->
+<!--    <div class="controls">-->
+<!--      <select id="id_disk_offering" name="disk_offering">-->
+<!--        {% for disk_offering in disk_offerings %}-->
+<!--          <option value="{{disk_offering.id}}"-->
+<!--            {% if disk_offering == database.infra.disk_offering %}-->
+<!--              selected="selected">*-->
+<!--            {% else %}-->
+<!--              >-->
+<!--            {% endif %}-->
+<!--            {{disk_offering}}-->
+<!--          </option>-->
+<!--        {% endfor %}-->
+<!--      </select>-->
+<!--      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--  <div class="control-group">-->
+<!--    <div class="controls">-->
+<!--      <label class="checkbox">-->
+<!--        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>-->
+<!--        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>-->
+<!--      </label>-->
+<!--      <p class="help-block">When marked, the disk will be resized automatically.</p>-->
+<!--    </div>-->
+<!--  </div>-->
   {% if available_patches %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
@@ -102,8 +102,6 @@
 </fieldset>
 
 {% include "admin/confirmation_modal_input.html" with modal_id="resize_vm" title="Resize VM" body_text="logical/modal/vm_offering_body.html" input_name="resize_vm_yes" submit_button_value="Resize" submit_button_name="vm_resize" submit_button_id="id_resize_vm_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
 
 {% endblock %}
 

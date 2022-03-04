@@ -227,6 +227,17 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
     restore_snapshot(database, snapshot.group, task, retry_from)
 
 
+@app.task(bind=True)
+def upgrade_disk_type_database(self, database, new_disk_type_upgrade, task, user, retry_from=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from task_upgrade_type_disk import task_upgrade_disk_type
+    task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from)
+
+
 def _create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,

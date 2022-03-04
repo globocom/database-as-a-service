@@ -12,7 +12,7 @@ SEARCH_FIELDS = (
     "volumes__identifier"
 )
 EDITING_READ_ONLY_FIELDS = (
-    'identifier', 'total_size_kb', 'used_size_kb', 'is_active', 'path'
+    'identifier', 'total_size_kb', 'used_size_kb', 'is_active', 'path', 'disk_offering_type'
 )
 
 

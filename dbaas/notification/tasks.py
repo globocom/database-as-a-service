@@ -2146,6 +2146,24 @@ class TaskRegister(object):
         )
 
     @classmethod
+    def upgrade_disk_type(cls, database, new_disk_type_upgrade, user, retry_from=None):
+        task_params = {
+            'task_name': "upgrade_disk_type",
+            'arguments': "Upgrading disk type of {} to {}".format(
+                database.name, new_disk_type_upgrade),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.upgrade_disk_type_database.delay(
+            database=database, new_disk_type_upgrade=new_disk_type_upgrade, task=task, user=user,
+            retry_from=retry_from
+        )
+
+    @classmethod
     def database_upgrade(cls, database, user, since_step=None):
 
         task_params = {

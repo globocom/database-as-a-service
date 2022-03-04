@@ -25,6 +25,7 @@ from .remove_instance_database import RemoveInstanceDatabaseAdmin
 from .database_change_persistence import DatabaseChangePersistenceAdmin
 from .database_set_ssl_required import DatabaseSetSSLRequiredAdmin
 from .database_set_ssl_not_required import DatabaseSetSSLNotRequiredAdmin
+from . database_upgrade_disk_type import DatabaseUpgradeDiskTypeAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -58,4 +59,8 @@ admin.site.register(
 )
 admin.site.register(
     models.DatabaseSetSSLNotRequired, DatabaseSetSSLNotRequiredAdmin
+)
+
+admin.site.register(
+    models.DatabaseUpgradeDiskType, DatabaseUpgradeDiskTypeAdmin
 )

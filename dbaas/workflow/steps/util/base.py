@@ -104,6 +104,12 @@ class BaseInstanceStep(object):
             return restore
 
     @property
+    def upgrade_disk_type(self):
+        upgrade_disk_type = self.database.database_upgrade_disk_type.last()
+        if upgrade_disk_type and upgrade_disk_type.is_running:
+            return upgrade_disk_type
+
+    @property
     def snapshot(self):
         try:
             return self.restore.group.backups.get(instance=self.instance)

@@ -21,7 +21,7 @@ from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
 from physical.models import (
     Host, Plan, Environment, DatabaseInfra, Instance,
-    Offering, EnginePatch, Pool)
+    Offering, EnginePatch, Pool, DiskOfferingType)
 from notification.models import TaskHistory
 from util.models import BaseModel
 from maintenance.tasks import execute_scheduled_maintenance
@@ -800,6 +800,22 @@ class DatabaseDestroy(DatabaseMaintenanceTask):
             self.plan_name = self.plan.name
 
         super(DatabaseDestroy, self).save(*args, **kwargs)
+
+
+class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
+    database = models.ForeignKey(Database, verbose_name="Database",
+                                 null=False, unique=False, related_name="database_upgrade_disk_type")
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History",
+                            null=False, related_name="database_upgrade_disk_type")
+    disk_offering_type = models.ForeignKey(DiskOfferingType, verbose_name="Disk Offering Type",
+                                          null=False, related_name="database_upgrade_disk_type")
+    origin_disk_offering_type = models.ForeignKey(DiskOfferingType, verbose_name="Origin Disk Offering Type",
+                                                  null=False, related_name="database_upgrade_disk_type_new")
+
+    def __unicode__(self):
+        return "Change Disk Type of database: {} to {}".format(
+            self.database, self.disk_offering_type.name
+        )
 
 
 class DatabaseRestore(DatabaseMaintenanceTask):
