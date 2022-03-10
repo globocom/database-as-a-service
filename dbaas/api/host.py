@@ -7,11 +7,13 @@ from rest_framework import filters
 from rest_framework.views import APIView
 from util import get_credentials_for, GetCredentialException
 from dbaas_credentials.models import CredentialType, Credential
+from physical.models import Environment
 from notification.tasks import TaskRegister
 
 from physical.models import Host
 
-
+class EnvironmentProvisionerError(Exception):
+    pass
 
 class HostSerializer(serializers.ModelSerializer):
     team_name = serializers.SerializerMethodField('get_team_name')
@@ -140,10 +142,22 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
         params = self.request.GET.dict()
         filter_params = {}
         for k, v in params.iteritems():
-            if k == 'cloudstack_hosts_only':
+            if k == 'provisioner':
+                provisioner = None
+                try:
+                    provisioners = {
+                        x[1].replace(" ", "").upper(): x[0]
+                        for x in Environment.PROVISIONER_CHOICES}
+                    provisioner = provisioners[v.upper().replace(" ", "")]
+                except (KeyError, IndexError):
+                    raise EnvironmentProvisionerError("Invalid provisioner")
+                
+                if provisioner == None:
+                    raise EnvironmentProvisionerError("Provisioner %s not found", v)
+
                 cs_envs = Credential.objects.filter(
                     integration_type__type=CredentialType.HOST_PROVIDER,
-                    project='cloudstack'
+                    environments__provisioner=provisioner
                 ).values_list(
                     'environments', flat=True
                 )
