@@ -151,9 +151,6 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
                     provisioner = provisioners[v.upper().replace(" ", "")]
                 except (KeyError, IndexError):
                     raise EnvironmentProvisionerError("Invalid provisioner")
-                
-                if provisioner == None:
-                    raise EnvironmentProvisionerError("Provisioner %s not found", v)
 
                 cs_envs = Credential.objects.filter(
                     integration_type__type=CredentialType.HOST_PROVIDER,
