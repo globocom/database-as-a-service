@@ -1179,6 +1179,7 @@ def database_history(request, context, database):
         "change_persistence",
         "set_require_ssl",
         "set_not_require_ssl",
+        "database_upgrade_disk_type",
     ]
     for related in database_maintenances:
         context["maintenances"] += getattr(database, related).all()
