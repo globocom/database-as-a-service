@@ -11,6 +11,7 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderSnapshot
 from models import Snapshot, BackupGroup
+from notification.tasks import TaskRegister
 from util import (get_worker_name, get_credentials_for,
                   GetCredentialException)
 
@@ -285,7 +286,7 @@ def make_instance_snapshot_backup_upgrade_disk(instance, error, group, provider_
 @only_one(key="updatesslkey")
 def update_ssl(self):
     from account.models import User
-    from notification.tasks import TaskRegister
+    #from notification.tasks import TaskRegister
     from logical.models import Database
     LOG.info("Updating ssl certificates")
     worker_name = get_worker_name()
@@ -314,6 +315,9 @@ def make_databases_backup(self):
     backup_group_interval = Configuration.get_by_name_as_int(
         'backup_group_interval', default=1
     )
+    backups_per_group = Configuration.get_by_name_as_int(
+        'backups_per_group', default=10
+    )
     waiting_msg = "\nWaiting {} minute(s) to start the next backup group".format(
         backup_group_interval
     )
@@ -333,6 +337,7 @@ def make_databases_backup(self):
         instances__backup_instance__status=Snapshot.SUCCESS,
         backup_hour__lt=current_hour,
         plan__has_persistence=True,
+        instances__backup_instance__purge_at=None,
         instances__backup_instance__end_at__year=current_time.year,
         instances__backup_instance__end_at__month=current_time.month,
         instances__backup_instance__end_at__day=current_time.day).distinct()
@@ -363,8 +368,30 @@ def make_databases_backup(self):
         databaseinfras_by_env = infras.filter(environment=env)
         error = {}
         backup_number = 0
-        backups_per_group = len(infras) / 12
+        #backups_per_group = len(infras) / 12
         for infra in databaseinfras_by_env:
+
+            database = infra.databases.first()
+            if not database:
+                continue            
+
+            if backups_per_group > 0:
+                if backup_number < backups_per_group:
+                    backup_number += 1
+                else:
+                    backup_number = 0
+                    task_history.update_details(waiting_msg, True)
+                    sleep(backup_group_interval*60)
+
+            msg = "\n{} - Starting backup task for {}".format(
+                strftime("%m/%d/%Y %H:%M:%S"), database
+            )
+            task_history.update_details(persist=True, details=msg)
+            TaskRegister.database_backup(
+                database=database, user=None, automatic=True
+            )
+
+            '''
             if not infra.databases.first():
                 continue
 
@@ -433,6 +460,7 @@ def make_databases_backup(self):
                 time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
                 msg = "\n{} - {}".format(time_now, msg)
                 task_history.update_details(persist=True, details=msg)
+            '''
 
     task_history.update_status_for(status, details="\nBackup finished")
 
@@ -522,7 +550,7 @@ def get_snapshots_by_env(env):
 @app.task(bind=True)
 @only_one(key="purge_unused_exports")
 def purge_unused_exports_task(self):
-    from notification.tasks import TaskRegister
+    #from notification.tasks import TaskRegister
     task = TaskRegister.purge_unused_exports()
 
     task = TaskHistory.register(
@@ -633,7 +661,7 @@ def _create_database_backup(instance, task, group):
 
 
 @app.task(bind=True)
-def make_database_backup(self, database, task):
+def make_database_backup(self, database, task, automatic):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name, task_history=task
@@ -665,7 +693,7 @@ def make_database_backup(self, database, task):
             )
             return False
 
-        snapshot.is_automatic = False
+        snapshot.is_automatic = automatic
         snapshot.save()
 
         if not has_warning:
