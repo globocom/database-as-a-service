@@ -337,8 +337,12 @@ def make_databases_backup(self):
         'backup_group_interval', default=1
     )
     backups_per_group = Configuration.get_by_name_as_int(
-        'backups_per_group', default=10
+        'backups_per_group', default=20
     )
+    parallel_backup = Configuration.get_by_name_as_int(
+        'parallel_backup', 0
+    )
+    #parallel_backup = 0
     waiting_msg = "\nWaiting {} minute(s) to start the next backup group".format(
         backup_group_interval
     )
@@ -370,8 +374,6 @@ def make_databases_backup(self):
 
     # Merging pending and current infras to backup list
     infras = infras_current_hour | infras_pending_backup
-
-    backup_number = 0
     for env_name in env_names_order:
         try:
             env = environments.get(name=env_name)
@@ -381,11 +383,11 @@ def make_databases_backup(self):
         msg = '\nStarting Backup for env {}'.format(env.name)
         task_history.update_details(persist=True, details=msg)
         databaseinfras_by_env = infras.filter(environment=env)
+        error = {}
+        backup_number = 0
         for infra in databaseinfras_by_env:
-
-            database = infra.databases.first()
-            if not database:
-                continue            
+            if not infra.databases.first():
+                continue
 
             if backups_per_group > 0:
                 if backup_number < backups_per_group:
@@ -395,15 +397,80 @@ def make_databases_backup(self):
                     task_history.update_details(waiting_msg, True)
                     sleep(backup_group_interval*60)
 
-            msg = "\n{} - Starting backup task for {}".format(
-                strftime("%d/%m/%Y %H:%M:%S"), database
-            )
-            task_history.update_details(persist=True, details=msg)
-            TaskRegister.database_backup(
-                database=database, user=None, automatic=True
-            )
+            if parallel_backup:
+
+                database = infra.databases.first()
+                msg = "\n{} - Starting backup task for {}".format(
+                    strftime("%d/%m/%Y %H:%M:%S"), database
+                )
+                task_history.update_details(persist=True, details=msg)
+                TaskRegister.database_backup(
+                    database=database, user=None, automatic=True, current_hour=current_hour
+                )
+
+            else:
+
+                group = BackupGroup()
+                group.save()
+
+                instances_backup = infra.instances.filter(
+                    read_only=False, is_active=True
+                )
+                for instance in instances_backup:
+                    try:
+                        driver = instance.databaseinfra.get_driver()
+                        is_eligible = driver.check_instance_is_eligible_for_backup(
+                            instance
+                        )
+                        if not is_eligible:
+                            LOG.info(
+                                'Instance {} is not eligible for backup'.format(
+                                    instance
+                                )
+                            )
+                            continue
+                    except Exception as e:
+                        status = TaskHistory.STATUS_ERROR
+                        msg = "Backup for %s was unsuccessful. Error: %s" % (
+                            str(instance), str(e))
+                        LOG.error(msg)
+
+                    time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
+                    start_msg = "\n{} - Starting backup for {} ...".format(
+                        time_now, instance
+                    )
+                    task_history.update_details(persist=True, details=start_msg)
+                    try:
+                        snapshot = make_instance_snapshot_backup(
+                            instance=instance, error=error, group=group,
+                            current_hour=current_hour
+                        )
+                        if snapshot and snapshot.was_successful:
+                            msg = "Backup for %s was successful" % (str(instance))
+                            LOG.info(msg)
+                        elif snapshot and snapshot.was_error:
+                            status = TaskHistory.STATUS_ERROR
+                            msg = "Backup for %s was unsuccessful. Error: %s" % (
+                                str(instance), error['errormsg'])
+                            LOG.error(msg)
+                        else:
+                            status = TaskHistory.STATUS_WARNING
+                            msg = "Backup for %s has warning" % (str(instance))
+                            LOG.info(msg)
+                        LOG.info(msg)
+                    except Exception as e:
+                        status = TaskHistory.STATUS_ERROR
+                        msg = "Backup for %s was unsuccessful. Error: %s" % (
+                            str(instance), str(e))
+                        LOG.error(msg)
+
+                    time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
+                    msg = "\n{} - {}".format(time_now, msg)
+                    task_history.update_details(persist=True, details=msg)
 
     task_history.update_status_for(status, details="\nBackup finished")
+
+    return
 
 
 def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
@@ -621,7 +688,7 @@ def _get_infras_with_backup_today():
 
 
 @app.task(bind=True)
-def make_database_backup(self, database, task, automatic):
+def make_database_backup(self, database, task, automatic, current_hour):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name, task_history=task
@@ -673,7 +740,7 @@ def make_database_backup(self, database, task, automatic):
 
     has_warning = False
     for instance in instances:
-        snapshot = _create_database_backup(instance, task, group)
+        snapshot = _create_database_backup(instance, task, group, current_hour)
 
         if not snapshot:
             task.set_status_error(

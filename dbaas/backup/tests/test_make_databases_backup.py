@@ -34,6 +34,9 @@ class TestMakeDatabasesBackup(TestCase):
         mommy.make(
             'Configuration', name='backup_hour', value=str(self.backup_hour)
         )
+        mommy.make(
+            'Configuration', name='parallel_backup', value=0
+        )
         self.dev_env = mommy.make(
             'Environment', name='dev', stage=Environment.DEV
         )
