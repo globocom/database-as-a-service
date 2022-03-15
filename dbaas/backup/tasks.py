@@ -342,7 +342,6 @@ def make_databases_backup(self):
     parallel_backup = Configuration.get_by_name_as_int(
         'parallel_backup', 0
     )
-    #parallel_backup = 0
     waiting_msg = "\nWaiting {} minute(s) to start the next backup group".format(
         backup_group_interval
     )
