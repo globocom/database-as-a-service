@@ -283,7 +283,12 @@ class Database(BaseModel):
             ).first()
 
             task_name = self.__clean_task(task.task_name)
+            if '.' in task_name:
+                task_name = task_name.split('.')[-1]
+
             lock_task_name = self.__clean_task(lock.task.task_name)
+            if '.' in lock_task_name:
+                lock_task_name = lock_task_name.split('.')[-1]
 
             if lock_task_name != task_name or not lock.task.is_status_error:
                 return False
