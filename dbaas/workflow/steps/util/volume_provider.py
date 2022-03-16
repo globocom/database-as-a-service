@@ -648,6 +648,20 @@ class DestroyVolume(NewVolume):
         return
 
 
+class DestroyFirstVolume(NewVolume):
+
+    def __unicode__(self):
+        return "Removing volume..."
+
+    def do(self):
+        if not self.instance.is_database or not self.host:
+            return
+        self._remove_volume(self.first_disk, self.host)
+
+    def undo(self):
+        return
+
+
 class NewVolumeMigrate(NewVolume):
     def __unicode__(self):
         return "Creating second volume based on snapshot for migrate..."
@@ -2144,6 +2158,28 @@ class DetachDataVolume(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
+
+
+class DetachFirstVolume(VolumeProviderBase):
+    def __unicode__(self):
+        return "Detaching first disk from VM..."
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.detach_disk(self.first_disk)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        if hasattr(self, 'host_migrate'):
+            AttachDataVolume(self.instance).do()
+
 
 
 class DetachActiveVolume(DetachDataVolume):

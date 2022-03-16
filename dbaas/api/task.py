@@ -124,6 +124,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'notification.tasks.migrate_engine',
         'maintenance.tasks.restart_database',
         'notification.tasks.change_database_persistence',
+        'maintenance.tasks.task_upgrade_disk_type',
     ]
 
     model = TaskHistory
