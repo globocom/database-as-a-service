@@ -649,14 +649,18 @@ def _check_snapshot_limit(instances, task):
         )
 
 
-def _create_database_backup(instance, task, group):
+def _create_database_backup(instance, task, group, current_hour):
     task.add_detail('\n{} - Starting backup for {}...'.format(
         strftime("%d/%m/%Y %H:%M:%S"), instance))
 
     error = {}
     try:
         snapshot = make_instance_snapshot_backup(
-            instance=instance, error=error, group=group, task=task
+            instance=instance,
+            error=error,
+            group=group,
+            current_hour=current_hour,
+            task=task
         )
     except Exception as e:
         task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), e))
