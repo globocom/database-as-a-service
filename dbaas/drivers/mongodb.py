@@ -17,6 +17,7 @@ from physical.models import Instance
 from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
 from dateutil import tz
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -210,7 +211,12 @@ class MongoDB(BaseDriver):
         return self.__mongo_client__(instance, default_timeout=False)
 
     def lock_database(self, client):
+        mongodb_waiting_lock = Configuration.get_by_name_as_int(
+        'mongodb_waiting_lock', default=0
+        )
         client.fsync(lock=True)
+        LOG.info('Wait {} seconds for mongodb sync'.format(mongodb_waiting_lock))
+        sleep(mongodb_waiting_lock)
 
     def unlock_database(self, client):
         """ This method unlocks a database instance for writing purposes.

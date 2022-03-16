@@ -2091,7 +2091,7 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_backup(cls, database, user):
+    def database_backup(cls, database, user, automatic=False, current_hour=None):
         from backup.tasks import make_database_backup
 
         task_params = {
@@ -2106,7 +2106,9 @@ class TaskRegister(object):
 
         make_database_backup.delay(
             database=database,
-            task=task
+            task=task,
+            automatic=automatic,
+            current_hour=current_hour
         )
 
     @classmethod
