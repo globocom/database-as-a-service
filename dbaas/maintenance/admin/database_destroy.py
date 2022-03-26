@@ -24,7 +24,7 @@ class DatabaseDestroyAdmin(DatabaseMaintenanceTaskAdmin):
     )
     readonly_fields = (
         "current_step_class", "database", "infra", "plan", "plan_name",
-        "environment", "team", "project", "name", "description",
+        "environment", "team", "project", "name", "description", "instances",
         "subscribe_to_email_events", "is_protected", "user", "link_task",
         "started_at", "finished_at", "status", "maintenance_action",
         "task_schedule"

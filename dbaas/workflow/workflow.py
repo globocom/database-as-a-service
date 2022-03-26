@@ -80,6 +80,10 @@ def steps_for_instances(
         since_step=0, undo=False, step_manager=None
 ):
     is_retry = since_step > 0
+
+    if is_retry and step_counter_method:
+        step_counter_method(since_step, None)
+
     success, locked_databases = lock_databases_for(instances, task, is_retry)
     if not success:
         return False

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from logging import getLogger
 from requests import post, delete, get
 from time import sleep
 from urlparse import urljoin
@@ -13,6 +14,7 @@ from base import BaseInstanceStep
 from vm import WaitingBeReady as WaitingVMBeReady
 from workflow.steps.util.vm import HostStatus
 
+LOG = getLogger(__name__)
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
@@ -651,8 +653,13 @@ class CreateVirtualMachine(HostProviderStep):
 
         try:
             self.provider.destroy_host(self.host)
-        except (Host.DoesNotExist, IndexError):
-            pass
+        except HostProviderDestroyVMException as e:
+            content, response = e
+            if response.status_code == 404:
+                LOG.warning('Host {} not found in host-provider'.format(self.host))
+            else:
+                raise e
+
         self.delete_instance()
         if host.id:
             host.delete()

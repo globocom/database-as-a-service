@@ -141,10 +141,11 @@ def make_instance_snapshot_backup(instance, error, group,
                     response = None
                     response = provider.take_snapshot()
                     break
-                except Exception as e:
-                    if response is None and '503' in str(e):
-                        errormsg = "{} - Error creating snapshot: {}, for instance: {}. It will try again in 30 seconds. ".format(
-                            strftime("%d/%m/%Y %H:%M:%S"), e, instance
+                except IndexError as e:
+                    content, response = e
+                    if response.status_code == 503:
+                        errormsg = "{} - 503 error creating snapshot for instance: {}. It will try again in 30 seconds. ".format(
+                            strftime("%d/%m/%Y %H:%M:%S"), instance
                         )
                         LOG.error(errormsg)
                         if task:

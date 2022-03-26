@@ -17,6 +17,7 @@ from physical.models import (Plan, DatabaseInfra,
 from util import email_notifications, get_worker_name
 from util.decorators import only_one
 from util import providers as util_providers
+from util import get_vm_name
 from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances,
@@ -52,6 +53,35 @@ def rollback_database(dest_database):
     dest_database.is_in_quarantine = True
     dest_database.save()
     dest_database.delete()
+
+
+def get_instances_for_retry_destroy(infra, instances_last_destroy):
+    instances = []
+    for count, instance_data in enumerate(instances_last_destroy.split(',')):
+        instance_dns, instance_port, instance_type = instance_data.split(':')
+        instance_port = int(instance_port)
+        instance_type = int(instance_type)
+        instance_name = get_vm_name(
+            infra.name_prefix, infra.name_stamp, count + 1
+        )
+        try:
+            instance = infra.instances.get(
+                Q(hostname__hostname__startswith=instance_name) |
+                Q(dns__startswith=instance_name),
+                port=instance_port,
+            )
+        except Instance.DoesNotExist:
+            instance = Instance()
+            instance.dns = instance_name
+            instance.databaseinfra = infra
+
+            instance.port = instance_port
+            instance.instance_type = instance_type
+
+        instance.vm_name = instance.dns
+        instances.append(instance)
+
+    return instances
 
 
 @app.task(bind=True)
@@ -165,6 +195,11 @@ def destroy_database(self, database, task_history=None, user=None):
 
         instances = ([host.instances.order_by('instance_type').first()
                      for host in infra.hosts])
+        database_destroy.instances =  ",".join(
+            ["{}:{}:{}".format(
+                instance.dns, instance.port, instance.instance_type)
+            for instance in instances])
+
         database_destroy.current_step = total_of_steps(steps, instances)
 
         database_destroy.save()
@@ -184,8 +219,17 @@ def destroy_database(self, database, task_history=None, user=None):
 
 @app.task(bind=True)
 def destroy_database_retry(self, rollback_from, task, user):
-    from maintenance.tasks import _create_database_rollback
-    _create_database_rollback(self, rollback_from, task, user)
+    task_history = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+    instances = get_instances_for_retry_destroy(
+        rollback_from.infra, rollback_from.instances
+    )
+
+    from maintenance.tasks_create_database import rollback_create
+    rollback_create(rollback_from, task_history, user,
+                    instances=instances)
 
 
 @app.task(bind=True)
