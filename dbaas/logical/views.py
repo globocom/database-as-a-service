@@ -846,12 +846,19 @@ def database_metrics(request, context, database):
         else "mysql"
     )
 
+    hostname = instance.hostname.hostname
+    project_domain = credential.get_parameter_by_name('project_domain')
+    if project_domain:
+        zabbix_host = '{}.{}'.format(hostname.split('.')[0], project_domain)
+    else:
+        zabbix_host = hostname
+
     grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
         endpoint,
         credential.project.format(engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
         credential.get_parameter_by_name('os_param'),
-        instance.hostname.hostname,
+        zabbix_host,
         credential.get_parameter_by_name('disk_param'),
         credential.get_parameter_by_name('disk_dir'),
         credential.get_parameter_by_name('env_param'),
