@@ -1234,7 +1234,9 @@ EOF_DBAAS_CONFIGSENTINELFILE
 {% else %}
 
     create_config_http
+    {% if IS_OL6  %}
     createconfigdbrsyslogfile
+    {% endif %}
 
     {% if ONLY_SENTINEL %}
 

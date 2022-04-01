@@ -577,6 +577,13 @@ class ConfigureLog(Configure):
             )
         }
 
+    @property
+    def is_valid(self):
+        if not super(ConfigureLog, self).is_valid:
+            return False
+
+        return self.host.is_ol6
+
     def do(self):
         if self.is_valid:
             self.run_script_host.ssh.run_script(
