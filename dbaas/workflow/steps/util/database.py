@@ -10,6 +10,7 @@ from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util.ssl import InfraSSLBaseName
 from dbaas_credentials.models import CredentialType
+from dbaas_zabbix import factory_for
 from util import get_credentials_for
 
 
@@ -733,6 +734,16 @@ class Create(DatabaseStep):
     def __unicode__(self):
         return "Creating database..."
 
+    @property
+    def zabbix_credentials(self):
+        return get_credentials_for(self.environment, CredentialType.ZABBIX)
+
+    @property
+    def zabbix_provider(self):
+        return factory_for(
+            databaseinfra=self.infra, credentials=self.zabbix_credentials
+        )
+
     def do(self):
         creating = self.create
         if creating.database:
@@ -744,6 +755,8 @@ class Create(DatabaseStep):
         database.subscribe_to_email_events = creating.subscribe_to_email_events
         database.is_protected = creating.is_protected
         database.pool = creating.pool
+        if self.zabbix_provider.using_agent:
+            database.log_type = Database.GCP_LOG
 
         if creating.project:
             database.project = creating.project

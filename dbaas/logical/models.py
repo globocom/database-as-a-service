@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
+import urllib
 from datetime import date, timedelta
 from django.db import models, transaction, Error
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -24,6 +25,9 @@ from drivers.base import DatabaseStatus
 from drivers.errors import ConnectionError
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
+
 
 
 LOG = logging.getLogger(__name__)
@@ -107,6 +111,13 @@ class Database(BaseModel):
         (ALERT, 'Alert')
     )
 
+    KIBANA_LOG = 1
+    GCP_LOG = 2
+    LOG_TYPE = (
+        (KIBANA_LOG, 'Kibana'),
+        (GCP_LOG, 'GCP Cloud Logging')
+    )
+
     name = models.CharField(
         verbose_name=_("Database name"), max_length=100, db_index=True
     )
@@ -160,6 +171,7 @@ class Database(BaseModel):
         User, related_name='databases_quarantine',
         null=True, blank=True, editable=False
     )
+    log_type = models.IntegerField(choices=LOG_TYPE, default=KIBANA_LOG)
 
     def validate_unique(self, *args, **kwargs):
         ''' Validate if database name is unique
@@ -450,8 +462,6 @@ class Database(BaseModel):
         return self.driver.get_connection_dns_simple(database=self)
 
     def __graylog_url(self):
-        from util import get_credentials_for
-        from dbaas_credentials.models import CredentialType
 
         if self.databaseinfra.plan.is_pre_provisioned:
             return ""
@@ -472,9 +482,6 @@ class Database(BaseModel):
         )
 
     def __kibana_url(self):
-        from util import get_credentials_for
-        from dbaas_credentials.models import CredentialType
-
         if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
@@ -493,11 +500,57 @@ class Database(BaseModel):
             credential.endpoint, time_query, filter_query
         )
 
+    def __gcp_log_url(self):
+        from workflow.steps.util.base import HostProviderClient
+        host_prov_client = HostProviderClient(self.environment)
+
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.GCP_LOG
+        )
+
+        vm_ids = host_prov_client.get_vm_ids(self.infra)
+
+        storage_scope = "storageScope=storage,projects%2F{}%2Flocations%2Fglobal%2Fbuckets%2F{}%2Fviews%2F_AllLogs".format(
+             credential.get_parameter_by_name("project"),
+             credential.get_parameter_by_name("bucket")
+        )
+
+        search_filter = " OR ".join(
+            ['resource.type="gce_instance" resource.labels.instance_id="%s"' %
+             x for x in vm_ids])
+        query = "query;query=%(search_filter)s;" % {
+            "search_filter": urllib.quote(search_filter)
+        }
+
+        extra_param = (
+            ";summaryFields=:false:32:beginning;"
+            "lfeCustomFields=resource%252Flabels%252Finstance_id;")
+
+        url = "%(endpoint)s/logs/%(query)s%(storageScope)s%(extraParam)s" % {
+            "endpoint": credential.endpoint,
+            "query": query,
+            "storageScope": storage_scope,
+            "extraParam": extra_param
+        }
+        print('URL:', url)
+
+        return url
+
     def get_log_url(self):
+        if self.log_type == self.GCP_LOG:
+            return self.__graylog_url()
+        else:
+            return self.__kibana_url()
+
+        '''
+        if Configuration.get_by_name_as_int('gcp_log_integration') == 1:
+            return self.__gcp_log_url()
         if Configuration.get_by_name_as_int('graylog_integration') == 1:
             return self.__graylog_url()
         if Configuration.get_by_name_as_int('kibana_integration') == 1:
             return self.__kibana_url()
+        '''
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
