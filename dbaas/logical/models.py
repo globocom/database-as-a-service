@@ -461,6 +461,7 @@ class Database(BaseModel):
     def get_endpoint_dns_simple(self):
         return self.driver.get_connection_dns_simple(database=self)
 
+    '''
     def __graylog_url(self):
 
         if self.databaseinfra.plan.is_pre_provisioned:
@@ -480,6 +481,7 @@ class Database(BaseModel):
         return "{}/streams/{}/search?q={}:{}".format(
             credential.endpoint, stream, search_field, self.name
         )
+    '''
 
     def __kibana_url(self):
         if self.databaseinfra.plan.is_pre_provisioned:
@@ -539,7 +541,7 @@ class Database(BaseModel):
 
     def get_log_url(self):
         if self.log_type == self.GCP_LOG:
-            return self.__graylog_url()
+            return self.__gcp_log_url()
         else:
             return self.__kibana_url()
 
