@@ -502,11 +502,13 @@ class VipProviderStep(BaseInstanceStep):
 
     @property
     def team(self):
-        # @TODO
-        return "dbaas"
         if self.has_database:
             return self.database.team.name
-        return self.create.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
 
     @property
     def current_vip(self):
