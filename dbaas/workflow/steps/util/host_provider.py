@@ -720,6 +720,7 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
         host = self.provider.create_host(
             self.infra, self.offering, self.vm_name,
             self.team, self.zone,
+            database_name=self.database.name,
             static_ip=self.instance.static_ip
         )
         self.host.future_host = host
@@ -895,6 +896,7 @@ class DestroyVirtualMachineMigrateKeepObject(DestroyVirtualMachineMigrate):
         self.provider.create_host(
             self.infra, self.host_migrating.offering, self.vm_name,
             self.team, self.host_migrate.zone_origin,
+            database_name=self.database.name,
             static_ip=self.instance.static_ip,
             host_obj=self.host
         )
@@ -910,6 +912,7 @@ class RecreateVirtualMachineMigrate(CreateVirtualMachineMigrate):
         self.provider.create_host(
             self.infra, self.offering, self.vm_name,
             self.team, self.zone,
+            database_name=self.database.name,
             static_ip=self.instance.static_ip,
             host_obj=self.host
         )
