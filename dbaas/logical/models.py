@@ -529,12 +529,15 @@ class Database(BaseModel):
             ";summaryFields=:false:32:beginning;"
             "lfeCustomFields=resource%252Flabels%252Finstance_id;")
 
-        url = "%(endpoint)s/logs/%(query)s%(storageScope)s%(extraParam)s" % {
-            "endpoint": credential.endpoint,
-            "query": query,
-            "storageScope": storage_scope,
-            "extraParam": extra_param
-        }
+        auth = "?organizationId=&authuser=1&project={}".format(credential.get_parameter_by_name("auth_project"))
+
+        url = "{endpoint}/logs/{query}{storageScope}{extraParam}{auth}".format(
+            endpoint=credential.endpoint,
+            query=query,
+            storageScope=storage_scope,
+            extraParam=extra_param,
+            auth=auth
+        )
         print('URL:', url)
 
         return url
