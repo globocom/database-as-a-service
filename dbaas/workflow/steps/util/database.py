@@ -226,6 +226,10 @@ class StartRsyslog(DatabaseStep):
             action=action
         )
         self.host.ssh.run_script(script)
+        script2 = self.host.commands.ops_agent_fluent_bit(
+            action=action
+        )
+        self.host.ssh.run_script(script2)
 
     @property
     def is_valid(self):
