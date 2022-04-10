@@ -281,6 +281,14 @@ class Engine(BaseModel):
     @property
     def is_redis(self):
         return self.name == 'redis'
+    
+    @property
+    def is_mongodb(self):
+        return self.name == 'mongodb'
+    
+    @property
+    def is_mysql(self):
+        return self.name in ('mysql', 'mysql_percona')
 
     def available_patches(self, database):
         engine_patch = database.infra.engine_patch
