@@ -2493,7 +2493,7 @@ class VolumeProviderSnapshot(VolumeProviderBase):
 
         migration = DatabaseMigrate.objects.filter(
                      database=self.database).last()
-        return migration.get_current_environment(instance=self.instance)
+        return migration.get_instance_environment(instance=self.instance)
 
 
 class WaitRsyncFromSnapshotDatabaseMigrate(RsyncFromSnapshotMigrateBackupHost):
