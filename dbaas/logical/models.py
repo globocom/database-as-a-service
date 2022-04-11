@@ -13,6 +13,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
+from dbaas_credentials.models import CredentialType
 
 from util import slugify, make_db_random_password
 from util.models import BaseModel
@@ -24,6 +25,7 @@ from drivers.base import DatabaseStatus
 from drivers.errors import ConnectionError
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
+from util import get_or_none_credentials_for
 
 
 LOG = logging.getLogger(__name__)
@@ -160,6 +162,13 @@ class Database(BaseModel):
         User, related_name='databases_quarantine',
         null=True, blank=True, editable=False
     )
+
+    @property
+    def has_cost_credential(self):
+        return get_or_none_credentials_for(
+            self.infra.environment,
+            CredentialType.GCP_COST
+        )
 
     def validate_unique(self, *args, **kwargs):
         ''' Validate if database name is unique
