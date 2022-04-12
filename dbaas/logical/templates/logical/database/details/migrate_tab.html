@@ -37,15 +37,13 @@
         <select id="migrate_environment" class="environments" name="migrate_environment">
         {% if current_stage == 1 %}
           {% for env in environments %}
-              {% if not env.hide_migration %}
                 {% if env == current_environment %}
                   <option value="{{env.id}}" selected="selected">---------</option>
                 {% else %}
-                  {% if env.provisioner != current_environment.provisioner %}
+                  {% if env.provisioner != current_environment.provisioner and not env.hide_migration %}
                   <option value="{{env.id}}">{{env}}</option>
                   {% endif %}
                 {% endif %}
-              {% endif %}
           {% endfor %}
         {% else %}
           <option value="{{last_db_migrate.environment.id}}">{{last_db_migrate.environment}}</option>
