@@ -7,7 +7,7 @@ from urlparse import urljoin
 from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_credentials.models import CredentialType
-from physical.models import Host, Instance, Ip
+from physical.models import Host, Instance, Ip, DatabaseInfra
 from maintenance.models import HostMigrate
 from util import get_credentials_for
 from base import BaseInstanceStep
@@ -126,6 +126,11 @@ class Provider(BaseInstanceStep):
     def provider(self):
         return self.credential.project
 
+    @property
+    def infra_service_account(self):
+        infra = DatabaseInfra.objects.get(id=self.infra.id)
+        return infra.service_account
+
     def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
@@ -210,7 +215,7 @@ class Provider(BaseInstanceStep):
             "team_name": team_name,
             "database_name": database_name,
             "static_ip_id": static_ip and static_ip.identifier,
-            "service_account": self.infra.service_account
+            "service_account": self.infra_service_account
         }
         if zone:
             data['zone'] = zone
@@ -929,7 +934,6 @@ class CreateServiceAccount(HostProviderStep):
 
     @property
     def infra_service_account(self):
-        from physical.models import DatabaseInfra
         infra = DatabaseInfra.objects.get(id=self.infra.id)
         return infra.service_account
 
@@ -988,7 +992,8 @@ class DestroyServiceAccountMigrate(CreateServiceAccount):
         return self.infra.environment
 
     def do(self):
-        super(DestroyServiceAccountMigrate, self).undo()
+        pass
+        #super(DestroyServiceAccountMigrate, self).undo()
 
     def undo(self):
         raise NotImplementedError
