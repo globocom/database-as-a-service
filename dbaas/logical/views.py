@@ -2107,7 +2107,7 @@ def database_destroy(request, context, database):
         context, RequestContext(request)
     )
 
-    
+
 def database_switch_write(request, database_id, host_id):
     database = Database.objects.get(id=database_id)
     instances = database.infra.instances.filter(hostname_id=host_id)
