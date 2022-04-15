@@ -40,6 +40,18 @@ def zabbix_collect_used_disk(task):
                 "There is no Zabbix credential for {} environment.".format(environment),
             )
             return
+        try:
+            grafana_credential = Credential.get_credentials(
+                environment=environment,
+                integration=CredentialType.objects.get(type=CredentialType.GRAFANA)
+            )
+            project_domain = grafana_credential.get_parameter_by_name('project_domain')
+        except IndexError:
+            task.update_status_for(
+                TaskHistory.STATUS_ERROR,
+                "There is no Grafana credential for {} environment.".format(environment),
+            )
+            return
 
         for database in Database.objects.filter(environment=environment):
             database_resized = False
@@ -62,7 +74,12 @@ def zabbix_collect_used_disk(task):
             driver = database.databaseinfra.get_driver()
             non_database_instances = driver.get_non_database_instances()
 
-            for host in zabbix_provider.hosts:
+            if zabbix_provider.using_agent:
+                hosts = list({instance.hostname for instance in database.databaseinfra.instances.all()})
+            else:
+                hosts = zabbix_provider.hosts
+
+            for host in hosts:
                 instance = database.databaseinfra.instances.filter(
                     address=host.address
                 ).first()
@@ -74,9 +91,14 @@ def zabbix_collect_used_disk(task):
                     message="Host: {} ({})".format(host.hostname, host.address), level=2
                 )
 
+                if zabbix_provider.using_agent:
+                    zabbix_host = '{}.{}'.format(host.hostname.split('.')[0], project_domain)
+                else:
+                    zabbix_host = host.hostname
+
                 try:
-                    zabbix_size = metrics.get_current_disk_data_size(host)
-                    zabbix_used = metrics.get_current_disk_data_used(host)
+                    zabbix_size = metrics.get_current_disk_data_size(zabbix_host)
+                    zabbix_used = metrics.get_current_disk_data_used(zabbix_host)
                     zabbix_percentage = (zabbix_used * 100) / zabbix_size
                 except ZabbixMetricsError as error:
                     ret = host_mount_data_percentage(host, task)

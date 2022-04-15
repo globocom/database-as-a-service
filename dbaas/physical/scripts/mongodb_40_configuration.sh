@@ -138,7 +138,9 @@ EOF_DBAAS
     createconfigdbfile
 {% else %}
     createconfigdbfile
+    {% if IS_OL6  %}
     createconfigdbrsyslogfile
+    {% endif %}
     createmongodbkeyfile
 {% endif %}
 

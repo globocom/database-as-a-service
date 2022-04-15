@@ -160,7 +160,9 @@ EOF_DBAAS_CONFIGDBFILE
     createconfigdbfile
 {% else %}
     createconfigdbfile
+    {% if IS_OL6  %}
     createconfigdbrsyslogfile
+    {% endif %}
 {% endif %}
 
 exit 0

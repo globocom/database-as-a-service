@@ -424,6 +424,19 @@ class HostProviderClient(object):
             data = resp.json()
             return data.get('offering_id')
 
+    def get_vm_ids(self, databaseinfra):
+        api_host_url = '/{}/{}/host-ids/{}'.format(
+            self.credential.project,
+            self.env.name,
+            databaseinfra.name
+        )
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url)
+        )
+        if resp.ok:
+            return resp.json().get("ids")
+
 
 class ACLFromHellClient(object):
 

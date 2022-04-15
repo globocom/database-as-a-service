@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import datetime, time
+from re import L
 import json
 from collections import OrderedDict
 import logging
@@ -834,48 +835,54 @@ def database_metrics(request, context, database):
         environment=database.databaseinfra.environment,
         credential_type=CredentialType.GRAFANA
     )
+
     instance = database.infra.instances.filter(
         hostname__hostname__contains=context['hostname'],
     ).first()
+    hostname = instance.hostname.hostname
 
-    endpoint = credential.endpoint
+    project_domain = credential.get_parameter_by_name('project_domain')
+    if project_domain:
+        zabbix_host = '{}.{}'.format(hostname.split('.')[0], project_domain)
+    else:
+        zabbix_host = hostname
+
     datasource = credential.get_parameter_by_name('environment')
+    if database.engine.is_mysql:
+        zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mysql_grafana_dashboard')
+        sofia_engine_dashboard = Configuration.get_by_name('sofia_mysql_grafana_dashboard')
+    elif database.engine.is_mongodb:
+        zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mongodb_grafana_dashboard')
+        sofia_engine_dashboard = Configuration.get_by_name('sofia_mongodb_grafana_dashboard')
+    elif database.engine.is_redis:
+        zabbix_engine_dashboard = Configuration.get_by_name('zabbix_redis_grafana_dashboard')
+        sofia_engine_dashboard = Configuration.get_by_name('sofia_redis_grafana_dashboard')
 
-    engine_type = (
-        database.engine_type if not database.engine_type == "mysql_percona"
-        else "mysql"
-    )
 
-    grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
-        endpoint,
-        credential.project.format(engine_type),
-        credential.get_parameter_by_name('db_param'), instance.dns,
+    grafana_url_zabbix = '{}{}?{}={}&{}={}&{}={}&{}={}'.format(
+        credential.endpoint,
+        zabbix_engine_dashboard,
+        credential.get_parameter_by_name('db_param'),
+        instance.dns,
         credential.get_parameter_by_name('os_param'),
-        instance.hostname.hostname,
+        zabbix_host,
         credential.get_parameter_by_name('disk_param'),
         credential.get_parameter_by_name('disk_dir'),
         credential.get_parameter_by_name('env_param'),
         datasource
     )
-
     context['grafana_url_zabbix'] = grafana_url_zabbix
 
-    dashboard = credential.get_parameter_by_name(
-                'sofia_dbaas_database_dashboard'
-                )
-
-    dashboard = dashboard.format(engine_type)
     hostname = instance.hostname.hostname
     if 'globoi.com' in hostname:
         hostname = hostname.split('.')[0]
-    url = "{}/{}?var-host_name={}&var-datasource={}".format(
+    grafana_url_sofia = "{}{}?var-host_name={}&var-datasource={}".format(
         credential.endpoint,
-        dashboard,
+        sofia_engine_dashboard,
         hostname,
         credential.get_parameter_by_name('datasource'),
-        )
-
-    context['grafana_url_sofia'] = url
+    )
+    context['grafana_url_sofia'] = grafana_url_sofia
 
     return render_to_response(
         "logical/database/details/metrics_tab.html",

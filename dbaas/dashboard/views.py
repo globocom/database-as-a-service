@@ -5,9 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from physical.models import DatabaseInfra
 from logical.models import Database
-from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
-from physical.models import Environment
+from system.models import Configuration
+
 
 LOG = logging.getLogger(__name__)
 
@@ -50,16 +49,8 @@ def databaseinfra(request, infra_id):
 
 @login_required
 def sofia_dashboard(request):
-
-    credential = get_credentials_for(
-        environment=Environment.objects.first(),
-        credential_type=CredentialType.GRAFANA
-    )
-
-    sofia_dashboard = "{}/{}?var-datasource={}".format(
-        credential.endpoint,
-        credential.get_parameter_by_name('sofia_dbaas_dashboard'),
-        credential.get_parameter_by_name('datasource')
-        )
+    sofia_grafana_url = Configuration.get_by_name('sofia_grafana_url')
+    sofia_grafana_datasource = Configuration.get_by_name('sofia_grafana_datasource')
+    sofia_dashboard = "{}?var-datasource={}".format(sofia_grafana_url, sofia_grafana_datasource)
 
     return render_to_response("dashboard/sofia_dashboard.html", {'sofia_dashboard':sofia_dashboard}, context_instance=RequestContext(request))

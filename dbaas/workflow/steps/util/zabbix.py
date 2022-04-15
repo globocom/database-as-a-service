@@ -51,7 +51,10 @@ class ZabbixStep(BaseInstanceStep):
 
     @property
     def hosts_in_zabbix(self):
-        monitors = [self.host.hostname]
+        if self.zabbix_provider.using_agent:
+            monitors = []
+        else:
+            monitors = [self.host.hostname]
         for instance in self.instances:
             current_dns = instance.dns
             monitors.append(current_dns)
@@ -109,9 +112,8 @@ class CreateAlarms(ZabbixStep):
             return
 
         DestroyAlarms(self.instance).do()
-        self.zabbix_provider.create_instance_basic_monitors(
-            self.host
-        )
+        if not self.zabbix_provider.using_agent:
+            self.zabbix_provider.create_instance_basic_monitors(self.host)
 
         for instance in self.instances:
             self.zabbix_provider.create_instance_monitors(instance)
@@ -136,7 +138,10 @@ class CreateAlarmsDatabaseMigrateBase(ZabbixStep):
 
     @property
     def hosts_in_zabbix(self):
-        monitors = [self.host_monitor.hostname]
+        if self.zabbix_provider.using_agent:
+            monitors = []
+        else:
+            monitors = [self.host_monitor.hostname]
         for instance in self.instances_monitor:
             current_dns = instance.dns
             monitors.append(current_dns)
@@ -149,7 +154,8 @@ class CreateAlarmsDatabaseMigrateBase(ZabbixStep):
         return monitors
 
     def _create_alarms(self):
-        self.zabbix_provider.create_instance_basic_monitors(self.host_monitor)
+        if not self.zabbix_provider.using_agent:
+            self.zabbix_provider.create_instance_basic_monitors(self.host_monitor)
         for instance in self.instances_monitor:
             self.zabbix_provider.create_instance_monitors(instance)
 

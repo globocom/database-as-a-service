@@ -70,6 +70,18 @@ class HostBaseCommands(object):
             no_output=no_output
         )
 
+    def ops_agent_fluent_bit(self, action, no_output=False):
+        script = """chkconfig google-cloud-ops-agent-fluent-bit
+        if [ "$?" == "0" ];
+        then
+            {}
+        fi""".format(self.exec_service_command(
+            service_name='google-cloud-ops-agent-fluent-bit',
+            action=action,
+            no_output=no_output
+        ))
+        return script
+
     def telegraf(self, action, no_output=False):
         return self.exec_service_command(
             service_name='telegraf',

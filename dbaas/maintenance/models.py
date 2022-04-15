@@ -1037,6 +1037,11 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
             host.can_do_retry = False
             host.save()
 
+    def get_instance_environment(self, instance):
+        if instance.future_instance:
+            return self.origin_environment
+        return self.environment
+
     @property
     def hosts_zones(self):
         hosts = {}
@@ -1048,32 +1053,6 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         return "Migrate {} to {} - Stage: {}".format(
             self.database, self.environment, self.migration_stage
         )
-
-    def get_current_environment(self, instance=None):
-        if self.migration_is_running:
-            return self.origin_environment
-
-        if not self.database.plan.is_ha\
-           or not self.database.infra.migration_in_progress:
-            return self.environment
-
-        if instance:
-            if self.migration_stage > self.STAGE_1:
-                if instance.dns == instance.address:
-                    return self.origin_environment
-                return self.environment
-            if instance.dns == instance.address:
-                return self.environment
-            return self.origin_environment
-
-        return self.environment
-
-    @property
-    def migration_is_running(self):
-        ''' return true if migration is started and running '''
-        return all([self.database.infra.migration_in_progress,
-                    self.migration_stage > self.NOT_STARTED,
-                    self.status != self.SUCCESS])
 
 
 class HostMigrate(DatabaseMaintenanceTask):
