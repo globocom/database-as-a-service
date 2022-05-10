@@ -558,7 +558,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
-
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -608,6 +607,14 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.vip_provider.CreateVip',
+                'workflow.steps.util.vip_provider.CreateInstanceGroup',
+                'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                'workflow.steps.util.vip_provider.CreateHeathcheck',
+                'workflow.steps.util.vip_provider.CreateBackendService',
+                'workflow.steps.util.vip_provider.AllocateIP',
+                'workflow.steps.util.vip_provider.AllocateDNS',
+                'workflow.steps.util.vip_provider.CreateForwardingRule',
+                'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
                 'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
@@ -643,7 +650,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Configuring database': (
-                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
             )}, {
@@ -669,6 +676,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',

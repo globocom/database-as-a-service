@@ -10,6 +10,7 @@ from notification.models import TaskHistory
 from django_redis import get_redis_connection
 from django.conf import settings
 from redis import Redis
+from django.db.models import get_app, get_models
 
 
 class CeleryActivesNodeError(EnvironmentError):
@@ -139,48 +140,37 @@ class Command(BaseCommand):
             self.task.add_detail("ERROR: Not running in celery", level=2)
             self.task.add_detail("Setting task to ERROR status", level=3)
 
+            self.change_maintenance_status_to_error(task=task)
             task.update_status_for(
                 status=TaskHistory.STATUS_ERROR,
                 details="Celery is not running this task"
             )
 
-            database_upgrade = task.database_upgrades.first()
-            if database_upgrade:
-                self.task.add_detail(
-                    "Setting database upgrade {} status to ERROR".format(
-                        database_upgrade.id
-                    ), level=3
-                )
-                database_upgrade.set_error()
-
-            database_resize = task.database_resizes.first()
-            if database_resize:
-                self.task.add_detail(
-                    "Setting database resize {} status to ERROR".format(
-                        database_resize.id
-                    ), level=3
-                )
-                database_resize.set_error()
-
-            database_create = task.create_database.first()
-            if database_create:
-                self.task.add_detail(
-                    "Setting database create {} status to ERROR".format(
-                        database_create.id
-                    ), level=3
-                )
-                database_create.set_error()
-
-            database_restore = task.database_restore.first()
-            if database_restore:
-                self.task.add_detail(
-                    "Setting database restore {} status to ERROR".format(
-                        database_restore.id
-                    ), level=3
-                )
-                database_restore.set_error()
-
         return tasks_with_problem
+
+    def change_maintenance_status_to_error(self, task):
+        """
+            Function to set maintenance task to error, to allow retry of the operation linked to maintenance.
+        """
+        try:
+            app = get_app('maintenance')
+            for model in get_models(app):
+                if hasattr(model, 'task'):
+                    obj_maintenance = model.objects.filter(task=task).first()
+                    if obj_maintenance:
+                        self.task.add_detail(
+                            "Setting {}-{} status to ERROR".format(
+                                model.__name__, obj_maintenance.id
+                            ), level=0
+                        )
+                        obj_maintenance.set_error()
+        except Exception as error:
+            self.task.add_detail(
+                "ERROR: {} to update maintenance to error.".format(
+                    error
+                ), level=0
+            )
+            raise Exception(error)
 
     def get_celery_active_tasks(self, expected_hosts):
         self.task.add_detail('Collecting celery tasks...')
