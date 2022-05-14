@@ -42,7 +42,8 @@ from logical.views import database_details, DatabaseHostsView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
     RemoveInstanceDatabaseRetryView, database_history, \
     database_set_ssl_required, database_set_ssl_required_retry, \
-    database_set_ssl_not_required, database_set_ssl_not_required_retry, database_upgrades
+    database_set_ssl_not_required, database_set_ssl_not_required_retry, \
+    database_upgrades, database_cost
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -675,6 +676,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/$',
                 self.admin_site.admin_view(database_details),
                 name="logical_database_details"
+            ),
+             url(
+                r'^/?(?P<id>\d+)/cost/$',
+                self.admin_site.admin_view(database_cost),
+                name="logical_database_cost"
             ),
             url(
                 r'^/?(?P<id>\d+)/credentials/$',

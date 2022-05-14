@@ -26,6 +26,7 @@ from drivers.errors import ConnectionError
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 from util import get_credentials_for
+from util import get_or_none_credentials_for
 from dbaas_credentials.models import CredentialType
 
 
@@ -266,6 +267,13 @@ class Database(BaseModel):
     @property
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
+
+    @property
+    def has_cost_credential(self):
+        return get_or_none_credentials_for(
+            self.infra.environment,
+            CredentialType.GCP_COST
+        )
 
     def pin_task(self, task):
         try:

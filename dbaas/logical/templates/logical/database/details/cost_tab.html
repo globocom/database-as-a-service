@@ -1,0 +1,96 @@
+{% extends "logical/database/details/base.html" %}
+{% load capacity admin_static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/progress_bar.css' %}" />
+{% endblock extrastyle %}
+{% block tab %}
+<div class="row-fluid">
+    <div class="chartBox span9">
+        <canvas id="costChart"></canvas>
+    </div>
+    <div class="costtotals span3">
+        <div class="alert alert-info">
+            <h2>Total:</h2>
+            <p class="totalvalue"></p>
+        </div>
+        <div class="alert alert-info">
+            <h2>Period:</h2>
+            <p class="periodvalue"></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+<style>
+.totalvalue, .periodvalue{
+    font-size: 2em;
+    line-height: 1.4em;
+}
+</style>
+<script src="{% static "assets/js/bootstrap.min.js" %}"></script>
+<script src="{% static "admin/js/chart.js" %}"></script>
+<script>
+var costApi="{{ cost_api }}";
+var infraName="{{ infra_name }}";
+
+$(document).ready(function(){
+    $(".form-actions").hide();
+    $.get(costApi + infraName, function(data){
+        var [labels, costs] = [[], []];
+        data.items.forEach(function(item){
+            labels.push(item.usage_date)
+            costs.push(
+                item.cost
+            )
+        })
+        const chartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Database cost',
+                data: costs,
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+            }]
+        };
+
+        const config = {
+            type: 'line',
+            data: chartData,
+          };
+
+        const costChart = new Chart(
+            document.getElementById('costChart'),
+            config
+        );
+
+        $(".totalvalue").html(
+            parseFloat(data.totals.cost).toFixed(2) + 
+            " (" + data.totals.cost_currency + ")"
+        );
+
+        $('.periodvalue').html(
+          "From " + data.totals.date_start +
+          "<br>To " + data.totals.date_end + 
+          "<br>(" + data.totals.days + " days)"
+        );
+
+
+    }).fail(function(err) {
+        console.error("COST API ERROR::", err)
+        var msg = "<p>Error while get chart data</p>";
+        if (err.status === 404){
+            msg = "<p>Database infra not found on cost api</p>";
+        }
+        $(".chartBox").html(msg);
+        $(".costtotals").hide()
+      })
+})
+</script>
+
+{% endblock %}

@@ -269,6 +269,21 @@ def database_details(request, context, database):
     )
 
 
+@database_view('cost')
+def database_cost(request, context, database):
+    credential = get_credentials_for(
+        database.infra.environment,
+        CredentialType.GCP_COST
+    )
+
+    context['cost_api'] = credential.endpoint
+    context['infra_name'] = database.infra.name
+    return render_to_response(
+        "logical/database/details/cost_tab.html",
+        context, RequestContext(request)
+    )
+
+
 @database_view('credentials')
 def database_credentials(request, context, database):
 
