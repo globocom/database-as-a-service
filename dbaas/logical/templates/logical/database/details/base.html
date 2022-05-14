@@ -53,6 +53,9 @@
     {% block tabs %}
       <ul class="nav nav-tabs">
         <li role="presentation" {% if current_tab == 'details' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_details' database.id %}">Details</a></li>
+        {% if database.has_cost_credential %}
+        <li role="presentation" {% if current_tab == 'cost' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_cost' database.id %}">Cost</a></li>
+        {% endif %}
         <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_credentials' database.id %}">Credentials</a></li>
         <li role="presentation" {% if current_tab == 'metrics' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_metrics' database.id %}">Metrics</a></li>
         <li role="presentation" {% if current_tab == 'resizes' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_resizes' database.id %}">Vm Offering</a></li>
