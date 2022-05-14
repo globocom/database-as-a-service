@@ -2158,6 +2158,7 @@ class DetachDataVolume(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
+            MountDataVolume(self.instance).do()
 
 
 class DetachFirstVolume(VolumeProviderBase):
@@ -2179,7 +2180,6 @@ class DetachFirstVolume(VolumeProviderBase):
 
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
-
 
 
 class DetachActiveVolume(DetachDataVolume):
