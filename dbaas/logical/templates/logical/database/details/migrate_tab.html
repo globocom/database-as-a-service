@@ -271,7 +271,24 @@
     });
     $("#migrate_environment").change()
 
+    function check_offering(new_offering, old_offering, modal_id){
+      $.ajax({
+          url: "/logical/check_offering_sizes/",
+          type: "POST",
+          data: {
+              'new_offering': parseInt(new_offering),
+              'old_offering': parseInt(old_offering)
+          },
+          success: function( data ) {
+            $("#" + modal_id + " .modal_check_offer").empty().append('<p style="color:red;font-weight:bold;">' + data.cpus + '</p>');
+            $("#" + modal_id + " .modal_check_offer").append('<p style="color:red;font-weight:bold;">' + data.memory + '</p>');
+            $("#" + modal_id + " .modal_check_offer").css('display', 'block');
+          }
+      });
+    }
+
     $("#migrate_offering").on("change", function() {
+      check_offering($(this).val(), {{ current_offering.id }}, "migrate_environment_modal");
       control_migrate_button();
     });
     $("#migrate_offering").change()
