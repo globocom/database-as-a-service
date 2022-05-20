@@ -13,18 +13,19 @@ LOG = logging.getLogger(__name__)
 
 def connect_host(func):
     def wrapper(self, *args, **kw):
-        try:
-            self.connect()
-            return func(self, *args, **kw)
-        except (paramiko.ssh_exception.BadHostKeyException,
-                paramiko.ssh_exception.AuthenticationException,
-                paramiko.ssh_exception.SSHException,
-                socket.error) as e:
-            msg = "We caught an exception: {}.".format(e)
-            LOG.warning(msg)
-            self.output['exception'] = str(e)
-            return self.output
-
+        # try:
+        #     self.connect()
+        #     return func(self, *args, **kw)
+        # except (paramiko.ssh_exception.BadHostKeyException,
+        #         paramiko.ssh_exception.AuthenticationException,
+        #         paramiko.ssh_exception.SSHException,
+        #         socket.error) as e:
+        #     msg = "We caught an exception: {}.".format(e)
+        #     LOG.warning(msg)
+        #     self.output['exception'] = str(e)
+        #     return self.output
+        self.connect()
+        return func(self, *args, **kw)
     return wrapper
 
 
