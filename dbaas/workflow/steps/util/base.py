@@ -473,6 +473,7 @@ class ACLFromHellClient(object):
         return action(
             url,
             auth=(self.credential.user, self.credential.password),
+            verify=False,
             **kw
         )
 
