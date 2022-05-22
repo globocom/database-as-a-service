@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from .views import refresh_status
 from .views import (CredentialView, CredentialSSLView,
-                    credential_parameter_by_name)
+                    credential_parameter_by_name, check_offering_sizes)
 
 
 urlpatterns = patterns(
@@ -18,4 +18,7 @@ urlpatterns = patterns(
     url(r"^(?P<env_id>\d+)/credential_parameter_by_name/(?P<param_name>[\w\-\_]+)$",
         credential_parameter_by_name,
         name="credential_parameter_by_name"),
+    url(r"^check_offering_sizes/",
+        check_offering_sizes,
+        name="check_offering_sizes"),
 )

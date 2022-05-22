@@ -39,6 +39,7 @@ from maintenance.models import (
 from . import services
 from . import exceptions
 from . import utils
+from django.contrib.auth.decorators import login_required
 
 
 LOG = logging.getLogger(__name__)
@@ -2472,3 +2473,26 @@ def database_persistence(request, context, database):
         "logical/database/details/persistence_tab.html",
         context, RequestContext(request)
     )
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def check_offering_sizes(request):
+    status = False
+    cpus = ''
+    memory = ''
+    if request.method == 'POST':
+        new_id = int(request.POST.get('new_offering'))
+        old_id = int(request.POST.get('old_offering'))
+        if new_id > 0 and old_id > 0:
+            new = Offering.objects.get(id=request.POST.get('new_offering'))
+            old = Offering.objects.get(id=request.POST.get('old_offering'))
+            cpus = 'Check that the cpus amount of new offer is lower than the previous one.' \
+                if int(new.cpus) < int(old.cpus) else ''
+            memory = 'Check that the memory amount of new offer is lower than the previous one.' \
+                if int(new.memory_size_mb) < int(old.memory_size_mb) else ''
+    response_json = json.dumps({'status': status,
+                                'cpus': cpus,
+                                'memory': memory})
+    return HttpResponse(response_json, content_type="application/json")
+
