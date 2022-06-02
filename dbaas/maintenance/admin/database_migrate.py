@@ -16,7 +16,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     list_filter = [
         "status", "database", "environment"
     ]
-    search_fields = ("task__id", "task__task_id", "database")
+    search_fields = ("task__id", "task__task_id", "database__name")
     list_display = (
         "database", "origin_environment", "environment",
         "origin_offering", "offering", "migration_stage", "current_step",
