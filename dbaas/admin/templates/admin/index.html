@@ -96,6 +96,8 @@
                                 {% if model.admin_url %}
                                     {% if model.name == "Resource use reports" %}
                                         <td class="model-name"><a href="{% url 'sub_used_resource_report' %}">Resource use reports</a></td>
+                                    {% elif model.name == "Plans" %}
+                                        <td class="model-name"><a href="{{ model.admin_url }}">Plan details</a></td>
                                     {% else %}
                                         <td class="model-name"><a href="{{ model.admin_url }}">{{ model.name }}</a></td>
                                     {% endif %}
