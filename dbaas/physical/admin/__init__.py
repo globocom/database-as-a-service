@@ -20,6 +20,7 @@ from .vip import VipAdmin
 from .vip_instance_group import VipInstanceGroupAdmin
 from .disk_offering_type import DiskOfferingTypeAdmin
 from .script import ScriptAdmin
+from ..views import plans_details
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
 admin.site.register(models.Engine, EngineAdmin)
@@ -41,4 +42,4 @@ admin.site.register(models.Vip, VipAdmin)
 admin.site.register(models.VipInstanceGroup, VipInstanceGroupAdmin)
 admin.site.register(models.DiskOfferingType, DiskOfferingTypeAdmin)
 admin.site.register(models.Volume)
-
+admin.site.register_view('/physical/plans_details/', name="Plan details", view=plans_details)
