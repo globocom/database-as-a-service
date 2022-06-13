@@ -3,7 +3,7 @@
 {% block sidebar %}
   {{ block.super }}
 
-{% if custom_list and perms.physical.add_databaseinfra %}
+{% if custom_list %}
 <div class="container-fluid">
     <div class="row-fluid dashboard-tools">
         {% if perms.simple_audit.change_audit %}
