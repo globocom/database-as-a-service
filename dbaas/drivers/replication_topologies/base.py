@@ -240,6 +240,7 @@ class BaseTopology(object):
             'workflow.steps.util.host_provider.AllocateIP',
             'workflow.steps.util.host_provider.CreateVirtualMachine',
             'workflow.steps.util.dns.CreateDNS',
+            'workflow.steps.util.dns.CheckIsReady',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.volume_provider.NewVolume',
