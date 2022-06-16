@@ -95,7 +95,7 @@ class AddReadOnlyInstanceService:
 
         max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
         qtd_new_hosts = self.number_of_instances
-        current_read_nodes = len(self.database.infra.instances.filter(read_only=True))
+        current_read_nodes = len(self.database.infra.instances.filter(read_only=True, status=1))
         total_read_hosts = qtd_new_hosts + current_read_nodes
         if total_read_hosts > max_read_hosts:
             raise exceptions.ReadOnlyHostsLimit(
