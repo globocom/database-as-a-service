@@ -31,7 +31,7 @@ gunicorn==19.6.0
 httpretty==0.8.0
 itsdangerous==0.23
 kombu==3.0.35
-logilab-common==0.60.0
+logilab-common==0.61.0
 paramiko==2.1.1
 pyasn1==0.1.7
 pycrypto==2.6
