@@ -976,7 +976,9 @@ class DestroyIPMigrate(AllocateIP):
         return self.infra.environment
 
     def do(self):
-        super(DestroyIPMigrate, self).undo()
+        if self.instance.static_ip_by_address:
+            self.provider.destroy_static_ip(self.instance.static_ip_by_address)
+            self.instance.static_ip_by_address.delete()
 
     def undo(self):
         raise NotImplementedError
