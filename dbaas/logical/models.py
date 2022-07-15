@@ -112,13 +112,6 @@ class Database(BaseModel):
         (ALERT, 'Alert')
     )
 
-    KIBANA_LOG = 1
-    GCP_LOG = 2
-    LOG_TYPE = (
-        (KIBANA_LOG, 'Kibana'),
-        (GCP_LOG, 'GCP Cloud Logging')
-    )
-
     name = models.CharField(
         verbose_name=_("Database name"), max_length=100, db_index=True
     )
@@ -172,7 +165,6 @@ class Database(BaseModel):
         User, related_name='databases_quarantine',
         null=True, blank=True, editable=False
     )
-    log_type = models.IntegerField(choices=LOG_TYPE, default=KIBANA_LOG)
 
     def validate_unique(self, *args, **kwargs):
         ''' Validate if database name is unique
@@ -274,6 +266,14 @@ class Database(BaseModel):
             self.infra.environment,
             CredentialType.GCP_COST
         )
+
+    @property
+    def gcp_log_credential(self):
+        return get_or_none_credentials_for(
+            self.environment,
+            CredentialType.GCP_LOG
+        )
+
 
     def pin_task(self, task):
         try:
@@ -469,28 +469,6 @@ class Database(BaseModel):
     def get_endpoint_dns_simple(self):
         return self.driver.get_connection_dns_simple(database=self)
 
-    '''
-    def __graylog_url(self):
-
-        if self.databaseinfra.plan.is_pre_provisioned:
-            return ""
-
-        credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.GRAYLOG
-        )
-        stream = credential.get_parameter_by_name(
-            'stream_{}'.format(self.plan.engine.engine_type.name)
-        )
-        search_field = credential.get_parameter_by_name('search_field')
-        if not stream or not search_field:
-            return ""
-
-        return "{}/streams/{}/search?q={}:{}".format(
-            credential.endpoint, stream, search_field, self.name
-        )
-    '''
-
     def __kibana_url(self):
         if self.databaseinfra.plan.is_pre_provisioned:
             return ""
@@ -514,10 +492,7 @@ class Database(BaseModel):
         from workflow.steps.util.base import HostProviderClient
         host_prov_client = HostProviderClient(self.environment)
 
-        credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.GCP_LOG
-        )
+        credential = self.gcp_log_credential
 
         vm_ids = host_prov_client.get_vm_ids(self.infra)
 
@@ -551,19 +526,10 @@ class Database(BaseModel):
         return url
 
     def get_log_url(self):
-        if self.log_type == self.GCP_LOG:
+        if self.gcp_log_credential:
             return self.__gcp_log_url()
         else:
             return self.__kibana_url()
-
-        '''
-        if Configuration.get_by_name_as_int('gcp_log_integration') == 1:
-            return self.__gcp_log_url()
-        if Configuration.get_by_name_as_int('graylog_integration') == 1:
-            return self.__graylog_url()
-        if Configuration.get_by_name_as_int('kibana_integration') == 1:
-            return self.__kibana_url()
-        '''
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:

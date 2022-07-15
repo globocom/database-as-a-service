@@ -1655,6 +1655,14 @@ class Instance(BaseModel):
             return
 
     @property
+    def static_ip_by_address(self):
+        try:
+            return Ip.objects.get(address=self.address)
+        except Ip.DoesNotExist:
+            return
+
+
+    @property
     def has_static_ip_allocated_by_dns(self):
 
         return Ip.objects.filter(
