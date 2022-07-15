@@ -748,10 +748,6 @@ class Create(DatabaseStep):
         database.subscribe_to_email_events = creating.subscribe_to_email_events
         database.is_protected = creating.is_protected
         database.pool = creating.pool
-        if self.host.is_ol6:
-            database.log_type = Database.KIBANA_LOG
-        else:
-            database.log_type = Database.GCP_LOG
 
         if creating.project:
             database.project = creating.project
