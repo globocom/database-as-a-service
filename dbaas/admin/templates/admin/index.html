@@ -75,9 +75,9 @@
         <div class="span12 app-list">
         {% endif %}
             {% if app_list %}
-                <h2>{% trans 'Apps' %}</h2>
+                <h2 id="apps-list-title">{% trans 'Apps' %}</h2>
                 {% for app in app_list %}
-                    <table summary="{% blocktrans with name=app.name %}Models available in the {{ name }} application.{% endblocktrans %}" class="table table-striped table-hover table-bordered table-condensed">
+                    <table summary="{% blocktrans with name=app.name %}Models available in the {{ name }} application.{% endblocktrans %}" class="table table-striped table-hover table-bordered table-condensed" id="app-{{ app.app_label }}">
                         <thead>
                           <tr>
                             <th colspan="4">
@@ -161,8 +161,18 @@
             }
         }
 
+        reorder_apps = function(){
+            first_app = 'logical';
+            app = $(`#app-${first_app}`);
+            app.clone().insertAfter('#apps-list-title')
+            app.remove();
+        }
+
         $(window).resize(swap_if_necessary);
-        $(document).ready(swap_if_necessary);
+        $(document).ready(function() {
+            reorder_apps();
+            swap_if_necessary();
+        });
     })(django.jQuery);
     </script>
 {% endblock js_footer %}
