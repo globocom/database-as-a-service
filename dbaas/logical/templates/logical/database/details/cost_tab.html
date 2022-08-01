@@ -40,14 +40,24 @@ var infraName="{{ infra_name }}";
 
 $(document).ready(function(){
     $(".form-actions").hide();
-    $.get(costApi + infraName, function(data){
+
+    var todayDate = new Date();
+    var [past30daysDate] = new Date(new Date().setDate(todayDate.getDate() - 30)).toISOString().split("T");
+    todayDate = todayDate.toISOString().split("T")[0];
+
+    var url = `${costApi}${infraName}/${past30daysDate}/${todayDate}`
+    $.get(url, function(data){
         var [labels, costs] = [[], []];
         data.items.forEach(function(item){
-            labels.push(item.usage_date)
-            costs.push(
-                item.cost
-            )
+            var index = labels.indexOf(item.usage_date);
+            if (index !== -1) {
+                costs[index] += item.cost;
+            } else {
+                labels.push(item.usage_date);
+                costs.push(item.cost);
+            }
         })
+
         const chartData = {
             labels: labels,
             datasets: [{
