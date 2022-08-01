@@ -21,6 +21,33 @@
         </div>
     </div>
 </div>
+<div class="row-fluid" style="margin-top: 3em;">
+    <table id="details-table" class="stripe hover dt-head-center">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Custo Total</th>
+                <th>Custo Infra</th>
+                <th>Custo DBaaS</th>
+                <th>Utilização</th>
+                <th>Unidade Utilização</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Data</th>
+                <th>Custo Total</th>
+                <th>Custo Infra</th>
+                <th>Custo DBaaS</th>
+                <th>Utilização</th>
+                <th>Unidade Utilização</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 
 {% endblock %}
 
@@ -68,6 +95,34 @@ $(document).ready(function(){
                 tension: 0.1,
             }]
         };
+
+        $('#details-table').DataTable({
+            data: data.items,
+            columns: [
+                {data: 'usage_date'},
+                {
+                    data: 'cost',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {
+                    data: 'cost_infra',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {
+                    data: 'cost_dbaas',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {data: 'utilization'},
+                {data: 'utilization_metric'}
+            ],
+            pageLength: 25
+        });
 
         const config = {
             type: 'line',
