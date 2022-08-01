@@ -75,8 +75,8 @@ $(document).ready(function(){
     $(".form-actions").hide();
 
     var todayDate = new Date();
-    var [past30daysDate] = new Date(new Date().setDate(todayDate.getDate() - 30)).toISOString().split("T");
-    todayDate = todayDate.toISOString().split("T")[0];
+    var [past30daysDate] = new Date(new Date().setDate(todayDate.getDate() - 30)).toISOString().split("T"); // get the date from "today" minus 30 days, and format it to ISO string whitout the time Eg. (2022-07-02)
+    todayDate = todayDate.toISOString().split("T")[0]; // convert "today" Date object to ISO string without the time. Eg. (2022-08-01)
 
     var url = `${costApi}${infraName}/${past30daysDate}/${todayDate}`
     $.get(url, function(data){
