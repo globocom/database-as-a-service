@@ -25,10 +25,13 @@
     <table id="details-table" class="stripe hover dt-head-center">
         <thead>
             <tr>
+                <th>Nome DB</th>
                 <th>Data</th>
                 <th>Custo Total</th>
                 <th>Custo Infra</th>
                 <th>Custo DBaaS</th>
+                <th>Serviço</th>
+                <th>SKU</th>
                 <th>Utilização</th>
                 <th>Unidade Utilização</th>
             </tr>
@@ -38,10 +41,13 @@
         </tbody>
         <tfoot>
             <tr>
+                <th>Nome DB</th>
                 <th>Data</th>
                 <th>Custo Total</th>
                 <th>Custo Infra</th>
                 <th>Custo DBaaS</th>
+                <th>Serviço</th>
+                <th>SKU</th>
                 <th>Utilização</th>
                 <th>Unidade Utilização</th>
             </tr>
@@ -99,6 +105,7 @@ $(document).ready(function(){
         $('#details-table').DataTable({
             data: data.items,
             columns: [
+                {data: 'database_name'},
                 {data: 'usage_date'},
                 {
                     data: 'cost',
@@ -118,6 +125,8 @@ $(document).ready(function(){
                         return parseFloat(data).toFixed(2)
                     }
                 },
+                {data: 'infra_service_description'},
+                {data: 'infra_sku_description'},
                 {data: 'utilization'},
                 {data: 'utilization_metric'}
             ],
