@@ -678,6 +678,7 @@ class RedisCluster(Redis):
                 {'host': instance.address, 'port': instance.port}
                 for instance in self.instances_filtered
             ],
+            max_connections=None,
             password=self.databaseinfra.password,
             socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
             socket_connect_timeout=REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds,
