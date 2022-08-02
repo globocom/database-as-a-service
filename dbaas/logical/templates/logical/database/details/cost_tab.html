@@ -25,15 +25,15 @@
     <table id="details-table" class="stripe hover dt-head-center">
         <thead>
             <tr>
-                <th>Nome DB</th>
-                <th>Data</th>
-                <th>Custo Total</th>
-                <th>Custo Infra</th>
-                <th>Custo DBaaS</th>
-                <th>Serviço</th>
+                <th>DB Name</th>
+                <th>Date</th>
+                <th>Total Cost</th>
+                <th>Infra Cost</th>
+                <th>DBaaS Cost</th>
+                <th>Service</th>
                 <th>SKU</th>
-                <th>Utilização</th>
-                <th>Unidade Utilização</th>
+                <th>Utilization</th>
+                <th>Utilization Metric</th>
             </tr>
         </thead>
         <tbody>
@@ -41,15 +41,15 @@
         </tbody>
         <tfoot>
             <tr>
-                <th>Nome DB</th>
-                <th>Data</th>
-                <th>Custo Total</th>
-                <th>Custo Infra</th>
-                <th>Custo DBaaS</th>
-                <th>Serviço</th>
+                <th>DB Name</th>
+                <th>Date</th>
+                <th>Total Cost</th>
+                <th>Infra Cost</th>
+                <th>DBaaS Cost</th>
+                <th>Service</th>
                 <th>SKU</th>
-                <th>Utilização</th>
-                <th>Unidade Utilização</th>
+                <th>Utilization</th>
+                <th>Utilization Metric</th>
             </tr>
         </tfoot>
     </table>
@@ -73,6 +73,7 @@ var infraName="{{ infra_name }}";
 
 $(document).ready(function(){
     $(".form-actions").hide();
+    $("#details-table").hide(); // hide table headers while there is no data
 
     var todayDate = new Date();
     var [past30daysDate] = new Date(new Date().setDate(todayDate.getDate() - 30)).toISOString().split("T"); // get the date from "today" minus 30 days, and format it to ISO string whitout the time Eg. (2022-07-02)
@@ -101,7 +102,7 @@ $(document).ready(function(){
                 tension: 0.1,
             }]
         };
-
+        $("#details-table").show();
         $('#details-table').DataTable({
             data: data.items,
             columns: [
