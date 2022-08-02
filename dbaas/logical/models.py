@@ -28,7 +28,7 @@ from notification.models import TaskHistory
 from util import get_credentials_for
 from util import get_or_none_credentials_for
 from dbaas_credentials.models import CredentialType
-
+from physical.models import Environment
 
 
 LOG = logging.getLogger(__name__)
@@ -97,6 +97,13 @@ class DatabaseHistory(models.Model):
     description = models.TextField(
         verbose_name=_("Description"), null=True, blank=True
     )
+
+    def get_environment_stage(self):
+        try:
+            return Environment.objects.get(name=self.environment).stage
+        except Exception as error:
+            print(error)
+            return None
 
 
 class Database(BaseModel):

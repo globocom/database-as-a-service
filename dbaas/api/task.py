@@ -52,6 +52,7 @@ class TaskSerializer(serializers.ModelSerializer):
             return {
                 'name': instance.name,
                 'environment': instance.environment.name,
+                'environment_stage': instance.environment.stage,
                 'engine': '{} {}'.format(
                     engine.engine_type.name,
                     engine.version
@@ -62,6 +63,7 @@ class TaskSerializer(serializers.ModelSerializer):
             return {
                 'name': instance.name,
                 'environment': instance.environment,
+                'environment_stage': instance.get_environment_stage(),
                 'engine': instance.engine
             }
 
