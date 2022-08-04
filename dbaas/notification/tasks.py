@@ -597,7 +597,7 @@ def check_database_is_alive(self, database, wait=60, retries=3):
 @app.task(bind=True)
 @only_one(key="get_databases_used_size")
 def update_database_used_size_old(self):
-    LOG.info("Retrieving all databases")
+    LOG.info("Retrieving all databases -> (update_database_used_size_old)")
     try:
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
