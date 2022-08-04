@@ -97,6 +97,9 @@ class DatabaseHistory(models.Model):
     description = models.TextField(
         verbose_name=_("Description"), null=True, blank=True
     )
+    apps_bind_name = models.TextField(
+        verbose_name=_("apps_bind_name"), null=True, blank=True
+    )
 
 
 class Database(BaseModel):

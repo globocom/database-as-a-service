@@ -21,6 +21,39 @@
         </div>
     </div>
 </div>
+<div class="row-fluid" style="margin-top: 3em;">
+    <table id="details-table" class="stripe hover dt-head-center">
+        <thead>
+            <tr>
+                <th>DB Name</th>
+                <th>Date</th>
+                <th>Total Cost</th>
+                <th>Infra Cost</th>
+                <th>DBaaS Cost</th>
+                <th>Service</th>
+                <th>SKU</th>
+                <th>Utilization</th>
+                <th>Utilization Metric</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>DB Name</th>
+                <th>Date</th>
+                <th>Total Cost</th>
+                <th>Infra Cost</th>
+                <th>DBaaS Cost</th>
+                <th>Service</th>
+                <th>SKU</th>
+                <th>Utilization</th>
+                <th>Utilization Metric</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 
 {% endblock %}
 
@@ -40,14 +73,25 @@ var infraName="{{ infra_name }}";
 
 $(document).ready(function(){
     $(".form-actions").hide();
-    $.get(costApi + infraName, function(data){
+    $("#details-table").hide(); // hide table headers while there is no data
+
+    var todayDate = new Date();
+    var [past30daysDate] = new Date(new Date().setDate(todayDate.getDate() - 30)).toISOString().split("T"); // get the date from "today" minus 30 days, and format it to ISO string whitout the time Eg. (2022-07-02)
+    todayDate = todayDate.toISOString().split("T")[0]; // convert "today" Date object to ISO string without the time. Eg. (2022-08-01)
+
+    var url = `${costApi}${infraName}/${past30daysDate}/${todayDate}`
+    $.get(url, function(data){
         var [labels, costs] = [[], []];
         data.items.forEach(function(item){
-            labels.push(item.usage_date)
-            costs.push(
-                item.cost
-            )
+            var index = labels.indexOf(item.usage_date);
+            if (index !== -1) {
+                costs[index] += item.cost;
+            } else {
+                labels.push(item.usage_date);
+                costs.push(item.cost);
+            }
         })
+
         const chartData = {
             labels: labels,
             datasets: [{
@@ -58,6 +102,37 @@ $(document).ready(function(){
                 tension: 0.1,
             }]
         };
+        $("#details-table").show();
+        $('#details-table').DataTable({
+            data: data.items,
+            columns: [
+                {data: 'database_name'},
+                {data: 'usage_date'},
+                {
+                    data: 'cost',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {
+                    data: 'cost_infra',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {
+                    data: 'cost_dbaas',
+                    render: function (data, type, row) {
+                        return parseFloat(data).toFixed(2)
+                    }
+                },
+                {data: 'infra_service_description'},
+                {data: 'infra_sku_description'},
+                {data: 'utilization'},
+                {data: 'utilization_metric'}
+            ],
+            pageLength: 25
+        });
 
         const config = {
             type: 'line',
