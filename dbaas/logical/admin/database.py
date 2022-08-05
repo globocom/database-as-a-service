@@ -228,9 +228,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return show_info_popup(
             database.name, "Show Endpoint", ed_point,
             "icon-info-sign", "show-endpoint"
-        )
+        ) + self.quarantine_html(database)
+
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
+
+    def quarantine_html(self, database):
+        html_default = '<span class="label label-{}">{}</span>'
+        quarantine = ""
+        if database.is_in_quarantine:
+            quarantine = html_default.format("important", "in quarantine")
+
+        return format_html(quarantine)
 
     def engine_type(self, database):
         return database.engine_type
