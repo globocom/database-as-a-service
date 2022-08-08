@@ -2118,6 +2118,10 @@ def database_destroy(request, context, database):
             database.is_in_quarantine = False
             database.save()
 
+    quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
+    quarantine_time_dt = datetime.date.today() + datetime.timedelta(days=quarantine_time)
+    context["quarantine_time_dt"] = quarantine_time_dt
+
     return render_to_response(
         "logical/database/details/destroy_tab.html",
         context, RequestContext(request)
