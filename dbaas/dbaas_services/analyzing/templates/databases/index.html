@@ -1,0 +1,48 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.init.js"></script>
+    <script type="text/javascript" src="{% static 'js/clone.js' %}"> </script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            Report database
+        </li>
+        {% if has_perm %}
+            <li style="margin-top: -5px; position: relative; float: right">
+                <form method="post">
+                    <input style="display: none" name="database_report" value="database_report">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        Generate CSV database!
+                    </button>
+                </form>
+            </li>
+            <li style="margin-right: 5px; margin-top: -5px; position: relative; float: right">
+                <form method="post">
+                    <input style="display: none" name="database_report" value="database_report_per_line">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        Generate CSV database per line (Mariel)!
+                    </button>
+                </form>
+            </li>
+        {% endif %}
+    </ul>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
