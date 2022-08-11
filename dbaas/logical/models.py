@@ -97,9 +97,6 @@ class DatabaseHistory(models.Model):
     description = models.TextField(
         verbose_name=_("Description"), null=True, blank=True
     )
-    apps_bind_name = models.TextField(
-        verbose_name=_("apps_bind_name"), null=True, blank=True
-    )
 
 
 class Database(BaseModel):
@@ -167,6 +164,9 @@ class Database(BaseModel):
     quarantine_user = models.ForeignKey(
         User, related_name='databases_quarantine',
         null=True, blank=True, editable=False
+    )
+    apps_bind_name = models.TextField(
+        verbose_name=_("apps_bind_name"), null=True, blank=True
     )
 
     def validate_unique(self, *args, **kwargs):
