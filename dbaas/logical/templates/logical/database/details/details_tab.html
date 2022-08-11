@@ -176,6 +176,10 @@
     <div class="control-label"><label>Created At:</label></div>
     <div class="controls"><p class="readonly">{{ database.created_at }}</p></div>
   </div>
+    <div class="control-group">
+    <div class="control-label"><label>Bind name:</label></div>
+    <div class="controls"><p class="readonly">{{ database.apps_bind_name }}</p></div>
+  </div>
   {% if database.is_in_quarantine %}
     <div class="control-group">
       <div class="control-label"><label>Quarantine since:</label></div>
