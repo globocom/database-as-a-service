@@ -45,7 +45,7 @@
     <div class="control-label"></div>
     <div class="controls">
       {% if not database.is_in_quarantine and is_dba %}
-      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Put in quarantine</button>
+      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal_quarantine">Put in quarantine</button>
       {% else %}
       <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
       {% endif %}
@@ -53,7 +53,11 @@
   </div>
 </fieldset>
 
-{% include "admin/confirmation_modal_input.html" with modal_id="delete_modal" title="Delete database" body_text="logical/modal/delete_database.html" input_name="database_name" submit_button_value="Delete" submit_button_name="database_destroy" submit_button_id="id_destroy_btn"   %}
+{% if not database.is_in_quarantine and is_dba %}
+    {% include "admin/confirmation_modal_input.html" with modal_id="delete_modal_quarantine" title="Put in quarantine" body_text="logical/modal/delete_database_quarantine.html" input_name="database_name" submit_button_value="Delete" submit_button_name="database_destroy" submit_button_id="id_destroy_btn"   %}
+{% else %}
+    {% include "admin/confirmation_modal_input.html" with modal_id="delete_modal" title="Delete database" body_text="logical/modal/delete_database.html" input_name="database_name" submit_button_value="Delete" submit_button_name="database_destroy" submit_button_id="id_destroy_btn"   %}
+{% endif %}
 
 {% include "admin/confirmation_modal.html" with modal_id="undo_quarantine_modal" confirmation_message="Are you sure you want to get the database out of quarantine?" box_title="Undo quarantine now" button_class="btn btn-primary" button_type="submit" button_value="Undo Quarantine" button_name="undo_quarantine" id_optional="id=confirm_undo_quarantine_button" %}
 
