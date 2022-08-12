@@ -1,0 +1,1 @@
+from dbaas.dbaas_services.scripts.prometheus_get_bind import InsertBind
