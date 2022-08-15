@@ -13,11 +13,11 @@ from logical.models import Database, DatabaseHistory
 from dbaas.middleware import UserMiddleware
 from django.conf import settings
 from account.models import Team, Role
+from datetime import datetime
 
 import models
 import csv
 import logging
-import datetime
 
 
 class SubUsedResourceReport(ListView):
@@ -55,34 +55,55 @@ class DatabaseReport(ListView):
     def post(self, request, *args, **kwargs):
         self.has_perm(request)
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Created At', 'In Quarantine', 'Apps Bind Name']
-        databases = Database.objects.all()
         database_report = request.POST.get("database_report", "")
 
+        if database_report == 'database_report':
+            return self.default_database_report()
+        else:
+            return self.vm_by_line_database_report()
+
+
+    def vm_by_line_database_report(self):
+
+        header = ['Name', 'VM', 'Env', 'Team', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="report.csv"'
+
+        filename = 'dbaas_databases_vm_by_line-' + datetime.now().strftime("%Y-%m-%m") + ".csv"
+
+        response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
         writer = csv.writer(response, csv.excel)
         response.write(u'\ufeff'.encode('utf8'))
         writer.writerow(header)
 
         for database in databases:
-            database_history = DatabaseHistory.objects.filter(database_id=database.id).last()
-            try:
-                apps_bind_name = database_history.apps_bind_name
-            except:
-                apps_bind_name = ''
-            if database_report == 'database_report':
-                hostname = [instance.hostname.hostname.encode("utf-8") for instance in
-                            database.infra.instances.all()]
-                data = [database.name, hostname, database.environment, database.team,
-                        database.created_at, database.is_in_quarantine, apps_bind_name]
+            for instance in database.infra.instances.all():
+                data = [database.name, instance.hostname.hostname.encode("utf-8"), database.environment,
+                        database.team,
+                        database.created_at, database.is_in_quarantine, database.apps_bind_name]
                 writer.writerow(data)
-            else:
-                for instance in database.infra.instances.all():
-                    data = [database.name, instance.hostname.hostname.encode("utf-8"), database.environment,
-                            database.team,
-                            database.created_at, database.is_in_quarantine, apps_bind_name]
-                    writer.writerow(data)
-
+            
+            
         return response
 
+    def default_database_report(self):
+
+        header = ['Name', 'VM', 'Env', 'Team', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        databases = Database.objects.all()
+        response = HttpResponse(content_type='text/csv')
+
+        filename = 'dbaas_databases-' + datetime.now().strftime("%Y-%m-%m") + ".csv"
+        response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
+
+        writer = csv.writer(response, csv.excel)
+        response.write(u'\ufeff'.encode('utf8'))
+        writer.writerow(header)
+
+        for database in databases:
+            hostname = [instance.hostname.hostname.encode("utf-8") for instance in
+                        database.infra.instances.all()]
+            data = [database.name, hostname, database.environment, database.team,
+                    database.created_at, database.is_in_quarantine, database.apps_bind_name]
+            writer.writerow(data)
+            
+        return response

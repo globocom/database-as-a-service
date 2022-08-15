@@ -3,6 +3,7 @@ networks:
   gntw:
     driver: bridge
 services:
+  
   app:
     image: dbaas_dev
     volumes:
@@ -29,6 +30,7 @@ services:
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks:
       - gntw
+  
   app_celery:
     image: dbaas_dev
     volumes:
@@ -54,26 +56,32 @@ services:
         - SSL_CERT_FILE=/etc/ssl/certsg/AC_RAIZ.pem
     networks:
       - gntw
+  
   dev_redisdb:
-        image: redis:3.2
-        container_name: dev_redis32
-        networks:
-            - gntw
+    image: redis:3.2
+    container_name: dev_redis32
+    networks:
+        - gntw
+  
   dev_mongodb:
-        image: mongo:3.4
-        container_name: dev_mongo34
-        networks:
-          - gntw
+    image: mongo:3.4
+    container_name: dev_mongo34
+    networks:
+      - gntw
+  
   dev_mysqldb57:
-        platform: linux/x86_64
-        image: mysql:5.7
-        container_name: dev_mysql57
-        volumes:
-            - ./data/mysql:/var/lib/mysql
-        environment:
-            - MYSQL_ROOT_PASSWORD=123
-            - MYSQL_USER=rute
-            - MYSQL_PASSWORD=123
-            - MYSQL_DATABASE=dbaas
-        networks:
-            - gntw
+    platform: linux/x86_64
+    image: mysql:5.7
+    container_name: dev_mysql57
+    volumes:
+        - ./data/mysql:/var/lib/mysql
+    environment:
+        - MYSQL_ROOT_PASSWORD=123
+        - MYSQL_USER=rute
+        - MYSQL_PASSWORD=123
+        - MYSQL_DATABASE=dbaas
+    networks:
+        - gntw
+    ports:
+      - "4406:3306"
+    
