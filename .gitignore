@@ -26,3 +26,4 @@ dev/log
 venv/
 dev/etc
 dev/dbaas-20210112.dump
+.venv

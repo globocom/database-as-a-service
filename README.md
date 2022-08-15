@@ -71,11 +71,11 @@ Database setup for migrations:
 1. Connect to the local database.
     
         mysql -u root -p <GENERATED-PASSWORD>
-2. Change root password to an empty string.     
+   1. Change root password to an empty string.     
     
-        ALTER USER 'root'@'localhost' IDENTIFIED BY '';
+           ALTER USER 'root'@'localhost' IDENTIFIED BY '';
 
-3. Create ```dbaas``` database.
+2. Create ```dbaas``` database.
     
         CREATE DATABASE dbaas;
     

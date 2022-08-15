@@ -4,6 +4,7 @@ services:
 
     mysqldb55:
         image: mysql:5.5
+        platform: linux/amd64
         container_name: mysql55
         environment:
             - MYSQL_ROOT_PASSWORD=123
@@ -15,6 +16,7 @@ services:
 
     mysqldb56:
         image: mysql:5.6
+        platform: linux/amd64
         container_name: mysql56
         environment:
             - MYSQL_ROOT_PASSWORD=123
@@ -23,9 +25,10 @@ services:
             - MYSQL_DATABASE=dbaas
         ports:
             - "3307:3306"
-
+docker exec -i dev_mysql57 mysql -u root --password=123 dbaas
     mysqldb57:
         image: mysql:5.7
+        platform: linux/amd64
         container_name: mysql57
         environment:
             - MYSQL_ROOT_PASSWORD=123
@@ -51,6 +54,7 @@ services:
 
     test:
         image: dbaas_test
+        platform: linux/amd64
         volumes:
             - .:/code
         depends_on:
