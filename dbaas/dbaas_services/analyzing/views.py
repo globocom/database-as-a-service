@@ -69,7 +69,7 @@ class DatabaseReport(ListView):
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
-        filename = 'dbaas_databases_vm_by_line-' + datetime.now().strftime("%Y-%m-%m") + ".csv"
+        filename = 'dbaas_databases_vm_by_line-' + datetime.now().strftime("%Y-%m-%d") + ".csv"
 
         response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
         writer = csv.writer(response, csv.excel)
@@ -92,7 +92,7 @@ class DatabaseReport(ListView):
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
-        filename = 'dbaas_databases-' + datetime.now().strftime("%Y-%m-%m") + ".csv"
+        filename = 'dbaas_databases-' + datetime.now().strftime("%Y-%m-%d") + ".csv"
         response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
 
         writer = csv.writer(response, csv.excel)
