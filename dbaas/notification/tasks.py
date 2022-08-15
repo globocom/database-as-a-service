@@ -37,6 +37,8 @@ from maintenance.tasks_create_database import (get_or_create_infra,
 from notification.scripts import script_mongo_log_rotate
 from util.providers import get_deploy_settings
 
+import json
+import requests
 
 LOG = get_task_logger(__name__)
 
@@ -1814,6 +1816,46 @@ def database_set_ssl_not_required(self, database, user, task, since_step=0):
             ('Could not set database SSL required.\n'
              'This task doesn\'t have rollback')
         )
+
+
+@app.task(bind=True)
+@only_one(key="update_apps_bind_name", timeout=600)
+def update_apps_bind_name(self):
+    try:
+        db = Database
+        databases = db.objects.all()
+
+        for database in databases:
+            data_query = "query=tsuru_service_instance_bind{service_instance="
+            query = "'{}'".format(database)
+            data_query = data_query + query + "}"
+            response = requests.get("https://prometheus-br1.tsuru.gcp.i.globo/api/v1/query", params=data_query, verify=False)
+            print(response.url)
+            try:
+                content = json.loads(response.content)
+                metric = content["data"]["result"][0]["metric"]
+                if metric:
+                    databese_objects = db.objects.get(id=database.id)
+                    if databese_objects:
+                        if databese_objects.apps_bind_name:
+                            databese_objects.apps_bind_name += ', ' + metric["app"]
+                        else:
+                            databese_objects.apps_bind_name = metric["app"]
+                        databese_objects.save()
+                    print(content)
+            except Exception as e:
+                print(e)
+                pass
+
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
+                                       details='Updating apps bind name done!')
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
 class TaskRegister(object):
