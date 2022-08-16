@@ -1822,35 +1822,37 @@ def database_set_ssl_not_required(self, database, user, task, since_step=0):
 @only_one(key="update_apps_bind_name", timeout=600)
 def update_apps_bind_name(self):
     try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
+
         db = Database
         databases = db.objects.all()
 
         for database in databases:
             data_query = "query=tsuru_service_instance_bind{service_instance="
-            query = "'{}'".format(database)
+            query = "'{}'".format(database.name)
             data_query = data_query + query + "}"
-            response = requests.get("https://prometheus-br1.tsuru.gcp.i.globo/api/v1/query", params=data_query, verify=False)
-            print(response.url)
+            response = requests.get("https://prometheus-br1.tsuru.gcp.i.globo/api/v1/query", params=data_query,
+                                    verify=False)
+
             try:
                 content = json.loads(response.content)
                 metric = content["data"]["result"][0]["metric"]
                 if metric:
-                    databese_objects = db.objects.get(id=database.id)
-                    if databese_objects:
+                    databese_objects = db.objects.filter(id=database.id,
+                                                         apps_bind_name__icontains=metric["app"]).first()
+                    if not databese_objects:
                         if databese_objects.apps_bind_name:
                             databese_objects.apps_bind_name += ', ' + metric["app"]
                         else:
                             databese_objects.apps_bind_name = metric["app"]
                         databese_objects.save()
-                    print(content)
-            except Exception as e:
-                print(e)
-                pass
 
-        worker_name = get_worker_name()
-        task_history = TaskHistory.register(
-            request=self.request, user=None, worker_name=worker_name)
-        task_history.relevance = TaskHistory.RELEVANCE_WARNING
+            except Exception as e:
+                task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+                pass
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Updating apps bind name done!')
