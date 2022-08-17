@@ -27,7 +27,7 @@ def zabbix_collect_used_disk(task):
     resizes = 0
     problems = 0
 
-    integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
+    integration = CredentialType.objects.get(type=CredentialType.ZABBIX_READ_ONLY)
     for environment in Environment.objects.all():
         task.add_detail("Execution for environment: {}".format(environment.name))
         try:
@@ -63,7 +63,7 @@ def zabbix_collect_used_disk(task):
                 ).format(database)
                 task.add_detail(message, level=2)
                 continue
-                
+
             zabbix_provider = factory_for(
                 databaseinfra=database.databaseinfra, credentials=credentials
             )
