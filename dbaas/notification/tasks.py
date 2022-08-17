@@ -730,7 +730,7 @@ def purge_task_history(self):
                 'notification.tasks.database_notification',
                 'notification.tasks.database_notification_for_team',
                 'notification.tasks.update_database_used_size',
-                'notification.tasks.update_disk_used_size',
+                'maintenance.tasks.update_disk_used_size',
                 'notification.tasks.update_database_status',
                 'notification.tasks.update_instances_status',
                 'notification.tasks.update_infra_instances_sizes',
@@ -1009,20 +1009,6 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
         database.finish_task()
     finally:
         AuditRequest.cleanup_request()
-
-
-@app.task(bind=True)
-@only_one(key="disk_auto_resize", timeout=600)
-def update_disk_used_size(self):
-    worker_name = get_worker_name()
-    task = TaskHistory.register(
-        request=self.request, user=None, worker_name=worker_name
-    )
-    task.relevance = TaskHistory.RELEVANCE_WARNING
-    task.add_detail(message='Collecting disk used space from Zabbix')
-
-    from .tasks_disk_resize import zabbix_collect_used_disk
-    zabbix_collect_used_disk(task=task)
 
 
 @app.task(bind=True)
