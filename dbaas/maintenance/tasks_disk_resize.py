@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from django.core.exceptions import ObjectDoesNotExist
+
+from account.models import AccountUser
 from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from dbaas_zabbix import factory_for
-from dbaas_zabbix.metrics import ZabbixMetrics
 from dbaas_zabbix.errors import ZabbixMetricsError
-from account.models import AccountUser
-from physical.models import Environment, DiskOffering, Host
-from physical.errors import DiskOfferingMaxAutoResize
+from dbaas_zabbix.metrics import ZabbixMetrics
 from logical.errors import BusyDatabaseError
 from logical.models import Database
-from system.models import Configuration
-from .models import TaskHistory
-from util import email_notifications
+from physical.errors import DiskOfferingMaxAutoResize
+from physical.models import Environment, DiskOffering
 from physical.ssh import ScriptFailedException
+from system.models import Configuration
+from util import email_notifications
+from notification.tasks_disk_resize import update_disk
+
+from .models import TaskHistory
 
 
 def zabbix_collect_used_disk(task):
@@ -25,125 +27,13 @@ def zabbix_collect_used_disk(task):
     collected = 0
     resizes = 0
     problems = 0
-
     integration = CredentialType.objects.get(type=CredentialType.ZABBIX_READ_ONLY)
-    for environment in Environment.objects.all():
-        task.add_detail("Execution for environment: {}".format(environment.name))
+    environments = Environment.objects.all()
 
-        # get credentials
-        zabbix_credential, grafana_credential = find_credentials_for_environment(environment, integration, task)
-        if zabbix_credential is None or grafana_credential is None:
-            return
-
-        project_domain = grafana_credential.get_parameter_by_name('project_domain')
-
-        for database in Database.objects.filter(environment=environment):
-            database_resized = False
-            task.add_detail(message="Database: {}".format(database.name), level=1)
-
-            # check if database is locked
-            if check_locked_database(database, task):
-                continue
-
-            # get zabbix provider and metrics
-            zabbix_provider, metrics = get_provider_and_metrics(database, zabbix_credential)
-
-            driver = database.databaseinfra.get_driver()
-            non_database_instances = driver.get_non_database_instances()
-
-            # get hosts either from zabbix or infra
-            hosts = get_hosts(zabbix_provider, database)
-
-            for host in hosts:
-                # check if host is a database instance
-                if not is_database_instance(database, non_database_instances, host):
-                    continue
-
-                collected += 1
-                task.add_detail(
-                    message="Host: {} ({})".format(host.hostname, host.address), level=2
-                )
-
-                # get zabbix hostname
-                zabbix_host = get_zabbix_host(zabbix_provider, host, project_domain)
-
-                # get zabbix metrics for comparisons
-                zabbix_size, zabbix_used, zabbix_percentage = get_zabbix_metrics_values(metrics, zabbix_host, host, task)
-                if zabbix_size is None and zabbix_used is None and zabbix_percentage is None:
-                    problems += 1
-                    status = TaskHistory.STATUS_WARNING
-                    continue
-
-                task.add_detail(
-                    message="Zabbix /data: {}% ({}kb/{}kb)".format(
-                        zabbix_percentage, zabbix_used, zabbix_size
-                    ),
-                    level=3,
-                )
-
-                current_percentage = zabbix_percentage
-                current_used = zabbix_used
-                current_size = zabbix_size
-
-                current_percentage, current_used, current_size = check_treshhold_limit(
-                    current_percentage, current_used, current_size, zabbix_percentage, threshold_disk_resize, host, task
-                )
-
-                if zabbix_percentage > current_percentage:
-                    problems += 1
-                    status = TaskHistory.STATUS_WARNING
-                    task.add_detail(
-                        message="Error: Zabbix metrics not updated", level=4
-                    )
-
-                size_metadata = database.databaseinfra.disk_offering.size_kb
-                if has_difference_between(size_metadata, current_size):
-                    problems += 1
-                    task.add_detail(
-                        message="Error: Disk size different: {}kb".format(
-                            size_metadata
-                        ),
-                        level=4,
-                    )
-                    status = TaskHistory.STATUS_WARNING
-                elif (
-                    current_percentage >= threshold_disk_resize
-                    and database.disk_auto_resize
-                    and not database_resized
-                ):
-                    try:
-                        task_resize = disk_auto_resize(
-                            database=database,
-                            current_size=size_metadata,
-                            usage_percentage=current_percentage,
-                        )
-                        database_resized = True
-                    except Exception as e:
-                        problems += 1
-                        status = TaskHistory.STATUS_WARNING
-                        task.add_detail(
-                            message="Error: Could not do resize. {}".format(e), level=4
-                        )
-                    else:
-                        resizes += 1
-                        task.add_detail(
-                            message="Executing Resize... Task: {}".format(
-                                task_resize.id
-                            ),
-                            level=4,
-                        )
-
-                if not update_disk(
-                    database=database,
-                    address=host.address,
-                    task=task,
-                    total_size=current_size,
-                    used_size=current_used,
-                ):
-                    problems += 1
-                    status = TaskHistory.STATUS_WARNING
-
-            zabbix_provider.logout()
+    # run validations for every environment
+    collected, problems, resizes, status = execute_for_environments(
+        environments, task, integration, collected, problems, resizes, status, threshold_disk_resize
+    )
 
     details = "Collected: {} | Resize: {} | Problems: {}".format(
         collected, resizes, problems
@@ -151,28 +41,160 @@ def zabbix_collect_used_disk(task):
     task.update_status_for(status=status, details=details)
 
 
-def update_disk(database, address, total_size, used_size, task):
-    try:
-        volume = database.update_host_disk_used_size(
-            host_address=address, used_size_kb=used_size, total_size_kb=total_size
-        )
-        if not volume:
-            raise EnvironmentError("Instance {} do not have disk".format(address))
-    except ObjectDoesNotExist:
-        task.add_detail(
-            message="{} not found for: {}".format(address, database.name), level=3
-        )
-        return False
-    except Exception as error:
-        task.add_detail(
-            message="Could not update disk size used: {}".format(error), level=3
-        )
-        return False
+def execute_for_environments(environments, task, integration, collected, problems, resizes, status,
+                             threshold_disk_resize) -> tuple:
+    for environment in environments:
+        task.add_detail("Execution for environment: {}".format(environment.name))
 
-    task.add_detail(
-        message="Used disk size updated. NFS: {}".format(volume.identifier), level=3
-    )
-    return True
+        # get credentials
+        zabbix_credential, grafana_credential = find_credentials_for_environment(environment, integration, task)
+        if zabbix_credential is None and grafana_credential is None:
+            return
+
+        project_domain = grafana_credential.get_parameter_by_name('project_domain')
+        databases = Database.objects.filter(environment=environment)
+
+        # execute for databases of this specific environment
+        collected, problems, resizes, status = execute_for_databases(databases, task, zabbix_credential,
+                                                                     project_domain, collected, problems, resizes,
+                                                                     status, threshold_disk_resize)
+
+    return collected, problems, resizes, status
+
+
+def execute_for_databases(databases, task, zabbix_credential, project_domain, collected, problems, resizes, status,
+                          threshold_disk_resize) -> tuple:
+    for database in databases:
+        database_resized = False
+        task.add_detail(message="Database: {}".format(database.name), level=1)
+
+        # check if database is locked
+        if check_locked_database(database, task):
+            continue  # goes to next database because this is locked
+
+        # get zabbix provider and metrics
+        zabbix_provider, metrics = get_provider_and_metrics(database, zabbix_credential)
+
+        driver = database.databaseinfra.get_driver()
+        non_database_instances = driver.get_non_database_instances()
+
+        # get hosts either from zabbix or infra
+        hosts = get_hosts(zabbix_provider, database)
+
+        # execute for hosts
+        collected, problems, resizes, status, database_resized = execute_for_hosts(hosts, database,
+                                                                                   non_database_instances, collected,
+                                                                                   task, zabbix_provider,
+                                                                                   project_domain, metrics, problems,
+                                                                                   status, threshold_disk_resize,
+                                                                                   resizes, database_resized)
+
+        zabbix_provider.logout()
+        return collected, problems, resizes, status
+
+
+def execute_for_hosts(hosts, database, non_database_instances, collected, task, zabbix_provider, project_domain,
+                      metrics, problems, status, threshold_disk_resize, resizes, database_resized) -> tuple:
+    for host in hosts:
+        # check if host is a database instance
+        if not is_database_instance(database, non_database_instances, host):
+            continue
+
+        collected += 1
+        task.add_detail(
+            message="Host: {} ({})".format(host.hostname, host.address), level=2
+        )
+
+        # get zabbix hostname
+        zabbix_host = get_zabbix_host(zabbix_provider, host, project_domain)
+
+        # get zabbix metrics for comparisons
+        zabbix_size, zabbix_used, zabbix_percentage = get_zabbix_metrics_value(metrics, zabbix_host, host, task)
+        if zabbix_size is None and zabbix_used is None and zabbix_percentage is None:
+            problems += 1
+            status = TaskHistory.STATUS_WARNING
+            continue
+
+        task.add_detail(
+            message="Zabbix /data: {}% ({}kb/{}kb)".format(
+                zabbix_percentage, zabbix_used, zabbix_size
+            ),
+            level=3,
+        )
+
+        current_percentage = zabbix_percentage
+        current_used = zabbix_used
+        current_size = zabbix_size
+
+        current_percentage, current_used, current_size = check_treshold_for_data(
+            current_percentage, current_used, current_size, zabbix_percentage, threshold_disk_resize, host, task
+        )
+
+        if zabbix_percentage > current_percentage:
+            problems += 1
+            status = TaskHistory.STATUS_WARNING
+            task.add_detail(
+                message="Error: Zabbix metrics not updated", level=4
+            )
+
+        problems, resizes, status, database_resized = check_size_differences(database, current_size, current_percentage,
+                                                                             threshold_disk_resize, database_resized,
+                                                                             problems, task, status, resizes)
+        # update disk size info in DBaaS DB
+        if not update_disk(
+                database=database,
+                address=host.address,
+                task=task,
+                total_size=current_size,
+                used_size=current_used,
+        ):
+            problems += 1
+            status = TaskHistory.STATUS_WARNING
+
+    return collected, problems, resizes, status
+
+
+def check_size_differences(database, current_size, current_percentage, threshold_disk_resize, database_resized,
+                           problems, task, status, resizes):
+    size_metadata = database.databaseinfra.disk_offering.size_kb
+    if has_difference_between(size_metadata, current_size):
+        problems += 1
+        task.add_detail(
+            message="Error: Disk size different: {}kb".format(
+                size_metadata
+            ),
+            level=4,
+        )
+        status = TaskHistory.STATUS_WARNING
+    elif (
+            current_percentage >= threshold_disk_resize
+            and database.disk_auto_resize
+            and not database_resized
+    ):
+        try:
+            # create the actual disk resize task
+            task_resize = disk_auto_resize(
+                database=database,
+                current_size=size_metadata,
+                usage_percentage=current_percentage,
+            )
+            database_resized = True
+        except Exception as e:
+            problems += 1
+            status = TaskHistory.STATUS_WARNING
+            task.add_detail(
+                message="Error: Could not do resize. {}".format(e), level=4
+            )
+        else:
+            resizes += 1
+            task.add_detail(
+                message="Executing Resize... Task: {}".format(
+                    task_resize.id
+                ),
+                level=4,
+            )
+
+    return problems, resizes, status, database_resized
 
 
 def disk_auto_resize(database, current_size, usage_percentage):
@@ -314,7 +336,7 @@ def get_zabbix_host(zabbix_provider, host, project_domain):
         return host.hostname
 
 
-def get_zabbix_metrics_values(metrics, zabbix_host, host, task) -> tuple:
+def get_zabbix_metrics_value(metrics, zabbix_host, host, task) -> tuple:
     zabbix_size, zabbix_used, zabbix_percentage = None
     try:
         zabbix_size = metrics.get_current_disk_data_size(zabbix_host)
@@ -330,7 +352,8 @@ def get_zabbix_metrics_values(metrics, zabbix_host, host, task) -> tuple:
     return zabbix_size, zabbix_used, zabbix_percentage
 
 
-def check_treshhold_limit(current_percentage, current_used, current_size, zabbix_percentage, threshold_disk_resize, host, task) -> tuple:
+def check_treshold_for_data(current_percentage, current_used, current_size, zabbix_percentage, threshold_disk_resize,
+                            host, task) -> tuple:
     if zabbix_percentage >= threshold_disk_resize:
         (
             current_percentage,
