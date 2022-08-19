@@ -1819,8 +1819,49 @@ def database_set_ssl_not_required(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
-@only_one(key="update_apps_bind_name", timeout=600)
-def update_apps_bind_name(self):
+@only_one(key="update_database_apps_bind_name", timeout=600)
+def update_database_apps_bind_name(self):
+    '''
+    this function goes to prometheus and fetches all apps bind name from databases.
+
+    return prometheus:
+    {
+       "status":"success",
+       "data":{
+          "resultType":"vector",
+          "result":[
+             {
+                "metric":{
+                   "service_instance":"account_management_api_redis_qa",
+                   "service":"tsuru-dbaas-dev",
+                   "app":"account-management-api-gcp-qa",
+                   "instance":"tsuru-team-metrics.apps.tsuru.gcp.i.globo:443",
+                   "job":"tsuru-team-metrics",
+                   "__name__":"tsuru_service_instance_bind"
+                },
+                "value":[
+                   1660912779.46,
+                   "1"
+                ]
+             },
+             {
+                "metric":{
+                   "service_instance":"account_management_api_redis_qa",
+                   "service":"tsuru-dbaas-dev",
+                   "app":"account-management-api-qa",
+                   "instance":"tsuru-team-metrics.apps.tsuru.gcp.i.globo:443",
+                   "job":"tsuru-team-metrics",
+                   "__name__":"tsuru_service_instance_bind"
+                },
+                "value":[
+                   1660912779.46,
+                   "1"
+                ]
+             }
+          ]
+       }
+    }
+    '''
     try:
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
@@ -1829,6 +1870,7 @@ def update_apps_bind_name(self):
 
         db = Database
         databases = db.objects.all()
+        database_count = databases.count()
 
         for database in databases:
             data_query = "query=tsuru_service_instance_bind{service_instance="
@@ -1836,26 +1878,29 @@ def update_apps_bind_name(self):
             data_query = data_query + query + "}"
             response = requests.get("https://prometheus-br1.tsuru.gcp.i.globo/api/v1/query", params=data_query,
                                     verify=False)
-
             try:
                 content = json.loads(response.content)
-                metric = content["data"]["result"][0]["metric"]
-                if metric:
-                    databese_objects = db.objects.filter(id=database.id,
-                                                         apps_bind_name__icontains=metric["app"]).first()
-                    if not databese_objects:
-                        if databese_objects.apps_bind_name:
-                            databese_objects.apps_bind_name += ', ' + metric["app"]
-                        else:
-                            databese_objects.apps_bind_name = metric["app"]
-                        databese_objects.save()
+                results = content["data"]["result"]
+
+                apps_bind_name = ""
+                for result in results:
+                    app_name = result["metric"]["app"]
+                    if len(apps_bind_name) > 0:
+                        apps_bind_name += ', ' + app_name
+                    else:
+                        apps_bind_name = app_name
+
+                database_objects = db.objects.filter(id=database.id).first()
+                database_objects.apps_bind_name = apps_bind_name
+                database_objects.save()
 
             except Exception as e:
                 task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
                 pass
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                       details='Updating apps bind name done!')
+                                       details='Updating database apps bind name done, the amount: {}'.format(
+                                           database_count))
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
