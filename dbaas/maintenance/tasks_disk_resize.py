@@ -42,7 +42,7 @@ def zabbix_collect_used_disk(task):
 
 
 def execute_for_environments(environments, task, integration, collected, problems, resizes, status,
-                             threshold_disk_resize) -> tuple:
+                             threshold_disk_resize):
     for environment in environments:
         task.add_detail("Execution for environment: {}".format(environment.name))
 
@@ -63,7 +63,7 @@ def execute_for_environments(environments, task, integration, collected, problem
 
 
 def execute_for_databases(databases, task, zabbix_credential, project_domain, collected, problems, resizes, status,
-                          threshold_disk_resize) -> tuple:
+                          threshold_disk_resize):
     for database in databases:
         database_resized = False
         task.add_detail(message="Database: {}".format(database.name), level=1)
@@ -94,7 +94,7 @@ def execute_for_databases(databases, task, zabbix_credential, project_domain, co
 
 
 def execute_for_hosts(hosts, database, non_database_instances, collected, task, zabbix_provider, project_domain,
-                      metrics, problems, status, threshold_disk_resize, resizes, database_resized) -> tuple:
+                      metrics, problems, status, threshold_disk_resize, resizes, database_resized):
     for host in hosts:
         # check if host is a database instance
         if not is_database_instance(database, non_database_instances, host):
@@ -268,8 +268,9 @@ def has_difference_between(metadata, collected):
     return collected > max_value or collected < min_value
 
 
-def find_credentials_for_environment(environment, integration, task) -> tuple:
-    zabbix_credential, grafana_credential = None
+def find_credentials_for_environment(environment, integration, task):
+    zabbix_credential = None
+    grafana_credential = None
     try:
         zabbix_credential = Credential.get_credentials(
             environment=environment, integration=integration
@@ -304,7 +305,7 @@ def check_locked_database(database, task):
     return False
 
 
-def get_provider_and_metrics(database, zabbix_credential) -> tuple:
+def get_provider_and_metrics(database, zabbix_credential):
     zabbix_provider = factory_for(
         databaseinfra=database.databaseinfra, credentials=zabbix_credential
     )
@@ -336,7 +337,7 @@ def get_zabbix_host(zabbix_provider, host, project_domain):
         return host.hostname
 
 
-def get_zabbix_metrics_value(metrics, zabbix_host, host, task) -> tuple:
+def get_zabbix_metrics_value(metrics, zabbix_host, host, task):
     zabbix_size, zabbix_used, zabbix_percentage = None
     try:
         zabbix_size = metrics.get_current_disk_data_size(zabbix_host)
@@ -353,7 +354,7 @@ def get_zabbix_metrics_value(metrics, zabbix_host, host, task) -> tuple:
 
 
 def check_treshold_for_data(current_percentage, current_used, current_size, zabbix_percentage, threshold_disk_resize,
-                            host, task) -> tuple:
+                            host, task):
     if zabbix_percentage >= threshold_disk_resize:
         (
             current_percentage,
