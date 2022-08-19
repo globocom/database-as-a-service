@@ -64,32 +64,33 @@ def execute_for_environments(environments, task, integration, collected, problem
 
 def execute_for_databases(databases, task, zabbix_credential, project_domain, collected, problems, resizes, status,
                           threshold_disk_resize):
-    for database in databases:
-        database_resized = False
-        task.add_detail(message="Database: {}".format(database.name), level=1)
+    if databases is not None:
+        for database in databases:
+            database_resized = False
+            task.add_detail(message="Database: {}".format(database.name), level=1)
 
-        # check if database is locked
-        if check_locked_database(database, task):
-            continue  # goes to next database because this is locked
+            # check if database is locked
+            if check_locked_database(database, task):
+                continue  # goes to next database because this is locked
 
-        # get zabbix provider and metrics
-        zabbix_provider, metrics = get_provider_and_metrics(database, zabbix_credential)
+            # get zabbix provider and metrics
+            zabbix_provider, metrics = get_provider_and_metrics(database, zabbix_credential)
 
-        driver = database.databaseinfra.get_driver()
-        non_database_instances = driver.get_non_database_instances()
+            driver = database.databaseinfra.get_driver()
+            non_database_instances = driver.get_non_database_instances()
 
-        # get hosts either from zabbix or infra
-        hosts = get_hosts(zabbix_provider, database)
+            # get hosts either from zabbix or infra
+            hosts = get_hosts(zabbix_provider, database)
 
-        # execute for hosts
-        collected, problems, resizes, status, database_resized = execute_for_hosts(hosts, database,
-                                                                                   non_database_instances, collected,
-                                                                                   task, zabbix_provider,
-                                                                                   project_domain, metrics, problems,
-                                                                                   status, threshold_disk_resize,
-                                                                                   resizes, database_resized)
+            # execute for hosts
+            collected, problems, resizes, status, database_resized = execute_for_hosts(hosts, database,
+                                                                                       non_database_instances, collected,
+                                                                                       task, zabbix_provider,
+                                                                                       project_domain, metrics, problems,
+                                                                                       status, threshold_disk_resize,
+                                                                                       resizes, database_resized)
 
-        zabbix_provider.logout()
+            zabbix_provider.logout()
         return collected, problems, resizes, status
 
 
@@ -151,7 +152,7 @@ def execute_for_hosts(hosts, database, non_database_instances, collected, task, 
             problems += 1
             status = TaskHistory.STATUS_WARNING
 
-    return collected, problems, resizes, status
+    return collected, problems, resizes, status, database_resized
 
 
 def check_size_differences(database, current_size, current_percentage, threshold_disk_resize, database_resized,
@@ -338,7 +339,9 @@ def get_zabbix_host(zabbix_provider, host, project_domain):
 
 
 def get_zabbix_metrics_value(metrics, zabbix_host, host, task):
-    zabbix_size, zabbix_used, zabbix_percentage = None
+    zabbix_size = None
+    zabbix_used = None
+    zabbix_percentage = None
     try:
         zabbix_size = metrics.get_current_disk_data_size(zabbix_host)
         zabbix_used = metrics.get_current_disk_data_used(zabbix_host)
