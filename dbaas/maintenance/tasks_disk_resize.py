@@ -18,6 +18,7 @@ from physical.ssh import ScriptFailedException
 from system.models import Configuration
 from util import email_notifications
 from notification.tasks_disk_resize import update_disk
+from notification.tasks import TaskRegister
 
 from .models import TaskHistory
 
@@ -27,6 +28,11 @@ ZABBIX_METRICS_TOTAL_TIME = 0
 
 
 def zabbix_collect_used_disk(task):
+    """
+    With Zabbix, collect disk (/data) usage % for all DB hosts
+    and check if a disk resize is needed. If the resize is needed,
+    create a separate task to do the resize
+    """
     status = TaskHistory.STATUS_SUCCESS
     threshold_disk_resize = Configuration.get_by_name_as_int(
         "threshold_disk_resize", default=80.0
@@ -38,7 +44,7 @@ def zabbix_collect_used_disk(task):
     environments = Environment.objects.all()
 
     # run validations for every environment
-    collected, problems, resizes, status = execute_for_environments(
+    collected, problems, resizes, status = go_through_environments(
         environments, task, integration, collected, problems, resizes, status, threshold_disk_resize
     )
 
@@ -50,13 +56,13 @@ def zabbix_collect_used_disk(task):
     task.update_status_for(status=status, details=details)
 
 
-def execute_for_environments(environments, task, integration, collected, problems, resizes, status,
-                             threshold_disk_resize):
+def go_through_environments(environments, task, integration, collected, problems, resizes, status, threshold_disk_resize):
     for environment in environments:
         task.add_detail("Execution for environment: {}".format(environment.name))
 
         # get credentials
-        zabbix_credential, grafana_credential = find_credentials_for_environment(environment, integration, task)
+        zabbix_credential, grafana_credential = find_zabbix_and_grafana_credentials_for_environment(environment,
+                                                                                                    integration, task)
         if zabbix_credential is None and grafana_credential is None:
             return
 
@@ -66,15 +72,14 @@ def execute_for_environments(environments, task, integration, collected, problem
         databases = Database.objects.filter(environment=environment)
 
         # execute for databases of this specific environment
-        collected, problems, resizes, status = execute_for_databases(databases, task, zabbix_credential,
-                                                                     project_domain, collected, problems, resizes,
-                                                                     status, threshold_disk_resize)
+        collected, problems, resizes, status = go_through_databases(databases, task, zabbix_credential,
+                                                                    project_domain, collected, problems, resizes,
+                                                                    status, threshold_disk_resize)
 
     return collected, problems, resizes, status
 
 
-def execute_for_databases(databases, task, zabbix_credential, project_domain, collected, problems, resizes, status,
-                          threshold_disk_resize):
+def go_through_databases(databases, task, zabbix_credential, project_domain, collected, problems, resizes, status, threshold_disk_resize):
     if databases is not None:
         for database in databases:
             database_resized = False
@@ -85,7 +90,7 @@ def execute_for_databases(databases, task, zabbix_credential, project_domain, co
                 continue  # goes to next database because this is locked
 
             # get zabbix provider and metrics
-            zabbix_provider, metrics = get_provider_and_metrics(database, zabbix_credential)
+            zabbix_provider, metrics = get_zabbix_provider_and_metrics(database, zabbix_credential)
 
             driver = database.databaseinfra.get_driver()
             non_database_instances = driver.get_non_database_instances()
@@ -94,19 +99,19 @@ def execute_for_databases(databases, task, zabbix_credential, project_domain, co
             hosts = get_hosts(zabbix_provider, database)
 
             # execute for hosts
-            collected, problems, resizes, status, database_resized = execute_for_hosts(hosts, database,
-                                                                                       non_database_instances, collected,
-                                                                                       task, zabbix_provider,
-                                                                                       project_domain, metrics, problems,
-                                                                                       status, threshold_disk_resize,
-                                                                                       resizes, database_resized)
+            collected, problems, resizes, status, database_resized = go_through_hosts(hosts, database,
+                                                                                      non_database_instances, collected,
+                                                                                      task, zabbix_provider,
+                                                                                      project_domain, metrics, problems,
+                                                                                      status, threshold_disk_resize,
+                                                                                      resizes, database_resized)
 
             zabbix_provider.logout()
         return collected, problems, resizes, status
 
 
-def execute_for_hosts(hosts, database, non_database_instances, collected, task, zabbix_provider, project_domain,
-                      metrics, problems, status, threshold_disk_resize, resizes, database_resized):
+def go_through_hosts(hosts, database, non_database_instances, collected, task, zabbix_provider, project_domain,
+                     metrics, problems, status, threshold_disk_resize, resizes, database_resized):
     for host in hosts:
         # check if host is a database instance
         if not is_database_instance(database, non_database_instances, host):
@@ -119,8 +124,8 @@ def execute_for_hosts(hosts, database, non_database_instances, collected, task, 
         LOG.info("Host: %s (%s)" % (host.hostname, host.address))
 
         # get zabbix hostname
-        zabbix_host = get_zabbix_host(zabbix_provider, host, project_domain)
-        LOG.info("Zabbix host: %s" % zabbix_host)
+        zabbix_host = get_zabbix_hostname(zabbix_provider, host, project_domain)
+        LOG.info("Zabbix hostname: %s" % zabbix_host)
 
         # get zabbix metrics for comparisons
         zabbix_size, zabbix_used, zabbix_percentage = get_zabbix_metrics_value(metrics, zabbix_host, host, task)
@@ -193,7 +198,7 @@ def check_size_differences(database, current_size, current_percentage, threshold
         try:
             # create the actual disk resize task
             LOG.info("Creating disk resize task")
-            task_resize = disk_auto_resize(
+            task_resize = create_disk_resize_task(
                 database=database,
                 current_size=size_metadata,
                 usage_percentage=current_percentage,
@@ -218,9 +223,7 @@ def check_size_differences(database, current_size, current_percentage, threshold
     return problems, resizes, status, database_resized
 
 
-def disk_auto_resize(database, current_size, usage_percentage):
-    from notification.tasks import TaskRegister
-
+def create_disk_resize_task(database, current_size, usage_percentage):
     LOG.info("Resizing database {} disks. Usage percentage is {}%".format(database.name, usage_percentage))
 
     # look for the first greater disk size offer for the db environment
@@ -297,7 +300,7 @@ def has_difference_between(metadata, collected):
     return collected > max_value or collected < min_value
 
 
-def find_credentials_for_environment(environment, integration, task):
+def find_zabbix_and_grafana_credentials_for_environment(environment, integration, task):
     zabbix_credential = None
     grafana_credential = None
     try:
@@ -334,7 +337,7 @@ def check_locked_database(database, task):
     return False
 
 
-def get_provider_and_metrics(database, zabbix_credential):
+def get_zabbix_provider_and_metrics(database, zabbix_credential):
     LOG.info("Getting zabbix provider and metrics for database: %s" % database.name)
     started_at = datetime.datetime.now()
     LOG.info("Provider started at: %s" % started_at)
@@ -373,7 +376,7 @@ def is_database_instance(database, non_database_instances, host):
     return instance not in non_database_instances
 
 
-def get_zabbix_host(zabbix_provider, host, project_domain):
+def get_zabbix_hostname(zabbix_provider, host, project_domain):
     if zabbix_provider.using_agent:
         return '{}.{}'.format(host.hostname.split('.')[0], project_domain)
     else:
