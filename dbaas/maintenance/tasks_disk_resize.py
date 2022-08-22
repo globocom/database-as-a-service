@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import logging
+import datetime
 
 from account.models import AccountUser
 from dbaas_credentials.credential import Credential
@@ -21,6 +22,9 @@ from notification.tasks_disk_resize import update_disk
 from .models import TaskHistory
 
 LOG = logging.getLogger(__name__)
+ZABBIX_PROVIDER_TOTAL_TIME = 0
+ZABBIX_METRICS_TOTAL_TIME = 0
+
 
 def zabbix_collect_used_disk(task):
     status = TaskHistory.STATUS_SUCCESS
@@ -41,6 +45,8 @@ def zabbix_collect_used_disk(task):
     details = "Collected: {} | Resize: {} | Problems: {}".format(
         collected, resizes, problems
     )
+    task.add_detail("Zabbix PROVIDERS integration total time: {}s".format(ZABBIX_PROVIDER_TOTAL_TIME))
+    task.add_detail("Zabbix METRICS integration total time: {}s".format(ZABBIX_METRICS_TOTAL_TIME))
     task.update_status_for(status=status, details=details)
 
 
@@ -330,12 +336,24 @@ def check_locked_database(database, task):
 
 def get_provider_and_metrics(database, zabbix_credential):
     LOG.info("Getting zabbix provider and metrics for database: %s" % database.name)
+    started_at = datetime.datetime.now()
+    LOG.info("Provider started at: %s" % started_at)
     zabbix_provider = factory_for(
         databaseinfra=database.databaseinfra, credentials=zabbix_credential
     )
+
+    global ZABBIX_PROVIDER_TOTAL_TIME
+    ZABBIX_PROVIDER_TOTAL_TIME += (datetime.datetime.now() - started_at).total_seconds()
+
+    started_at = datetime.datetime.now()
+    LOG.info("Metrics started at: %s" % started_at)
     metrics = ZabbixMetrics(
         zabbix_provider.api, zabbix_provider.main_clientgroup
     )
+    global ZABBIX_METRICS_TOTAL_TIME
+    ZABBIX_METRICS_TOTAL_TIME += (datetime.datetime.now() - started_at).total_seconds()
+    LOG.info("Provider total time: %s - Metrics total time: %s" % (ZABBIX_PROVIDER_TOTAL_TIME,
+                                                                   ZABBIX_METRICS_TOTAL_TIME))
 
     return zabbix_provider, metrics
 
@@ -363,6 +381,8 @@ def get_zabbix_host(zabbix_provider, host, project_domain):
 
 
 def get_zabbix_metrics_value(metrics, zabbix_host, host, task):
+    started_at = datetime.datetime.now()
+    LOG.info("Metrics started at: %s" % started_at)
     zabbix_size = None
     zabbix_used = None
     zabbix_percentage = None
@@ -376,6 +396,11 @@ def get_zabbix_metrics_value(metrics, zabbix_host, host, task):
             zabbix_percentage, zabbix_used, zabbix_size = ret
         else:
             task.add_detail(message="Error: {}".format(error), level=3)
+
+    global ZABBIX_METRICS_TOTAL_TIME
+    ZABBIX_METRICS_TOTAL_TIME += (datetime.datetime.now() - started_at).total_seconds()
+    LOG.info("Provider total time: %s - Metrics total time: %s" % (ZABBIX_PROVIDER_TOTAL_TIME,
+                                                                   ZABBIX_METRICS_TOTAL_TIME))
 
     return zabbix_size, zabbix_used, zabbix_percentage
 
