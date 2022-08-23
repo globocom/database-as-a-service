@@ -37,6 +37,8 @@ from maintenance.tasks_create_database import (get_or_create_infra,
 from notification.scripts import script_mongo_log_rotate
 from util.providers import get_deploy_settings
 
+import json
+import requests
 
 LOG = get_task_logger(__name__)
 
@@ -1814,6 +1816,93 @@ def database_set_ssl_not_required(self, database, user, task, since_step=0):
             ('Could not set database SSL required.\n'
              'This task doesn\'t have rollback')
         )
+
+
+@app.task(bind=True)
+@only_one(key="update_database_apps_bind_name", timeout=600)
+def update_database_apps_bind_name(self):
+    '''
+    this function goes to prometheus and fetches all apps bind name from databases.
+
+    return prometheus:
+    {
+       "status":"success",
+       "data":{
+          "resultType":"vector",
+          "result":[
+             {
+                "metric":{
+                   "service_instance":"account_management_api_redis_qa",
+                   "service":"tsuru-dbaas-dev",
+                   "app":"account-management-api-gcp-qa",
+                   "instance":"tsuru-team-metrics.apps.tsuru.gcp.i.globo:443",
+                   "job":"tsuru-team-metrics",
+                   "__name__":"tsuru_service_instance_bind"
+                },
+                "value":[
+                   1660912779.46,
+                   "1"
+                ]
+             },
+             {
+                "metric":{
+                   "service_instance":"account_management_api_redis_qa",
+                   "service":"tsuru-dbaas-dev",
+                   "app":"account-management-api-qa",
+                   "instance":"tsuru-team-metrics.apps.tsuru.gcp.i.globo:443",
+                   "job":"tsuru-team-metrics",
+                   "__name__":"tsuru_service_instance_bind"
+                },
+                "value":[
+                   1660912779.46,
+                   "1"
+                ]
+             }
+          ]
+       }
+    }
+    '''
+    try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
+
+        db = Database
+        databases = db.objects.all()
+        database_count = databases.count()
+
+        for database in databases:
+            data_query = "query=tsuru_service_instance_bind{service_instance="
+            query = "'{}'".format(database.name)
+            data_query = data_query + query + "}"
+            response = requests.get("https://prometheus-br1.tsuru.gcp.i.globo/api/v1/query", params=data_query,
+                                    verify=False)
+            try:
+                content = json.loads(response.content)
+                results = content["data"]["result"]
+
+                apps_bind_name = ""
+                for result in results:
+                    app_name = result["metric"]["app"]
+                    if len(apps_bind_name) > 0:
+                        apps_bind_name += ', ' + app_name
+                    else:
+                        apps_bind_name = app_name
+
+                database_objects = db.objects.filter(id=database.id).first()
+                database_objects.apps_bind_name = apps_bind_name
+                database_objects.save()
+
+            except Exception as e:
+                task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+                pass
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
+                                       details='Updating database apps bind name done, the amount: {}'.format(
+                                           database_count))
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
 class TaskRegister(object):
