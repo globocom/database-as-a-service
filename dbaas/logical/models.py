@@ -499,30 +499,20 @@ class Database(BaseModel):
 
         vm_ids = host_prov_client.get_vm_ids(self.infra)
 
-        storage_scope = "storageScope=storage,projects%2F{}%2Flocations%2Fglobal%2Fbuckets%2F{}%2Fviews%2F_AllLogs".format(
-             credential.get_parameter_by_name("project"),
-             credential.get_parameter_by_name("bucket")
-        )
-
         search_filter = " OR ".join(
-            ['resource.type="gce_instance" resource.labels.instance_id="%s"' %
+            ['resource.labels.instance_id="%s"' %
              x for x in vm_ids])
+        new_filter = '(resource.type="gce_instance") AND ({})'.format(search_filter)
         query = "query;query=%(search_filter)s;" % {
-            "search_filter": urllib.quote(search_filter)
+            "search_filter": urllib.quote(new_filter)
         }
 
-        extra_param = (
-            ";summaryFields=:false:32:beginning;"
-            "lfeCustomFields=resource%252Flabels%252Finstance_id;")
+        project = "?project={}".format(credential.get_parameter_by_name("project"))
 
-        auth = "?organizationId=&authuser=1&project={}".format(credential.get_parameter_by_name("auth_project"))
-
-        url = "{endpoint}/logs/{query}{storageScope}{extraParam}{auth}".format(
+        url = "{endpoint}/logs/{query}{project}".format(
             endpoint=credential.endpoint,
             query=query,
-            storageScope=storage_scope,
-            extraParam=extra_param,
-            auth=auth
+            project=project
         )
         print('URL:', url)
 
