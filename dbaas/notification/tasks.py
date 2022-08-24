@@ -1870,7 +1870,7 @@ def update_database_apps_bind_name(self):
 
         db = Database
         databases = db.objects.all()
-        database_count = databases.count()
+        database_count = 0
 
         for database in databases:
             data_query = "query=tsuru_service_instance_bind{service_instance="
@@ -1893,6 +1893,7 @@ def update_database_apps_bind_name(self):
                 database_objects = db.objects.filter(id=database.id).first()
                 database_objects.apps_bind_name = apps_bind_name
                 database_objects.save()
+                database_count += 1
 
             except Exception as e:
                 task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
@@ -1902,7 +1903,7 @@ def update_database_apps_bind_name(self):
                                        details='Updating database apps bind name done, the amount: {}'.format(
                                            database_count))
     except Exception as e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Error connect prometheus')
 
 
 class TaskRegister(object):
