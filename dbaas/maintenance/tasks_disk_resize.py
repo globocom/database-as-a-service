@@ -12,6 +12,7 @@ from dbaas_zabbix.errors import ZabbixMetricsError
 from dbaas_zabbix.metrics import ZabbixMetrics
 from logical.errors import BusyDatabaseError
 from logical.models import Database
+from paramiko.ssh_exception import SSHException
 from physical.errors import DiskOfferingMaxAutoResize
 from physical.models import Environment, DiskOffering
 from physical.ssh import ScriptFailedException
@@ -264,6 +265,16 @@ def host_mount_data_percentage(host, task):
     except ScriptFailedException as err:
         task.add_detail(
             message="Could not load mount size: {}".format(str(err)), level=4
+        )
+        return None, None, None
+    except SSHException as err:
+        task.add_detail(
+            message="Could not connect to Host SSH: {}".format(str(err)), level=4
+        )
+        return None, None, None
+    except Exception as err:
+        task.add_detail(
+            message="Error when mounting /data from host: {}".format(str(err)), level=4
         )
         return None, None, None
 
