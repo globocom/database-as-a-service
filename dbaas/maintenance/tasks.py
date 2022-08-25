@@ -5,6 +5,7 @@ import logging
 from notification.models import TaskHistory
 from util import get_worker_name, \
     build_context_script, get_dict_lines
+from util.decorators import only_one
 from registered_functions.functools import get_function
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
 from workflow.steps.util.db_monitor import DisableMonitoring, EnableMonitoring
@@ -444,3 +445,17 @@ def database_environment_migrate_rollback(self, step_manager, task):
     )
     from tasks_database_migrate import rollback_database_environment_migrate
     rollback_database_environment_migrate(step_manager, task)
+
+
+@app.task(bind=True)
+@only_one(key="disk_auto_resize", timeout=600)
+def update_disk_used_size(self):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name
+    )
+    task.relevance = TaskHistory.RELEVANCE_WARNING
+    task.add_detail(message='Collecting disk used space from Zabbix')
+
+    from .tasks_disk_resize import zabbix_collect_used_disk
+    zabbix_collect_used_disk(task=task)
