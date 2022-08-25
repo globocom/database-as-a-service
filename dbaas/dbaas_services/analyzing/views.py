@@ -62,38 +62,47 @@ class DatabaseReport(ListView):
         else:
             return self.vm_by_line_database_report()
 
-
     def vm_by_line_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Email', 'Emergency Contacts',
+                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
+
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
         filename = 'dbaas_databases_vm_by_line-' + datetime.now().strftime("%Y-%m-%d") + ".csv"
 
-        response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
         writer = csv.writer(response, csv.excel)
         response.write(u'\ufeff'.encode('utf8'))
         writer.writerow(header)
 
         for database in databases:
             for instance in database.infra.instances.all():
-                data = [database.name, instance.hostname.hostname.encode("utf-8"), database.environment,
+                data = [database.name,
+                        instance.hostname.hostname.encode("utf-8"),
+                        database.environment,
                         database.team,
-                        database.created_at, database.is_in_quarantine, database.apps_bind_name]
+                        database.team.name,
+                        database.team.email,
+                        database.team.contacts,
+                        database.team.organization.name,
+                        database.created_at,
+                        database.is_in_quarantine,
+                        database.apps_bind_name]
                 writer.writerow(data)
-            
-            
+
         return response
 
     def default_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Email', 'Emergency Contacts',
+                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
         filename = 'dbaas_databases-' + datetime.now().strftime("%Y-%m-%d") + ".csv"
-        response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 
         writer = csv.writer(response, csv.excel)
         response.write(u'\ufeff'.encode('utf8'))
@@ -102,8 +111,17 @@ class DatabaseReport(ListView):
         for database in databases:
             hostname = [instance.hostname.hostname.encode("utf-8") for instance in
                         database.infra.instances.all()]
-            data = [database.name, hostname, database.environment, database.team,
-                    database.created_at, database.is_in_quarantine, database.apps_bind_name]
+            data = [database.name,
+                    hostname,
+                    database.environment,
+                    database.team,
+                    database.team.name,
+                    database.team.email,
+                    database.team.contacts,
+                    database.team.organization.name,
+                    database.created_at,
+                    database.is_in_quarantine,
+                    database.apps_bind_name]
             writer.writerow(data)
-            
+
         return response
