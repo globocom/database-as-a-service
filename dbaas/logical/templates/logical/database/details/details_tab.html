@@ -25,6 +25,24 @@
       </a>
     </div>
   </div>
+<!--TO TRABALHANDO AQUI-->
+  <div class="control-group">
+    <div class="control-label"><label>Monitoring:</label></div>
+    <div class="controls">
+      <a class="btn {% if database.is_monitoring %}btn-info{% endif %}
+                    {% if not database.is_monitoring %}btn-success{% endif %}
+
+            " title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring">
+        {% if database.is_monitoring %}
+            Desativar
+        {% endif %}
+        {% if not database.is_monitoring %}
+            Ativar
+        {% endif %}
+      </a>
+    </div>
+  </div>
+<!--ACABA AQUI-->
   <div class="control-group">
     <div class="control-label"><label>Project:</label></div>
     <div class="controls">
@@ -250,6 +268,24 @@
               $('#status-tag span').replaceWith(output);
           }
         }).fail(function() {
+          alert("invalid server response");
+      });
+    });
+
+    $("#id_monitoring").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_monitoring").attr('disabled','disabled');
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/toggle_monitoring/" + database_id, "type": "GET",
+          complete: function () {
+            running_update = false;
+            $("#id_monitoring").removeAttr('disabled');
+            window.location.reload();
+          },
+      }).fail(function() {
           alert("invalid server response");
       });
     });
