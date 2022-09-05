@@ -525,7 +525,7 @@ class Database(BaseModel):
             return self.__kibana_url()
 
     def get_chg_register_url(self):
-        endpoint = Configuration.get_by_name('chg_register_prod_url')
+        endpoint = Configuration.get_by_name('chg_register_url')
         url = "{endpoint}/chg_register/{database_name}".format(
             endpoint=endpoint,
             database_name=self.name
