@@ -28,7 +28,7 @@ from notification.models import TaskHistory
 from util import get_credentials_for
 from util import get_or_none_credentials_for
 from dbaas_credentials.models import CredentialType
-
+from system.models import Configuration
 
 
 LOG = logging.getLogger(__name__)
@@ -523,6 +523,15 @@ class Database(BaseModel):
             return self.__gcp_log_url()
         else:
             return self.__kibana_url()
+
+    def get_chg_register_url(self):
+        endpoint = Configuration.get_by_name('chg_register_prod_url')
+        url = "{endpoint}/chg_register/{database_name}".format(
+            endpoint=endpoint,
+            database_name=self.name
+        )
+        print('URL:', url)
+        return url
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
