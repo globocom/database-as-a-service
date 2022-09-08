@@ -5,18 +5,18 @@
 {% block title %}{{ title }} | DBaaS{% endblock %}
 
 {% block extrastyle %}
-<link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
+<link rel="shortcut icon" type="image/png" href="{% static "new_logo.png" %}"/>
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/admin-dbaas.css" %}" />
 {% endblock %}
 
 {% block branding %}
-    <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
+    <a href="{% url 'admin:index' %}" class="brand" id="site-name"><img src="/static/0.0.11/new_logo.png" alt="" height="30px" width="30px" id="site-name-img" style="float: left; margin-top: 0px;">DBaaS</a>
     {% get_configuration 'docs_url' 'config_docs_url' %}
     {% if config_docs_url %}
       <a href="{{ config_docs_url }}" target="_blank" class="brand" id="site-docs">Docs</a>
     {% endif %}
       <a href="http://dbmonitor.globoi.com" target="_blank" class="brand" id="site-db-monitor">DBMonitor</a>
-
+v
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
