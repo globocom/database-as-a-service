@@ -112,6 +112,12 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         app_label = opts.app_label
         if not self.has_view_permission(request, None) and not self.has_change_permission(request, None):
             raise PermissionDenied
+        self.readonly_fields = []
+        if not request.user.is_superuser:
+            self.readonly_fields = [
+                "name", "role", "database_limit", "resources",
+                "token", "email", "organization", "database_alocation_limit", "contacts"
+            ]
 
         list_display = self.get_list_display(request)
         if self.has_change_permission(request, None):
