@@ -131,6 +131,9 @@ class Database(BaseModel):
     is_in_quarantine = models.BooleanField(
         verbose_name=_("Is database in quarantine?"), default=False
     )
+    is_monitoring = models.BooleanField(
+        verbose_name=_("Is database being monitored?"), default=True
+    )
     quarantine_dt = models.DateField(
         verbose_name=_("Quarantine date"), null=True, blank=True,
         editable=False
