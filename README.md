@@ -1,7 +1,11 @@
 
+# Para desenvolvimento local, use o docker
+
+se for desenvolvimento local, entre na pasta de dev e use o makefile dentro desta pasta
 
 
-# USE AS COISAS DE DOCKER, O RESTO É MAIS PRA SABER COMO FOI FEITO
+## Old? Revisar??
+
 
 
 
