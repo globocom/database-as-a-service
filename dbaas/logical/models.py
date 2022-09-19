@@ -30,7 +30,7 @@ from notification.models import TaskHistory
 from util import get_credentials_for
 from util import get_or_none_credentials_for
 from dbaas_credentials.models import CredentialType
-
+from system.models import Configuration
 
 
 LOG = logging.getLogger(__name__)
@@ -130,9 +130,6 @@ class Database(BaseModel):
     )
     is_in_quarantine = models.BooleanField(
         verbose_name=_("Is database in quarantine?"), default=False
-    )
-    is_monitoring = models.BooleanField(
-        verbose_name=_("Is database being monitored?"), default=True
     )
     quarantine_dt = models.DateField(
         verbose_name=_("Quarantine date"), null=True, blank=True,
@@ -547,6 +544,15 @@ class Database(BaseModel):
             self.__activate_monitoring(instances)
         else:
             self.__deactivate_monitoring(instances)
+
+    def get_chg_register_url(self):
+        endpoint = Configuration.get_by_name('chg_register_url')
+        url = "{endpoint}/chg_register/{database_name}".format(
+            endpoint=endpoint,
+            database_name=self.name
+        )
+        print('URL:', url)
+        return url
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
