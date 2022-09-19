@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block branding %}
-    <a href="{% url 'admin:index' %}" class="brand" id="site-name"><img src="/static/0.0.11/db-dev-logo.png" alt="" height="30px" width="30px" id="site-name-img" style="float: left; margin-top: 0px;">DBaaS</a>
+    <a href="{% url 'admin:index' %}" class="brand" id="site-name"><img src="/static/0.0.11/db-dev-logo.png" alt="" width="25px" id="site-name-img" style="float: left; margin-top: 0px; padding-right: 10px;">DBaaS</a>
     {% get_configuration 'docs_url' 'config_docs_url' %}
     {% if config_docs_url %}
       <a href="{{ config_docs_url }}" target="_blank" class="brand" id="site-docs">Docs</a>
