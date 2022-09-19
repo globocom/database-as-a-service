@@ -225,6 +225,18 @@ def refresh_status(request, database_id):
                          'instances_status': instances_status})
     return HttpResponse(output, content_type="application/json")
 
+def toggle_monitoring(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    database.toggle_monitoring()
+    database.is_monitoring = not database.is_monitoring
+    database.save()
+    instances_status = []
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
 
 @database_view('details')
 def database_details(request, context, database):

@@ -24,6 +24,8 @@ from account.models import Team
 from drivers.base import DatabaseStatus
 from drivers.errors import ConnectionError
 from logical.validators import database_name_evironment_constraint
+from workflow.steps.util.zabbix import DisableAlarms, EnableAlarms
+from workflow.steps.util.db_monitor import DisableMonitoring, EnableMonitoring
 from notification.models import TaskHistory
 from util import get_credentials_for
 from util import get_or_none_credentials_for
@@ -523,6 +525,25 @@ class Database(BaseModel):
             return self.__gcp_log_url()
         else:
             return self.__kibana_url()
+
+    def __activate_monitoring(self, instances):
+        for instance in instances:
+            EnableAlarms(instance).do()
+            EnableMonitoring(instance).do()
+        return
+
+    def __deactivate_monitoring(self,instances):
+        for instance in instances:
+            DisableAlarms(instance).do()
+            DisableMonitoring(instance).do()
+        return
+
+    def toggle_monitoring(self):
+        instances = self.infra.get_driver().get_database_instances()
+        if not self.is_monitoring:
+            self.__activate_monitoring(instances)
+        else:
+            self.__deactivate_monitoring(instances)
 
     def get_chg_register_url(self):
         endpoint = Configuration.get_by_name('chg_register_url')
