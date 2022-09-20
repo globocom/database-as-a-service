@@ -47,7 +47,7 @@ class TeamAdmin(admin.DjangoServicesAdmin):
 
     service_class = TeamService
     list_display = [
-        "name", "role", "database_limit", "resources", "team_pool",
+        "name", "role", "team_area", "database_limit", "resources", "team_pool",
         "token", "email", "organization"
     ]
     filter_horizontal = ['users']
