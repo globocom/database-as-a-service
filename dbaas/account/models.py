@@ -144,6 +144,11 @@ class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, 
                             unique=True, validators=[validate_name])
+
+    # workaround to allow us to have some more metadata for the teams.
+    # In the future this should be sync with some central place.
+    team_area = models.CharField(_('Area do time'), max_length=80, unique=False, blank=True, null=True)
+
     email = models.EmailField(null=False, blank=False)
     database_alocation_limit = models.PositiveSmallIntegerField(
         _('DB Alocation Limit'),
