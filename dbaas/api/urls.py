@@ -36,6 +36,7 @@ from .remove_readonly import RemoveInstanceDatabaseAPI
 from .pool import PoolAPI
 from .list_database import DatabaseListAPI
 from .list_team import TeamListAPI
+from .zabbix_disk_size_alert import ZabbixDiskSizeAlertAPI
 
 
 router = DefaultRouter()
@@ -94,6 +95,8 @@ if settings.CLOUD_STACK_ENABLED:
 router.register(r'team', TeamAPI)
 router.register(r'user', UserAPI)
 router.register(r'snapshot', SnapshotAPI)
+router.register(r'zabbix/disk_resize_alert', ZabbixDiskSizeAlertAPI, base_name="zabbix")
+
 urlpatterns += router.urls
 
 # is_slave url
