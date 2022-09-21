@@ -113,7 +113,7 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         if not self.has_view_permission(request, None) and not self.has_change_permission(request, None):
             raise PermissionDenied
         self.readonly_fields = []
-        if not request.user.is_superuser:
+        if not request.user.has_perm('account.edit_team'):
             self.readonly_fields = [
                 "name", "role", "database_limit", "resources",
                 "token", "email", "organization", "database_alocation_limit", "contacts"

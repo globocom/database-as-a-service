@@ -65,6 +65,16 @@ $make dev_docker_migrate
 $make dev_docker_run
 ```
 
+To generate a migration, you should run:
+
+```
+ $make dev_docker_generate_migration app=my_app
+```
+And then, to apply the changes to the bank:
+```
+$make dev_docker_migrate 
+```
+
 You can explore spacific docker settings in [this link](./doc/dockerconfs.md)
 
 ### without docker
