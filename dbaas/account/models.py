@@ -17,11 +17,9 @@ from .helper import find_ldap_groups_from_user
 from system.models import Configuration
 from dbaas.celery import app
 from util.teams import Teams as TeamsAPI
-
 from physical.models import Environment
 
 LOG = logging.getLogger(__name__)
-
 
 class AccountUser(User):
 
@@ -142,7 +140,7 @@ class Team(BaseModel):
 
         return True
 
-    name = models.CharField(_('name'), max_length=80, 
+    name = models.CharField(_('name'), max_length=80,
                             unique=True, validators=[validate_name])
 
     # workaround to allow us to have some more metadata for the teams.
@@ -215,7 +213,7 @@ class Team(BaseModel):
 
     def clean(self):
         if not self.contacts:
-            raise ValidationError({'contacts': ('This field is required',)})
+            raise ValidationError({'contacts': ('sThis field is required',)})
 
     @classmethod
     def get_all_permissions_for(cls, user=None):
