@@ -9,6 +9,7 @@ from rest_framework import views, serializers, status, permissions
 from rest_framework.response import Response
 
 from logical.models import Database
+from physical.models import Host
 from notification.models import TaskHistory
 
 LOG = logging.getLogger(__name__)
@@ -38,21 +39,44 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
 
         serializer = ZabbixDiskSizeAlertSerializer(data=data)
         if serializer.is_valid():
-            for host in serializer.data:
-                # TODO
-                database = {'name': ''}
+            for host in serializer.data['hosts']:
+                # busca a database pelo IP do Host
+                database = self.get_database_from_host_ip(host['ip'])
+                if database is None:
+                    continue
+
+                # Valida se nao tem nenhuma task de resize rodando para a database
                 if not self.validate_running_resize_task(database):
-                    LOG.warning("Database {} already has a resize task runing.".format(database['name']))
+                    LOG.warning("Database {} already has a resize task runing.".format(database.name))
+                LOG.info("No resize task is running for database {}".format(database.name))
+
             return Response(status=status.HTTP_201_CREATED)
 
         LOG.error("Serializer erros: {}".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def validate_running_resize_task(self, database):
-        running_task = TaskHistory.objects.filter(database=database, task_name='database_disk_resize',
-                                                  status__in=self.running_status).first()
+        # busca task de resize de disco para a database
+        running_task = TaskHistory.objects.filter(database_name=database.name, task_name='database_disk_resize',
+                                                  task_status__in=self.running_status).first()
 
         if running_task:
             return False
 
         return True
+
+    def get_database_from_host_ip(self, ip):
+        # busca host pelo ip
+        host = Host.objects.filter(address=ip).first()
+        if not host:
+            LOG.error("Host with IP {} not found!".format(ip))
+            return None
+        LOG.info("Host with IP {} is {}".format(ip, host.hostname))
+
+        # busca database atraves da databaseinfra do host
+        database = Database.objects.filter(databaseinfra=host.databaseinfra).first()
+        if not database:
+            LOG.error("Database with Host {} not found!".format(host.id))
+        LOG.info("Database for Host {} is {}".format(host.hostname, database.name))
+
+        return database

@@ -1416,6 +1416,10 @@ class Host(BaseModel):
     def is_ol7(self):
         return ' 7.' in self.os_description
 
+    @property
+    def databaseinfra(self):
+        return self.instances.first().databaseinfra
+
 
 class Volume(BaseModel):
     host = models.ForeignKey(
