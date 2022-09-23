@@ -9,8 +9,8 @@ from rest_framework import views, serializers, status, permissions
 from rest_framework.response import Response
 
 from logical.models import Database
+from maintenance.tasks import TaskRegisterMaintenance
 from physical.models import Host
-from notification.models import TaskHistory
 
 LOG = logging.getLogger(__name__)
 
@@ -48,6 +48,9 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
                 # Valida se nao tem nenhuma task de resize rodando para a database
                 if not self.validate_running_resize_task(database):
                     LOG.warning("Database {} already has a resize task runing.".format(database.name))
+                    continue
+
+                TaskRegisterMaintenance.zabbix_alert_resize_disk(database)
                 LOG.info("No resize task is running for database {}".format(database.name))
 
             return Response(status=status.HTTP_201_CREATED)
@@ -56,6 +59,7 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def validate_running_resize_task(self, database):
+        from notification.models import TaskHistory
         # busca task de resize de disco para a database
         running_task = TaskHistory.objects.filter(database_name=database.name, task_name='database_disk_resize',
                                                   task_status__in=self.running_status).first()

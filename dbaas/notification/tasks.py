@@ -20,6 +20,7 @@ from util import providers as util_providers
 from util import get_vm_name
 from system.models import Configuration
 from notification.models import TaskHistory
+from util.task_register import TaskRegisterBase
 from workflow.workflow import (steps_for_instances,
                                rollback_for_instances_full,
                                total_of_steps)
@@ -1892,31 +1893,7 @@ def update_database_apps_bind_name(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Error connect prometheus')
 
 
-class TaskRegister(object):
-    TASK_CLASS = TaskHistory
-
-    @classmethod
-    def create_task(cls, params):
-        database = params.pop('database', None)
-
-        task = cls.TASK_CLASS()
-
-        if database:
-            task.object_id = database.id
-            task.object_class = database._meta.db_table
-            database_name = database.name
-        else:
-            database_name = params.pop('database_name', '')
-
-        task.database_name = database_name
-
-        for k, v in params.iteritems():
-            setattr(task, k, v)
-
-        task.save()
-
-        return task
-
+class TaskRegister(TaskRegisterBase):
     # ============  BEGIN TASKS   ==========
 
     @classmethod
