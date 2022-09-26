@@ -80,6 +80,12 @@ class BaseClusterStep(PlanStep):
             return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} --slave --master-id {{ MASTER_ID }} {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }}'
         elif self.current_redis == self.REDIS5:
             return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster add-node {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }} --cluster-slave --cluster-master-id {{ MASTER_ID }}'
+    @property
+    def cluster_master_node_command(self):
+        if self.current_redis == self.REDIS4:
+            return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} {{ NEW_NODE_ADDRESS }} {{CLUSTER_ADDRESS}} {{ MASTER_ID }} {{ CLUSTER_ADDRESS }}'
+        elif self.current_redis == self.REDIS5:
+            return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster add-node {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }} {{ MASTER_ID }} {{ CLUSTER_ADDRESS }}'
 
     @property
     def cluster_del_node_command(self):
@@ -329,6 +335,46 @@ class AddSlaveNode(BaseClusterStep):
         remove.run_script_host = self.host
         remove.do()
 
+class AddMasterNode(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Add node..."
+
+    def __init__(self, instance):
+        super(AddMasterNode, self).__init__(instance)
+        self.new_host_address = self.host.address
+
+    def get_variables_specifics(self):
+        return {
+            'MASTER_ID': self.driver.get_node_id(
+                self.instance, self.master.address, self.instance.port
+            ),
+            'NEW_NODE_ADDRESS': '{}:{}'.format(
+                self.new_host_address, self.instance.port
+            ),
+            'CLUSTER_ADDRESS': '{}:{}'.format(
+                self.master.address, self.instance.port
+            )
+        }
+
+    def do(self):
+        # output = self.run_script(self.cluster_slave_node_command)
+        output = self.run_script_host.ssh.run_script(
+            self.make_script(
+                self.cluster_master_node_command,
+                script_variables=self.script_variables
+            )
+        )
+        self.check_response(
+            '[OK] New node added correctly.', output['stdout']
+        )
+
+    def undo(self):
+        remove = RemoveNode(self.instance)
+        remove.remove_address = self.host.address
+        remove.run_script_host = self.host
+        remove.do()
+
 
 class RemoveNode(BaseClusterStep):
 
@@ -457,3 +503,23 @@ class RemoveNodeDBMigrate(RemoveNode):
 
     def undo(self):
         raise NotImplementedError
+
+
+class SetFutureInstanceMasterDatabaseMigrate(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Setting new master..."
+
+    def change_master(self, old_master, new_master):
+        if not self.driver.check_instance_is_master(old_master):
+            return
+        self.driver.check_replication_and_switch(
+            instance=old_master,
+            preferred_slave_instance=new_master
+        )
+
+    def do(self):
+        self.change_master(self.instance, self.instance.future_instance)
+
+    def undo(self):
+        self.change_master(self.instance.future_instance, self.instance)

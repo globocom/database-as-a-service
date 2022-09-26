@@ -119,7 +119,11 @@ def get_database_set_ssl_required_setting(class_path):
 def get_database_set_ssl_not_required_setting(class_path):
     return get_replication_topology_instance(class_path).get_set_not_require_ssl_steps()
 
+def get_add_slave_shard_redis_cluster(class_path):
+    return get_replication_topology_instance(class_path).get_add_slave_shard_redis_cluster()
 
+def get_add_master_shard_redis_cluster(class_path):
+    return get_replication_topology_instance(class_path).get_add_master_shard_redis_cluster()
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 

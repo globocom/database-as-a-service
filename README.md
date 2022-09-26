@@ -79,8 +79,10 @@ You can explore spacific docker settings in [this link](./doc/dockerconfs.md)
 
 ### without docker
 
-    mkvirtualenv dbaas
-    workon dbaas
+    sudo apt install default-libmysqlclient-dev
+    sudo apt-get install python-dev
+    virtualenv -p /usr/bin/python2.7 venv
+    source venv/bin/activate
 
 
 Install the required python packages by:
@@ -91,10 +93,11 @@ Database setup for migrations:
 
 1. Connect to the local database.
     
-        mysql -u root -p <GENERATED-PASSWORD>
+        sudo mysql -u root -p 123
 2. Change root password to an empty string.     
     
         ALTER USER 'root'@'localhost' IDENTIFIED BY '';
+        \q  
 
 3. Create ```dbaas``` database.
     

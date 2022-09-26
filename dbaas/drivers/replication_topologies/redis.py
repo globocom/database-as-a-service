@@ -737,7 +737,7 @@ class RedisSentinelNoPersistence(RedisSentinel):
     pass
 
 
-class RedisCluster(BaseRedis):
+class  RedisCluster(BaseRedis):
 
     @property
     def driver_name(self):
@@ -1060,6 +1060,26 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+        )}]
+    def get_add_slave_shard_redis_cluster(self):
+        return [{
+            'HealthCheck': (
+                'workflow.steps.redis.cluster.HealthCheck',
+            )}, {
+            'InsertSlave': (
+                'workflow.steps.redis.cluster.AddSlaveNode',
+                'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
+        )}]
+    def get_add_master_shard_redis_cluster(self):
+        return [{
+            'HealthCheck': (
+                'workflow.steps.redis.cluster.HealthCheck',
+            )}, {
+            'InsertSlave': (
+                'workflow.steps.redis.cluster.AddMasterNode',
+                'workflow.steps.redis.horizontal_elasticity.database.SetNotEligible',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
         )}]
 class RedisGenericGCE(object):
     def get_single_host_migrate_steps(self):
