@@ -1,0 +1,82 @@
+{% extends "logical/database/details/base.html" %}
+{% load capacity admin_static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/progress_bar.css' %}" />
+{% endblock extrastyle %}
+{% block tab %}
+
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <h1>{% if config_maintenance_description %}{{ config_maintenance_description }}{% endif %}</h1>
+  </div>
+</fieldset>
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+<script src="{% static "assets/js/bootstrap.min.js" %}"></script>
+<script>
+  var team_select = document.getElementById("id_team");
+  var team_contact = document.getElementById("id_contact");
+  var database_id = '{{ database.id }}';
+
+  jQuery(document).ready(function($) {
+    $(".bar .database-bar, .bar .other-bar, .bar .free-bar").popover({
+        'trigger': 'hover',
+        'placement': 'top'
+    });
+
+    $("#id_team").on("change", function() {
+      var team_id = team_select.value;
+
+      if (team_id) {
+        jQuery.ajax({
+          "dataType": "json", "url": "/account/team_contacts/" + team_id, "type": "GET",
+        }).done(function(response) {
+          if (response.error) {
+            alert(response.error);
+          } else {
+            var contacts = "";
+            if(response.contacts != null)
+              contacts = response.contacts;
+            team_contact.innerHTML = contacts
+          }
+        }).fail(function() {
+          alert("invalid server response");
+        });
+      }
+    });
+    $('#id_team').change();
+
+    running_update = false;
+    $("#id_status").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_status").attr('disabled','disabled');
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+          complete: function () {
+            running_update = false;
+            $("#id_status").removeAttr('disabled');
+          },
+      }).done(function(response) {
+        if (response.error) {
+              alert(response.error);
+          } else {
+              var output = response['database_status']
+              $('#status-tag span').replaceWith(output);
+          }
+        }).fail(function() {
+          alert("invalid server response");
+      });
+    });
+
+  });
+
+</script>
+
+{% endblock %}

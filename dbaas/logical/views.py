@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 import datetime, time
 from re import L
 import json
@@ -40,6 +43,8 @@ from . import services
 from . import exceptions
 from . import utils
 from django.contrib.auth.decorators import login_required
+from system.models import Configuration
+from django.core.handlers.wsgi import WSGIRequest
 
 
 LOG = logging.getLogger(__name__)
@@ -226,7 +231,41 @@ def refresh_status(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def check_args(args):
+    context = None
+    request = None
+    new_args = list(args)
+    for a in new_args:
+        if type(a) == WSGIRequest:
+            request = a
+        elif type(a) == dict:
+            context = a
+            context['config_maintenance'] = False
+            new_args[new_args.index(a)] = context
+    return context, request, tuple(new_args)
+
+
+def check_maintenance_decorator(check):
+    def test(func):
+        def wrapper(*args, **kwargs):
+            config_maintenance = Configuration.objects.get(name='config_maintenance')
+            context, request, new_args = check_args(args)
+            if check:
+                if int(config_maintenance.value) > 0 and not request.user.is_superuser:
+                    context['config_maintenance'] = True
+                    context['config_maintenance_description'] = str(config_maintenance.description)
+                    return render_to_response(
+                        "logical/database/details/dbaas_maintenance.html",
+                        context, RequestContext(request)
+                    )
+            res = func(*new_args, **kwargs)
+            return res
+        return wrapper
+    return test
+
+
 @database_view('details')
+@check_maintenance_decorator(False)
 def database_details(request, context, database):
     if request.method == 'POST':
         form = DatabaseDetailsForm(request.POST or None, instance=database)
@@ -271,6 +310,7 @@ def database_details(request, context, database):
 
 
 @database_view('cost')
+@check_maintenance_decorator(False)
 def database_cost(request, context, database):
     credential = get_credentials_for(
         database.infra.environment,
@@ -286,6 +326,7 @@ def database_cost(request, context, database):
 
 
 @database_view('credentials')
+@check_maintenance_decorator(True)
 def database_credentials(request, context, database):
 
     if request.method == 'POST':
@@ -699,6 +740,7 @@ class DatabaseParameters(TemplateView):
 
         return self.context
 
+    @check_maintenance_decorator(False)
     def post(self, request, *args, **kwargs):
 
         context, database = args
@@ -753,6 +795,7 @@ class DatabaseParameters(TemplateView):
                 return self.get(request)
 
     @database_view_class('parameters')
+    @check_maintenance_decorator(False)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         self.there_is_static_parameter = False
@@ -763,6 +806,7 @@ class DatabaseParameters(TemplateView):
 
 
 @database_view("")
+@check_maintenance_decorator(False)
 def database_change_parameters(request, context, database):
     can_do_change_parameters, error = database.can_do_change_parameters()
     if not can_do_change_parameters:
@@ -781,6 +825,7 @@ def database_change_parameters(request, context, database):
 
 
 @database_view("")
+@check_maintenance_decorator(False)
 def database_change_parameters_retry(request, context, database):
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
@@ -822,6 +867,7 @@ def database_change_parameters_retry(request, context, database):
 
 
 @database_view('metrics')
+@check_maintenance_decorator(False)
 def database_metrics(request, context, database):
     hostname = database.infra.instances.filter(
         is_active=True
@@ -979,6 +1025,7 @@ def get_last_valid_resize(request, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_resize_retry(request, context, database):
     last_resize = get_last_valid_resize(request, database)
     if last_resize:
@@ -996,6 +1043,7 @@ def database_resize_retry(request, context, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_resize_rollback(request, context, database):
     last_resize = get_last_valid_resize(request, database)
     if last_resize:
@@ -1007,6 +1055,7 @@ def database_resize_rollback(request, context, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_upgrade(request, context, database):
     can_do_upgrade, error = database.can_do_upgrade()
     if not can_do_upgrade:
@@ -1025,6 +1074,7 @@ def database_upgrade(request, context, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_upgrade_retry(request, context, database):
     can_do_upgrade, error = database.can_do_upgrade_retry()
     if can_do_upgrade:
@@ -1077,6 +1127,7 @@ def _upgrade_patch(request, database, target_patch):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_upgrade_patch_retry(request, context, database):
     _upgrade_patch_retry(request, database)
     return HttpResponseRedirect(
@@ -1109,6 +1160,7 @@ def _upgrade_patch_retry(request, database):
 
 
 @database_view('resizes')
+@check_maintenance_decorator(True)
 def database_resizes(request, context, database):
     if request.method == 'POST':
         if (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
@@ -1137,6 +1189,7 @@ def database_resizes(request, context, database):
 
 
 @database_view('upgrade_disk')
+@check_maintenance_decorator(True)
 def database_upgrades(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
@@ -1246,6 +1299,7 @@ class DatabaseMigrateEngineRetry(View):
         )
 
     @database_view_class('')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(DatabaseMigrateEngineRetry, self).dispatch(
@@ -1373,6 +1427,7 @@ class DatabaseMaintenanceView(TemplateView):
         return self.context
 
     @database_view_class('maintenance')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(DatabaseMaintenanceView, self).dispatch(
@@ -1566,6 +1621,7 @@ class DatabaseUpgradeView(TemplateView):
         return self.context
 
     @database_view_class('upgrade')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(DatabaseUpgradeView, self).dispatch(
@@ -1595,6 +1651,7 @@ class UpgradeDatabaseRetryView(View):
         )
 
     @database_view_class('')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(UpgradeDatabaseRetryView, self).dispatch(
@@ -1621,6 +1678,7 @@ class AddInstancesDatabaseRetryView(View):
         )
 
     @database_view_class('')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(AddInstancesDatabaseRetryView, self).dispatch(
@@ -1643,6 +1701,7 @@ class AddInstancesDatabaseRollbackView(View):
         )
 
     @database_view_class('')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(AddInstancesDatabaseRollbackView, self).dispatch(
@@ -1805,6 +1864,7 @@ class DatabaseHostsView(TemplateView):
         return self.context
 
     @database_view_class('hosts')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(DatabaseHostsView, self).dispatch(
@@ -1859,6 +1919,7 @@ class RemoveInstanceDatabaseRetryView(View):
         )
 
     @database_view_class('')
+    @check_maintenance_decorator(True)
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(RemoveInstanceDatabaseRetryView, self).dispatch(
@@ -1980,6 +2041,7 @@ def _delete_snapshot(request, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_make_backup(request, context, database):
     error = None
     try:
@@ -2004,6 +2066,7 @@ def database_make_backup(request, context, database):
 
 
 @database_view('backup')
+@check_maintenance_decorator(True)
 def database_backup(request, context, database):
     if request.method == 'POST':
         backup_hour = int(request.POST.get('backup_hour', 0))
@@ -2060,6 +2123,7 @@ def database_backup(request, context, database):
 
 
 @database_view('dns')
+@check_maintenance_decorator(True)
 def database_dns(request, context, database):
     context['can_remove_extra_dns'] = request.user.has_perm(
         'extra_dns.delete_extradns'
@@ -2108,6 +2172,7 @@ def _destroy_databases(request, database):
 
 
 @database_view('destroy')
+@check_maintenance_decorator(True)
 def database_destroy(request, context, database):
     if request.method == 'POST':
         if 'database_destroy' in request.POST:
@@ -2182,6 +2247,7 @@ def database_reinstall_vm(request, database_id, host_id):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def database_reinstall_vm_retry(request, context, database):
     last_reinstall_vm = database.reinstall_vm.last_available_retry
     can_reinstall_vm = True
@@ -2217,6 +2283,7 @@ def database_reinstall_vm_retry(request, context, database):
 
 
 @database_view('migrate')
+@check_maintenance_decorator(True)
 def database_migrate(request, context, database):
     if not database.is_host_migrate_available:
         messages.add_message(
@@ -2225,8 +2292,10 @@ def database_migrate(request, context, database):
         return database_details(request, database.id)
 
     environment = database.infra.environment
+    print(environment)
+    print(request)
     if request.POST:
-
+        print('Iagos Post------------------------------------------------------------------')
         can_migrate, error = database.can_migrate_host()
 
         if not can_migrate:
@@ -2276,6 +2345,9 @@ def database_migrate(request, context, database):
             offering = get_object_or_404(
                 Offering, pk=request.POST.get('new_offering')
             )
+            print(environment)
+            print(offering)
+            print(offering.environments.all())
             if environment not in offering.environments.all():
                 messages.add_message(
                     request, messages.ERROR,
@@ -2337,7 +2409,7 @@ def database_migrate(request, context, database):
 
     context["environments"] = set()
     environment_groups = environment.groups.all()
-
+    print(environment_groups)
     if not environment_groups:
         messages.add_message(
             request,
@@ -2350,7 +2422,7 @@ def database_migrate(request, context, database):
         for group in environment_groups:
             for env in group.environments.all():
                 context["environments"].add(env)
-
+    print(context["environments"])
     context["current_environment"] = environment
     context["current_offering"] = database.infra.offering
 
@@ -2399,6 +2471,7 @@ class ExecuteScheduleTaskView(RedirectView):
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
 
 @database_view("")
+@check_maintenance_decorator(True)
 def change_persistence_retry(request, context, database):
 
     can_do_chg_persistence, error = database.can_do_change_persistence_retry()
@@ -2434,6 +2507,7 @@ def change_persistence_retry(request, context, database):
 
 
 @database_view("")
+@check_maintenance_decorator(True)
 def change_persistence(request, context, database):
 
     can_do_change_persistence, error = database.can_do_change_persistence()
@@ -2456,6 +2530,7 @@ def change_persistence(request, context, database):
 
 
 @database_view('persistence')
+@check_maintenance_decorator(True)
 def database_persistence(request, context, database):
 
     if request.method == 'POST':

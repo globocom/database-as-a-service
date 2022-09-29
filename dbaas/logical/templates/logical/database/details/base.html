@@ -85,6 +85,7 @@
       {% csrf_token %}
       {% block tab %}
       {% endblock %}
+      {% if config_maintenance == False%}
       {% block database_button_save %}
       <div class="form-actions navbar navbar-fixed-bottom">
         <div class="container">
@@ -95,6 +96,7 @@
         </div>
       </div>
       {% endblock %}
+      {% endif %}
     </form>
   </div>
 {% endblock %}

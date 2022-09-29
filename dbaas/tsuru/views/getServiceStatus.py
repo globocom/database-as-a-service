@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from logical.models import Database
 from notification.models import TaskHistory
-from ..utils import get_url_env, get_database, LOG
+from ..utils import get_url_env, get_database, LOG, check_maintenance
 from django.db.models import Q
 
 
@@ -12,6 +12,7 @@ class GetServiceStatus(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
+    @check_maintenance
     def get(self, request, database_name, format=None):
         env = get_url_env(request)
         LOG.info("Database name {}. Environment {}".format(

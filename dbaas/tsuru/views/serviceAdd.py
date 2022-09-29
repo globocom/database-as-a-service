@@ -6,7 +6,7 @@ from physical.models import Plan, Environment, PlanNotFound, Pool
 from rest_framework import status
 from ..utils import (get_plans_dict, get_url_env,
                      log_and_response, validate_environment,
-                     LOG, DATABASE_NAME_REGEX)
+                     LOG, DATABASE_NAME_REGEX, check_maintenance)
 from django.utils.functional import cached_property
 from django.core.exceptions import ObjectDoesNotExist
 from account.models import AccountUser, Team
@@ -274,6 +274,7 @@ class ServiceAdd(APIView):
                 )
             self.extra_params.update({'pool': self.dbaas_pool})
 
+    @check_maintenance
     def post(self, request, format=None):
         validations = (
             self._validate_required_params,

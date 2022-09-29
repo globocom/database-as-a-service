@@ -6,10 +6,26 @@ from physical.models import Environment
 from rest_framework.response import Response
 from maintenance.models import DatabaseCreate
 from rest_framework import status
+from system.models import Configuration
+from rest_framework import status
+from rest_framework.response import Response
 
 
 LOG = logging.getLogger(__name__)
 DATABASE_NAME_REGEX = re.compile('^[a-z][a-z0-9_]+$')
+
+
+def check_maintenance(decorated_view_function):
+    def check_config(view, request, *args, **kwargs):
+        """ A function that intercepts the View function and enforces permissions """
+        config_maintenance = Configuration.objects.get(name='config_maintenance')
+        if int(config_maintenance.value) > 0:
+            return Response(config_maintenance.description, status=status.HTTP_400_BAD_REQUEST)
+        # Passing the arguments and control over to the view function that was decorated
+        response = decorated_view_function(view, request, *args, **kwargs)
+        # Perform actions here after the control is returned by the view function that was decorated
+        return response
+    return check_config
 
 
 def get_database(name, env):

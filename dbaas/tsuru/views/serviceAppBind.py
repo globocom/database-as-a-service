@@ -3,7 +3,7 @@ from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from logical.models import Database
 from workflow.steps.util.base import ACLFromHellClient
-from ..utils import (log_and_response, get_url_env, LOG, check_database_status)
+from ..utils import (log_and_response, get_url_env, LOG, check_database_status, check_maintenance)
 from rest_framework import status
 
 
@@ -36,6 +36,7 @@ class ServiceAppBind(APIView):
     def _handle_app_name(app_name):
         return app_name[0] if isinstance(app_name, list) else app_name
 
+    @check_maintenance
     def post(self, request, database_name, format=None):
         """This method binds a App to a database through tsuru."""
         env = get_url_env(request)
@@ -119,6 +120,7 @@ class ServiceAppBind(APIView):
 
         return Response(env_vars, status.HTTP_201_CREATED)
 
+    @check_maintenance
     def delete(self, request, database_name, format=None):
         """This method unbinds a App to a database through tsuru."""
         env = get_url_env(request)

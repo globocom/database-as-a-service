@@ -2,13 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from physical.models import Plan, Environment
-from ..utils import (get_plans_dict, get_url_env, validate_environment)
+from ..utils import (get_plans_dict, get_url_env, validate_environment, check_maintenance)
 
 
 class ListPlans(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Plan
 
+    @check_maintenance
     def get(self, request, format=None):
         ''' list all plans in the same
             stage that environment

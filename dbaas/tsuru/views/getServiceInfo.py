@@ -2,13 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from logical.models import Database
 from rest_framework.response import Response
-from ..utils import get_url_env, get_database, LOG
+from ..utils import get_url_env, get_database, LOG, check_maintenance
 
 
 class GetServiceInfo(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
+    @check_maintenance
     def get(self, request, database_name, format=None):
         env = get_url_env(request)
         try:

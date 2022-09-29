@@ -6,13 +6,14 @@ from dbaas.middleware import UserMiddleware
 from account.models import AccountUser, Team
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from ..utils import (get_url_env, get_database, log_and_response)
+from ..utils import (get_url_env, get_database, log_and_response, check_maintenance)
 
 
 class ServiceRemove(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
+    @check_maintenance
     def put(self, request, database_name, format=None):
         data = request.DATA
         if not data:
@@ -69,6 +70,7 @@ class ServiceRemove(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @check_maintenance
     def delete(self, request, database_name, format=None):
         UserMiddleware.set_current_user(request.user)
         env = get_url_env(request)

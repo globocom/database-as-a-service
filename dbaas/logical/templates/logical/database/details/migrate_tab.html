@@ -40,9 +40,9 @@
                 {% if env == current_environment %}
                   <option value="{{env.id}}" selected="selected">---------</option>
                 {% else %}
-                  {% if env.provisioner != current_environment.provisioner and not env.hide_migration %}
+
                   <option value="{{env.id}}">{{env}}</option>
-                  {% endif %}
+
                 {% endif %}
           {% endfor %}
         {% else %}
