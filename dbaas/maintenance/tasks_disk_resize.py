@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import logging
 import datetime
+import socket
 
 from account.models import AccountUser
 from dbaas_credentials.credential import Credential
@@ -266,16 +267,25 @@ def host_mount_data_percentage(host, task):
         task.add_detail(
             message="Could not load mount size: {}".format(str(err)), level=4
         )
+        LOG.error("Error: Could not load mount size -> {}".format(str(err)))
         return None, None, None
     except SSHException as err:
         task.add_detail(
             message="Could not connect to Host SSH: {}".format(str(err)), level=4
         )
+        LOG.error("Error: Could not connect to Host SSH -> {}".format(str(err)))
+        return None, None, None
+    except socket.timeout:
+        task.add_detail(
+            message="Socket timed out when trying to create temp file.", level=4
+        )
+        LOG.error("Error: Socket timed out when trying to create temp file.")
         return None, None, None
     except Exception as err:
         task.add_detail(
             message="Error when mounting /data from host: {}".format(str(err)), level=4
         )
+        LOG.error("Error: Error when mounting /data from host -> {}".format(str(err)))
         return None, None, None
 
     values = output["stdout"][0].strip().split()
