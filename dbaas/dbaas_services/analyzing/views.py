@@ -64,7 +64,7 @@ class DatabaseReport(ListView):
 
     def vm_by_line_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Email', 'Emergency Contacts',
+        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
                   'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
 
         databases = Database.objects.all()
@@ -84,6 +84,7 @@ class DatabaseReport(ListView):
                         database.environment,
                         database.team,
                         database.team.name,
+                        database.team.team_area,
                         database.team.email,
                         database.team.contacts,
                         database.team.organization.name,
@@ -96,7 +97,7 @@ class DatabaseReport(ListView):
 
     def default_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Email', 'Emergency Contacts',
+        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
                   'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
@@ -116,6 +117,7 @@ class DatabaseReport(ListView):
                     database.environment,
                     database.team,
                     database.team.name,
+                    database.team.team_area,
                     database.team.email,
                     database.team.contacts,
                     database.team.organization.name,
