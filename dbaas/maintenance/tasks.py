@@ -491,10 +491,10 @@ def zabbix_alert_resize_disk_task(task):
 
 class TaskRegisterMaintenance(TaskRegisterBase):
     @classmethod
-    def zabbix_alert_resize_disk(cls, database):
+    def zabbix_alert_resize_disk(cls, database, not_running):
         task_params = {
-            'task_name': 'database_set_ssl_not)required',
-            'arguments': 'Setting database SSL Not Required {}'.format(
+            'task_name': 'resize_disk_from_zabbix_alert',
+            'arguments': 'Resizing disk for database {}'.format(
                 database),
             'database': database,
             'user': None,
@@ -503,4 +503,11 @@ class TaskRegisterMaintenance(TaskRegisterBase):
 
         task = cls.create_task(task_params)
 
-        zabbix_alert_resize_disk_task.delay(task)
+        if not not_running:
+            LOG.warning("Database {} already has a resize task runing.".format(database.name))
+            details = "Database {} already has a resize task runing".format(database.name)
+            status = TaskHistory.STATUS_WARNING
+
+            task.update_status_for(status=status, details=details)
+        else:
+            zabbix_alert_resize_disk_task.delay(task)

@@ -23,7 +23,7 @@ class ZabbixHostInformationSerializer(serializers.Serializer):
 
 
 class ZabbixDiskSizeAlertSerializer(serializers.Serializer):
-    hosts = ZabbixHostInformationSerializer(many=True)
+    host = ZabbixHostInformationSerializer()
 
 
 class ZabbixDiskSizeAlertAPIView(views.APIView):
@@ -39,19 +39,19 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
 
         serializer = ZabbixDiskSizeAlertSerializer(data=data)
         if serializer.is_valid():
-            for host in serializer.data['hosts']:
-                # busca a database pelo IP do Host
-                database = self.get_database_from_host_ip(host['ip'])
-                if database is None:
-                    continue
+            host = serializer.data['host']
 
-                # Valida se nao tem nenhuma task de resize rodando para a database
-                if not self.validate_running_resize_task(database):
-                    LOG.warning("Database {} already has a resize task runing.".format(database.name))
-                    continue
+            # busca a database pelo IP do Host
+            database = self.get_database_from_host_ip(host['ip'])
+            if database is None:
+                return Response({'message': 'Database não encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
-                TaskRegisterMaintenance.zabbix_alert_resize_disk(database)
-                LOG.info("No resize task is running for database {}".format(database.name))
+            # Valida se nao tem nenhuma task de resize rodando para a database
+            running = self.validate_running_resize_task(database)
+
+            TaskRegisterMaintenance.zabbix_alert_resize_disk(database, running)
+
+            LOG.info("No resize task is running for database {}".format(database.name))
 
             return Response(status=status.HTTP_201_CREATED)
 
