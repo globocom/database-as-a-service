@@ -40,10 +40,16 @@ from . import services
 from . import exceptions
 from . import utils
 from django.contrib.auth.decorators import login_required
-
+import MySQLdb
+import MySQLdb.cursors
 
 LOG = logging.getLogger(__name__)
 
+REGIONS = [
+    "us-west1", "us-west2", "us-west3", "us-west4", "us-south1", "us-central1", "northamerica-northeast1",
+    "northamerica-northeast2", "us-east1", "us-east2", "us-east3", "us-east4", "us-east5", "southamerica-east1",
+    "southamerica-west1"
+]
 
 def credential_parameter_by_name(request, env_id, param_name):
 
@@ -2314,6 +2320,34 @@ def database_migrate(request, context, database):
                 TaskRegister.database_migrate(
                     database, environment, offering, request.user, hosts_zones
                 )
+
+        elif 'new_region' in request.POST:
+            host_prov_client = HostProviderClient(environment)
+
+            host = get_object_or_404(Host, pk=request.POST.get('host'))
+            new_zone = request.POST["new_region"]
+            zone_origin = request.POST.get("zone_origin")
+
+            # Do not allow GCP hosts
+            # to be in the same region
+            if ('gcp' in environment.name and database.engine_type.startswith('mysql')):
+                instances = database.infra.instances.all()
+                for instance in instances:
+                    host_check = instance.hostname
+                    host_info = host_prov_client.get_vm_by_host(host_check)
+                    if host_info.zone == new_zone:
+                        messages.add_message(
+                            request,
+                            messages.ERROR,
+                            ("The new zone must be"
+                             "different from other hosts zone")
+                        )
+                        return
+
+            TaskRegister.region_migrate(
+                host, new_zone, environment, request.user, database, zone_origin
+            )
+
         return
 
     hosts = set()
@@ -2327,13 +2361,17 @@ def database_migrate(request, context, database):
         hp = Provider(instance, environment)
         try:
             host_info = hp.host_info(host)
+            current_zone = host_info['zone']
         except Exception as e:
             LOG.error("Could get host info {} - {}".format(host, e))
         else:
             host.current_zone = host_info['zone']
+            current_zone = host_info['zone']
         hosts.add(host)
+
     context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
     context['zones'] = sorted(zones)
+    context['current_zone'] = current_zone
 
     context["environments"] = set()
     environment_groups = environment.groups.all()
@@ -2365,13 +2403,27 @@ def database_migrate(request, context, database):
         "is_ha": database.plan.is_ha
     }
 
+    engine = '{}_{}'.format(
+        database.engine.name,
+        database.databaseinfra.engine_patch.full_version
+    )
+    topology = database.databaseinfra.plan.replication_topology
+    full_engine = engine + " - " + topology.details if topology.details else engine
+    context['current_engine'] = full_engine
+
+    all_env = find_environments()
+    filter_plan = find_plans(engine, topology.details, topology)
+    plan_env = find_plan_environments()
+    filter_env = filter_env_avaliable(all_env, filter_plan, plan_env)
+
+    regions = return_all_available_regions(filter_env, environment)
+    context['regions'] = regions
     context.update(**stage_info)
 
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)
     )
-
 
 def zones_for_environment(request, database_id, environment_id):
     database = get_object_or_404(Database, pk=database_id)
@@ -2382,6 +2434,107 @@ def zones_for_environment(request, database_id, environment_id):
         json.dumps({"zones": zones}), content_type="application/json"
     )
 
+def mysql_connection():
+    conn = MySQLdb.connect("dev_mysqldb57", "root", "123", "dbaas", cursorclass=MySQLdb.cursors.DictCursor)
+    return conn.cursor()
+
+def find_environments():
+    # Database search for all environment available in the DBaaS
+    cursor = mysql_connection()
+    cursor.execute("SELECT id, name FROM physical_environment")
+    raw_data = cursor.fetchall()
+
+    env_data = [
+        data
+        for data in raw_data
+    ]
+    return env_data
+
+def find_plans(engine, topology_details, topology):
+    # Database search for all physical plans available in the DBaaS
+    cursor = mysql_connection()
+    cursor.execute("SELECT id, name FROM physical_plan")
+    raw_data = cursor.fetchall()
+
+    # Filtered and formatted datas
+    plan = [
+        data
+        for data in raw_data
+        if engine.lower().split('_')[0] in data.get('name', '').lower()
+    ]
+
+    plan_data = []
+    for p in plan:
+        if 'no' in str(topology_details).lower():
+            if 'ha' not in p.get('name', '').lower():
+                plan_data.append(p)
+        else:
+            if 'ha' in p.get('name', '').lower():
+                plan_data.append(p)
+
+    # Formatted engine version
+    engine_version = ''
+    for top in str(topology):
+        if top.isdigit():
+            engine_version = engine_version + top
+
+    # Final datas filtered and returning a list of all physical plans available
+    filter_plan = [
+        plan
+        for plan in plan_data
+        if engine_version in plan.get('name', '').replace('.', '')
+    ]
+    return filter_plan
+
+def find_plan_environments():
+    # Database search for physical plans correlated with environments in the DBaaS
+    cursor = mysql_connection()
+    cursor.execute("SELECT plan_id, environment_id FROM physical_plan_environments")
+    raw_data = cursor.fetchall()
+
+    plan_env_data = [
+        data
+        for data in raw_data
+    ]
+    return plan_env_data
+
+def filter_env_avaliable(all_env, filter_plan, plan_env):
+    # Filtered physical plan with correlated physical plan
+    filter_plan_env = [
+        {
+            'plan_id': p_e['plan_id'],
+            'plan_name': plan['name'],
+            'env_id': p_e['environment_id']
+        }
+        for p_e in plan_env
+        for plan in filter_plan
+        if plan["id"] == p_e["plan_id"]
+    ]
+
+    # Returning a list of filtered environments with correlated physical plan filtered
+    filter_env_raw = [
+        env['name']
+        for fil in filter_plan_env
+        for env in all_env
+        if fil['env_id'] == env['id']
+    ]
+    return list(set(filter_env_raw))
+
+def return_all_available_regions(filter_env, current_env):
+    cache = []
+    regions = []
+    for env in filter_env:
+        for region in REGIONS:
+            if region in env:
+                if env != current_env:
+                    if region not in cache:
+                        regions.append({
+                            'region': region,
+                            'id': region + env,
+                            'env': env
+                        })
+                        cache.append(region)
+    return regions
 
 class ExecuteScheduleTaskView(RedirectView):
     pattern_name = 'admin:logical_database_maintenance'

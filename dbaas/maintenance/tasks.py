@@ -269,6 +269,18 @@ def node_zone_migrate(self, host, zone, new_environment, task,
         zone_origin=zone_origin
     )
 
+@app.task(bind=True)
+def node_region_migrate(self, host, new_zone, environment, task, zone_origin, since_step=None, step_manager=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    from tasks_region_migrate import node_region_migrate
+    node_region_migrate(
+        host, new_zone, environment, task,
+        since_step, step_manager=step_manager,
+        zone_origin=zone_origin
+    )
 
 @app.task(bind=True)
 def recreate_slave(self, database, host, task, since_step=None,

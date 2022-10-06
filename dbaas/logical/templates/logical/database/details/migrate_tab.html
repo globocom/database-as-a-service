@@ -93,11 +93,47 @@
       </table>
     </div>
   </div>
+  <div class="panel-body region-migrate-box">
+    <div class="control-group">
+      <h3>Regions</h3>
+      <table id="table-region" class="table table-striped table-hover">
+        <tbody>
+          <div class="controls">
+            <tr>
+              <td><h4>{{ current_zone }}</h4></td>
+              <td>
+                {%if last_host_migrate and last_host_migrate.is_status_error %}
+                  {%if not last_host_migrate.database_migrate and last_host_migrate.host == host %}
+                    <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
+                    <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
+                    <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
+                  {% else %}
+                    {{ current_zone }}
+                  {% endif %}
+                {% else %}
+                  <select id="migrate_region" class="region" name="migrate_region">
+                    <option value="{{reg.id}}" selected="selected">---------</option>
+                    {% for reg in regions %}
+                      {% if reg != current_zone %}
+                        <option value="{{reg.id}}">{{ reg.region }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                  </select>
+                  <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn region-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.id}}" data-target="#migrate_region_modal" disabled>Migrate Region</button>
+              </td>
+            </div>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </fieldset>
 {% endblock %}
 
 {% block database_button_save %}
 
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_region_modal" confirmation_message="Are you sure you want to migrate this region?" box_title="Migrate region" button_class="btn btn-primary" id_optional="id=migrate_region_btn_modal"%}
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_environment_modal" confirmation_message="Are you sure you want to migrate this database?" box_title="Migrate database" button_class="btn btn-primary" id_optional="id=migrate_database_btn_modal"%}
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="full_rollback_migrate_stage_modal" confirmation_message="Are you sure you want to rollback migration full stage?" box_title="Rollback migrate database full stage" button_class="btn btn-primary" id_optional="id=full_rollback_migrate_stage_btn_modal"%}
@@ -114,6 +150,7 @@
     $(".environments").attr("disabled", "disabled");
     $(".offerings").attr("disabled", "disabled");
     $(".zone-migrate-box").hide();
+    $(".region-migrate-box").hide();
   }
 
   function load_offerings(environment_id) {
@@ -193,7 +230,23 @@
   }
 
   jQuery(document).ready(function($) {
-    
+    $("#migrate_region").on("change", function () {
+      selectVal = $('#migrate_region').val();
+      var btn = document.getElementById('#migrate_region');
+
+      if (selectVal == "---------") {
+        $("#migrate_region_btn").prop('disabled', true);
+        btn.className = 'resize_button btn region-btn';
+        btn.disable = true;
+      }
+      else {
+        $("#migrate_region_btn").prop('disabled', false);
+        btn.className = 'resize_button btn btn-primary region-btn';
+        btn.disable = true;
+      }
+
+    });
+
     $(".host-zone").on("change", function() {
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
@@ -226,6 +279,20 @@
       $("#migrate_host_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>' + hostName + '</u> from <u>' + currentZone + '</u> to <u>' + newZone + '</u>?</label>');
     });
 
+    $(".host-zone-btn").click(function() {
+      var $select = $("#migrate_environment");
+      var new_env = $select.find(":selected").text()
+      var $select = $("#migrate_offering");
+      var new_offering = $select.find(":selected").text()
+      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
+    });
+
+    $(".region-btn").click(function() {
+      var $select = $("#migrate_region");
+      var new_env = $select.find(":selected").text()
+      $("#migrate_region_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_zone }}</u> to <u>' + new_env + '</u><br><br>Are you sure you want to migrate this database?</label>');
+    });
+
     $("#migrate_host_btn_modal").click(function() {
       $("#migrate_host_btn_modal").attr("disabled", "disabled");
       $("#migrate_host_btn_modal").css({
@@ -234,12 +301,12 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone, zoneOrigin);
     });
 
-    $(".host-zone-btn").click(function() {
-      var $select = $("#migrate_environment");
-      var new_env = $select.find(":selected").text()
-      var $select = $("#migrate_offering");
-      var new_offering = $select.find(":selected").text()
-      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
+    $("#migrate_region_btn_modal").on("click", function() {
+      $("#migrate_region_btn_modal").attr("disabled", "disabled");
+      $("#migrate_region_btn_modal").css({
+        "pointer-events": "none"
+      });
+      window.MigrateManager.migrate_region({{database.id}}, hostId, newZone, zoneOrigin);
     });
 
     $("#migrate_database_btn_modal").click(function() {

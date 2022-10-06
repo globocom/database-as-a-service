@@ -1,5 +1,5 @@
 from maintenance.models import HostMigrate
-from util.providers import get_host_migrate_steps
+from util.providers import get_region_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 import logging
 
@@ -7,56 +7,33 @@ LOG = logging.getLogger(__name__)
 
 
 def get_steps(host):
-    LOG.debug('--------------------- Entrou get steps MAINTENANCE/TASKS_MIGRATE ---------------------')
     plan = host.instances.first().databaseinfra.plan
     class_path = plan.replication_topology.class_path
-
-    LOG.debug('--------')
-    LOG.debug('plan')
-    LOG.debug(plan)
-    LOG.debug('class_path')
-    LOG.debug(class_path)
-    LOG.debug('--------')
-
-    return get_host_migrate_steps(class_path)
+    return get_region_migrate_steps(class_path)
 
 
-def node_zone_migrate(host, zone, new_environment, task, 
+def node_region_migrate(host, new_zone, environment, task,
                       since_step=None, step_manager=None, 
                       zone_origin=None):
-    LOG.debug('--------------------- Entrou node_zone_migrate MAINTENANCE/TASKS_MIGRATE ---------------------')
     instance = host.instances.first()
     if step_manager:
-        host_migrate = step_manager
-        host_migrate.id = None
+        region_migrate = step_manager
+        region_migrate.id = None
     else:
-        host_migrate = HostMigrate()
-    host_migrate.task = task
-    host_migrate.host = instance.hostname
-    host_migrate.zone = zone
-    host_migrate.zone_origin = zone_origin
-    host_migrate.environment = new_environment
-    host_migrate.save()
-
-    LOG.debug('--------')
-    LOG.debug('host')
-    LOG.debug(host)
-    LOG.debug('zone')
-    LOG.debug(zone)
-    LOG.debug('instance')
-    LOG.debug(instance)
-    LOG.debug('task')
-    LOG.debug(task)
-    LOG.debug('env')
-    LOG.debug(new_environment)
-    LOG.debug('--------')
+        region_migrate = HostMigrate()
+    region_migrate.task = task
+    region_migrate.host = instance.hostname
+    region_migrate.zone = new_zone
+    region_migrate.zone_origin = zone_origin
+    region_migrate.environment = environment
+    region_migrate.save()
 
     steps = get_steps(host)
     result = steps_for_instances(
-        steps, [instance], task, host_migrate.update_step, since_step,
-        step_manager=host_migrate
+        steps, [instance], task, region_migrate.update_step, since_step,
+        step_manager=region_migrate
     )
-    host_migrate = HostMigrate.objects.get(id=host_migrate.id)
+    host_migrate = HostMigrate.objects.get(id=region_migrate.id)
     if result:
         host_migrate.set_success()
         task.set_status_success('Node migrated with success')
@@ -65,7 +42,7 @@ def node_zone_migrate(host, zone, new_environment, task,
         task.set_status_error('Could not migrate host')
 
 
-def rollback_node_zone_migrate(migrate, task):
+def rollback_node_region_migrate(migrate, task):
     instance = migrate.host.instances.first()
     migrate.id = None
     migrate.created_at = None

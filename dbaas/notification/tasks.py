@@ -2511,6 +2511,24 @@ class TaskRegister(object):
         )
 
     @classmethod
+    def region_migrate(cls, host, new_zone, environment, user, database, zone_origin, since_step=None, step_manager=None):
+        task_params = {
+            'task_name': "region_migrate",
+            'database': database,
+            'arguments': "Host: {}, New_zone: {}, Environment: {} Zone_origin".format(
+                host, new_zone, environment, zone_origin
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return maintenace_tasks.node_region_migrate.delay(
+            host=host, new_zone=new_zone, environment=environment,
+            task=task, since_step=since_step,
+            step_manager=step_manager, zone_origin=zone_origin
+        )
+
+    @classmethod
     def recreate_slave(cls, host, user,
                        since_step=None, step_manager=None):
         db = Database.objects.get(databaseinfra__instances__hostname=host)

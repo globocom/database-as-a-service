@@ -99,6 +99,9 @@ def get_filer_migrate_steps(class_path):
 def get_host_migrate_steps(class_path):
     return get_replication_topology_instance(class_path).get_host_migrate_steps()
 
+def get_region_migrate_steps(class_path):
+    return get_replication_topology_instance(class_path).get_region_migrate_steps()
+
 def get_database_migrate_steps(class_path, stage):
     object_instance = get_replication_topology_instance(class_path)
     if stage == DatabaseInfra.STAGE_1:
