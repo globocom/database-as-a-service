@@ -37,6 +37,7 @@ from maintenance.tasks_create_database import (get_or_create_infra,
                                                get_instances_for)
 from notification.scripts import script_mongo_log_rotate
 from util.providers import get_deploy_settings
+from util.task_register import database_disk_resize
 
 import json
 import requests
