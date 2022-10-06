@@ -467,18 +467,24 @@ def update_disk_used_size(self):
 
 
 @app.task(bind=True)
-def zabbix_alert_resize_disk_task(task):
-    databases = [task.database]
+def zabbix_alert_resize_disk_task(self, task_history, database):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        task_history=task_history, request=self.request,
+        user=None, worker_name=worker_name
+    )
+
+    databases = [database]
     status = TaskHistory.STATUS_SUCCESS
     threshold_disk_resize = Configuration.get_by_name_as_int(
         "threshold_disk_resize", default=80.0
     )
     integration = CredentialType.objects.get(type=CredentialType.ZABBIX_READ_ONLY)
-    zabbix_credential, graf_credential = find_zabbix_and_grafana_credentials_for_environment(task.database.environment,
-                                                                                             integration, task)
+    zabbix_credential, graf_credential = find_zabbix_and_grafana_credentials_for_environment(
+        database.environment, integration, task_history)
     project_domain = graf_credential.get_parameter_by_name('project_domain')
 
-    collected, problems, resizes, status = go_through_databases(databases=databases, task=task,
+    collected, problems, resizes, status = go_through_databases(databases=databases, task=task_history,
                                                                 zabbix_credential=zabbix_credential,
                                                                 project_domain=project_domain, collected=1, problems=0,
                                                                 resizes=0, status=status,
@@ -486,7 +492,7 @@ def zabbix_alert_resize_disk_task(task):
 
     details = "Resize: {} | Problems: {}".format(resizes, problems)
 
-    task.update_status_for(status=status, details=details)
+    task_history.update_status_for(status=status, details=details)
 
 
 class TaskRegisterMaintenance(TaskRegisterBase):
@@ -502,6 +508,7 @@ class TaskRegisterMaintenance(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
+        LOG.debug(task)
 
         if not not_running:
             LOG.warning("Database {} already has a resize task runing.".format(database.name))
@@ -510,4 +517,4 @@ class TaskRegisterMaintenance(TaskRegisterBase):
 
             task.update_status_for(status=status, details=details)
         else:
-            zabbix_alert_resize_disk_task.delay(task)
+            zabbix_alert_resize_disk_task.delay(task_history=task, database=database)
