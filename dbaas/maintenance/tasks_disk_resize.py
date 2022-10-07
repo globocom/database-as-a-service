@@ -20,7 +20,7 @@ from physical.ssh import ScriptFailedException
 from system.models import Configuration
 from util import email_notifications
 from notification.tasks_disk_resize import update_disk
-from notification.tasks import TaskRegister
+from util.task_register import TaskRegisterBase
 
 from .models import TaskHistory
 
@@ -242,7 +242,7 @@ def create_disk_resize_task(database, current_size, usage_percentage):
 
     user = AccountUser.objects.get(username="admin")
 
-    task = TaskRegister.database_disk_resize(
+    task = TaskRegisterBase.database_disk_resize(
         database=database,
         user=user,
         disk_offering=disk,
