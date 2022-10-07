@@ -40,8 +40,7 @@ from . import services
 from . import exceptions
 from . import utils
 from django.contrib.auth.decorators import login_required
-import MySQLdb
-import MySQLdb.cursors
+from django.db import connection
 
 LOG = logging.getLogger(__name__)
 
@@ -2435,14 +2434,22 @@ def zones_for_environment(request, database_id, environment_id):
     )
 
 def mysql_connection():
-    conn = MySQLdb.connect("dev_mysqldb57", "root", "123", "dbaas", cursorclass=MySQLdb.cursors.DictCursor)
-    return conn.cursor()
+    cursor = connection.cursor()
+    return cursor
+
+def dictfetchall(cursor):
+    # Returns all rows from a cursor as a dict
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
 
 def find_environments():
     # Database search for all environment available in the DBaaS
     cursor = mysql_connection()
     cursor.execute("SELECT id, name FROM physical_environment")
-    raw_data = cursor.fetchall()
+    raw_data = dictfetchall(cursor)
 
     env_data = [
         data
@@ -2454,7 +2461,7 @@ def find_plans(engine, topology_details, topology):
     # Database search for all physical plans available in the DBaaS
     cursor = mysql_connection()
     cursor.execute("SELECT id, name FROM physical_plan")
-    raw_data = cursor.fetchall()
+    raw_data = dictfetchall(cursor)
 
     # Filtered and formatted datas
     plan = [
@@ -2463,6 +2470,7 @@ def find_plans(engine, topology_details, topology):
         if engine.lower().split('_')[0] in data.get('name', '').lower()
     ]
 
+    # Filtered list of available environments according to current environment
     plan_data = []
     for p in plan:
         if 'no' in str(topology_details).lower():
@@ -2490,7 +2498,7 @@ def find_plan_environments():
     # Database search for physical plans correlated with environments in the DBaaS
     cursor = mysql_connection()
     cursor.execute("SELECT plan_id, environment_id FROM physical_plan_environments")
-    raw_data = cursor.fetchall()
+    raw_data = dictfetchall(cursor)
 
     plan_env_data = [
         data
@@ -2521,6 +2529,8 @@ def filter_env_avaliable(all_env, filter_plan, plan_env):
     return list(set(filter_env_raw))
 
 def return_all_available_regions(filter_env, current_env):
+    # Returns a list of regions where it`s possible to migrate
+    # Correlates a list of filtered envs with a list of regions and adds only if it`s not repeated
     cache = []
     regions = []
     for env in filter_env:
