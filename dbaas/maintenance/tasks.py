@@ -497,7 +497,7 @@ def zabbix_alert_resize_disk_task(self, task_history, database):
 
 class TaskRegisterMaintenance(TaskRegisterBase):
     @classmethod
-    def zabbix_alert_resize_disk(cls, database, not_running):
+    def zabbix_alert_resize_disk(cls, database, is_running):
         task_params = {
             'task_name': 'resize_disk_from_zabbix_alert',
             'arguments': 'Resizing disk for database {}'.format(
@@ -508,9 +508,8 @@ class TaskRegisterMaintenance(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
-        LOG.debug(task)
 
-        if not not_running:
+        if is_running:
             LOG.warning("Database {} already has a resize task runing.".format(database.name))
             details = "Database {} already has a resize task runing".format(database.name)
             status = TaskHistory.STATUS_WARNING

@@ -47,9 +47,10 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
                 return Response({'message': 'Database não encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
             # Valida se nao tem nenhuma task de resize rodando para a database
-            running = self.validate_running_resize_task(database)
+            is_running = self.is_running_resize_task_for_database(database)
 
-            TaskRegisterMaintenance.zabbix_alert_resize_disk(database, running)
+            # Chama funcao assincrona, para nao deixar o zabbix esperando enquanto roda
+            TaskRegisterMaintenance.zabbix_alert_resize_disk(database, is_running)
 
             LOG.info("No resize task is running for database {}".format(database.name))
 
@@ -58,18 +59,18 @@ class ZabbixDiskSizeAlertAPIView(views.APIView):
         LOG.error("Serializer erros: {}".format(serializer.errors))
         return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def validate_running_resize_task(self, database):
+    def is_running_resize_task_for_database(self, database):
         from notification.models import TaskHistory
         # busca task de resize de disco para a database
         running_task = TaskHistory.objects.filter(database_name=database.name, task_name='database_disk_resize',
                                                   task_status__in=self.running_status).first()
 
         if running_task:
-            return False
+            return True
 
-        return True
+        return False
 
-    def get_database_from_host_ip(self, ip):
+    def get_database_from_host_ip(self, ip):  # "ip="10.89.1.108" -> Database object"
         # busca host pelo ip
         host = Host.objects.filter(address=ip).first()
         if not host:
