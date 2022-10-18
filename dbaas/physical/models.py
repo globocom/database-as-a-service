@@ -630,12 +630,12 @@ class DiskOfferingType(BaseModel):
         return '{}'.format(self.name)
 
     def get_type_to(self, environment_to):
-        disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
-                                                             identifier=self.identifier).first()
-        if not disk_offering_type:
-            disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
-                                                                 is_default=True).first()
-        return disk_offering_type
+        LOG.info('Getting DiskOfferingType for environment %s.', environment_to.name)
+        default_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
+                                                                is_default=True).first()
+
+        LOG.info('Default DiskOfferingType for environment is %s.', default_offering_type.identifier)
+        return default_offering_type
 
 
 class Plan(BaseModel):
