@@ -74,7 +74,7 @@ unit_test: # run tests
 send_codecov:
 	@cd dbaas && curl -s https://codecov.io/bash > codecov.sh  && bash codecov.sh 
 
-docker_build:
+docker_build_test:
 	docker build -t dbaas_test .
 
 test_with_docker:
@@ -168,3 +168,34 @@ dev_docker_develop_package:
 	@make dev_docker_restart app app_celery
 %:
 	@:
+
+
+
+
+# Docker part, for deploy, for GCP
+# TODO, standardize with other providers
+docker_build:
+	GIT_BRANCH=$$(git branch --show-current); \
+	GIT_COMMIT=$$(git rev-parse --short HEAD); \
+	DATE=$$(date +"%Y-%M-%d_%T"); \
+	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
+	docker build -t dbaas/dbaas_app --label git-commit=$(git rev-parse --short HEAD) --build-arg build_info="$$INFO" . -f Dockerfile_gcp
+
+docker_run:
+	# make docker_stop 
+	docker stop dbaas_app 2>&1 >/dev/null
+	docker rm dbaas_app 2>&1 >/dev/null
+	docker run --name=host_provider -d -p 80:80 dbaas/dbaas_app 
+
+docker_stop:
+	docker stop dbaas_app	
+
+docker_deploy_build: 
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"
+	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-app:${TAG}
+
+docker_deploy_push:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make docker_deploy_push TAG=v1.02"
+	docker push us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-app:${TAG}
