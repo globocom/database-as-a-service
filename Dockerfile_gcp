@@ -39,21 +39,7 @@ RUN pip install --upgrade distribute
 RUN pip install python-ldap
 
 
-#RUN pip install -r requirements_test.txt
 
-# ENTRYPOINT /code/tests.sh
-
-# RUN pip install -U setuptools
-# RUN apt install -y --force-yes python-pip python-dev
-
-
-# Because of the vserion of the encrypt lib we are using, we need to update pip
-# BUT we cant update it too much
-# And then update the virtual env for this better but not too good pip
-# so it works and other libs don't break
-# TODO - update it all O/
-#RUN pip install --upgrade pip==9.0.1
-#RUN pip install virtualenv --upgrade
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -i https://artifactory.globoi.com/artifactory/api/pypi/pypi-all/simple/ -r requirements.txt
@@ -68,5 +54,11 @@ COPY . .
 ARG build_info
 RUN echo ${build_info} > build_info.txt
 
+# RUN nc -lU /dev/log
+# RUN mkdir /dev
+USER root
+
+RUN touch /dev/log
+USER app
 
 ENTRYPOINT [ "./gunicorn.sh" ]

@@ -183,9 +183,24 @@ docker_build:
 
 docker_run:
 	# make docker_stop 
-	docker stop dbaas_app 2>&1 >/dev/null
+	# docker stop dbaas_app 2>&1 >/dev/null
 	docker rm dbaas_app 2>&1 >/dev/null
-	docker run --name=host_provider -d -p 80:80 dbaas/dbaas_app 
+	# docker run --log-driver syslog --name=dbaas_app -e "PORT=80" -e "WORKERS=2"  -p 80:80 dbaas/dbaas_app 
+	docker run --name=dbaas_app \
+		-e "PORT=80" \
+		-e "WORKERS=2" \
+		-e "DBAAS_DATABASE_HOST=dbaas-01-145632598674.dev.mysql.globoi.com" \
+		-e "DBAAS_DATABASE_USER=u_dbaas" \
+		-e "DBAAS_DATABASE_NAME=dbaas" \
+		-e "DBAAS_DATABASE_PASSWORD=u3umvWZ7LM" \
+		-e "REDIS_HOST=dbaas.dev.redis.globoi.com" \
+		-e "REDIS_PASSWORD=dfghg3vsdb6dbBSD1" \
+		-e "REDIS_DB=0" \
+		-e "REDIS_PORT=6379" \
+		-p 80:80 dbaas/dbaas_app 
+
+
+
 
 docker_stop:
 	docker stop dbaas_app	
