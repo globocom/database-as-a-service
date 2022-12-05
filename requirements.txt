@@ -16,7 +16,7 @@ MarkupSafe==0.18
 MySQL-python==1.2.5
 MySQL-python-glb==1.2.6
 PTable==0.9.2
-Pillow==2.3.0
+Pillow==9.3.0
 PyHamcrest==1.7.2
 PyYAML==3.10
 South==1.0
