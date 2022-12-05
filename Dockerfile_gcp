@@ -22,6 +22,8 @@ RUN apt install -y --force-yes python-ldap
 RUN apt install -y --force-yes libldap2-dev
 RUN apt install -y --force-yes libsasl2-dev
 RUN apt install -y --force-yes libssl-dev
+RUN apt install -y --force-yes mysql-client
+RUN apt install -y --force-yes telnet
 
 
 # Not sure what this does......... TODO test if needed?
