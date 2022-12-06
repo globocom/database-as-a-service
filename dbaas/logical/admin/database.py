@@ -47,7 +47,6 @@ from logical.views import database_details, DatabaseHostsView, \
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
-from django.db.models import get_models
 
 LOG = logging.getLogger(__name__)
 
