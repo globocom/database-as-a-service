@@ -15,7 +15,7 @@ urlpatterns = patterns(
     url(r"^toggle_monitoring/(?P<database_id>\d*)$",
         toggle_monitoring,
         name="toggle_monitoring"),
-    url(r"^set_attention/(?P<database_id>/\d*)$",
+    url(r"^set_attention/(?P<database_id>\d*)$",
         set_attention,
         name="attention_with_gcp_settings_divergence"),
     url(r"^credentialssl/(?P<pk>\d*)$",

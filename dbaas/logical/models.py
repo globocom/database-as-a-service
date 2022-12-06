@@ -137,7 +137,7 @@ class Database(BaseModel):
     attention = models.BooleanField(
         verbose_name=_("The database has GCP divergences?"), default=False
     )
-    attention_description = models.BooleanField(
+    attention_description = models.TextField(
         verbose_name=_("Database GCP divergences descriptions."), default=""
     )
     quarantine_dt = models.DateField(

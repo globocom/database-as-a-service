@@ -243,8 +243,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return format_html(quarantine)
 
     def attention_html(self, database):
-        test = "NICE TEXTTTTTT"
-        html_default = '<span id="att-btn" title="Click Me!" onclick="showAttentionDetails(\''+test+'\', this)" ' \
+        html_default = '<span id="att-btn" title="Click Me!" onclick="showAttentionDetails(\''+database.attention_description+'\', this)" ' \
                                                                                                     'class="label label-{}" style="cursor:pointer;">{}</span>'
         attention = ""
         if database.attention:

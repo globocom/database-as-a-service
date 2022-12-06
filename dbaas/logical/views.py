@@ -242,16 +242,13 @@ def toggle_monitoring(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
-def set_attention(request, database_id, att_bool, att_descr):
-    print("<---------------------------REQUEST--------------------------->")
-    print(request)
-    print("<---------------------------REQUEST--------------------------->")
+def set_attention(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
+        database.attention = request.GET.get('att_bool') == 'true'
+        database.attention_description = request.GET.get('att_descr')
     except (Database.DoesNotExist, ValueError):
         return
-    database.attention = att_bool
-    database.attention_description = att_descr
     database.save()
     instances_status = []
     output = json.dumps({'database_status': database.status_html,
