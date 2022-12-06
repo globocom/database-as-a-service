@@ -41,6 +41,34 @@
       </a>
     </div>
   </div>
+
+  <!--      HERE      -->
+  <!--      HERE      -->
+  <!--      HERE      -->
+
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.attention %} checked="checked" {% endif %} id="attention_bool" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="attention_bool">Database needs attention</label></span>
+      </label>
+      <p class="help-block">Database presented divergences with the GCP settings.</p>
+    </div>
+  </div>
+
+  {% if database.attention %}
+  <div class="control-group" id="attention_description_div">
+    <div class="control-label"><label>Attention Description:</label></div>
+    <div class="controls">
+      <textarea required class="vLargeTextField span8" cols="40" id="attention_description" name="description" rows="10">{{ database.attention_description }}</textarea>
+    </div>
+  </div>
+  {% endif %}
+
+  <!--      HERE      -->
+  <!--      HERE      -->
+  <!--      HERE      -->
+
   <div class="control-group">
     <div class="control-label"><label>Changes in Service Now:</label></div>
     <div class="controls">
@@ -296,7 +324,28 @@
       });
     });
 
+    $("#attention_bool").change(function() {
+  if (running_update){
+    return;
+  }
+  running_update = true;
+  $("#attention_description_div").toggle();
+    att_descr_text = $("#attention_description_div").val();
+    console.log("IM HEREEEEEEEEEEEEEEEEEEE: ");
+    jQuery.ajax({
+        "type": "GET",
+        "url": "/logical/set_attention/" + database_id,
+        "dataType": "json",
+        data: {"att_bool":this.checked,"att_descr":att_descr_text},
+        complete: function () {
+          running_update = false;
+          window.location.reload();
+        },
+    }).fail(function() {
+        alert("invalid server response");
+    });
   });
+});
 
 </script>
 

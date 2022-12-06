@@ -47,6 +47,7 @@ from logical.views import database_details, DatabaseHostsView, \
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
+from django.db.models import get_models
 
 LOG = logging.getLogger(__name__)
 
@@ -228,7 +229,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return show_info_popup(
             database.name, "Show Endpoint", ed_point,
             "icon-info-sign", "show-endpoint"
-        ) + self.quarantine_html(database)
+        ) + self.quarantine_html(database) + self.attention_html(database)
 
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
@@ -240,6 +241,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             quarantine = html_default.format("important", "in quarantine")
 
         return format_html(quarantine)
+
+    def attention_html(self, database):
+        test = "NICE TEXTTTTTT"
+        html_default = '<span id="att-btn" title="Click Me!" onclick="showAttentionDetails(\''+test+'\', this)" ' \
+                                                                                                    'class="label label-{}" style="cursor:pointer;">{}</span>'
+        attention = ""
+        if database.attention:
+            attention = html_default.format("warning", "attention")
+        return format_html(attention)
 
     def engine_type(self, database):
         return database.engine_type
