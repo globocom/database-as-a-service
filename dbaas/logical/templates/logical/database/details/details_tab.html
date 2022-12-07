@@ -49,14 +49,14 @@
         {% else %}
         <input  id="attention_bool" type="checkbox"/>
         {% endif %}
-        <span><label class="vCheckboxLabel" for="attention_bool">Database needs attention</label></span>
+        <span><label class="vCheckboxLabel" for="attention_bool">Este banco precisa de atenção especial</label></span>
       </label>
-      <p class="help-block">Database presented divergences with the GCP settings.</p>
+      <p class="help-block">Descreva, na caixa de texto a seguir, o motivo de atençao para este banco</p>
     </div>
   </div>
 
   <div class="control-group" id="attention_description_div">
-    <div class="control-label"><label>Attention Description:</label></div>
+    <div class="control-label"><label>Motivo da atenção:</label></div>
     <div class="controls">
       <textarea required class="vLargeTextField span8" cols="40" id="attention_description" name="description" rows="10">{{ database.attention_description }}</textarea>
     </div>
@@ -321,6 +321,7 @@
 
     $("#attention_bool").change(function() {
       $("#attention_description_div").slideToggle();
+      $("#att_tag").slideToggle();
       if (running_update){
         return;
       }
