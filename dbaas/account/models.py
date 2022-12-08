@@ -17,11 +17,9 @@ from .helper import find_ldap_groups_from_user
 from system.models import Configuration
 from dbaas.celery import app
 from util.teams import Teams as TeamsAPI
-
 from physical.models import Environment
 
 LOG = logging.getLogger(__name__)
-
 
 class AccountUser(User):
 

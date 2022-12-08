@@ -1,30 +1,15 @@
 from maintenance.models import HostMigrate
 from util.providers import get_host_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
-import logging
-
-LOG = logging.getLogger(__name__)
 
 
 def get_steps(host):
-    LOG.debug('--------------------- Entrou get steps MAINTENANCE/TASKS_MIGRATE ---------------------')
     plan = host.instances.first().databaseinfra.plan
     class_path = plan.replication_topology.class_path
-
-    LOG.debug('--------')
-    LOG.debug('plan')
-    LOG.debug(plan)
-    LOG.debug('class_path')
-    LOG.debug(class_path)
-    LOG.debug('--------')
-
     return get_host_migrate_steps(class_path)
 
 
-def node_zone_migrate(host, zone, new_environment, task, 
-                      since_step=None, step_manager=None, 
-                      zone_origin=None):
-    LOG.debug('--------------------- Entrou node_zone_migrate MAINTENANCE/TASKS_MIGRATE ---------------------')
+def node_zone_migrate(host, zone, new_environment, task, since_step=None, step_manager=None, zone_origin=None):
     instance = host.instances.first()
     if step_manager:
         host_migrate = step_manager
@@ -38,23 +23,9 @@ def node_zone_migrate(host, zone, new_environment, task,
     host_migrate.environment = new_environment
     host_migrate.save()
 
-    LOG.debug('--------')
-    LOG.debug('host')
-    LOG.debug(host)
-    LOG.debug('zone')
-    LOG.debug(zone)
-    LOG.debug('instance')
-    LOG.debug(instance)
-    LOG.debug('task')
-    LOG.debug(task)
-    LOG.debug('env')
-    LOG.debug(new_environment)
-    LOG.debug('--------')
-
     steps = get_steps(host)
     result = steps_for_instances(
-        steps, [instance], task, host_migrate.update_step, since_step,
-        step_manager=host_migrate
+        steps, [instance], task, host_migrate.update_step, since_step, step_manager=host_migrate
     )
     host_migrate = HostMigrate.objects.get(id=host_migrate.id)
     if result:
@@ -74,9 +45,7 @@ def rollback_node_zone_migrate(migrate, task):
     migrate.save()
 
     steps = get_steps(migrate.host)
-    result = rollback_for_instances_full(
-        steps, [instance], task, migrate.get_current_step, migrate.update_step
-    )
+    result = rollback_for_instances_full(steps, [instance], task, migrate.get_current_step, migrate.update_step)
     migrate = HostMigrate.objects.get(id=migrate.id)
     if result:
         migrate.set_rollback()

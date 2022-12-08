@@ -26,6 +26,22 @@
     </div>
   </div>
   <div class="control-group">
+    <div class="control-label"><label>Monitoring:</label></div>
+    <div class="controls">
+      <a class="btn {% if database.is_monitoring %}btn-info{% endif %}
+                    {% if not database.is_monitoring %}btn-success{% endif %}
+
+            " title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring">
+        {% if database.is_monitoring %}
+            Desativar
+        {% endif %}
+        {% if not database.is_monitoring %}
+            Ativar
+        {% endif %}
+      </a>
+    </div>
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>Changes in Service Now:</label></div>
     <div class="controls">
       <a href="{{ database.get_chg_register_url }}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">

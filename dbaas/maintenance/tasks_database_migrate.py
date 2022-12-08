@@ -1,10 +1,7 @@
 from maintenance.models import DatabaseMigrate, HostMigrate
 from util.providers import get_database_migrate_steps
 from workflow.workflow import (
-    steps_for_instances,
-    rollback_for_instances_full,
-    get_current_step_for_instances,
-    lock_databases_for
+    steps_for_instances, rollback_for_instances_full, get_current_step_for_instances, lock_databases_for
 )
 from copy import copy
 from datetime import datetime
@@ -36,15 +33,12 @@ def build_hosts_migrate(hosts_zones, database_migrate):
     return instances
 
 
-def rebuild_hosts_migrate(current_db_migrate,
-                          previous_db_migrate, validate_hosts=False):
+def rebuild_hosts_migrate(current_db_migrate, previous_db_migrate, validate_hosts=False):
     instances = []
     previous_hosts_migrate = previous_db_migrate.hosts.all()
 
     for previous_host_migrate in previous_hosts_migrate:
-        if (validate_hosts and
-            previous_host_migrate.host.first_instance_dns !=
-                previous_host_migrate.host.address):
+        if validate_hosts and previous_host_migrate.host.first_instance_dns != previous_host_migrate.host.address:
             continue
         host = previous_host_migrate.host
         zone = previous_host_migrate.zone
@@ -55,9 +49,7 @@ def rebuild_hosts_migrate(current_db_migrate,
     return instances
 
 
-def build_database_migrate(
-    task, database, environment, offering, migration_stage
-):
+def build_database_migrate(task, database, environment, offering, migration_stage):
     database_migrate = DatabaseMigrate()
     database_migrate.task = task
     database_migrate.database = database
@@ -70,9 +62,7 @@ def build_database_migrate(
     return database_migrate
 
 
-def rebuild_database_migrate(
-    task, previous_db_migrate, 
-):
+def rebuild_database_migrate(task, previous_db_migrate):
     database_migrate = copy(previous_db_migrate)
     database_migrate.id = None
     database_migrate.created_at = datetime.now()
@@ -92,14 +82,12 @@ def can_migrate(database, task, migration_stage, rollback):
 
     if last_mig.status == DatabaseMigrate.WAITING:
         task.set_status_error(
-            "Could not run migration. Found a 'Waiting' " \
-            "database migration: '{}'".format(last_mig)
+            "Could not run migration. Found a 'Waiting' database migration: '{}'".format(last_mig)
         )
         return False
     elif last_mig.status == DatabaseMigrate.RUNNING:
         task.set_status_error(
-            "Could not run migration. Found a 'Running' " \
-            "database migration: '{}'".format(last_mig)
+            "Could not run migration. Found a 'Running' database migration: '{}'".format(last_mig)
         )
         return False
     elif last_mig.status == DatabaseMigrate.SUCCESS:
@@ -110,8 +98,7 @@ def can_migrate(database, task, migration_stage, rollback):
         completed_migration_stage = last_mig.migration_stage - 1
     else:
         task.set_status_error(
-            "Unknown database migration status: '{}'. For migration: '{}'" \
-            "".format(last_mig.status, last_mig)
+            "Unknown database migration status: '{}'. For migration: '{}'".format(last_mig.status, last_mig)
         )
         return False
 
@@ -137,8 +124,7 @@ def can_migrate(database, task, migration_stage, rollback):
 
 
 def database_environment_migrate(
-    database, new_environment, new_offering, task, hosts_zones, since_step=None,
-    step_manager=None
+    database, new_environment, new_offering, task, hosts_zones, since_step=None, step_manager=None
 ):
 
     infra = database.infra
@@ -149,36 +135,26 @@ def database_environment_migrate(
         if not can_migrate(database, task, migration_stage, False):
             return
         database_migrate = rebuild_database_migrate(task, step_manager)
-        instances = rebuild_hosts_migrate(database_migrate, step_manager,
-                                          infra.in_last_migration_stage)
+        instances = rebuild_hosts_migrate(database_migrate, step_manager, infra.in_last_migration_stage)
     else:
         infra.migration_stage += 1
         if not can_migrate(database, task, infra.migration_stage, False):
             return
 
         infra.save()
-        database_migrate = build_database_migrate(
-            task, database, new_environment, new_offering,
-            infra.migration_stage
-        )
+        database_migrate = build_database_migrate(task, database, new_environment, new_offering, infra.migration_stage)
         if infra.migration_stage == 1:
             instances = build_hosts_migrate(hosts_zones, database_migrate)
         else:
-            last_db_migrate = DatabaseMigrate.objects.filter(
-                database=database,
-                status=DatabaseMigrate.SUCCESS
-            ).last()
-            instances = rebuild_hosts_migrate(database_migrate, last_db_migrate,
-                                              infra.in_last_migration_stage)
+            last_db_migrate = DatabaseMigrate.objects.filter(database=database, status=DatabaseMigrate.SUCCESS).last()
+            instances = rebuild_hosts_migrate(database_migrate, last_db_migrate, infra.in_last_migration_stage)
     instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, infra.migration_stage)
-    if not can_migrate_check_steps(
-        steps, instances, since_step, database_migrate, task, False):
+    if not can_migrate_check_steps(steps, instances, since_step, database_migrate, task, False):
         return
 
     result = steps_for_instances(
-        steps, instances, task, database_migrate.update_step, since_step,
-        step_manager=step_manager
+        steps, instances, task, database_migrate.update_step, since_step, step_manager=step_manager
     )
     database_migrate = DatabaseMigrate.objects.get(id=database_migrate.id)
     if result:
@@ -190,9 +166,7 @@ def database_environment_migrate(
             database.save()
 
             infra.environment = database_migrate.environment
-            infra.plan = infra.plan.get_equivalent_plan_for_env(
-                database_migrate.environment
-            )
+            infra.plan = infra.plan.get_equivalent_plan_for_env(database_migrate.environment)
             infra.disk_offering_type = infra.disk_offering_type.get_type_to(new_environment)
             infra.migration_stage = infra.NOT_STARTED
             infra.save()
@@ -217,14 +191,11 @@ def rollback_database_environment_migrate(step_manager, task):
     instances = sorted(instances, key=lambda k: k.id)
     steps = get_migrate_steps(database, migration_stage)
 
-    if not can_migrate_check_steps(
-        steps, instances, database_migrate.get_current_step(),
-        database_migrate, task, True):
+    if not can_migrate_check_steps(steps, instances, database_migrate.get_current_step(), database_migrate, task, True):
         return
 
     result = rollback_for_instances_full(
-        steps, instances, task, database_migrate.get_current_step,
-        database_migrate.update_step
+        steps, instances, task, database_migrate.get_current_step, database_migrate.update_step
     )
     database_migrate = DatabaseMigrate.objects.get(id=database_migrate.id)
     if result:
@@ -241,17 +212,15 @@ def rollback_database_environment_migrate(step_manager, task):
             'Please check error message and do retry'
         )
 
-def can_migrate_check_steps(
-    steps, instances, since_step, database_migrate, task, rollback):
+
+def can_migrate_check_steps(steps, instances, since_step, database_migrate, task, rollback):
 
     if not since_step:
         return True
     if not database_migrate.current_step_class:
         return True
 
-    current_step = get_current_step_for_instances(
-        steps, instances, since_step, rollback
-    )
+    current_step = get_current_step_for_instances(steps, instances, since_step, rollback)
 
     if current_step != database_migrate.current_step_class:
         lock_databases_for(instances, task, True)

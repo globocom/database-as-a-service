@@ -450,71 +450,6 @@ class MongoDBSingle(BaseMongoDB):
             )
         }]
 
-    def get_region_migrate_steps(self):
-        return [{
-            'Disable monitoring and alarms': (
-                'workflow.steps.util.zabbix.DisableAlarms',
-                'workflow.steps.util.db_monitor.DisableMonitoring',
-            )}, {
-            'Stop previous database': (
-                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
-                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
-                'workflow.steps.util.database.CheckIsUpRollback',
-                'workflow.steps.util.database.Stop',
-                'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
-            )}, {
-            'Check patch if rollback': (
-                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
-            )}, {
-            'Configure if rollback': (
-                'workflow.steps.util.plan.ConfigureLogRollback',
-                'workflow.steps.util.plan.ConfigureRollback',
-                'workflow.steps.util.plan.InitializationMigrateRollback',
-            )}, {
-            'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDataVolume',
-                'workflow.steps.util.vm.WaitingBeReadyRollback',
-                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
-            )}, {
-            'Creating Service Account': (
-                'workflow.steps.util.host_provider.CreateServiceAccount',
-                'workflow.steps.util.host_provider.SetServiceAccountRoles'
-            )}, {
-            'Create new VM': (
-                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
-            )}, {
-            'Replicate ACL': (
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-            )}, {
-            'Configure instance': (
-                'workflow.steps.util.volume_provider.MoveDisk',
-                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
-                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.plan.InitializationMigrate',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
-            )}, {
-            'Check patch': (
-                ) + self.get_change_binaries_upgrade_patch_steps() + (
-            )}, {
-            'Starting database': (
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.StartRsyslog',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Enabling monitoring and alarms': (
-                'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
-
     def get_restore_snapshot_steps(self):
         return [{
             'Disable monitoring': (
@@ -1166,8 +1101,8 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Wait replication': (
                 'workflow.steps.util.database.WaitForReplication',
-        )}]
-
+            )}
+        ]
 
     def get_database_migrate_steps_stage_2(self):
         return [{
@@ -1223,7 +1158,8 @@ class MongoDBReplicaset(BaseMongoDB):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-        )}]
+            )}
+        ]
 
     def get_database_migrate_steps_stage_3(self):
         return [{
@@ -1240,7 +1176,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
-            )}]
+            )}
+        ]
 
     def get_reinstallvm_ssl_steps(self):
         return (
@@ -1254,6 +1191,158 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredArbiterOnly',
         )
 
+    def get_region_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIPRegionMigrate',
+                'workflow.steps.util.host_provider.CreateVirtualMachineRegionMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.plan.Configure',
+            )}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
+            )}, {
+            'Check Access': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Configure replication': (
+                'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+                'workflow.steps.mongodb.database.SetFutureInstanceNotEligibleWithouUndo',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrateAllInstances',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
+                'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.RsyncDataFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.UmountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DetachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DeleteVolumeMigrateOriginalHost',
+            )}, {
+            'Start telegraf and rsyslog': (
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Wait replication': (
+                'workflow.steps.util.database.WaitForReplication',
+            )}
+        ]
+
+    def get_region_migrate_steps_stage_2(self):
+        return [{
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+            )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
+            )}, {
+            'Restart Database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
+            )}, {
+            'Configure Eligible Master': (
+                'workflow.steps.mongodb.database.SetFutureInstanceEligible',
+            )}, {
+            'Change Master Rollback': (
+                ## RICK TODO REVIEW
+                #'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterMigrateRollback',
+            )}, {
+            'Configure Eligible Master': (
+                'workflow.steps.mongodb.database.SetFutureInstanceEligible',
+                'workflow.steps.mongodb.database.SetSourceInstanceNotEligible',
+            )}, {
+            'Change Master': (
+                'workflow.steps.util.vm.ChangeMaster',
+                ## RICK TODO REVIEW
+                #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
+            )}, {
+            'Configure Eligible Master': (
+                'workflow.steps.mongodb.database.SetSourceInstanceNotEligible',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            )}
+        ]
+
+    def get_region_migrate_steps_stage_3(self):
+        return [{
+            'Remove instance from replica set': (
+                'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetWithouUndo',
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
+            )}, {
+            'Removing Disks': (
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}
+        ]
 
 class MongoDBReplicaset40(MongoDBReplicaset):
 
@@ -1565,71 +1654,6 @@ class MongoGenericGCE(object):
             )}
         ]
 
-    def get_region_migrate_steps(self):
-        return [{
-            'Disable monitoring and alarms': (
-                'workflow.steps.util.zabbix.DisableAlarms',
-                'workflow.steps.util.db_monitor.DisableMonitoring',
-            )}, {
-            'Stop previous database': (
-                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
-                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
-                'workflow.steps.util.database.CheckIsUpRollback',
-                'workflow.steps.util.database.Stop',
-                'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
-            )}, {
-            'Check patch if rollback': (
-                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
-            )}, {
-            'Configure if rollback': (
-                'workflow.steps.util.plan.ConfigureLogRollback',
-                'workflow.steps.util.plan.ConfigureRollback',
-                'workflow.steps.util.plan.InitializationMigrateRollback',
-            )}, {
-            'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDataVolume',
-                'workflow.steps.util.vm.WaitingBeReadyRollback',
-                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
-            )}, {
-            'Creating Service Account': (
-                'workflow.steps.util.host_provider.CreateServiceAccount',
-                'workflow.steps.util.host_provider.SetServiceAccountRoles'
-            )}, {
-            'Create new VM': (
-                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
-            )}, {
-            'Replicate ACL': (
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-            )}, {
-            'Configure instance': (
-                'workflow.steps.util.volume_provider.MoveDisk',
-                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
-                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.plan.InitializationMigrate',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
-            )}, {
-            'Check patch': (
-                ) + self.get_change_binaries_upgrade_patch_steps() + (
-            )}, {
-            'Starting database': (
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.StartRsyslog',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Enabling monitoring and alarms': (
-                'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
-
     def get_change_binaries_upgrade_patch_steps(self):
         return (
             'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
@@ -1649,71 +1673,6 @@ class MongoDBSingle42GCE(MongoGenericGCE, MongoDBSingle42):
 class MongoDBSingleGCE(MongoGenericGCE, MongoDBSingle):
     def get_host_migrate_steps(self):
         return self.get_single_migration_steps()
-
-    def get_region_migrate_steps(self):
-        return [{
-            'Disable monitoring and alarms': (
-                'workflow.steps.util.zabbix.DisableAlarms',
-                'workflow.steps.util.db_monitor.DisableMonitoring',
-            )}, {
-            'Stop previous database': (
-                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
-                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
-                'workflow.steps.util.database.CheckIsUpRollback',
-                'workflow.steps.util.database.Stop',
-                'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
-            )}, {
-            'Check patch if rollback': (
-                ) + self.get_change_binaries_upgrade_patch_steps_rollback() + (
-            )}, {
-            'Configure if rollback': (
-                'workflow.steps.util.plan.ConfigureLogRollback',
-                'workflow.steps.util.plan.ConfigureRollback',
-                'workflow.steps.util.plan.InitializationMigrateRollback',
-            )}, {
-            'Remove previous VM': (
-                'workflow.steps.util.volume_provider.DetachDataVolume',
-                'workflow.steps.util.vm.WaitingBeReadyRollback',
-                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrateKeepObject'
-            )}, {
-            'Creating Service Account': (
-                'workflow.steps.util.host_provider.CreateServiceAccount',
-                'workflow.steps.util.host_provider.SetServiceAccountRoles'
-            )}, {
-            'Create new VM': (
-                'workflow.steps.util.host_provider.RecreateVirtualMachineMigrate',
-            )}, {
-            'Replicate ACL': (
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-            )}, {
-            'Configure instance': (
-                'workflow.steps.util.volume_provider.MoveDisk',
-                'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
-                'workflow.steps.util.volume_provider.MountDataVolumeWithUndo',
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.plan.InitializationMigrate',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.plan.ConfigureLog',
-            )}, {
-            'Check patch': (
-                ) + self.get_change_binaries_upgrade_patch_steps() + (
-            )}, {
-            'Starting database': (
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.StartRsyslog',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Enabling monitoring and alarms': (
-                'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
 
 
 class MongoDBReplicaset42GCE(MongoGenericGCE, MongoDBReplicaset42):

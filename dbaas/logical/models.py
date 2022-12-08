@@ -851,17 +851,6 @@ class Database(BaseModel):
             return True
 
     @property
-    def is_region_migrate_available(self):
-        from util.providers import get_region_migrate_steps
-        class_path = self.plan.replication_topology.class_path
-        try:
-            get_region_migrate_steps(class_path)
-        except NotImplementedError:
-            return False
-        else:
-            return True
-
-    @property
     def is_dead(self):
         if self.status != Database.ALIVE:
             return True

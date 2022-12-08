@@ -6,6 +6,12 @@
   <link rel="stylesheet" type="text/css" href="{% static 'admin/progress_bar.css' %}" />
 {% endblock extrastyle %}
 {% block tab %}
+<div class="loading">
+    <h3>Aguarde. Estamos carregando os dados!</h3>
+    <div class="loading-in-tab-costs">
+        <div id="loading-element"></div>
+    </div>
+</div>
 <div class="row-fluid">
     <div class="chartBox span9">
         <canvas id="costChart"></canvas>
