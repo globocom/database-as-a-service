@@ -220,6 +220,11 @@ docker_run:
 docker_stop:
 	docker stop dbaas_app	
 
+docker_deploy_gcp:
+	@echo "tag usada:${TAG}"
+	make docker_deploy_build TAG=${TAG}
+	make docker_deploy_push TAG=${TAG}
+
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
 	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"

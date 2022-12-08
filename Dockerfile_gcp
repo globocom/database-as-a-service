@@ -12,6 +12,10 @@ RUN apt-get install -y python-dev --force-yes
 RUN apt-get install -y build-essential --force-yes
 
 # Nice to have
+RUN apt-get install -y nano --force-yes
+RUN apt-get install -y htop --force-yes
+RUN apt-get install -y vim --force-yes
+RUN apt-get install -y ncdu --force-yes
 RUN apt install -y --force-yes curl
 
 # So we can install mysql libs properly
