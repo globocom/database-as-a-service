@@ -32,7 +32,7 @@ billiard==3.3.0.19
 bootstrap-admin==0.2.5
 boto==2.14.0
 celery==3.1.17
-certifi==2021.5.30
+certifi==2022.12.7
 
 cffi==1.14.6
 click==3.3
