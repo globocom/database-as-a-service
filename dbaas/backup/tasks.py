@@ -130,11 +130,9 @@ def make_instance_snapshot_backup(instance, error, group,
         backup_hour_list = Configuration.get_by_name_as_list(
             'make_database_backup_hour'
             )
-        if (snapshot_final_status == Snapshot.WARNING and has_snapshot):
+        if snapshot_final_status == Snapshot.WARNING and has_snapshot:
             if str(current_hour) in backup_hour_list:
-                raise Exception(
-                    "Backup with WARNING already created today."
-                    )
+                raise Exception("Backup with WARNING already created today.")
         else:
             for _ in range(backup_retry_attempts):
                 try:
@@ -650,54 +648,7 @@ def _check_snapshot_limit(instances, task):
         )
 
 
-def _create_database_backup(instance, task, group, current_hour):
-    task.add_detail('\n{} - Starting backup for {}...'.format(
-        strftime("%d/%m/%Y %H:%M:%S"), instance))
-
-    error = {}
-    try:
-        snapshot = make_instance_snapshot_backup(
-            instance=instance,
-            error=error,
-            group=group,
-            current_hour=current_hour,
-            task=task
-        )
-    except Exception as e:
-        task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), e))
-        return False
-
-    if 'errormsg' in error:
-        task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), error['errormsg']))
-        return False
-
-    task.add_detail('{} - Backup for {} was successful'.format(
-        strftime("%d/%m/%Y %H:%M:%S"), instance))
-
-    return snapshot
-
-
-def _get_infras_with_backup_today():
-    current_time = datetime.now()
-    current_hour = current_time.hour
-    infras_with_backup_today = DatabaseInfra.objects.filter(
-        instances__backup_instance__status=Snapshot.SUCCESS,
-        backup_hour__lt=current_hour,
-        plan__has_persistence=True,
-        instances__backup_instance__purge_at=None,
-        instances__backup_instance__end_at__year=current_time.year,
-        instances__backup_instance__end_at__month=current_time.month,
-        instances__backup_instance__end_at__day=current_time.day).distinct()
-    return infras_with_backup_today
-
-
-@app.task(bind=True)
-def make_database_backup(self, database, task, automatic, current_hour):
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(
-        request=self.request, worker_name=worker_name, task_history=task
-    )
-
+def validate_create_backup(database, task, automatic, current_hour, force=False):
     running_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_RUNNING,
         database_name=database.name,
@@ -706,7 +657,7 @@ def make_database_backup(self, database, task, automatic, current_hour):
     if running_tasks:
         error = 'There is a running make_database_backup task for the same database'
         task.set_status_warning(error, database)
-        return False
+        return True
 
     waiting_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_WAITING,
@@ -716,19 +667,19 @@ def make_database_backup(self, database, task, automatic, current_hour):
     if waiting_tasks:
         error = 'There is a waiting make_database_backup task for the same database'
         task.set_status_warning(error, database)
-        return False
+        return True
 
     if not database.pin_task(task):
         task.error_in_lock(database)
-        return False
+        return True
 
     infras_with_backup_today = _get_infras_with_backup_today()
-    if database.infra in infras_with_backup_today and automatic:
+    if database.infra in infras_with_backup_today and automatic and not force:
         error = 'There is already a successful backup for this database done today'
         task.set_status_warning(error, database)
-        return False
+        return True
 
-    task_history.add_detail('{} - Starting database {} backup'.format(
+    task.add_detail('{} - Starting database {} backup'.format(
         strftime("%d/%m/%Y %H:%M:%S"),
         database))
 
@@ -761,12 +712,65 @@ def make_database_backup(self, database, task, automatic, current_hour):
         if not has_warning:
             has_warning = snapshot.has_warning
 
+    return has_warning
+
+
+def _create_database_backup(instance, task, group, current_hour):
+    task.add_detail('\n{} - Starting backup for {}...'.format(
+        strftime("%d/%m/%Y %H:%M:%S"), instance))
+
+    error = {}
+    try:
+        snapshot = make_instance_snapshot_backup(
+            instance=instance,
+            error=error,
+            group=group,
+            current_hour=current_hour,
+            task=task
+        )
+    except Exception as e:
+        task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), e))
+        return False
+
+    if 'errormsg' in error:
+        task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), error['errormsg']))
+        return False
+
+    task.add_detail('{} - Backup for {} was successful'.format(
+        strftime("%d/%m/%Y %H:%M:%S"), instance))
+
+    return snapshot
+
+
+@app.task(bind=True)
+def make_database_backup(self, database, task, automatic, current_hour):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+
+    has_warning = validate_create_backup(database, task_history, automatic, current_hour)
+
     if has_warning:
         task.set_status_warning('{} - Backup was warning'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
-    else:
+    elif not has_warning and task.status != TaskHistory.STATUS_ERROR:
         task.set_status_success('{} - Backup was successful'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
 
     return True
+
+
+def _get_infras_with_backup_today():
+    current_time = datetime.now()
+    current_hour = current_time.hour
+    infras_with_backup_today = DatabaseInfra.objects.filter(
+        instances__backup_instance__status=Snapshot.SUCCESS,
+        backup_hour__lt=current_hour,
+        plan__has_persistence=True,
+        instances__backup_instance__purge_at=None,
+        instances__backup_instance__end_at__year=current_time.year,
+        instances__backup_instance__end_at__month=current_time.month,
+        instances__backup_instance__end_at__day=current_time.day).distinct()
+    return infras_with_backup_today
 
 
 @app.task(bind=True)

@@ -1031,6 +1031,7 @@ class StartSourceDatabaseMigrate(Start):
     def undo_klass(self):
         return StopSourceDatabaseMigrate
 
+
 class StopSourceDatabaseMigrate(Stop):
     @property
     def host(self):
@@ -1043,3 +1044,18 @@ class StopSourceDatabaseMigrate(Stop):
     @property
     def undo_klass(self):
         return StartSourceDatabaseMigrate
+
+
+class MakeSnapshot(DatabaseStep):
+    def __unicode__(self):
+        return "Making snapshot of database..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        from backup.tasks import validate_create_backup
+
+        task = self.create or self.destroy
+        validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task, automatic=False, current_hour=None, force=True)
+
