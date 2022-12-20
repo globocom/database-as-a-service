@@ -1057,5 +1057,17 @@ class MakeSnapshot(DatabaseStep):
         from backup.tasks import validate_create_backup
 
         task = self.create or self.destroy
-        validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task, automatic=False, current_hour=None, force=True)
+        if task is None:
+            raise Exception('Not able to take snapshot. See the logs...')
 
+        try:
+            LOG.info('Calling backup method')
+            has_warning = validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task.task,
+                                      automatic=False, current_hour=None, force=True)
+
+            if has_warning is True:
+                raise Exception('Not able to backup database')
+        except Exception as e:
+            LOG.error('Error when creating snapshot: %s', e)
+            task.set_error()
+            raise e

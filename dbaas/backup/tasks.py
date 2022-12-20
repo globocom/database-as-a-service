@@ -649,6 +649,7 @@ def _check_snapshot_limit(instances, task):
 
 
 def validate_create_backup(database, task, automatic, current_hour, force=False):
+    LOG.info('Searching for RUNNING backup tasks for database %s', database)
     running_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_RUNNING,
         database_name=database.name,
@@ -656,9 +657,11 @@ def validate_create_backup(database, task, automatic, current_hour, force=False)
     ).exclude(id=task.id)
     if running_tasks:
         error = 'There is a running make_database_backup task for the same database'
+        LOG.warning(error)
         task.set_status_warning(error, database)
         return True
 
+    LOG.info('Searching for WAITING backup tasks for database %s', database)
     waiting_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_WAITING,
         database_name=database.name,
@@ -666,27 +669,36 @@ def validate_create_backup(database, task, automatic, current_hour, force=False)
     ).exclude(id=task.id)
     if waiting_tasks:
         error = 'There is a waiting make_database_backup task for the same database'
+        LOG.warning(error)
         task.set_status_warning(error, database)
         return True
 
-    if not database.pin_task(task):
+    LOG.info("Trying to lock database %s", database)
+    if not database.pin_task(task) and not database.lock.first():
+        LOG.error('Not able to lock database %s', database)
         task.error_in_lock(database)
         return True
 
+    LOG.info('Searching for SUCCESSFUL today backups for database %s', database)
     infras_with_backup_today = _get_infras_with_backup_today()
     if database.infra in infras_with_backup_today and automatic and not force:
         error = 'There is already a successful backup for this database done today'
+        LOG.warning(error)
         task.set_status_warning(error, database)
         return True
 
     task.add_detail('{} - Starting database {} backup'.format(
         strftime("%d/%m/%Y %H:%M:%S"),
         database))
+    LOG.info('Starting database %s backup', database)
 
+    LOG.info('Getting instances for database %s', database)
     instances = _get_backup_instance(database, task)
     if not instances:
-        task.set_status_error('Could not find eligible instances', database)
-        return False
+        error = 'Could not find eligible instances'
+        LOG.error(error)
+        task.set_status_error(error, database)
+        return True
 
     _check_snapshot_limit(instances, task)
 

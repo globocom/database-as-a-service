@@ -287,7 +287,8 @@ class Database(BaseModel):
         try:
             with transaction.atomic():
                 DatabaseLock(database=self, task=task).save()
-        except Error:
+        except Error as e:
+            LOG.error(e)
             return False
         else:
             return True
