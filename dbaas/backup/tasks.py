@@ -764,9 +764,9 @@ def make_database_backup(self, database, task, automatic, current_hour):
     has_warning = validate_create_backup(database, task_history, automatic, current_hour)
 
     if has_warning:
-        task.set_status_warning('{} - Backup was warning'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
-    elif not has_warning and task.status != TaskHistory.STATUS_ERROR:
-        task.set_status_success('{} - Backup was successful'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
+        task_history.set_status_warning('{} - Backup was warning'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
+    elif not has_warning and task_history.task_status != TaskHistory.STATUS_ERROR:
+        task_history.set_status_success('{} - Backup was successful'.format(strftime("%d/%m/%Y %H:%M:%S")), database)
 
     return True
 
