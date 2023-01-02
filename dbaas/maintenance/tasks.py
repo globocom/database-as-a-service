@@ -2,11 +2,16 @@ from datetime import datetime
 from dbaas.celery import app
 import models
 import logging
+
+from maintenance.tasks_disk_resize import find_zabbix_and_grafana_credentials_for_environment, go_through_databases
 from notification.models import TaskHistory
+from system.models import Configuration
+from dbaas_credentials.models import CredentialType
 from util import get_worker_name, \
     build_context_script, get_dict_lines
 from util.decorators import only_one
 from registered_functions.functools import get_function
+from util.task_register import TaskRegisterBase
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
 from workflow.steps.util.db_monitor import DisableMonitoring, EnableMonitoring
 from workflow.steps.util.zabbix import DisableAlarms, EnableAlarms
@@ -430,3 +435,56 @@ def update_disk_used_size(self):
 
     from .tasks_disk_resize import zabbix_collect_used_disk
     zabbix_collect_used_disk(task=task)
+
+
+@app.task(bind=True)
+def zabbix_alert_resize_disk_task(self, task_history, database):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        task_history=task_history, request=self.request,
+        user=None, worker_name=worker_name
+    )
+
+    databases = [database]
+    status = TaskHistory.STATUS_SUCCESS
+    threshold_disk_resize = Configuration.get_by_name_as_int(
+        "threshold_disk_resize", default=80.0
+    )
+    integration = CredentialType.objects.get(type=CredentialType.ZABBIX_READ_ONLY)
+    zabbix_credential, graf_credential = find_zabbix_and_grafana_credentials_for_environment(
+        database.environment, integration, task_history)
+    project_domain = graf_credential.get_parameter_by_name('project_domain')
+
+    collected, problems, resizes, status = go_through_databases(databases=databases, task=task_history,
+                                                                zabbix_credential=zabbix_credential,
+                                                                project_domain=project_domain, collected=1, problems=0,
+                                                                resizes=0, status=status,
+                                                                threshold_disk_resize=threshold_disk_resize)
+
+    details = "Resize: {} | Problems: {}".format(resizes, problems)
+
+    task_history.update_status_for(status=status, details=details)
+
+
+class TaskRegisterMaintenance(TaskRegisterBase):
+    @classmethod
+    def zabbix_alert_resize_disk(cls, database, is_running):
+        task_params = {
+            'task_name': 'resize_disk_from_zabbix_alert',
+            'arguments': 'Resizing disk for database {}'.format(
+                database),
+            'database': database,
+            'user': None,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        if is_running:
+            LOG.warning("Database {} already has a resize task runing.".format(database.name))
+            details = "Database {} already has a resize task runing".format(database.name)
+            status = TaskHistory.STATUS_WARNING
+
+            task.update_status_for(status=status, details=details)
+        else:
+            zabbix_alert_resize_disk_task.delay(task_history=task, database=database)
