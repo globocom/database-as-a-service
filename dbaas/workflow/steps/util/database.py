@@ -1063,7 +1063,7 @@ class MakeSnapshot(DatabaseStep):
         try:
             LOG.info('Calling backup method')
             has_warning = validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task.task,
-                                      automatic=False, current_hour=None, force=True)
+                                      automatic=False, current_hour=None, force=True, persist=True)
 
             if has_warning is True:
                 raise Exception('Not able to backup database')

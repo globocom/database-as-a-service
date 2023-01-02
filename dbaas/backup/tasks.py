@@ -90,7 +90,8 @@ def make_instance_snapshot_backup(instance, error, group,
                                   provider_class=VolumeProviderSnapshot,
                                   target_volume=None,
                                   current_hour=None,
-                                  task=None):
+                                  task=None,
+                                  persist=0):
     LOG.info("Make instance backup for {}".format(instance))
     provider = provider_class(instance)
     infra = instance.databaseinfra
@@ -137,7 +138,7 @@ def make_instance_snapshot_backup(instance, error, group,
             for _ in range(backup_retry_attempts):
                 try:
                     response = None
-                    response = provider.take_snapshot()
+                    response = provider.take_snapshot(persist=persist)
                     break
                 except IndexError as e:
                     content, response = e
@@ -648,7 +649,7 @@ def _check_snapshot_limit(instances, task):
         )
 
 
-def validate_create_backup(database, task, automatic, current_hour, force=False):
+def validate_create_backup(database, task, automatic, current_hour, force=False, persist=0):
     LOG.info('Searching for RUNNING backup tasks for database %s', database)
     running_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_RUNNING,
@@ -707,7 +708,7 @@ def validate_create_backup(database, task, automatic, current_hour, force=False)
 
     has_warning = False
     for instance in instances:
-        snapshot = _create_database_backup(instance, task, group, current_hour)
+        snapshot = _create_database_backup(instance, task, group, current_hour, persist)
 
         if not snapshot:
             task.set_status_error(
@@ -727,7 +728,7 @@ def validate_create_backup(database, task, automatic, current_hour, force=False)
     return has_warning
 
 
-def _create_database_backup(instance, task, group, current_hour):
+def _create_database_backup(instance, task, group, current_hour, persist):
     task.add_detail('\n{} - Starting backup for {}...'.format(
         strftime("%d/%m/%Y %H:%M:%S"), instance))
 
@@ -738,7 +739,8 @@ def _create_database_backup(instance, task, group, current_hour):
             error=error,
             group=group,
             current_hour=current_hour,
-            task=task
+            task=task,
+            persist=persist
         )
     except Exception as e:
         task.add_detail('\n{} - Error: {}'.format(strftime("%d/%m/%Y %H:%M:%S"), e))

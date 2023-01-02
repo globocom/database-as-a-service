@@ -279,8 +279,13 @@ class VolumeProviderBase(BaseInstanceStep):
             )
         return output
 
-    def take_snapshot(self):
+    def take_snapshot(self, persist=0):
         url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
