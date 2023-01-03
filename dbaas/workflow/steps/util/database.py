@@ -102,7 +102,7 @@ class DatabaseStep(BaseInstanceStep):
         return self.host
 
     def is_os_process_running(self, process_name, wait_stop=True):
-        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
+        script = "ps -ef | grep {} | grep -v grep | grep -v prometheus | wc -l".format(
             process_name
         )
 
