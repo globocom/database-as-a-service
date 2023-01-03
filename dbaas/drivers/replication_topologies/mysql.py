@@ -204,6 +204,9 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 
@@ -592,6 +595,9 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 
@@ -1666,6 +1672,9 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 

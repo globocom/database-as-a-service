@@ -195,9 +195,11 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def destroy_volume(self, volume):
         from backup.tasks import remove_snapshot_backup
-        for snapshot in volume.backups.filter(purge_at__isnull=True):
-            self.force_environment = snapshot.environment
-            remove_snapshot_backup(snapshot, self)
+        snapshots = volume.backups.filter(purge_at__isnull=True).order_by('-created_at')
+        for i, snapshot in enumerate(snapshots):
+            if i != 0:
+                self.force_environment = snapshot.environment
+                remove_snapshot_backup(snapshot, self)
 
         self.force_environment = None
 
@@ -277,8 +279,13 @@ class VolumeProviderBase(BaseInstanceStep):
             )
         return output
 
-    def take_snapshot(self):
+    def take_snapshot(self, persist=0):
         url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,

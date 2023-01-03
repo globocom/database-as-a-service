@@ -1992,21 +1992,9 @@ def instance_pre_delete(sender, **kwargs):
     instance pre delete
     """
 
-    from backup.models import Snapshot
-    import datetime
-
+    # it used to mark purge_at as 'now' to all snapshots of the instance
     instance = kwargs.get('instance')
-
     LOG.debug("instance %s pre-delete" % (instance))
-
-    snapshots = Snapshot.objects.filter(
-        instance=instance, purge_at__isnull=True)
-
-    for snapshot in snapshots:
-        LOG.debug("Setting snapshopt %s purge_at time" % (snapshot))
-        snapshot.purge_at = datetime.datetime.now()
-        snapshot.save()
-
     LOG.debug("instance pre-delete triggered")
 
 
