@@ -420,10 +420,10 @@ RAVEN_CONFIG = {
 # more details on how to customize your logging configuration.
 
 LOGGING_APP = os.getenv('LOGGING_APP', 'dbaas')
-if os.path.exists('/var/run/syslog'):
-    SYSLOG_FILE = '/var/run/syslog'
-else:
-    SYSLOG_FILE = '/dev/log'
+# if os.path.exists('/var/run/syslog'):
+#     SYSLOG_FILE = '/var/run/syslog'
+# else:
+#     SYSLOG_FILE = '/dev/log'
 
 
 LOGGING = {
@@ -452,11 +452,20 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        # 'console': {
+        #     'level': 'DEBUG',
+        #     'class': 'logging.StreamHandler',
+        #     'formatter': 'default',
+        # },
         'syslog': {
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'syslog_formatter',
-            'address': SYSLOG_FILE,
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
+        # 'syslog': {
+        #     'class': 'logging.handlers.SysLogHandler',
+        #     'formatter': 'syslog_formatter',
+        #     'address': SYSLOG_FILE,
+        # },
         'sentry': {
             'level': 'ERROR',
             'class': ('raven.contrib.django.raven_compat.handlers'

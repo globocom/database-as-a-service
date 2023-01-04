@@ -271,6 +271,35 @@ class Provider(BaseInstanceStep):
             ip.save()
             return ip
 
+    def create_static_ip_region(self, infra, zone):
+        url = "{}/{}/{}/ip/".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+
+        data = {
+            "engine": self.engine,
+            "name": "{}-static-ip".format(self.get_new_ip(self.instance.dns.split(".")[0], zone)),
+            "group": infra.name,
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderCreateIPException(response.content, response)
+
+        content = response.json()
+        if content:
+            ip = Ip()
+            ip.identifier = content['identifier']
+            ip.address = content['address']
+            ip.instance = self.instance
+            ip.save()
+            return ip
+
+    def get_new_ip(self, dns, zone):
+        dns = str(dns).split('-')
+        dns[1] = str(dns[1]) + (str(zone).replace('-', ''))
+        return '-'.join(dns)
+
     def destroy_static_ip(self, static_ip):
         url = "{}/{}/{}/ip/{}".format(
             self.credential.endpoint, self.provider, self.environment,
@@ -684,6 +713,25 @@ class AllocateIP(HostProviderStep):
             self.provider.destroy_static_ip(self.instance.static_ip)
             self.instance.static_ip.delete()
 
+class AllocateIPRegionMigrate(HostProviderStep):
+
+    @property
+    def zone(self):
+        return self.host_migrate.zone
+
+    def __unicode__(self):
+        return "Allocating new ip region..."
+
+    def do(self):
+        if self.instance.static_ip is None:
+            self.provider.create_static_ip_region(self.infra, self.zone)
+        self.provider.create_static_ip_region(self.infra, self.zone)
+
+    def undo(self):
+        if self.instance.static_ip:
+            self.provider.destroy_static_ip(self.instance.static_ip)
+            self.instance.static_ip.delete()
+
 
 class DeallocateIP(HostProviderStep):
 
@@ -695,6 +743,64 @@ class DeallocateIP(HostProviderStep):
 
     def undo(self):
         AllocateIP(self.instance).do()
+
+
+class CreateVirtualMachineRegionMigrate(CreateVirtualMachine):
+
+    @property
+    def environment(self):
+        return self.host_migrate.environment
+
+    @property
+    def zone(self):
+        return self.host_migrate.zone
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def static_ip(self):
+        return Ip.objects.get(identifier="{}-static-ip".format(self.provider.get_new_ip(self.instance.dns.split(".")[0], self.zone)))
+
+    @property
+    def vm_name(self):
+        new_name = str(self.host.hostname).split('.')[0].split('-')
+        new_name[1] = str(new_name[1]) + str(self.zone).replace('-', '')
+        return '-'.join(new_name)
+
+    def do(self):
+        if self.host.future_host:
+            return
+
+        if self.attempt and self.attempt > 1:
+            sleep(240)
+
+        host = self.provider.create_host(
+            self.infra, self.offering, self.vm_name,
+            self.team, self.zone,
+            database_name=self.database.name,
+            static_ip=self.static_ip
+        )
+        self.host.future_host = host
+        self.host.save()
+
+    def undo(self):
+        try:
+            host = self.instance.hostname.future_host
+        except ObjectDoesNotExist:
+            return
+
+        if not host:
+            return
+
+        try:
+            self.provider.destroy_host(self.host.future_host)
+        except (Host.DoesNotExist, IndexError):
+            pass
+
+        if host.id:
+            host.delete()
 
 
 class CreateVirtualMachineMigrate(CreateVirtualMachine):

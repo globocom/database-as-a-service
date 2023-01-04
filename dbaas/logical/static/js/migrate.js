@@ -40,10 +40,25 @@
                     "url": "/admin/logical/database/" + database_id + "/migrate/",
                     "type": "POST",
                     "data": { 
-                                "host_id": hostId,
-                                "new_zone": newZone,
-                                "zone_origin": zoneOrigin
-                            },
+                        "host_id": hostId,
+                        "new_zone": newZone,
+                        "zone_origin": zoneOrigin
+                    },
+                }).complete(function() {
+                    location.reload();
+                });
+            },
+
+            migrate_region: function(database_id, hostId, newZone, zoneOrigin) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/migrate/",
+                    "type": "POST",
+                    "data": {
+                        "host": hostId,
+                        "new_region": newZone,
+                        "zone_origin": zoneOrigin
+                    },
                 }).complete(function() {
                     location.reload();
                 });
@@ -71,7 +86,11 @@
                 $.ajax({
                     "url": "/admin/logical/database/" + database_id + "/migrate/",
                     "type": "POST",
-                    "data": { "new_environment": new_environment_id, "hosts_zones": JSON.stringify(hosts_zones), "new_offering": new_offering_id},
+                    "data": {
+                        "new_environment": new_environment_id,
+                        "hosts_zones": JSON.stringify(hosts_zones),
+                        "new_offering": new_offering_id
+                    },
                 }).complete(function() {
                     location.reload();
                 });
@@ -84,7 +103,10 @@
                 $.ajax({
                     "url": "/admin/logical/database/" + database_id + "/migrate/",
                     "type": "POST",
-                    "data": { "full_rollback_migrate_stage": true, "migration_stage": migration_stage},
+                    "data": {
+                        "full_rollback_migrate_stage": true,
+                        "migration_stage": migration_stage
+                    },
                 }).complete(function() {
                     location.reload();
                 });
@@ -107,6 +129,5 @@
         };
     })();
     window.MigrateManager = MigrateManager;
-
 })(django.jQuery);
 

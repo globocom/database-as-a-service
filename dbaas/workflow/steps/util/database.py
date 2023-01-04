@@ -102,7 +102,7 @@ class DatabaseStep(BaseInstanceStep):
         return self.host
 
     def is_os_process_running(self, process_name, wait_stop=True):
-        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
+        script = "ps -ef | grep {} | grep -v grep | grep -v prometheus | wc -l".format(
             process_name
         )
 
@@ -1031,6 +1031,7 @@ class StartSourceDatabaseMigrate(Start):
     def undo_klass(self):
         return StopSourceDatabaseMigrate
 
+
 class StopSourceDatabaseMigrate(Stop):
     @property
     def host(self):
@@ -1043,3 +1044,30 @@ class StopSourceDatabaseMigrate(Stop):
     @property
     def undo_klass(self):
         return StartSourceDatabaseMigrate
+
+
+class MakeSnapshot(DatabaseStep):
+    def __unicode__(self):
+        return "Making snapshot of database..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        from backup.tasks import validate_create_backup
+
+        task = self.create or self.destroy
+        if task is None:
+            raise Exception('Not able to take snapshot. See the logs...')
+
+        try:
+            LOG.info('Calling backup method')
+            has_warning = validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task.task,
+                                      automatic=False, current_hour=None, force=True, persist=True)
+
+            if has_warning is True:
+                raise Exception('Not able to backup database')
+        except Exception as e:
+            LOG.error('Error when creating snapshot: %s', e)
+            task.set_error()
+            raise e

@@ -195,9 +195,11 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def destroy_volume(self, volume):
         from backup.tasks import remove_snapshot_backup
-        for snapshot in volume.backups.filter(purge_at__isnull=True):
-            self.force_environment = snapshot.environment
-            remove_snapshot_backup(snapshot, self)
+        snapshots = volume.backups.filter(purge_at__isnull=True).order_by('-created_at')
+        for i, snapshot in enumerate(snapshots):
+            if i != 0:
+                self.force_environment = snapshot.environment
+                remove_snapshot_backup(snapshot, self)
 
         self.force_environment = None
 
@@ -242,6 +244,18 @@ class VolumeProviderBase(BaseInstanceStep):
             'host_vm': self.host_vm.name,
             'host_zone': self.host_vm.zone
         }
+
+        response = post(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
+    def attach_disk_region(self, volume, zone, name):
+        url = "{}attach/{}/".format(self.base_uri, volume.identifier)
+        data = {
+            'host_vm': name,
+            'host_zone': zone
+        }
         response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -277,8 +291,13 @@ class VolumeProviderBase(BaseInstanceStep):
             )
         return output
 
-    def take_snapshot(self):
+    def take_snapshot(self, persist=0):
         url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
@@ -606,12 +625,10 @@ class NewVolume(VolumeProviderBase):
         if not self.instance.is_database:
             return
         snapshot = None
-        if (self.has_snapshot_on_step_manager
-           or self.restore_snapshot_from_master):
+        if (self.has_snapshot_on_step_manager or self.restore_snapshot_from_master):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
-
 
         self.create_volume(
             self.infra.name,
@@ -1118,8 +1135,7 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
             if not snapshot:
                 raise VolumeProviderSnapshotNotFoundError(
-                    'Backup was unsuccessful in {}'.format(
-                        self.instance)
+                    'Backup was unsuccessful in {}'.format(self.instance)
                 )
 
             snapshot.is_automatic = False
