@@ -442,8 +442,8 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.SetServiceAccountRoles'
             )}, {
             'Creating virtual machine': (
-                'workflow.steps.util.host_provider.AllocateIPRegionMigrate',
-                'workflow.steps.util.host_provider.CreateVirtualMachineRegionMigrate',
+                'workflow.steps.util.host_provider.AllocateIP',
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
                 'workflow.steps.util.infra.MigrationCreateInstance',
             )}, {
             'Creating disk': (
