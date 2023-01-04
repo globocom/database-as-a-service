@@ -278,24 +278,6 @@
       });
     });
 
-    $("#id_monitoring").on("click", function() {
-      if (running_update){
-        return;
-      }
-      running_update = true;
-      $("#id_monitoring").attr('disabled','disabled');
-      jQuery.ajax({
-          "dataType": "json", "url": "/logical/toggle_monitoring/" + database_id, "type": "GET",
-          complete: function () {
-            running_update = false;
-            $("#id_monitoring").removeAttr('disabled');
-            window.location.reload();
-          },
-      }).fail(function() {
-          alert("invalid server response");
-      });
-    });
-
   });
 
 </script>

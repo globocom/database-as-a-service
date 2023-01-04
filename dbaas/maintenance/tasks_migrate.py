@@ -9,9 +9,7 @@ def get_steps(host):
     return get_host_migrate_steps(class_path)
 
 
-def node_zone_migrate(host, zone, new_environment, task, 
-                      since_step=None, step_manager=None, 
-                      zone_origin=None):
+def node_zone_migrate(host, zone, new_environment, task, since_step=None, step_manager=None, zone_origin=None):
     instance = host.instances.first()
     if step_manager:
         host_migrate = step_manager
@@ -27,8 +25,7 @@ def node_zone_migrate(host, zone, new_environment, task,
 
     steps = get_steps(host)
     result = steps_for_instances(
-        steps, [instance], task, host_migrate.update_step, since_step,
-        step_manager=host_migrate
+        steps, [instance], task, host_migrate.update_step, since_step, step_manager=host_migrate
     )
     host_migrate = HostMigrate.objects.get(id=host_migrate.id)
     if result:
@@ -48,9 +45,7 @@ def rollback_node_zone_migrate(migrate, task):
     migrate.save()
 
     steps = get_steps(migrate.host)
-    result = rollback_for_instances_full(
-        steps, [instance], task, migrate.get_current_step, migrate.update_step
-    )
+    result = rollback_for_instances_full(steps, [instance], task, migrate.get_current_step, migrate.update_step)
     migrate = HostMigrate.objects.get(id=migrate.id)
     if result:
         migrate.set_rollback()
