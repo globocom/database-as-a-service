@@ -39,6 +39,7 @@ from . import utils
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 
+
 LOG = logging.getLogger(__name__)
 
 REGIONS = [
@@ -48,7 +49,6 @@ REGIONS = [
 ]
 
 def credential_parameter_by_name(request, env_id, param_name):
-
     try:
         env = Environment.objects.get(id=env_id)
         credential = get_credentials_for(env, CredentialType.HOST_PROVIDER)
@@ -180,7 +180,9 @@ def database_view(tab):
             if isinstance(context, dict):
                 return func(request, context, context['database'])
             return context
+
         return func_wrapper
+
     return database_decorator
 
 
@@ -191,7 +193,9 @@ def database_view_class(tab):
             context = check_permission(request, id, tab)
 
             return func(self, request, context, context['database'])
+
         return func_wrapper
+
     return database_decorator
 
 
@@ -220,18 +224,34 @@ def refresh_status(request, database_id):
     })
     return HttpResponse(output, content_type="application/json")
 
+
 def toggle_monitoring(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
     except (Database.DoesNotExist, ValueError):
         return
-    database.toggle_monitoring()
+    # database.toggle_monitoring()
     database.is_monitoring = not database.is_monitoring
     database.save()
     instances_status = []
     output = json.dumps({'database_status': database.status_html,
                          'instances_status': instances_status})
     return HttpResponse(output, content_type="application/json")
+
+
+def set_attention(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+        database.attention = request.GET.get('att_bool') == 'true'
+        database.attention_description = request.GET.get('att_descr')
+    except (Database.DoesNotExist, ValueError):
+        return
+    database.save()
+    instances_status = []
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
+
 
 @database_view('details')
 def database_details(request, context, database):
@@ -278,7 +298,6 @@ def database_cost(request, context, database):
 
 @database_view('credentials')
 def database_credentials(request, context, database):
-
     if request.method == 'POST':
         if 'setup_ssl' in request.POST:
             database_configure_ssl(request, context, database)
@@ -325,18 +344,17 @@ def database_credentials(request, context, database):
 
     can_set_ssl_required = \
         (infra.plan.replication_topology.can_setup_ssl and \
-        infra.ssl_configured and \
-        infra.set_require_ssl_for_databaseinfra and \
-        infra.ssl_mode == infra.ALLOWTLS and \
-        not set_ssl_mode_retry_in_progress)
+         infra.ssl_configured and \
+         infra.set_require_ssl_for_databaseinfra and \
+         infra.ssl_mode == infra.ALLOWTLS and \
+         not set_ssl_mode_retry_in_progress)
 
     can_set_ssl_not_required = \
         (infra.plan.replication_topology.can_setup_ssl and \
-        infra.ssl_configured and \
-        infra.set_require_ssl_for_databaseinfra and \
-        infra.ssl_mode == infra.REQUIRETLS and \
-        not set_ssl_mode_retry_in_progress)
-
+         infra.ssl_configured and \
+         infra.set_require_ssl_for_databaseinfra and \
+         infra.ssl_mode == infra.REQUIRETLS and \
+         not set_ssl_mode_retry_in_progress)
 
     context['can_set_ssl_required'] = can_set_ssl_required
     context['can_set_ssl_not_required'] = can_set_ssl_not_required
@@ -372,7 +390,6 @@ def database_credentials(request, context, database):
 
 
 def database_configure_ssl(request, context, database):
-
     can_do_configure_ssl, error = database.can_do_configure_ssl()
 
     if not can_do_configure_ssl:
@@ -394,6 +411,7 @@ def database_configure_ssl_retry(request, context=None, database=None, id=None):
             error = "Database does not have configure SSL task!"
         elif not last_configure_ssl.is_status_error:
             error = "Cannot do retry, last configure SSL status is '{}'!".format(last_configure_ssl.get_status_display())
+
         else:
             since_step = last_configure_ssl.current_step
 
@@ -406,7 +424,6 @@ def database_configure_ssl_retry(request, context=None, database=None, id=None):
 
 
 def database_set_ssl_required(request, context, database):
-
     can_do_ssl, error = database.can_do_set_ssl_required()
 
     if not can_do_ssl:
@@ -418,6 +435,7 @@ def database_set_ssl_required(request, context, database):
 
 
 def database_set_ssl_required_retry(request, context=None, database=None, id=None):
+
     if database is None:
         database = Database.objects.get(id=id)
 
@@ -440,7 +458,6 @@ def database_set_ssl_required_retry(request, context=None, database=None, id=Non
 
 
 def database_set_ssl_not_required(request, context, database):
-
     can_do_ssl, error = database.can_do_set_ssl_not_required()
 
     if not can_do_ssl:
@@ -451,7 +468,9 @@ def database_set_ssl_not_required(request, context, database):
     return HttpResponseRedirect(reverse('admin:logical_database_credentials', kwargs={'id': database.id}))
 
 
+
 def database_set_ssl_not_required_retry(request, context=None, database=None, id=None):
+
     if database is None:
         database = Database.objects.get(id=id)
 
@@ -462,6 +481,7 @@ def database_set_ssl_not_required_retry(request, context=None, database=None, id
             error = "Database does not have set SSL not required task!"
         elif not last_configure_ssl.is_status_error:
             error = "Cannot do retry, last set SSL not required status is '{}'!".format(
+
                 last_configure_ssl.get_status_display()
             )
         else:
@@ -476,7 +496,6 @@ def database_set_ssl_not_required_retry(request, context=None, database=None, id
 
 
 class DatabaseParameters(TemplateView):
-
     PROTECTED = 1
     EDITABLE = 2
     TASK_RUNNING = 3
@@ -754,7 +773,6 @@ def database_metrics(request, context, database):
         prometheus_scraper_port = Configuration.get_by_name('prometheus_redis_grafana_dashboard_scraper_port')
 
 
-
     grafana_url_zabbix = '{}{}?{}={}&{}={}&{}={}&{}={}'.format(
         credential.endpoint,
         zabbix_engine_dashboard,
@@ -993,7 +1011,7 @@ def database_resizes(request, context, database):
     if request.method == 'POST':
         if (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
                 'vm_offering'
-             )):
+        )):
             _vm_resize(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
@@ -1114,8 +1132,8 @@ class DatabaseMigrateEngineRetry(View):
             )
             service_obj.execute()
         except (
-            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
-            exceptions.ManagerNotFound
+                exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+                exceptions.ManagerNotFound
         ) as error:
             messages.add_message(self.request, messages.ERROR, str(error))
         return HttpResponseRedirect(
@@ -1320,21 +1338,21 @@ class DatabaseUpgradeView(TemplateView):
             )
             service_obj.execute()
         except (
-            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
-            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+                exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+                exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
         ) as error:
             messages.add_message(self.request, messages.ERROR, str(error))
 
     def has_update_mongodb_30(self):
         return (
-            self.database.is_mongodb_24() and
-            self.request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+                self.database.is_mongodb_24() and
+                self.request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
         )
 
     def can_do_upgrade(self):
         return (
-            bool(self.database.infra.plan.engine_equivalent_plan) and
-            self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
+                bool(self.database.infra.plan.engine_equivalent_plan) and
+                self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
         )
 
     def retry_migrate_engine(self):
@@ -1348,7 +1366,7 @@ class DatabaseUpgradeView(TemplateView):
         elif not last_migration.is_status_error:
             error = ("Cannot do retry, last engine migration. "
                      "Status is '{}'!").format(
-                        last_migration.get_status_display())
+                last_migration.get_status_display())
         else:
             since_step = last_migration.current_step
 
@@ -1409,11 +1427,11 @@ class DatabaseUpgradeView(TemplateView):
             database=self.database
         )
         self.context['all_patches_blocked_by_disk'] = (
-            available_patches and not patches_required_disk_size
+                available_patches and not patches_required_disk_size
         )
 
         self.context['has_patches_blocked_by_disk'] = (
-            list(available_patches) != list(patches_required_disk_size)
+                list(available_patches) != list(patches_required_disk_size)
         )
 
         if patches_required_disk_size:
@@ -1462,8 +1480,8 @@ class UpgradeDatabaseRetryView(View):
             )
             service_obj.execute()
         except (
-            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
-            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+                exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+                exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
         ) as error:
             messages.add_message(self.request, messages.ERROR, str(error))
 
@@ -1577,9 +1595,9 @@ class DatabaseHostsView(TemplateView):
             else:
                 service_obj.execute()
         except (
-            exceptions.DatabaseIsNotHA, exceptions.DatabaseNotAvailable,
-            exceptions.ManagerInvalidStatus, exceptions.ManagerNotFound,
-            exceptions.ReadOnlyHostsLimit, exceptions.RequiredNumberOfInstances
+                exceptions.DatabaseIsNotHA, exceptions.DatabaseNotAvailable,
+                exceptions.ManagerInvalidStatus, exceptions.ManagerNotFound,
+                exceptions.ReadOnlyHostsLimit, exceptions.RequiredNumberOfInstances
         ) as error:
             messages.add_message(self.request, messages.ERROR, str(error))
 
@@ -1672,7 +1690,7 @@ class DatabaseHostsView(TemplateView):
         enable_host = self.context['max_read_hosts'] - len(
             self.context['instances_read_only']
         )
-        self.context['enable_host'] = range(1, enable_host+1)
+        self.context['enable_host'] = range(1, enable_host + 1)
         self.context['add_read_only_retry'] = (
             AddInstancesToDatabase.objects.need_retry(
                 database=self.database
@@ -1707,8 +1725,8 @@ def database_delete_host(request, database_id, host_id):
         )
         service_obj.execute()
     except (
-        exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
-        exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
     ) as error:
         messages.add_message(request, messages.ERROR, str(error))
 
@@ -1726,8 +1744,8 @@ class RemoveInstanceDatabaseRetryView(View):
             )
             service_obj.execute()
         except (
-            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
-            exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
+                exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+                exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
         ) as error:
             messages.add_message(self.request, messages.ERROR, str(error))
 
@@ -2123,7 +2141,7 @@ def database_migrate(request, context, database):
             # Do not allow GCP hosts
             # to be in the same region
             if ('gcp' in environment.name and
-               database.engine_type.startswith('mysql')):
+                    database.engine_type.startswith('mysql')):
                 instances = database.infra.instances.all()
                 for instance in instances:
                     host_check = instance.hostname
@@ -2138,7 +2156,7 @@ def database_migrate(request, context, database):
                         return
 
             TaskRegister.host_migrate(
-                host, zone, environment, request.user, database, 
+                host, zone, environment, request.user, database,
                 zone_origin=zone_origin
             )
 
@@ -2239,7 +2257,7 @@ def database_migrate(request, context, database):
             request,
             messages.WARNING,
             "The environment %(env)s is not in any group" % {
-                'env':  environment.name
+                'env': environment.name
             }
         )
     else:
@@ -2434,7 +2452,6 @@ class ExecuteScheduleTaskView(RedirectView):
 
 @database_view("")
 def change_persistence_retry(request, context, database):
-
     can_do_chg_persistence, error = database.can_do_change_persistence_retry()
 
     if can_do_chg_persistence:
@@ -2444,7 +2461,7 @@ def change_persistence_retry(request, context, database):
         elif not last_change_persistence.is_status_error:
             error = ("Cannot do retry, last change persistence status "
                      "is '{}'!").format(
-                        last_change_persistence.get_status_display()
+                last_change_persistence.get_status_display()
             )
         else:
             since_step = last_change_persistence.current_step
@@ -2469,7 +2486,6 @@ def change_persistence_retry(request, context, database):
 
 @database_view("")
 def change_persistence(request, context, database):
-
     can_do_change_persistence, error = database.can_do_change_persistence()
 
     if not can_do_change_persistence:
@@ -2491,19 +2507,18 @@ def change_persistence(request, context, database):
 
 @database_view('persistence')
 def database_persistence(request, context, database):
-
     if request.method == 'POST':
 
         if 'retry_change_persistence' in request.POST:
             return HttpResponseRedirect(
-                    reverse('admin:logical_database_change_persistence_retry',
-                            kwargs={'id': database.id})
-                )
+                reverse('admin:logical_database_change_persistence_retry',
+                        kwargs={'id': database.id})
+            )
         elif 'database_change_persistence' in request.POST:
             return HttpResponseRedirect(
-                    reverse('admin:logical_database_change_persistence',
-                            kwargs={'id': database.id})
-                )
+                reverse('admin:logical_database_change_persistence',
+                        kwargs={'id': database.id})
+            )
 
     context['last_change_persistence'] = database.change_persistence.last()
 
@@ -2533,4 +2548,3 @@ def check_offering_sizes(request):
                                 'cpus': cpus,
                                 'memory': memory})
     return HttpResponse(response_json, content_type="application/json")
-

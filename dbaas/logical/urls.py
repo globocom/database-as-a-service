@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from .views import refresh_status, toggle_monitoring
+from .views import refresh_status, toggle_monitoring, set_attention
 from .views import (CredentialView, CredentialSSLView,
                     credential_parameter_by_name, check_offering_sizes)
 
@@ -14,7 +14,10 @@ urlpatterns = patterns(
         name="logical_database_refresh_status"),
     url(r"^toggle_monitoring/(?P<database_id>\d*)$",
         toggle_monitoring,
-        name="logical_database_refresh_status"),
+        name="toggle_monitoring"),
+    url(r"^set_attention/(?P<database_id>\d*)$",
+        set_attention,
+        name="attention_with_gcp_settings_divergence"),
     url(r"^credentialssl/(?P<pk>\d*)$",
         CredentialSSLView.as_view(),
         name="credentialssl-detail"),
