@@ -18,8 +18,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default=u''),
                       keep_default=False)
 
-
-
     def backwards(self, orm):
         # Deleting field 'Database.attention'
         db.delete_column(u'logical_database', 'attention')
