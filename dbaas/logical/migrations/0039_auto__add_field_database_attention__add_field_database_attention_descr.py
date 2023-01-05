@@ -10,13 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Database.attention'
         db.add_column(u'logical_database', 'attention',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=False, blank=True),
                       keep_default=False)
 
         # Adding field 'Database.attention_description'
         db.add_column(u'logical_database', 'attention_description',
-                      self.gf('django.db.models.fields.TextField')(default=u''),
+                      self.gf('django.db.models.fields.TextField')(default=u'', null=True, blank=True),
                       keep_default=False)
+
 
 
     def backwards(self, orm):
