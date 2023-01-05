@@ -8,25 +8,16 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Database.attention'
-        db.add_column(u'logical_database', 'attention',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
 
-        # Adding field 'Database.attention_description'
-        db.add_column(u'logical_database', 'attention_description',
-                      self.gf('django.db.models.fields.TextField')(default=u''),
-                      keep_default=False)
-
-
+        # Changing field 'Database.attention_description'
+        db.alter_column(u'logical_database', 'attention_description', self.gf('django.db.models.fields.TextField')(null=True, blank=True))
+        db.alter_column(u'logical_database', 'attention', self.gf('django.db.models.fields.BooleanField')(blank=True))
 
     def backwards(self, orm):
-        # Deleting field 'Database.attention'
-        db.delete_column(u'logical_database', 'attention')
 
-        # Deleting field 'Database.attention_description'
-        db.delete_column(u'logical_database', 'attention_description')
-
+        # Changing field 'Database.attention_description'
+        db.alter_column(u'logical_database', 'attention_description', self.gf('django.db.models.fields.TextField')())
+        db.alter_column(u'logical_database', 'attention', self.gf('django.db.models.fields.BooleanField')())
 
     models = {
         u'account.organization': {
@@ -107,7 +98,7 @@ class Migration(SchemaMigration):
             'Meta': {'ordering': "(u'name',)", 'unique_together': "((u'name', u'environment'),)", 'object_name': 'Database'},
             'apps_bind_name': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'attention': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'attention_description': ('django.db.models.fields.TextField', [], {'default': "u''"}),
+            'attention_description': ('django.db.models.fields.TextField', [], {'default': "u''", 'null': 'True', 'blank': 'True'}),
             'backup_path': ('django.db.models.fields.CharField', [], {'max_length': '300', 'null': 'True', 'blank': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'databaseinfra': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databases'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.DatabaseInfra']"}),
