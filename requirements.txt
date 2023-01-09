@@ -4,7 +4,6 @@ cryptography==2.6
 pbr==1.10.0
 python-foreman==0.2.1
 positional==1.1.1
-glb-version==1.3.1
 Babel==2.3.4
 Dex==0.6
 Django==1.6.10
@@ -37,7 +36,6 @@ certifi==2021.5.30
 cffi==1.14.6
 click==3.3
 colored==1.2.1
-coverage==3.6
 cryptography==2.6
 dargparse==0.2.5
 dbaas-aclapi==1.0.14

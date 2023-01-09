@@ -16,8 +16,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 1
-    - name: Docker build
-      run: make docker_build
     - name: Remove compose 
       run: sudo rm /usr/local/bin/docker-compose
     - name: Download compose
@@ -32,6 +30,8 @@ jobs:
       run: docker images
     - name: Check running containers
       run: docker ps
+    - name: build test image
+      run: make docker_build_test
     - name: run tests
       run: docker-compose run test
     - name: send codecov report

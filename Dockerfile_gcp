@@ -48,7 +48,7 @@ RUN pip install python-ldap
 
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -i https://artifactory.globoi.com/artifactory/api/pypi/pypi-all/simple/ -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # User, home, and app basics
 RUN useradd --create-home app
