@@ -869,8 +869,7 @@ def change_mongodb_log_rotate(self):
 
 @app.task(bind=True)
 @only_one(key="executescheduledmaintenancetask")
-def execute_scheduled_maintenance(self, task=None, user=None,
-                                  is_automatic=True):
+def execute_scheduled_maintenance(self, task=None, user=None, is_automatic=True):
     LOG.info("Searching Scheduled tasks")
     if user is None:
         user = User.objects.get(username='admin')
@@ -1952,8 +1951,7 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_resize_retry(cls,
-                              database, user, offering, original_offering, since_step, **kw):
+    def database_resize_retry(cls, database, user, offering, original_offering, since_step, **kw):
         task_params = {
             'task_name': 'resize_database_retry',
             'arguments': "Retrying resize database {}".format(database),

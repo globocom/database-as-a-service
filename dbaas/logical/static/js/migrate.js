@@ -49,20 +49,6 @@
                 });
             },
 
-            migrate_region: function(database_id, hostId, newZone, zoneOrigin) {
-                var self = this;
-                $.ajax({
-                    "url": "/admin/logical/database/" + database_id + "/migrate/",
-                    "type": "POST",
-                    "data": {
-                        "host": hostId,
-                        "new_region": newZone,
-                        "zone_origin": zoneOrigin
-                    },
-                }).complete(function() {
-                    location.reload();
-                });
-            },
             /**
             * Get all environment zones
             */
@@ -78,23 +64,39 @@
                     callback(data);
                 });
             },
+
             /**
             * Migrate database from selected environment
             */
             migrate_database: function(database_id, new_environment_id, new_offering_id, hosts_zones) {
                 var self = this;
-                $.ajax({
-                    "url": "/admin/logical/database/" + database_id + "/migrate/",
-                    "type": "POST",
-                    "data": {
-                        "new_environment": new_environment_id,
-                        "hosts_zones": JSON.stringify(hosts_zones),
-                        "new_offering": new_offering_id
-                    },
-                }).complete(function() {
-                    location.reload();
-                });
+                if (new_offering_id===0 && hosts_zones===0) {
+                    $.ajax({
+                        "url": "/admin/logical/database/" + database_id + "/migrate/",
+                        "type": "POST",
+                        "data": {
+                            "database_id": database_id,
+                            "new_environment_region": new_environment_id,
+                        },
+                    }).complete(function() {
+                        location.reload();
+                    });
+                }
+                else {
+                    $.ajax({
+                        "url": "/admin/logical/database/" + database_id + "/migrate/",
+                        "type": "POST",
+                        "data": {
+                            "new_environment": new_environment_id,
+                            "hosts_zones": JSON.stringify(hosts_zones),
+                            "new_offering": new_offering_id
+                        },
+                    }).complete(function() {
+                        location.reload();
+                    });
+                }
             },
+
             /**
             * Rollback full migrate database stage
             */
@@ -111,6 +113,7 @@
                     location.reload();
                 });
             },
+
             /**
             * Get all offerings to selected environment
             */
