@@ -26,7 +26,7 @@
         <tbody>
           <div class="controls">
             <tr>
-              <td><h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
+              <td><h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span id="current_offering" class="label label-info">{{ current_offering }}</span></h4>
               <p>New environment
                 {%if last_host_migrate and last_host_migrate.is_status_error %}
                   <u>{{ current_environment }}</u>
@@ -107,7 +107,7 @@
         <tbody>
           <div class="controls">
             <tr>
-              <td><h4>Database region is <span class="label label-info">{{ current_zone }}</span></h4>
+              <td><h4>Database region is <span id="region-info-id" class="label label-info"></span></h4>
                 <p> New region
               {%if last_host_migrate and last_host_migrate.is_status_error %}
                 {%if not last_host_migrate.database_migrate and last_host_migrate.host == host %}
@@ -184,6 +184,31 @@
     offering_select.innerHTML = options;
   }
 
+  function load_region(environment_id) {
+    window.MigrateManager.zones_for_environment({{database.id}}, {{current_environment.id}}, parse_region);
+  }
+
+  function parse_region(data) {
+    var size = data["zones"].length
+    var start_at = Math.floor(Math.random() * size);
+    for (var zone in data["zones"]) {
+      if (start_at >= size) {
+        start_at = 0
+      }
+      var name = data["zones"][zone]["name"];
+      var is_active = data["zones"][start_at]["is_active"];
+      if (zone == start_at.toString() && is_active) {
+        selected = true;
+        start_at = start_at + 1;
+      }
+      if (!is_active) {
+        start_at = start_at + 1;
+      }
+    }
+    var current_region_parsed = document.getElementById("region-info-id")
+    current_region_parsed.innerHTML = name;
+  }
+
   function load_zones(environment_id) {
     clean_zones()
     window.MigrateManager.zones_for_environment({{database.id}}, environment_id, parse_zones);
@@ -238,22 +263,6 @@
   }
 
   jQuery(document).ready(function($) {
-    $("#migrate_region").on("change", function () {
-      selectVal = $('#migrate_region').val();
-      var btn = document.getElementById('#migrate_region');
-
-      if (selectVal == "---------") {
-        $("#migrate_region_btn").prop('disabled', true);
-        btn.className = 'resize_button btn region-btn';
-        btn.disable = true;
-      }
-      else {
-        $("#migrate_region_btn").prop('disabled', false);
-        btn.className = 'resize_button btn btn-primary region-btn';
-        btn.disable = true;
-      }
-
-    });
 
     $(".host-zone").on("change", function() {
       var $hostZone = $(this),
@@ -287,35 +296,6 @@
       $("#migrate_host_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>' + hostName + '</u> from <u>' + currentZone + '</u> to <u>' + newZone + '</u>?</label>');
     });
 
-    $(".host-zone-btn").click(function() {
-      var $select = $("#migrate_environment"); var hostId;
-    var newZone;
-    var zoneOrigin;
-    $(".host-zone-btn").click(function() {
-      var $hostBtn = $(this);
-      hostId = $hostBtn.data('hostId');
-      var hostName = $hostBtn.data('hostName');
-      var $select = $("#migrate_zone_" + hostId);
-      var currentZone = $select.data('currentZone');
-      zoneOrigin = currentZone;
-      newZone = $select.find(":selected").val()
-      $("#migrate_host_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>' + hostName + '</u> from <u>' + currentZone + '</u> to <u>' + newZone + '</u>?</label>');
-    });
-
-    $(".host-zone-btn").click(function() {
-      var $select = $("#migrate_env
-      var new_env = $select.find(":selected").text()
-      var $select = $("#migrate_offering");
-      var new_offering = $select.find(":selected").text()
-      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
-    });
-
-    $(".region-btn").click(function() {
-      var $select = $("#migrate_region");
-      var new_env = $select.find(":selected").text()
-      $("#migrate_region_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_zone }}</u> to <u>' + new_env + '</u><br><br>Are you sure you want to migrate this database?</label>');
-    });
-
     $("#migrate_host_btn_modal").click(function() {
       $("#migrate_host_btn_modal").attr("disabled", "disabled");
       $("#migrate_host_btn_modal").css({
@@ -324,12 +304,12 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone, zoneOrigin);
     });
 
-    $("#migrate_region_btn_modal").on("click", function() {
-      $("#migrate_region_btn_modal").attr("disabled", "disabled");
-      $("#migrate_region_btn_modal").css({
-        "pointer-events": "none"
-      });
-      window.MigrateManager.migrate_region({{database.id}}, hostId, newZone, zoneOrigin);
+    $(".host-zone-btn").click(function() {
+      var $select = $("#migrate_environment");
+      var new_env = $select.find(":selected").text()
+      var $select = $("#migrate_offering");
+      var new_offering = $select.find(":selected").text()
+      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
     });
 
     $("#migrate_database_btn_modal").click(function() {
@@ -338,6 +318,11 @@
         hosts_zones[obj.dataset['hostId'].toString()] = obj.value;
       })
       window.MigrateManager.migrate_database({{database.id}}, $("#migrate_environment").val(), $("#migrate_offering").val(), hosts_zones);
+    });
+
+    $("#migrate_region_btn_modal").click(function() {
+      var $select = $("#migrate_region");
+      window.MigrateManager.migrate_database({{database.id}}, $("#migrate_region").val(), 0, 0);
     });
 
     $("#full_rollback_migrate_stage_btn_modal").click(function() {
@@ -358,6 +343,7 @@
       control_migrate_button();
       load_offerings($environment.val())
       load_zones($environment.val());
+      load_region($environment.val());
     });
     $("#migrate_environment").change()
 

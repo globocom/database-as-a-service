@@ -2200,38 +2200,49 @@ def database_migrate(request, context, database):
                     return
                 host = get_object_or_404(Host, pk=host_id)
                 hosts_zones[host] = zone
+
             if not hosts_zones:
                 messages.add_message(request, messages.ERROR, "There is no host to migrate")
             else:
                 TaskRegister.database_migrate(database, environment, offering, request.user, hosts_zones)
 
-        elif 'new_region' in request.POST:
-            environment = get_object_or_404(Environment, pk=request.POST.get('new_environment'))
+        elif 'new_environment_region' in request.POST:
+            database_id = json.loads(request.POST.get('database_id'))
+            new_environment_id = json.loads(request.POST.get('new_environment_region'))
+            current_offering = database.infra.offering
 
-            host_prov_client = HostProviderClient(environment)
+            database = get_object_or_404(Database, pk=database_id)
+            environment = get_object_or_404(Environment, pk=new_environment_id)
+            hp = Provider(database.infra.instances.first(), environment)
+            hp_zones = sorted(hp.list_zones())
 
-            new_zone = request.POST["new_zone"]
-            host_id = request.POST.get('host_id')
-            offering = database.infra.offering
+            if len(hp_zones) > 0:
+                zone = hp_zones[0]['name']
+
+            instances = database.infra.instances.all().order_by('shard', 'id')
+            for instance in instances:
+                host_id = instance.hostname.id
+                break
+
+            if environment not in current_offering.environments.all():
+                messages.add_message(
+                    request, messages.ERROR, "There is no offering {} to {} environment".format(current_offering, environment)
+                )
+                return
 
             hosts_zones = OrderedDict()
             host = get_object_or_404(Host, pk=host_id)
-            hosts_zones[host] = new_zone
+            hosts_zones[host] = zone
 
-            # Do not allow GCP hosts
-            # to be in the same region
-            if ('gcp' in environment.name and database.engine_type.startswith('mysql')):
-                instances = database.infra.instances.all()
-                for instance in instances:
-                    host_check = instance.hostname
-                    host_info = host_prov_client.get_vm_by_host(host_check)
-                    if host_info.zone == new_zone:
-                        messages.add_message(
-                            request, messages.ERROR, "The new zone must be different from other hosts zone"
-                        )
-                        return
-                TaskRegister.region_migrate(database, environment, offering, request.user, hosts_zones)
-            return
+            if not database.infra.migration_stage == database.infra.NOT_STARTED:
+                error = "Zone {} isn't available in {} environment".format(zone, environment)
+                messages.add_message(request, messages.ERROR, error)
+                return
+
+            if hosts_zones and 'gcp' in environment.name:
+                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones)
+            else:
+                messages.add_message(request, messages.ERROR, "There is no host to migrate")
         return
 
     hosts = set()
@@ -2246,21 +2257,17 @@ def database_migrate(request, context, database):
         hp = Provider(instance, environment)
         try:
             host_info = hp.host_info(host)
-            current_zone = host_info['zone']
         except Exception as e:
             LOG.error("Could get host info {} - {}".format(host, e))
         else:
             host.current_zone = host_info['zone']
-            current_zone = host_info['zone']
         hosts.add(host)
 
-    context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
-    context['zones'] = sorted(zones)
-    context['current_zone'] = current_zone
-
     context["environments"] = set()
-    environment_groups = environment.groups.all()
+    context['zones'] = sorted(zones)
+    context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
 
+    environment_groups = environment.groups.all()
     if not environment_groups:
         messages.add_message(
             request,
