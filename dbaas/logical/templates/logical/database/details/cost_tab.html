@@ -60,16 +60,51 @@
         </tfoot>
     </table>
 </div>
+<div class="error-not-found">
+    <h3>Database infra not found on cost api</h3>
+    <h3>Tente novamente!</h3>
+    <div id="btn-reload">
+        <button class="btn-primary">Recarregar</button>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block js_footer %}
 {{ block.super }}
 <style>
-.totalvalue, .periodvalue{
-    font-size: 2em;
-    line-height: 1.4em;
-}
+    .loading h3 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loading-in-tab-costs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #loading-element {
+        padding: 50px;
+        animation: is-rotating 1s infinite;
+        border: 6px solid #e5e5e5;
+        border-radius: 50%;
+        border-top-color: #51d4db;
+        height: 100px;
+        width: 100px;
+    }
+
+    @keyframes is-rotating {
+        to {
+            transform: rotate(1turn);
+        }
+    }
+
+    .totalvalue, .periodvalue{
+        font-size: 2em;
+        line-height: 1.4em;
+    }
 </style>
 <script src="{% static "assets/js/bootstrap.min.js" %}"></script>
 <script src="{% static "admin/js/chart.js" %}"></script>
@@ -78,6 +113,9 @@ var costApi="{{ cost_api }}";
 var infraName="{{ infra_name }}";
 
 $(document).ready(function(){
+    $(".error-not-found").hide();
+    $(".loading").show();
+    $(".row-fluid").hide();
     $(".form-actions").hide();
     $("#details-table").hide(); // hide table headers while there is no data
 
@@ -108,6 +146,8 @@ $(document).ready(function(){
                 tension: 0.1,
             }]
         };
+        $(".loading").hide();
+        $(".row-fluid").show();
         $("#details-table").show();
         $('#details-table').DataTable({
             data: data.items,
@@ -164,10 +204,12 @@ $(document).ready(function(){
 
     }).fail(function(err) {
         console.error("COST API ERROR::", err)
-        var msg = "<p>Error while get chart data</p>";
+        var msg = "<h3>Error while get chart data</h3>";
         if (err.status === 404){
-            msg = "<p>Database infra not found on cost api</p>";
+            msg = $(".error-not-found").show();
         }
+        $(".loading").hide();
+        $(".row-fluid").show();
         $(".chartBox").html(msg);
         $(".costtotals").hide()
       })

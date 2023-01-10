@@ -220,6 +220,18 @@ def refresh_status(request, database_id):
     })
     return HttpResponse(output, content_type="application/json")
 
+def toggle_monitoring(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    database.toggle_monitoring()
+    database.is_monitoring = not database.is_monitoring
+    database.save()
+    instances_status = []
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
 
 @database_view('details')
 def database_details(request, context, database):
@@ -695,10 +707,10 @@ def database_metrics(request, context, database):
     context['hostname'] = request.GET.get('hostname', hostname)
     context['source'] = request.GET.get('source', 'zabbix')
 
-    if context['source'] == 'sofia':
+    if context['source'] == 'prometheus':
         context['second_source'] = 'zabbix'
     else:
-        context['second_source'] = 'sofia'
+        context['second_source'] = 'prometheus'
 
     context['hosts'] = []
     for host in Host.objects.filter(instances__databaseinfra=database.infra,instances__is_active=True).distinct():
@@ -721,15 +733,26 @@ def database_metrics(request, context, database):
         zabbix_host = hostname
 
     datasource = credential.get_parameter_by_name('environment')
+    prometheus_node_dashboard = Configuration.get_by_name('prometheus_node_grafana_dashboard')
+
     if database.engine.is_mysql:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mysql_grafana_dashboard')
-        sofia_engine_dashboard = Configuration.get_by_name('sofia_mysql_grafana_dashboard')
+        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_mysql_grafana_dashboard')
+        prometheus_var = Configuration.get_by_name('prometheus_mysql_grafana_dashboard_var')
+        prometheus_scraper_port = Configuration.get_by_name('prometheus_mysql_grafana_dashboard_scraper_port')
+
     elif database.engine.is_mongodb:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mongodb_grafana_dashboard')
-        sofia_engine_dashboard = Configuration.get_by_name('sofia_mongodb_grafana_dashboard')
+        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard')
+        prometheus_var = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard_var')
+        prometheus_scraper_port = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard_scraper_port')
+
     elif database.engine.is_redis:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_redis_grafana_dashboard')
-        sofia_engine_dashboard = Configuration.get_by_name('sofia_redis_grafana_dashboard')
+        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_redis_grafana_dashboard')
+        prometheus_var = Configuration.get_by_name('prometheus_redis_grafana_dashboard_var')
+        prometheus_scraper_port = Configuration.get_by_name('prometheus_redis_grafana_dashboard_scraper_port')
+
 
 
     grafana_url_zabbix = '{}{}?{}={}&{}={}&{}={}&{}={}'.format(
@@ -749,13 +772,22 @@ def database_metrics(request, context, database):
     hostname = instance.hostname.hostname
     if 'globoi.com' in hostname:
         hostname = hostname.split('.')[0]
-    grafana_url_sofia = "{}{}?var-host_name={}&var-datasource={}".format(
+
+    prometheus_url_node = "{}{}?var-name={}".format(
         credential.endpoint,
-        sofia_engine_dashboard,
-        hostname,
-        credential.get_parameter_by_name('datasource'),
+        prometheus_node_dashboard,
+        hostname
     )
-    context['grafana_url_sofia'] = grafana_url_sofia
+    context['prometheus_url_node'] = prometheus_url_node
+
+    grafana_url_prometheus_db = "{}{}?var-{}={}:{}".format(
+        credential.endpoint,
+        prometheus_engine_dashboard,
+        prometheus_var,
+        instance.address,
+        prometheus_scraper_port
+    )
+    context['prometheus_url_db'] = grafana_url_prometheus_db
 
     return render_to_response("logical/database/details/metrics_tab.html", context, RequestContext(request))
 
