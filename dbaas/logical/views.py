@@ -752,23 +752,32 @@ def database_metrics(request, context, database):
         zabbix_host = hostname
 
     datasource = credential.get_parameter_by_name('environment')
-    prometheus_node_dashboard = Configuration.get_by_name('prometheus_node_grafana_dashboard')
+    environment_type = credential.get_parameter_by_name('environment_type')
+
+    prometheus_node_dashboard = get_prometheus_grafana_url_for_environment_type(
+        'prometheus_node_grafana_dashboard', environment_type)
 
     if database.engine.is_mysql:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mysql_grafana_dashboard')
-        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_mysql_grafana_dashboard')
+        prometheus_engine_dashboard = get_prometheus_grafana_url_for_environment_type(
+            'prometheus_mysql_grafana_dashboard', environment_type)
+
         prometheus_var = Configuration.get_by_name('prometheus_mysql_grafana_dashboard_var')
         prometheus_scraper_port = Configuration.get_by_name('prometheus_mysql_grafana_dashboard_scraper_port')
 
     elif database.engine.is_mongodb:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mongodb_grafana_dashboard')
-        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard')
+        prometheus_engine_dashboard = get_prometheus_grafana_url_for_environment_type(
+           'prometheus_mongodb_grafana_dashboard', environment_type)
+
         prometheus_var = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard_var')
         prometheus_scraper_port = Configuration.get_by_name('prometheus_mongodb_grafana_dashboard_scraper_port')
 
     elif database.engine.is_redis:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_redis_grafana_dashboard')
-        prometheus_engine_dashboard = Configuration.get_by_name('prometheus_redis_grafana_dashboard')
+        prometheus_engine_dashboard = get_prometheus_grafana_url_for_environment_type(
+            'prometheus_redis_grafana_dashboard', environment_type)
+
         prometheus_var = Configuration.get_by_name('prometheus_redis_grafana_dashboard_var')
         prometheus_scraper_port = Configuration.get_by_name('prometheus_redis_grafana_dashboard_scraper_port')
 
@@ -2432,6 +2441,12 @@ def return_all_available_regions(filter_env, current_env, current_offer):
                         })
                         cache.append(region)
     return regions
+
+
+def get_prometheus_grafana_url_for_environment_type(configuration_name, environment_type):
+    if environment_type == 'dev':
+        return Configuration.get_by_name(configuration_name + '_dev')
+    return Configuration.get_by_name(configuration_name)
 
 
 class ExecuteScheduleTaskView(RedirectView):
