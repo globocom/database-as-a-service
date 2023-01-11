@@ -140,8 +140,31 @@ class Team(BaseModel):
 
         return True
 
-    name = models.CharField(_('name'), max_length=80, 
+    name = models.CharField(_('name'), max_length=80,
                             unique=True, validators=[validate_name])
+
+    # workaround to allow us to have some more metadata for the teams.
+    # In the future this should be sync with some central place.
+    team_options = [
+        ('adtech','Adtech'),
+        ('backstage','Backstage & Interatividade'),
+        ('big_data_ai','Big Data & AI '),
+        ('editora_sgr','Editora e SGR'),
+        ('gestao_usuarios_servicos','Gestão de Usuários e Serviços'),
+        ('globo_id','Globo ID'),
+        ('infraestrutura','Infraestrutura'),
+        ('jcorp','JCorp'),
+        ('jornada_consumidor','Jornada do Consumidor '),
+        ('media','Media'),
+        ('plataformas_videos','Plataformas de Video '),
+        ('produtos_publishing','Produtos de Publishing'),
+        ('produtos_video_backend_globoplay','Produtos de Video (Backend GloboPlay)'),
+        ('seguranca','Segurança'),
+        ('telecom','TELECOM'),
+    ];
+    team_area = models.CharField(_('Area do time'), max_length=80, choices=team_options, blank=True, null=True)
+
+
     email = models.EmailField(null=False, blank=False)
     database_alocation_limit = models.PositiveSmallIntegerField(
         _('DB Alocation Limit'),
@@ -190,7 +213,7 @@ class Team(BaseModel):
 
     def clean(self):
         if not self.contacts:
-            raise ValidationError({'contacts': ('This field is required',)})
+            raise ValidationError({'contacts': ('sThis field is required',)})
 
     @classmethod
     def get_all_permissions_for(cls, user=None):

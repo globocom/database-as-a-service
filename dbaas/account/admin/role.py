@@ -26,7 +26,6 @@ class RoleAdmin(admin.ModelAdmin):
 class RoleEnvironmentAdmin(admin.ModelAdmin):
     model = RoleEnvironment
     filter_horizontal = ['environments']
-
     fieldsets = (
         (None, {'fields': ('role', )},),
         (None, {'fields': ('environments', )},),
