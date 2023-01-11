@@ -2247,7 +2247,6 @@ def database_migrate(request, context, database):
 
     hosts = set()
     zones = set()
-    current_zone = ''
     instances = database.infra.instances.all().order_by('shard', 'id')
     for instance in instances:
         host = instance.hostname
@@ -2308,7 +2307,7 @@ def database_migrate(request, context, database):
     plan_env = find_plan_environments()
     filter_env = filter_env_avaliable(all_env, filter_plan, plan_env)
 
-    regions = return_all_available_regions(filter_env, environment, current_offering.id)
+    regions = return_all_available_regions(filter_env, environment.id, current_offering.id)
     context['regions'] = regions
     context.update(**stage_info)
 
@@ -2430,21 +2429,23 @@ def filter_env_avaliable(all_env, filter_plan, plan_env):
     return filter_env_raw
 
 
-def return_all_available_regions(filter_env, current_env, current_offer):
+def return_all_available_regions(filter_env, current_env_id, current_offer_id):
     # Returns a list of regions where it`s possible to migrate
     # Correlates a list of filtered envs with a list of regions and adds only if it`s not repeated
+    sa = 'southamerica-east1'
+
     cache = []
     regions = []
     for env in filter_env:
         for region in REGIONS:
-            if region in env['environment']:
-                if env['environment'] != current_env:
+            if env['env_id'] != current_env_id:
+                if region in env['environment'] or (env['environment'] == 'gcp-lab-dev' and region == sa):
                     if region not in cache:
                         regions.append({
                             'region': region,
                             'environment': env['environment'],
                             'environment_id': env['env_id'],
-                            'offering_id': current_offer
+                            'offering_id': current_offer_id
                         })
                         cache.append(region)
     return regions
