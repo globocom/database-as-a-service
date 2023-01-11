@@ -695,7 +695,7 @@ class BaseTopology(object):
                 'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
             )}, {
             'Recreate Alarms': (
-                #'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
         )}]
 

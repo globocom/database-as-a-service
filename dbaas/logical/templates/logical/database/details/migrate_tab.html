@@ -127,7 +127,7 @@
                   {% endfor %}
                 {% endif %}
                 </select>
-                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn region-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal" disabled>Migrate Region to GCP</button>
+                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn region-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal" disabled="disabled">Migrate Region to GCP</button>
                 </p>
               </td>
             </div>
@@ -153,7 +153,6 @@
 <script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
 <script>
   var currentStage = {{ current_stage }}
-
   if (currentStage != 1){
     $(".environments").attr("disabled", "disabled");
     $(".offerings").attr("disabled", "disabled");
@@ -206,7 +205,8 @@
       }
     }
     var current_region_parsed = document.getElementById("region-info-id")
-    current_region_parsed.innerHTML = name;
+    const array_region = name.split("-")
+    current_region_parsed.innerHTML = array_region[0] + "-" + array_region[1];
   }
 
   function load_zones(environment_id) {
