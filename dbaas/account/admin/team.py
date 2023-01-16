@@ -47,7 +47,7 @@ class TeamAdmin(admin.DjangoServicesAdmin):
 
     service_class = TeamService
     list_display = [
-        "name", "role", "database_limit", "resources", "team_pool",
+        "name", "role", "team_area", "database_limit", "resources", "team_pool",
         "token", "email", "organization"
     ]
     filter_horizontal = ['users']
@@ -112,6 +112,12 @@ class TeamAdmin(admin.DjangoServicesAdmin):
         app_label = opts.app_label
         if not self.has_view_permission(request, None) and not self.has_change_permission(request, None):
             raise PermissionDenied
+        self.readonly_fields = []
+        if not request.user.has_perm('account.edit_team'):
+            self.readonly_fields = [
+                "name", "role", "database_limit", "resources",
+                "token", "email", "organization", "database_alocation_limit", "contacts"
+            ]
 
         list_display = self.get_list_display(request)
         if self.has_change_permission(request, None):

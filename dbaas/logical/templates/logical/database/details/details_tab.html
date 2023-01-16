@@ -31,7 +31,7 @@
       <a class="btn {% if database.is_monitoring %}btn-info{% endif %}
                     {% if not database.is_monitoring %}btn-success{% endif %}
 
-            " title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring">
+            " title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring_disabled" disabled>
         {% if database.is_monitoring %}
             Desativar
         {% endif %}

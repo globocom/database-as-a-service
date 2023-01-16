@@ -117,6 +117,7 @@ class HostSSH(object):
     def create_script_file(self, script):
         self.set_script_file_variables()
         ftp = self.client.open_sftp()
+        ftp.get_channel().settimeout(600)
         ftp.putfo(BytesIO(script.encode()), self.script_file_full_path)
         ftp.close()
 
