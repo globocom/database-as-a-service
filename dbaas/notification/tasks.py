@@ -2338,7 +2338,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def region_migrate(cls, database, environment, offering, user, hosts_zones, since_step=None, step_manager=None):
+    def region_migrate(cls, database, environment, offering, user, hosts_zones, flag_region, since_step=None, step_manager=None):
         if step_manager:
             migration_stage = step_manager.migration_stage
         else:
@@ -2354,8 +2354,8 @@ class TaskRegister(TaskRegisterBase):
 
         task = cls.create_task(task_params)
         return maintenace_tasks.region_migrate.delay(
-            database=database, environment=environment,
-            offering=offering, task=task, hosts_zones=hosts_zones, since_step=since_step, step_manager=step_manager
+            database=database, environment=environment, offering=offering, task=task, hosts_zones=hosts_zones,
+            flag_region=flag_region, since_step=since_step, step_manager=step_manager
         )
 
     @classmethod
@@ -2498,9 +2498,8 @@ class TaskRegister(TaskRegisterBase):
             ).last()
 
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(
-                database,
-                database_migrate.environment,
-                database_migrate.migration_stage)
+                database, database_migrate.environment, database_migrate.migration_stage
+        )
         task_params = {
             'task_name': "database_migrate_rollback",
             'arguments': args,

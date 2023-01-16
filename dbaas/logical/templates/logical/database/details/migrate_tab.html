@@ -110,20 +110,16 @@
               <td><h4>Database region is <span id="region-info-id" class="label label-info"></span></h4>
                 <p> New region
               {%if last_host_migrate and last_host_migrate.is_status_error %}
-                {%if not last_host_migrate.database_migrate and last_host_migrate.host == host %}
-                  <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
-                  <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
-                  <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
-                {% else %}
-                  {{ current_zone }}
+                {%if not last_host_migrate.database_migrate %}
+                  <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for region migrate">Rollback</a>
+                  <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for region migrate">Retry</a>
+                  <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last region migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
                 {% endif %}
               {% else %}
                 <select id="migrate_region" class="region" name="migrate_region">
                   <option value="---------" selected="selected">---------</option>
                   {% for reg in regions %}
-                    {% if reg != current_zone %}
-                      <option value="{{reg.environment_id}}">{{ reg.region }}</option>
-                    {% endif %}
+                    <option value="{{reg.environment_id}}">{{ reg.region }}</option>
                   {% endfor %}
                 {% endif %}
                 </select>
