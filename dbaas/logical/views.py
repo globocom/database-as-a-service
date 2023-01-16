@@ -238,15 +238,44 @@ def toggle_monitoring(request, database_id):
                          'instances_status': instances_status})
     return HttpResponse(output, content_type="application/json")
 
+
+def check_change_team_labels(new_team, old_team, database):
+    status = True
+    try:
+        if new_team and new_team != old_team.id:
+            database.team = Team.objects.get(id=new_team)
+            database.save()
+            status, msg = database.update_team_labels()
+        else:
+            msg = 'Team has not changed'
+    except Exception as error:
+        status = False
+        msg = 'Error in update team labels in GCP: {}'.format(str(error))
+    LOG.info(msg)
+    return status, msg
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':
-        form = DatabaseDetailsForm(request.POST or None, instance=database)
-        if form.is_valid():
-            form.save()
+        new_team = request.POST.get('team') or None
+        old_team = database.team
+        status, msg_update = check_change_team_labels(new_team, old_team, database)
+        if status:
+            form = DatabaseDetailsForm(request.POST or None, instance=database)
+            if form.is_valid():
+                form.save()
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'The database "{}" was changed successfully'.format(database)
+                )
+                return HttpResponseRedirect(
+                    reverse('admin:logical_database_changelist')
+                )
+        else:
             messages.add_message(
-                request, messages.SUCCESS,
-                'The database "{}" was changed successfully'.format(database)
+                request, messages.ERROR,
+                'Error in update team labels in gce "{}"'.format(msg_update)
             )
             return HttpResponseRedirect(
                 reverse('admin:logical_database_changelist')

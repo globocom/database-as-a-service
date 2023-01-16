@@ -76,6 +76,10 @@ class HostProviderDestroyServiceAccountException(HostProviderException):
     pass
 
 
+class HostProviderUpdateLabelsException(HostProviderException):
+    pass
+
+
 class Provider(BaseInstanceStep):
 
     def __init__(self, instance, environment):
@@ -419,6 +423,23 @@ class Provider(BaseInstanceStep):
                 response.content, response
             )
 
+    def update_team_labels(self, host, team_name):
+        url = "{}/{}/{}/host/update_labels".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "host_id": host.identifier,
+            "team_name": team_name
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderUpdateLabelsException(
+                response.content, response
+            )
+
+        return True
+
 
 class HostProviderStep(BaseInstanceStep):
 
@@ -450,6 +471,16 @@ class HostProviderStep(BaseInstanceStep):
 
     def undo(self):
         pass
+
+
+class UpdateTeamLabelsVmInstances(HostProviderStep):
+    def __unicode__(self):
+        return "Updating Team Labels in all VM Instances..."
+
+    def do(self):
+        updated = self.provider.update_team_labels(self.host, self.team_name)
+        if not updated:
+            raise EnvironmentError("Error in update Team Labels")
 
 
 class Stop(HostProviderStep):

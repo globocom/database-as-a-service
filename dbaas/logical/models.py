@@ -31,7 +31,7 @@ from util import get_credentials_for
 from util import get_or_none_credentials_for
 from dbaas_credentials.models import CredentialType
 from system.models import Configuration
-
+from django.utils.module_loading import import_by_path
 
 LOG = logging.getLogger(__name__)
 KB_FACTOR = 1.0 / 1024.0
@@ -1312,6 +1312,24 @@ class Database(BaseModel):
     @property
     def organization(self):
         return self.team.organization
+
+    def update_team_labels(self):
+        status = True
+        host_provider_class = "workflow.steps.util.host_provider.UpdateTeamLabelsVmInstances"
+        volume_provider_class = "workflow.steps.util.volume_provider.UpdateTeamLabelsDisks"
+        step_class_host_provider = import_by_path(host_provider_class)
+        step_class_volume_provider = import_by_path(volume_provider_class)
+        try:
+            instances = self.infra.instances.all()
+            for i in instances:
+                step_class_host_provider(i).do()
+                step_class_volume_provider(i).do()
+            msg = "Labels Updated successfully"
+        except Exception as error:
+            msg = ("Error to update team labels: {}".format(str(error)))
+            LOG.error(msg)
+            status = False
+        return status, msg
 
 
 class DatabaseLock(BaseModel):
