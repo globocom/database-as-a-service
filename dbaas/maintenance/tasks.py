@@ -385,13 +385,11 @@ def node_zone_migrate_rollback(self, migrate, task):
 
 
 @app.task(bind=True)
-def region_migrate(
-    self, database, environment, offering, task, hosts_zones, since_step=None, step_manager=None
-):
+def region_migrate(self, database, environment, offering, task, hosts_zones, flag_region, since_step=None, step_manager=None):
     task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
 
     from tasks_region_migrate import region_migrate
-    region_migrate(database, environment, offering, task, hosts_zones, since_step, step_manager=step_manager)
+    region_migrate(database, environment, offering, task, hosts_zones, flag_region, since_step, step_manager=step_manager)
 
 
 @app.task(bind=True)

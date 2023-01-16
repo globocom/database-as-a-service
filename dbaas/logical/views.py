@@ -2150,6 +2150,7 @@ def database_migrate(request, context, database):
         elif 'new_environment_region' in request.POST:
             database_id = json.loads(request.POST.get('database_id'))
             new_environment_id = json.loads(request.POST.get('new_environment_region'))
+            flag_region = json.loads(request.POST.get('is_region_migrate'))
             current_offering = database.infra.offering
 
             database = get_object_or_404(Database, pk=database_id)
@@ -2181,7 +2182,7 @@ def database_migrate(request, context, database):
                 return
 
             if hosts_zones and 'gcp' in environment.name:
-                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones)
+                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones, flag_region)
             else:
                 messages.add_message(request, messages.ERROR, "There is no host to migrate")
         return

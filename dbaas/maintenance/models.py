@@ -20,8 +20,8 @@ from account.models import Team
 from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
 from physical.models import (
-    Host, Plan, Environment, DatabaseInfra, Instance,
-    Offering, EnginePatch, Pool, DiskOfferingType)
+    Host, Plan, Environment, DatabaseInfra, Instance, Offering, EnginePatch, Pool, DiskOfferingType
+)
 from notification.models import TaskHistory
 from util.models import BaseModel
 from maintenance.tasks import execute_scheduled_maintenance
@@ -985,28 +985,18 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         (STAGE_2, "Stage 2"),
         (STAGE_3, "Stage 3"))
 
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, related_name="database_migrate"
-    )
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History", null=False, related_name="database_migrate")
     database = models.ForeignKey(
-        Database, verbose_name="Database",
-        null=False, unique=False, related_name="database_migrate"
+        Database, verbose_name="Database", null=False, unique=False, related_name="database_migrate"
     )
-    environment = models.ForeignKey(
-        Environment, null=False, related_name="database_migrate"
-    )
+    environment = models.ForeignKey(Environment, null=False, related_name="database_migrate")
     origin_environment = models.ForeignKey(Environment, null=False)
-    offering = models.ForeignKey(
-        Offering, related_name="database_migrate", null=True, blank=True
-    )
+    offering = models.ForeignKey(Offering, related_name="database_migrate", null=True, blank=True)
     origin_offering = models.ForeignKey(Offering, null=True, blank=True)
     migration_stage = models.IntegerField(
-        choices=MIGRATION_STAGES,
-        verbose_name=_("Migration Stage"),
-        null=False,
-        blank=False,
-        default=NOT_STARTED)
+        choices=MIGRATION_STAGES, verbose_name=_("Migration Stage"), null=False, blank=False, default=NOT_STARTED
+    )
+    is_region_migrate = models.BooleanField(verbose_name=_("Is region migrate"), default=False)
 
     @property
     def host_migrate_snapshot(self):

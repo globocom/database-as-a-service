@@ -77,6 +77,7 @@
                         "data": {
                             "database_id": database_id,
                             "new_environment_region": new_environment_id,
+                            "is_region_migrate": true,
                         },
                     }).complete(function() {
                         location.reload();

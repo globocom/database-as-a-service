@@ -48,7 +48,7 @@ def rebuild_hosts_migrate(current_db_migrate, previous_db_migrate, validate_host
     return instances
 
 
-def build_region_migrate(task, database, environment, offering, migration_stage):
+def build_region_migrate(task, database, environment, offering, migration_stage, flag_region):
     database_migrate = DatabaseMigrate()
     database_migrate.task = task
     database_migrate.database = database
@@ -57,6 +57,7 @@ def build_region_migrate(task, database, environment, offering, migration_stage)
     database_migrate.offering = offering
     database_migrate.origin_offering = database.infra.offering
     database_migrate.migration_stage = migration_stage
+    database_migrate.is_region_migrate = flag_region
     database_migrate.save()
     return database_migrate
 
@@ -103,7 +104,7 @@ def can_migrate(database, task, migration_stage, rollback):
     return True
 
 
-def region_migrate(database, new_environment, new_offering, task, hosts_zones, since_step=None, step_manager=None):
+def region_migrate(database, new_environment, new_offering, task, hosts_zones, flag_region, since_step=None, step_manager=None):
 
     infra = database.infra
 
@@ -119,7 +120,7 @@ def region_migrate(database, new_environment, new_offering, task, hosts_zones, s
             return
 
         infra.save()
-        database_migrate = build_region_migrate(task, database, new_environment, new_offering, infra.migration_stage)
+        database_migrate = build_region_migrate(task, database, new_environment, new_offering, infra.migration_stage, flag_region)
         if infra.migration_stage == 1:
             instances = build_hosts_migrate(hosts_zones, database_migrate)
         else:
