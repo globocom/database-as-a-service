@@ -1,3 +1,5 @@
+import time
+
 from dbaas.celery import app
 
 from celery.utils.log import get_task_logger
@@ -5,6 +7,8 @@ from simple_audit.models import AuditRequest
 
 from notification.models import TaskHistory
 from util import email_notifications, get_worker_name
+
+from system.models import Configuration
 
 LOG = get_task_logger(__name__)
 
@@ -14,7 +18,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
     from workflow.steps.util.volume_provider import ResizeVolume, Resize2fs
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
-
+    qtd_max_retries = Configuration.get_by_name("qtd_retries_resize2fs_dbresize")
     if not database.pin_task(task_history):
         task_history.error_in_lock(database)
         return False
@@ -46,7 +50,17 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                         'NFS {}'.format(instance, disk_offering)
             )
             ResizeVolume(instance).do()
-            Resize2fs(instance).do()
+            for step in range(1, 1 + qtd_max_retries):
+                try:
+                    Resize2fs(instance).do()
+                except Exception as error:
+                    task_history.update_details(
+                        persist=True,
+                        details='\nError: {} \nAttempt number: {} for Resize2fs'.format(str(error), step))
+                    if step == qtd_max_retries:
+                        raise Exception(error)
+                    else:
+                        time.sleep(30)
             resized.append(instance)
 
         task_history.update_details(
