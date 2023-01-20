@@ -59,8 +59,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                         details='\nError: {} \nAttempt number: {} for Resize2fs'.format(str(error), step))
                     if step == qtd_max_retries:
                         raise Exception(error)
-                    else:
-                        time.sleep(30)
+                    time.sleep(30)
             resized.append(instance)
 
         task_history.update_details(
