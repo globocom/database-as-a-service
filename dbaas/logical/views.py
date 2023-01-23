@@ -1097,6 +1097,7 @@ def database_history(request, context, database):
         "databases_create",
         "databases_clone",
         "origin_databases_clone",
+        "databases_quarantine",
         "databases_destroy",
         "database_restore",
         "configure_ssl",
@@ -2002,6 +2003,7 @@ def _destroy_databases(request, database):
     in_quarantine = database.is_in_quarantine
     database.destroy(request.user)
     if not in_quarantine:
+        TaskRegister.database_quarantine(database, request.user, datetime.datetime.now(), undo=False)
         return HttpResponseRedirect(
             reverse('admin:logical_database_changelist')
         )
@@ -2022,6 +2024,7 @@ def database_destroy(request, context, database):
             if response:
                 return response
         if 'undo_quarantine' in request.POST and database.is_in_quarantine:
+            TaskRegister.database_quarantine(database, request.user, datetime.datetime.now(), undo=True)
             database.is_in_quarantine = False
             database.save()
 

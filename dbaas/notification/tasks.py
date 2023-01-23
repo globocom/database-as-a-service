@@ -21,12 +21,10 @@ from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from util.task_register import TaskRegisterBase
-from workflow.workflow import (steps_for_instances,
-                               rollback_for_instances_full,
-                               total_of_steps)
+from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
-from maintenance.models import (DatabaseDestroy, RestartDatabase, DatabaseCreate, DatabaseMigrate)
+from maintenance.models import (DatabaseDestroy, RestartDatabase, DatabaseCreate, DatabaseMigrate, DatabaseQuarantine)
 from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra, get_instances_for)
 from notification.scripts import script_mongo_log_rotate
@@ -144,6 +142,28 @@ def create_database(
             'Could not create database\n'
             'Please check error message and do retry'
         )
+
+
+@app.task(bind=True)
+def quarantine_database(self, database, user, start_datetime, undo=False, task=None):
+
+    infra = database.databaseinfra
+
+    database_quarantine = DatabaseQuarantine()
+    database_quarantine.task = task
+    database_quarantine.database = infra.databases.first()
+    database_quarantine.name = database.name
+    database_quarantine.user = user.username if user else task.user
+    database_quarantine.undo = undo
+    database_quarantine.infra = database.infra
+    database_quarantine.started_at = start_datetime
+    database_quarantine.finished_at = datetime.now()
+    database_quarantine.save()
+
+    if undo:
+        task.set_status_success('Database not in quarantine')
+    else:
+        task.set_status_success('Database in quarantine')
 
 
 @app.task(bind=True)
@@ -1798,7 +1818,16 @@ def update_database_apps_bind_name(self):
 
 
 class TaskRegister(TaskRegisterBase):
-    # ============  BEGIN TASKS   ==========
+    @classmethod
+    def database_quarantine(cls, database, user, start_datetime, undo):
+        task_params = {
+            'task_name': 'database_quarantine',
+            'arguments': 'Database quarantine status: {}'.format(undo),
+            'user': user,
+            'database': database
+        }
+        task = cls.create_task(task_params)
+        quarantine_database(database, user, start_datetime, undo=undo, task=task)
 
     @classmethod
     def database_destroy(cls, database, user, **kw):
