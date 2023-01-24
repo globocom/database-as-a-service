@@ -24,6 +24,7 @@ from drivers.errors import CredentialAlreadyExists
 from physical.models import (Host, DiskOffering, Environment, Plan, Offering)
 from util import get_credentials_for
 from notification.tasks import TaskRegister, execute_scheduled_maintenance
+from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm, DatabaseForm
@@ -2295,6 +2296,15 @@ def database_migrate(request, context, database):
         "current_stage": database.infra.migration_stage + 1,
         "is_ha": database.plan.is_ha
     }
+
+    flag_waiting = 0
+    waiting_tasks = TaskHistory.objects.filter(
+        task_status=TaskHistory.STATUS_WAITING,
+        database_name=database.name,
+    )
+    if len(waiting_tasks) > 0:
+        flag_waiting = 1
+    context['is_in_waiting'] = flag_waiting
 
     engine = '{}_{}'.format(
         database.engine.name, database.databaseinfra.engine_patch.full_version
