@@ -4,6 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
+from physical.service.prometheus_exporter import RedisExporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
@@ -1071,3 +1072,17 @@ class MakeSnapshot(DatabaseStep):
             LOG.error('Error when creating snapshot: %s', e)
             task.set_error()
             raise e
+
+
+class ConfigurePrometheusMonitoring(DatabaseStep):
+    def __unicode__(self):
+        return "Configuring Database Prometheus exporters..."
+
+    def do(self):
+        LOG.info('Changing password for infra %s', self.infra.name)
+        exporter = RedisExporter(self.infra.environment)
+        for instance in self.infra.instances.all():
+            exporter.change_password(instance.hostname)
+
+    def undo(self):
+        pass
