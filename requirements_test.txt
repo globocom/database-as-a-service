@@ -11,3 +11,5 @@ moto==0.2.9
 lxml==3.7.3
 cssselect==1.0.1
 model_mommy==1.3.2
+uuid==1.30
+mock==1.0.1

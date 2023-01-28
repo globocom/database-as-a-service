@@ -4,11 +4,11 @@ import re
 import logging
 import json
 from mock import patch, MagicMock
-from rest_framework import test, status
+from dbaas.notification.tests import tests
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls.resolvers import reverse
 from account.models import Role, Team, Organization
 from physical.models import Environment
 from dbaas.tests.helpers import InstanceHelper

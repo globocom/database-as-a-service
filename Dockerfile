@@ -15,9 +15,13 @@ RUN apt-get install -y --no-install-recommends \
 RUN sed '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp
 RUN pip install --upgrade pip \
     && pip install ipython==5.1.0 \
+	&& pip install kombu==3.0.24 \
+	&& pip install --upgrade kombu \
     && pip install ipdb==0.10.1 \
 	&& pip install -U setuptools \
 	&& easy_install distribute \
     && pip install -r requirements_test.txt
+
+
 
 ENTRYPOINT /code/tests.sh
