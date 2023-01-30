@@ -42,6 +42,22 @@
     </div>
   </div>
   <div class="control-group">
+    <div class="control-label"><label>Start/Stop Database:</label></div>
+    <div class="controls">
+      <a class="btn {% if database.is_alive %}btn-danger{% endif %}
+                    {% if database.is_dead %}btn-success{% endif %}
+            " title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database"
+      {% if start_database and start_database.is_error %} disabled {% endif %}>
+        {% if database.is_alive %}
+            Stop Database
+        {% endif %}
+        {% if database.is_dead %}
+            Start Database
+        {% endif %}
+      </a>
+    </div>
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>Changes in Service Now:</label></div>
     <div class="controls">
       <a href="{{ database.get_chg_register_url }}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">
@@ -296,6 +312,28 @@
       });
     });
 
+    $("#id_start_stop_database").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_start_stop_database").attr('disabled','disabled');
+      value = $("#id_start_stop_database").text();
+      if(value.includes('Stop')){
+        url = "/logical/stop_database/"+ database_id;
+      }else{
+        url = "/logical/start_database/"+ database_id;
+      }
+      jQuery.ajax({
+          "dataType": "json", "url": url, "type": "GET",
+          complete: function () {
+            running_update = false;
+            window.location.reload();
+          },
+      }).fail(function() {
+          alert("invalid server response");
+      });
+    });
   });
 
 </script>
