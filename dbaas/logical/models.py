@@ -134,6 +134,12 @@ class Database(BaseModel):
     is_monitoring = models.BooleanField(
         verbose_name=_("Is database being monitored?"), default=True
     )
+    attention = models.BooleanField(
+        verbose_name=_("The database has GCP divergences?"), default=False, blank=True
+    )
+    attention_description = models.TextField(
+        verbose_name=_("Database GCP divergences descriptions."), default="", null=True, blank=True
+    )
     quarantine_dt = models.DateField(
         verbose_name=_("Quarantine date"), null=True, blank=True,
         editable=False

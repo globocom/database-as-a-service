@@ -221,10 +221,7 @@ def region_migration_start(self, infra, instances, since_step=None):
 
 @app.task(bind=True)
 def restore_database(self, database, task, snapshot, user, retry_from=None):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=user, worker_name=get_worker_name())
 
     from backup.models import Snapshot
     snapshot = Snapshot.objects.get(id=snapshot)
@@ -235,10 +232,7 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
 
 @app.task(bind=True)
 def upgrade_disk_type_database(self, database, new_disk_type_upgrade, task, user, retry_from=None):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=user, worker_name=get_worker_name())
 
     from task_upgrade_type_disk import task_upgrade_disk_type
     task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from)
@@ -267,10 +261,7 @@ def stop_database_vm(self, database, task, user, retry_from=None):
 
 
 def _create_database_rollback(self, rollback_from, task, user):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=user, worker_name=get_worker_name())
 
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
@@ -282,29 +273,20 @@ def create_database_rollback(self, rollback_from, task, user):
 
 
 @app.task(bind=True)
-def node_zone_migrate(self, host, zone, new_environment, task,
-                      since_step=None, step_manager=None,
-                      zone_origin=None):
+def node_zone_migrate(self, host, zone, new_environment, task, since_step=None, step_manager=None, zone_origin=None):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
     )
     from tasks_migrate import node_zone_migrate
     node_zone_migrate(
-        host, zone, new_environment, task,
-        since_step, step_manager=step_manager,
-        zone_origin=zone_origin
+        host, zone, new_environment, task, since_step, step_manager=step_manager, zone_origin=zone_origin
     )
-
 
 @app.task(bind=True)
-def recreate_slave(self, database, host, task, since_step=None,
-                   step_manager=None):
+def recreate_slave(self, database, host, task, since_step=None, step_manager=None):
     from maintenance.models import RecreateSlave
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=task.user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
     instance = host.instances.first()
     if step_manager:
         step_manager = step_manager
@@ -312,11 +294,7 @@ def recreate_slave(self, database, host, task, since_step=None,
         step_manager.started_at = None
         since_step = step_manager.current_step
     else:
-        retry_from = RecreateSlave.objects.filter(
-            can_do_retry=True,
-            host=host,
-            status=RecreateSlave.ERROR
-        ).last()
+        retry_from = RecreateSlave.objects.filter(can_do_retry=True, host=host, status=RecreateSlave.ERROR).last()
         step_manager = RecreateSlave()
         if retry_from:
             step_manager.current_step = retry_from.current_step
@@ -328,8 +306,7 @@ def recreate_slave(self, database, host, task, since_step=None,
 
     steps = host.instances.first().databaseinfra.recreate_slave_steps()
     result = steps_for_instances(
-        steps, [instance], task, step_manager.update_step, since_step,
-        step_manager=step_manager
+        steps, [instance], task, step_manager.update_step, since_step, step_manager=step_manager
     )
     step_manager = RecreateSlave.objects.get(id=step_manager.id)
     if result:
@@ -341,24 +318,16 @@ def recreate_slave(self, database, host, task, since_step=None,
 
 
 @app.task(bind=True)
-def update_ssl(self, database, task, since_step=None, step_manager=None,
-               scheduled_task=None, auto_rollback=False):
+def update_ssl(self, database, task, since_step=None, step_manager=None, scheduled_task=None, auto_rollback=False):
     from maintenance.models import UpdateSsl
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=task.user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
     if step_manager:
         step_manager = step_manager
         step_manager.id = None
         step_manager.started_at = None
         since_step = step_manager.current_step
     else:
-        retry_from = UpdateSsl.objects.filter(
-            can_do_retry=True,
-            database=database,
-            status=UpdateSsl.ERROR
-        ).last()
+        retry_from = UpdateSsl.objects.filter(can_do_retry=True, database=database, status=UpdateSsl.ERROR).last()
         step_manager = UpdateSsl()
         if retry_from:
             step_manager.current_step = retry_from.current_step
@@ -382,8 +351,7 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
         instances.append(host.instances.all()[0])
 
     result = steps_for_instances(
-        steps, instances, task, step_manager.update_step, since_step,
-        step_manager=step_manager
+        steps, instances, task, step_manager.update_step, since_step, step_manager=step_manager
     )
     step_manager = UpdateSsl.objects.get(id=step_manager.id)
     if result:
@@ -406,9 +374,7 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
             rollback_step_manager.can_do_retry = 0
             rollback_step_manager.save()
             result = rollback_for_instances_full(
-                steps, instances, new_task,
-                rollback_step_manager.get_current_step,
-                rollback_step_manager.update_step,
+                steps, instances, new_task, rollback_step_manager.get_current_step, rollback_step_manager.update_step,
             )
             if result:
                 rollback_step_manager.set_success()
@@ -421,9 +387,9 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
 
 
 @app.task(bind=True)
-def restart_database(self, database, task, since_step=None, step_manager=None,
-                     scheduled_task=None, auto_rollback=False,
-                     auto_cleanup=False):
+def restart_database(
+        self, database, task, since_step=None, step_manager=None, scheduled_task=None, auto_rollback=False, auto_cleanup=False
+):
     from maintenance.async_jobs import RestartDatabaseJob
     async_job = RestartDatabaseJob(
         request=self.request,
@@ -440,36 +406,41 @@ def restart_database(self, database, task, since_step=None, step_manager=None,
 
 @app.task(bind=True)
 def node_zone_migrate_rollback(self, migrate, task):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=task.user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
     from tasks_migrate import rollback_node_zone_migrate
     rollback_node_zone_migrate(migrate, task)
 
 
 @app.task(bind=True)
+def region_migrate(self, database, environment, offering, task, hosts_zones, flag_region, since_step=None, step_manager=None):
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
+
+    from tasks_region_migrate import region_migrate
+    region_migrate(database, environment, offering, task, hosts_zones, flag_region, since_step, step_manager=step_manager)
+
+
+@app.task(bind=True)
+def region_migrate_rollback(self, step_manager, task):
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
+
+    from tasks_region_migrate import rollback_region_migrate
+    rollback_region_migrate(step_manager, task)
+
+
+@app.task(bind=True)
 def database_environment_migrate(
-    self, database, new_environment, new_offering, task, hosts_zones,
-    since_step=None, step_manager=None
+    self, database, new_environment, new_offering, task, hosts_zones, since_step=None, step_manager=None
 ):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=task.user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
     from tasks_database_migrate import database_environment_migrate
     database_environment_migrate(
-        database, new_environment, new_offering, task, hosts_zones, since_step,
-        step_manager=step_manager
+        database, new_environment, new_offering, task, hosts_zones, since_step, step_manager=step_manager
     )
 
 
 @app.task(bind=True)
 def database_environment_migrate_rollback(self, step_manager, task):
-    task = TaskHistory.register(
-        request=self.request, task_history=task, user=task.user,
-        worker_name=get_worker_name()
-    )
+    task = TaskHistory.register(request=self.request, task_history=task, user=task.user, worker_name=get_worker_name())
     from tasks_database_migrate import rollback_database_environment_migrate
     rollback_database_environment_migrate(step_manager, task)
 
@@ -478,9 +449,7 @@ def database_environment_migrate_rollback(self, step_manager, task):
 @only_one(key="disk_auto_resize", timeout=600)
 def update_disk_used_size(self):
     worker_name = get_worker_name()
-    task = TaskHistory.register(
-        request=self.request, user=None, worker_name=worker_name
-    )
+    task = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_WARNING
     task.add_detail(message='Collecting disk used space from Zabbix')
 
