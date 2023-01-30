@@ -4,7 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
-from physical.service.prometheus_exporter import RedisExporter
+from physical.factories.prometheus_exporter_factory import get_exporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
@@ -1080,9 +1080,9 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
 
     def do(self):
         LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
-        exporter = RedisExporter(self.infra.environment)
+        exporter = get_exporter(self.infra)
         for instance in self.infra.instances.all():
-            exporter.configure_exporter(instance.hostname)
+            exporter.configure_host_exporter(instance.hostname)
 
     def undo(self):
         pass

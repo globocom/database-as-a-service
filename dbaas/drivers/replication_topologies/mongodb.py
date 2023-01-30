@@ -274,6 +274,7 @@ class MongoDBSingle(BaseMongoDB):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -736,6 +737,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',

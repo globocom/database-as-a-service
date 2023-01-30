@@ -1,24 +1,21 @@
 import logging
 
-from dbaas_credentials.models import CredentialType, Credential
+from dbaas_credentials.models import CredentialType
+from dbaas_credentials.credential import Credential
 
 LOG = logging.getLogger(__name__)
 
 
 class Exporter(object):
-    CAT_EXPORTER_CONFIG_COMMAND = None
-
     def __init__(self, path, user, password, project):
         self.exporter_path = path
         self.default_user = user
         self.default_password = password
         self.project = project
 
-    def configure_exporter(self, host):
+    def configure_host_exporter(self, host):
         self.change_password(host)
         self.change_address(host)
-
-        raise Exception('Forcing for retry later')
 
     def change_password(self, host):
         LOG.info("Changing password for Host %s", host.hostname)
@@ -44,6 +41,10 @@ class Exporter(object):
 
         return True
 
+    @property
+    def cat_exporter_config_command(self):
+        return 'cat {}'.format(self.exporter_path)
+
     def get_service_file(self, host):
         LOG.info('Getting service file for Host %s', host.hostname)
         return self._get_service_file(host)
@@ -58,7 +59,7 @@ class Exporter(object):
         return
 
     def _get_service_file(self, host):
-        service_config_file = host.ssh.run_script(self.CAT_EXPORTER_CONFIG_COMMAND)['stdout']
+        service_config_file = host.ssh.run_script(self.cat_exporter_config_command)['stdout']
         return ''.join(service_config_file)
 
 
@@ -70,8 +71,6 @@ class RedisExporter(Exporter):
             password=None,
             project=project
         )
-
-        self.CAT_EXPORTER_CONFIG_COMMAND = 'cat {}'.format(self.exporter_path)
 
     def _get_infra_credentials(self, infra):
         return {'user': None, 'password': infra.password}
@@ -95,3 +94,44 @@ class RedisExporter(Exporter):
 
         new_config_string = '{}--redis.addr=redis://{}:6379{}'.format(part1, host.address, part2)
         self.overwrite_config_file(host, new_config_string)
+
+
+class MongoDBExporter(Exporter):
+    def __init__(self, project):
+        credential = Credential.get_credentials(
+            environment=project,
+            integration=CredentialType.objects.get(type=CredentialType.MONGODB)
+        )
+
+        super(MongoDBExporter, self).__init__(
+            path='/etc/systemd/system/mongodb_exporter.service',
+            user=credential.user,
+            password=credential.password,
+            project=project
+        )
+
+    def _get_infra_credentials(self, infra):
+        return {'user': self.default_user, 'password': self.default_password}
+
+    def _change_address(self, host, address=None):
+        config_string = self.get_service_file(host)
+        # TODO: change address for mongodb config file
+        return
+
+
+class MySQLExporter(Exporter):
+    def __init__(self, project):
+        credential = Credential.get_credentials(
+            environment=project,
+            integration=CredentialType.objects.get(type=CredentialType.MYSQL)
+        )
+
+        super(MySQLExporter, self).__init__(
+            path='/etc/systemd/system/mysql_exporter.service',
+            user=credential.user,
+            password=credential.password,
+            project=project
+        )
+
+    def _get_infra_credentials(self, infra):
+        return {'user': self.default_user, 'password': self.default_password}
