@@ -590,6 +590,11 @@ class BaseTopology(object):
 
     def get_stop_database_vm_steps(self):
         return [{
+            'Disable monitoring and check replication': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+            )}, {
             'Stopping database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
@@ -613,13 +618,12 @@ class BaseTopology(object):
             )}, {
             'Restoring master instance': (
                 'workflow.steps.util.database.RestoreMasterInstanceFromDatabaseStop',
-            )}]
-        #     )}, {
-        #     'Enable alarms': (
-        #         'workflow.steps.util.db_monitor.EnableMonitoring',
-        #         'workflow.steps.util.zabbix.EnableAlarms',
-        #     )
-        # }]
+            )}, {
+            'Enable alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
 
 
 class FakeTestTopology(BaseTopology):
