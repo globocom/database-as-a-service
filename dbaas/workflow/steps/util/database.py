@@ -1079,10 +1079,10 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
         return "Configuring Database Prometheus exporters..."
 
     def do(self):
-        LOG.info('Changing password for infra %s', self.infra.name)
+        LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
         exporter = RedisExporter(self.infra.environment)
         for instance in self.infra.instances.all():
-            exporter.change_password(instance.hostname)
+            exporter.configure_exporter(instance.hostname)
 
     def undo(self):
         pass
