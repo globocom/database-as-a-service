@@ -2157,6 +2157,41 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
+    def start_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "start_database_vm",
+            'arguments': "Starting database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.start_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+    @classmethod
+    def stop_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "stop_database_vm",
+            'arguments': "Stopping database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.stop_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+
+    @classmethod
     def database_upgrade(cls, database, user, since_step=None):
 
         task_params = {
