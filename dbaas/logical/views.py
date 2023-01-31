@@ -2297,13 +2297,13 @@ def database_migrate(request, context, database):
         "is_ha": database.plan.is_ha
     }
 
-    flag_waiting = 0
+    flag_waiting = 'false'
     waiting_tasks = TaskHistory.objects.filter(
         task_status=TaskHistory.STATUS_WAITING,
         database_name=database.name,
     )
     if len(waiting_tasks) > 0:
-        flag_waiting = 1
+        flag_waiting = 'true'
     context['is_in_waiting'] = flag_waiting
 
     engine = '{}_{}'.format(
