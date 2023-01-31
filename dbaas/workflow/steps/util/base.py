@@ -110,6 +110,18 @@ class BaseInstanceStep(object):
             return upgrade_disk_type
 
     @property
+    def start_database_vm(self):
+        start_database_vm = self.database.start_database_vm.last()
+        if start_database_vm and start_database_vm.is_running:
+            return start_database_vm
+
+    @property
+    def stop_database_vm(self):
+        stop_database_vm = self.database.stop_database_vm.last()
+        if stop_database_vm and stop_database_vm.is_running:
+            return stop_database_vm
+
+    @property
     def snapshot(self):
         try:
             return self.restore.group.backups.get(instance=self.instance)

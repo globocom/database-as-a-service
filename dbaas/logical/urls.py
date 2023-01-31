@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from .views import refresh_status, toggle_monitoring, set_attention
+from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention
 from .views import (CredentialView, CredentialSSLView,
                     credential_parameter_by_name, check_offering_sizes)
 
@@ -12,6 +12,12 @@ urlpatterns = patterns(
     url(r"^status/(?P<database_id>\d*)$",
         refresh_status,
         name="logical_database_refresh_status"),
+    url(r"^start_database/(?P<database_id>\d*)$",
+        start_database_vm,
+        name="logical_database_start_database_vm"),
+    url(r"^stop_database/(?P<database_id>\d*)$",
+        stop_database_vm,
+        name="logical_database_stop_database_vm"),
     url(r"^toggle_monitoring/(?P<database_id>\d*)$",
         toggle_monitoring,
         name="toggle_monitoring"),

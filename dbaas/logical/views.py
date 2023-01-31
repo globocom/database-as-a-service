@@ -278,6 +278,8 @@ def database_details(request, context, database):
     context['engine'] = engine
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
+    context['start_database'] = database.database_start_database_vm.last()
+    context['stop_database'] = database.database_stop_database_vm.last()
 
     if database.databaseinfra.ssl_configured:
         context['ssl_detail'] = 'SSL is configured.'
@@ -851,6 +853,50 @@ def _upgrade_disk_type(request, database):
     Database.upgrade_disk_type(database=database, disk_offering_type=disk_offering_type, user=request.user)
 
 
+def start_database_vm(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    can_be_started, error = database.can_be_start_database_vm()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+        return
+    Database.start_database_vm(database=database, user=request.user)
+
+    instances_status = []
+    for instance in database.infra.instances.all():
+        instance.update_status()
+        instances_status.append({"id": instance.hostname.id,
+                                 "html": instance.status_html()})
+    database.update_status()
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
+
+
+def stop_database_vm(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    can_be_stoped, error = database.can_be_stop_database_vm()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+        return
+    Database.stop_database_vm(database=database, user=request.user)
+
+    instances_status = []
+    for instance in database.infra.instances.all():
+        instance.update_status()
+        instances_status.append({"id": instance.hostname.id,
+                                 "html": instance.status_html()})
+    database.update_status()
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
+
+
 def _vm_resize(request, database):
     try:
         check_is_database_dead(database.id, 'VM resize')
@@ -1110,6 +1156,8 @@ def database_history(request, context, database):
         "set_require_ssl",
         "set_not_require_ssl",
         "database_upgrade_disk_type",
+        "database_start_database_vm",
+        "database_stop_database_vm",
     ]
     for related in database_maintenances:
         context["maintenances"] += getattr(database, related).all()

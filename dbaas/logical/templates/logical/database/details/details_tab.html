@@ -59,6 +59,19 @@
     <div class="control-label"><label>Motivo da atenção:</label></div>
     <div class="controls">
       <textarea required class="vLargeTextField span8" cols="40" id="attention_description" name="description" rows="10">{{ database.attention_description }}</textarea>
+    <div class="control-label"><label>Start/Stop Database:</label></div>
+    <div class="controls">
+      <a class="btn {% if database.is_alive %}btn-danger{% endif %}
+                    {% if database.is_dead %}btn-success{% endif %}
+            " title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database"
+      {% if start_database and start_database.is_error %} disabled {% endif %}>
+        {% if database.is_alive %}
+            Stop Database
+        {% endif %}
+        {% if database.is_dead %}
+            Start Database
+        {% endif %}
+      </a>
     </div>
   </div>
   <div class="control-group">
@@ -319,13 +332,18 @@
       });
     });
 
+<<<<<<< HEAD
     $("#attention_bool").change(function() {
       $("#attention_description_div").slideToggle();
       $("#att_tag").slideToggle();
+=======
+    $("#id_start_stop_database").on("click", function() {
+>>>>>>> master
       if (running_update){
         return;
       }
       running_update = true;
+<<<<<<< HEAD
       send_attention()
       running_update = false;
     });
@@ -348,13 +366,32 @@
           "?att_bool="+att_bool_text+"&att_descr="+att_desc_text,
           complete: function () {
             running_update = false;
+=======
+      $("#id_start_stop_database").attr('disabled','disabled');
+      value = $("#id_start_stop_database").text();
+      if(value.includes('Stop')){
+        url = "/logical/stop_database/"+ database_id;
+      }else{
+        url = "/logical/start_database/"+ database_id;
+      }
+      jQuery.ajax({
+          "dataType": "json", "url": url, "type": "GET",
+          complete: function () {
+            running_update = false;
+            window.location.reload();
+>>>>>>> master
           },
       }).fail(function() {
           alert("invalid server response");
       });
+<<<<<<< HEAD
     }
 });
 
+=======
+    });
+  });
+>>>>>>> master
 
 </script>
 

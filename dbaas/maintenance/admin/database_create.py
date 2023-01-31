@@ -19,11 +19,11 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
 
     list_display = (
         "name", "infra", "team", "project", "environment", "plan_name", "user",
-        "current_step", "friendly_status", "maintenance_action", "link_task",
+        "current_step", "current_step_class", "friendly_status", "maintenance_action", "link_task",
         "started_at", "finished_at"
     )
     readonly_fields = (
-        "current_step_class", "database", "infra", "plan", "plan_name", "environment", "team",
+        "database", "infra", "plan", "plan_name", "environment", "team",
         "project", "name", "description", "subscribe_to_email_events",
         "is_protected", "user", "link_task", "started_at", "finished_at",
         "status", "maintenance_action", "task_schedule", "pool"
