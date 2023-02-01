@@ -1081,8 +1081,7 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
     def do(self):
         LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
         exporter = get_exporter(self.infra)
-        for instance in self.infra.instances.all():
-            exporter.configure_host_exporter(instance.hostname)
+        exporter.configure_host_exporter(self.instance.hostname)
 
     def undo(self):
         pass
