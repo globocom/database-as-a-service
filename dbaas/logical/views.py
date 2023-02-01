@@ -269,7 +269,7 @@ def database_details(request, context, database):
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
-        masters_quant = len(database.driver.get_master_instance(default_timeout=True))
+        masters_quant = len(database.driver.get_master_instance(default_timeout=3000))
     except TypeError:
         masters_quant = 1
     except Exception:
