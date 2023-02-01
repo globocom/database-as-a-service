@@ -18,7 +18,6 @@
 
 {% block tab %}
 <fieldset class="module aligned">
-  
   <div class="control-group environment-box">
     <h3>Environments</h3>
     <div class="control-group">
@@ -123,7 +122,7 @@
                   {% endfor %}
                 {% endif %}
                 </select>
-                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn region-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal" disabled="disabled">Migrate Region to GCP</button>
+                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn host-zone-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal">Migrate Region to GCP</button>
                 </p>
               </td>
             </div>
@@ -260,6 +259,21 @@
 
   jQuery(document).ready(function($) {
 
+    var is_in_waiting = {{ is_in_waiting }};
+    const select_region = $("#migrate_region").val();
+    if (select_region === "---------"){
+      document.querySelector('#migrate_region_btn').disabled = true;
+    }
+
+    $("#migrate_region").change(function() {
+      if ((is_in_waiting) || ($(this).val() === "---------")){
+        status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+      }
+      else {
+        status_migrate("migrate_region_btn", "DISABLE", "FALSE");
+      }
+    });
+
     $(".host-zone").on("change", function() {
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
@@ -269,9 +283,11 @@
       if (!disable) {
         disable = $hostZone.val() == "Loading..."
       }
-      if (disable) {
+
+      if (is_in_waiting || (disable)){
         status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE")
-      } else {
+      }
+      else {
         status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
       }
     });
@@ -328,9 +344,14 @@
 
     function control_migrate_button() {
       env = $("#migrate_environment").val()
-      status_migrate("migrate_environment_btn", {{ current_environment.id }}, env)
-      if ({{ current_environment.id }} != env) {
-        status_migrate("migrate_environment_btn", "0", $("#migrate_offering").val())
+      if (!is_in_waiting){
+        status_migrate("migrate_environment_btn", {{ current_environment.id }}, env)
+        if ({{ current_environment.id }} != env) {
+          status_migrate("migrate_environment_btn", "0", $("#migrate_offering").val())
+        }
+      }
+      else {
+        status_migrate("migrate_environment_btn", "DISABLE", "DISABLE")
       }
     }
 
