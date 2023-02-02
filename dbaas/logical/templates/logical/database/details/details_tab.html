@@ -41,14 +41,21 @@
   <div class="control-group">
     <div class="control-label"><label>Start/Stop Database:</label></div>
     <div class="controls">
-      <a class="btn {% if database.is_alive %}btn-danger{% endif %} {% if database.is_dead %}btn-success{% endif %}" title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database" {% if start_database and start_database.is_error %} disabled {% endif %}>
-        {% if database.is_alive %}
+      <a class="btn {% if database.status == database.DEAD %}btn-success{% else %}btn-danger{% endif %}" title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database" {{ btn_start_stop_is_disabled }}>
+        {% if database.status == database.DEAD %}
+            Start Database
+        {% else %}
             Stop Database
         {% endif %}
-        {% if database.is_dead %}
-            Start Database
-        {% endif %}
       </a>
+      {%if last_start_database and last_start_database.is_status_error %}
+        <a class="resize_button btn btn-warning" href="{% url 'admin:start_database_vm_retry' last_start_database.id %}" title="Go to disk resize page">Retry</a>
+        <p><a href="{% url 'admin:maintenance_databasestartdatabasevm_change' last_start_database.id %}" target='_blank'>Last start database </a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_start_database.task.id %}" target='_blank'>task</a> and do retry of upgrade disk type by clicking in one of above buttons</p>
+      {% endif %}
+      {%if last_stop_database and last_stop_database.is_status_error %}
+        <a class="resize_button btn btn-warning" href="{% url 'admin:stop_database_vm_retry' last_stop_database.id %}" title="Go to disk resize page">Retry</a>
+        <p><a href="{% url 'admin:maintenance_databasestopdatabasevm_change' last_stop_database.id %}" target='_blank'>Last stop database </a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_stop_database.task.id %}" target='_blank'>task</a> and do retry of upgrade disk type by clicking in one of above buttons</p>
+      {% endif %}
     </div>
   </div>
   <div class="control-group">
@@ -169,7 +176,8 @@
             ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
           {% endif %}
         </p>
-      </div>      <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
+      </div>
+      <div class="controls controls-300">{% if database.status == database.ALIVE %}{% render_detailed_capacity_html database disk %}{% endif %}</div>
     </div>
     <div class="control-group">
       <div class="control-label"><label>Disk Type:</label></div>
@@ -182,22 +190,23 @@
   {% endif %}
 
   {% if database.is_in_memory %}
-    <div class="control-group">
-      <div class="control-label"><label>Memory database:</label></div>
-      <div class="controls">
-        <p class="readonly">
-          {% if database.total_size_in_gb %}
-            total {{ database.total_size_in_gb }} GB
-            {% if masters_quant > 1 %}
-              ({{ masters_quant }} x {{ database.driver.get_master_instance_total_size_in_gb }} GB)
-            {% endif %}
-          {% else %}
-            Total memory size not collected yet. Will be updated in a few minutes...
+  <div class="control-group">
+    <div class="control-label"><label>Memory database:</label></div>
+    <div class="controls">
+      <p class="readonly">
+        {% if database.total_size_in_gb %}
+          total {{ database.total_size_in_gb }} GB
+          {% if masters_quant > 1 %}
+            ({{ masters_quant }} x {{ database.driver.get_master_instance_total_size_in_gb }} GB)
           {% endif %}
-        </p>
-      </div>
-      <div class="controls controls-300">{% render_detailed_capacity_html database memory %}</div>
+        {% else %}
+          Total memory size not collected yet. Will be updated in a few minutes...
+        {% endif %}
+      </p>
     </div>
+    <div class="controls controls-300">{% if database.status == database.ALIVE %}{% render_detailed_capacity_html database memory %}{% endif %}</div>
+  </div>
+  {% endif %}
   <div class="control-group">
       <div class="control-label"><label>Persisted:</label></div>
       <div class="controls">
@@ -208,27 +217,34 @@
             No
           {% endif %}
         </p>
-      </div>    </div>  {% endif %}
+      </div>
+  </div>
   <div class="control-group">
     <div class="control-label"><label>Offering:</label></div>
     <div class="controls"><p class="readonly">{{ database.offering }}</p></div>
-  </div>  <div class="control-group">
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>SSL:</label></div>
     <div class="controls"><p class="readonly">{{ ssl_detail }}</p></div>
-  </div>  <div class="control-group">
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>Created At:</label></div>
     <div class="controls"><p class="readonly">{{ database.created_at }}</p></div>
-  </div>    <div class="control-group">
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>Bind name:</label></div>
     <div class="controls"><p class="readonly">{{ database.apps_bind_name }}</p></div>
-  </div>  {% if database.is_in_quarantine %}
-    <div class="control-group">
-      <div class="control-label"><label>Quarantine since:</label></div>
-      <div class="controls"><p class="readonly">{{ database.quarantine_dt }}</p></div>
-    </div>    <div class="control-group">
-      <div class="control-label"><label>Quarantine requested by:</label></div>
-      <div class="controls"><p class="readonly">{{ database.quarantine_user }}</p></div>
-    </div>  {% endif %}
+  </div>
+  {% if database.is_in_quarantine %}
+  <div class="control-group">
+    <div class="control-label"><label>Quarantine since:</label></div>
+    <div class="controls"><p class="readonly">{{ database.quarantine_dt }}</p></div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Quarantine requested by:</label></div>
+    <div class="controls"><p class="readonly">{{ database.quarantine_user }}</p></div>
+  </div>
+  {% endif %}
 </fieldset>
 {% endblock %}
 
@@ -332,7 +348,6 @@
           "dataType": "json", "url": url, "type": "GET",
           complete: function () {
             running_update = false;
-            window.location.reload();
           },
       }).fail(function() {
           alert("invalid server response");

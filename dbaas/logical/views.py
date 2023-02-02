@@ -254,6 +254,14 @@ def set_attention(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def get_is_button_start_stop_disabled(start_database, stop_database):
+    if (start_database and start_database.status not in [start_database.SUCCESS, start_database.ROLLBACK]) or \
+            (stop_database and stop_database.status not in [stop_database.SUCCESS, stop_database.ROLLBACK]):
+        return 'disabled'
+    else:
+        return ''
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':
@@ -274,13 +282,15 @@ def database_details(request, context, database):
         masters_quant = 1
     except Exception:
         masters_quant = 0
-
+    start_database = database.database_start_database_vm.last()
+    stop_database = database.database_stop_database_vm.last()
     context['masters_quant'] = masters_quant
     context['engine'] = engine
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
-    context['start_database'] = database.database_start_database_vm.last()
-    context['stop_database'] = database.database_stop_database_vm.last()
+    context['btn_start_stop_is_disabled'] = get_is_button_start_stop_disabled(start_database, stop_database)
+    context['last_start_database'] = start_database
+    context['last_stop_database'] = stop_database
 
     if database.databaseinfra.ssl_configured:
         context['ssl_detail'] = 'SSL is configured.'
@@ -865,15 +875,7 @@ def start_database_vm(request, database_id):
         return
     Database.start_database_vm(database=database, user=request.user)
 
-    instances_status = []
-    for instance in database.infra.instances.all():
-        instance.update_status()
-        instances_status.append({"id": instance.hostname.id,
-                                 "html": instance.status_html()})
-    database.update_status()
-    output = json.dumps({'database_status': database.status_html,
-                         'instances_status': instances_status})
-    return HttpResponse(output, content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")
 
 
 def stop_database_vm(request, database_id):
@@ -887,15 +889,7 @@ def stop_database_vm(request, database_id):
         return
     Database.stop_database_vm(database=database, user=request.user)
 
-    instances_status = []
-    for instance in database.infra.instances.all():
-        instance.update_status()
-        instances_status.append({"id": instance.hostname.id,
-                                 "html": instance.status_html()})
-    database.update_status()
-    output = json.dumps({'database_status': database.status_html,
-                         'instances_status': instances_status})
-    return HttpResponse(output, content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")
 
 
 def _vm_resize(request, database):
