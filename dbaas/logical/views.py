@@ -289,8 +289,8 @@ def database_details(request, context, database):
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
     context['btn_start_stop_is_disabled'] = get_is_button_start_stop_disabled(start_database, stop_database)
-    context['last_start_database'] = database.database_start_database_vm.last()
-    context['last_stop_database'] = database.database_stop_database_vm.last()
+    context['last_start_database'] = start_database
+    context['last_stop_database'] = stop_database
 
     if database.databaseinfra.ssl_configured:
         context['ssl_detail'] = 'SSL is configured.'
