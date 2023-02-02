@@ -393,6 +393,7 @@ class BaseTopology(object):
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             ),
         }]
 
