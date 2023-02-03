@@ -1079,9 +1079,20 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
         return "Configuring Database Prometheus exporters..."
 
     def do(self):
-        LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
-        exporter = get_exporter(self.infra)
-        exporter.configure_host_exporter(self.instance.hostname)
+        try:
+            LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
+            exporter = get_exporter(self.infra)
+            exporter.configure_host_exporter(self.instance.hostname)
+        except Exception as e:
+            LOG.error('Failed to configure prometheus for host %s', self.instance.hostname)
+            LOG.error(e)
+            database = self.infra.databases.first()
+            database.attention = True
+            attention = 'Não foi possível configurar monitoração com Prometheus para essa database. ' \
+                        'Entrar em contato com time DBDev'
+            database.attention_description = attention
+
+            database.save()
 
     def undo(self):
         pass
