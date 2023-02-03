@@ -1155,6 +1155,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
 
@@ -2469,6 +2470,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
                 )
             }]
 

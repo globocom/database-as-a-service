@@ -913,6 +913,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
 
@@ -1549,6 +1550,7 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
 
