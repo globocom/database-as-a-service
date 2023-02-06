@@ -630,12 +630,12 @@ class DiskOfferingType(BaseModel):
         return '{}'.format(self.name)
 
     def get_type_to(self, environment_to):
-        disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
-                                                             identifier=self.identifier).first()
-        if not disk_offering_type:
-            disk_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
-                                                                 is_default=True).first()
-        return disk_offering_type
+        LOG.info('Getting DiskOfferingType for environment %s.', environment_to.name)
+        default_offering_type = DiskOfferingType.objects.filter(environments=environment_to,
+                                                                is_default=True).first()
+
+        LOG.info('Default DiskOfferingType for environment is %s.', default_offering_type.identifier)
+        return default_offering_type
 
 
 class Plan(BaseModel):
@@ -1416,6 +1416,10 @@ class Host(BaseModel):
     def is_ol7(self):
         return ' 7.' in self.os_description
 
+    @property
+    def databaseinfra(self):
+        return self.instances.first().databaseinfra
+
 
 class Volume(BaseModel):
     host = models.ForeignKey(
@@ -1988,21 +1992,9 @@ def instance_pre_delete(sender, **kwargs):
     instance pre delete
     """
 
-    from backup.models import Snapshot
-    import datetime
-
+    # it used to mark purge_at as 'now' to all snapshots of the instance
     instance = kwargs.get('instance')
-
     LOG.debug("instance %s pre-delete" % (instance))
-
-    snapshots = Snapshot.objects.filter(
-        instance=instance, purge_at__isnull=True)
-
-    for snapshot in snapshots:
-        LOG.debug("Setting snapshopt %s purge_at time" % (snapshot))
-        snapshot.purge_at = datetime.datetime.now()
-        snapshot.save()
-
     LOG.debug("instance pre-delete triggered")
 
 

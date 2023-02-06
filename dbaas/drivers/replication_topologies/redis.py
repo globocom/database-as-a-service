@@ -118,6 +118,9 @@ class RedisSingle(BaseRedis):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 
@@ -485,6 +488,9 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 
@@ -807,6 +813,9 @@ class RedisCluster(BaseRedis):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 

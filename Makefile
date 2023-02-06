@@ -74,7 +74,7 @@ unit_test: # run tests
 send_codecov:
 	@cd dbaas && curl -s https://codecov.io/bash > codecov.sh  && bash codecov.sh 
 
-docker_build:
+docker_build_test:
 	docker build -t dbaas_test .
 
 test_with_docker:
@@ -168,3 +168,77 @@ dev_docker_develop_package:
 	@make dev_docker_restart app app_celery
 %:
 	@:
+
+
+
+
+# Docker part, for deploy, for GCP
+# TODO, standardize with other providers
+docker_build:
+	GIT_BRANCH=$$(git branch --show-current); \
+	GIT_COMMIT=$$(git rev-parse --short HEAD); \
+	DATE=$$(date +"%Y-%M-%d_%T"); \
+	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
+	docker build -t dbaas/dbaas_app --label git-commit=$(git rev-parse --short HEAD) --build-arg build_info="$$INFO" . -f Dockerfile_gcp
+
+docker_run:
+	# make docker_stop 
+	# docker stop dbaas_app 2>&1 >/dev/null
+	# docker rm dbaas_app 2>&1 >/dev/null
+	# docker run --log-driver syslog --name=dbaas_app -e "PORT=80" -e "WORKERS=2"  -p 80:80 dbaas/dbaas_app 
+	docker run --name=dbaas_app \
+		-v /Users/marcelo.soares/dbaas_dev_pki/pki/globocom:/etc/pki/globocom \
+		-e "PORT=80" \
+		-e "WORKERS=2" \
+		-e "DBAAS_DATABASE_HOST=dbaas-01-145632598674.dev.mysql.globoi.com" \
+		-e "DBAAS_DATABASE_USER=u_dbaas" \
+		-e "DBAAS_DATABASE_NAME=dbaas" \
+		-e "DBAAS_DATABASE_PASSWORD=u3umvWZ7LM" \
+		-e "REDIS_HOST=dbaas.dev.redis.globoi.com" \
+		-e "REDIS_PASSWORD=dfghg3vsdb6dbBSD1" \
+		-e "REDIS_DB=0" \
+		-e "REDIS_PORT=6379" \
+		-e "DBAAS_OAUTH2_LOGIN_ENABLE=1" \
+		-e "ALLACCESS_CREATE_RANDOM_USER=0" \
+		-e "DBAAS_LDAP_ENABLED="1" \
+		-e "DBAAS_LDAP_CERTDIR="/etc/pki/globocom/" \
+		-e "DBAAS_LDAP_CACERTFILE="glb_cacert.pem" \
+		-e "DBAAS_LDAP_CERTFILE="glb_clientcrt.pem" \
+		-e "DBAAS_LDAP_KEYFILE="glb_clientkey.pem" \
+		-e "AUTH_LDAP_SERVER_URI="ldaps://ldap.globoi.com:636" \
+		-e "AUTH_LDAP_BIND_DN="cn=gerenciasenha,ou=Usuarios,dc=globoi,dc=com" \
+		-e "AUTH_LDAP_BIND_PASSWORD="glb!ldap..," \
+		-e "AUTH_LDAP_USER_SEARCH="ou=Usuarios,dc=globoi,dc=com" \
+		-e "AUTH_LDAP_GROUP_SEARCH="ou=Grupos,dc=globoi,dc=com" \
+		-e "DBAAS_NOTIFICATION_BROKER_URL=redis://:dfghg3vsdb6dbBSD1@dbaas.dev.redis.globoi.com:6379/0" \
+		-e "DBAAS_DJ_SECRET_KEY=n3#i=z^st83t5-k_xw!v9t_ey@h=!&6!3e$l6n&sn^o9@f&jxv" \
+		-p 80:80 dbaas/dbaas_app 
+
+
+
+
+docker_stop:
+	docker stop dbaas_app	
+
+docker_deploy_gcp:
+	@echo "tag usada:${TAG}"
+	make docker_deploy_build TAG=${TAG}
+	make docker_deploy_push TAG=${TAG}
+
+docker_deploy_build: 
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make docker_deploy_build TAG=v1.02"
+	GIT_BRANCH=$$(git branch --show-current); \
+	GIT_COMMIT=$$(git rev-parse --short HEAD); \
+	DATE=$$(date +"%Y-%M-%d_%T"); \
+	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
+	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-app:${TAG} \
+		--label git-commit=$(git rev-parse --short HEAD) \
+		--build-arg build_info="$$INFO"  \
+		-f Dockerfile_gcp
+
+
+docker_deploy_push:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make docker_deploy_push TAG=v1.02"
+	docker push us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-app:${TAG}

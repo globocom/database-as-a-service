@@ -280,8 +280,11 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
+            )}, {
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
+            )}
+        ]
 
     def get_host_migrate_steps(self):
         return [{
@@ -739,6 +742,9 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Update Host Disk Size': (
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 
@@ -1505,6 +1511,9 @@ class MongoDBSingleK8s(MongoDBSingle):
             # 'Update Host Disk Size': (
             #     'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             # )
+            ),
+            'Save Snapshot': (
+                'workflow.steps.util.database.MakeSnapshot',
             )
         }]
 

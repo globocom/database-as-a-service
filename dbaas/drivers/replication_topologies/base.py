@@ -547,6 +547,7 @@ class BaseTopology(object):
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
         )}]
 
+
     def get_database_migrate_steps_stage_2(self):
         return [{
             'Cleaning up': (
@@ -608,7 +609,7 @@ class BaseTopology(object):
             )}, {
             'Check patch': (
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
-            )}, {
+                           )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolume',
                 'workflow.steps.util.volume_provider.MountDataVolume',
@@ -697,7 +698,7 @@ class BaseTopology(object):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-        )}]
+            )}]
 
     def get_region_migrate_steps_stage_2(self):
         return [{
@@ -708,10 +709,47 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
-        )}]
+            )}]
 
     def get_region_migrate_steps_stage_3(self):
         raise NotImplementedError
+
+    def get_stop_database_vm_steps(self):
+        return [{
+            'Disable monitoring and check replication': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+            )}, {
+            'Stopping database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Stopping VM': (
+                'workflow.steps.util.host_provider.StopIfRunning',
+            )
+        }]
+
+    def get_start_database_vm_steps(self):
+        return [{
+            'Starting VM': (
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Restoring master instance': (
+                'workflow.steps.util.database.RestoreMasterInstanceFromDatabaseStop',
+            )}, {
+            'Enable alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
 
 
 class FakeTestTopology(BaseTopology):

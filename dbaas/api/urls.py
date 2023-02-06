@@ -36,6 +36,7 @@ from .remove_readonly import RemoveInstanceDatabaseAPI
 from .pool import PoolAPI
 from .list_database import DatabaseListAPI
 from .list_team import TeamListAPI
+from .zabbix_disk_size_alert import ZabbixDiskSizeAlertAPIView
 
 
 router = DefaultRouter()
@@ -94,6 +95,7 @@ if settings.CLOUD_STACK_ENABLED:
 router.register(r'team', TeamAPI)
 router.register(r'user', UserAPI)
 router.register(r'snapshot', SnapshotAPI)
+
 urlpatterns += router.urls
 
 # is_slave url
@@ -102,5 +104,10 @@ urlpatterns += [
         r'^host/(?P<hostname>[-\w.]+)/is_slave/$',
         CheckIsSlaveAPIView.as_view(),
         name='is_slave'
+    ),
+    url(
+        r'^zabbix/disk_size_alert/$',
+        ZabbixDiskSizeAlertAPIView.as_view(),
+        name='zabbix_disk_size_alert'
     )
 ]

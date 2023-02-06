@@ -102,7 +102,7 @@ class DatabaseStep(BaseInstanceStep):
         return self.host
 
     def is_os_process_running(self, process_name, wait_stop=True):
-        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
+        script = "ps -ef | grep {} | grep -v grep | grep -v prometheus | wc -l".format(
             process_name
         )
 
@@ -1031,6 +1031,7 @@ class StartSourceDatabaseMigrate(Start):
     def undo_klass(self):
         return StopSourceDatabaseMigrate
 
+
 class StopSourceDatabaseMigrate(Stop):
     @property
     def host(self):
@@ -1043,3 +1044,64 @@ class StopSourceDatabaseMigrate(Stop):
     @property
     def undo_klass(self):
         return StartSourceDatabaseMigrate
+
+
+class MakeSnapshot(DatabaseStep):
+    def __unicode__(self):
+        return "Making snapshot of database..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        from backup.tasks import validate_create_backup
+
+        task = self.create or self.destroy
+        if task is None:
+            raise Exception('Not able to take snapshot. See the logs...')
+
+        try:
+            LOG.info('Calling backup method')
+            has_warning = validate_create_backup(database=self.instance.databaseinfra.databases.first(), task=task.task,
+                                      automatic=False, current_hour=None, force=True, persist=True)
+
+            if has_warning is True:
+                raise Exception('Not able to backup database')
+        except Exception as e:
+            LOG.error('Error when creating snapshot: %s', e)
+            task.set_error()
+            raise e
+
+
+class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
+    def __unicode__(self):
+        return "Restore Master Instance..."
+
+    def get_master_instance_from_stop(self):
+        try:
+            stop_database = self.database.database_stop_database_vm.last().database_stop_instance.last()
+            return stop_database.master
+        except Exception as error:
+            LOG.error('Error to retrive instance from last Database Stop VM')
+            raise error
+
+    @property
+    def is_single_instance(self):
+        return not self.infra.plan.is_ha
+
+    def is_valid(self):
+        if not('mysql' in self.engine.name.lower()):
+            return False
+        if self.is_single_instance:
+            return False
+        if self.driver.get_master_instance() == self.get_master_instance_from_stop():
+            return False
+        return True
+
+    def do(self):
+        if not self.is_valid():
+            return False
+        self.driver.set_master(self.get_master_instance_from_stop())
+
+    def undo(self):
+        pass

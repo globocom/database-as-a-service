@@ -89,6 +89,9 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             if not success:
                 return redirect
 
+        if rollback_from.is_region_migrate:
+            TaskRegister.region_migrate_rollback(rollback_from.database, request.user, step_manager=rollback_from)
+
         TaskRegister.database_migrate_rollback(rollback_from.database, request.user, step_manager=rollback_from)
         return self.redirect_to_database(rollback_from)
 

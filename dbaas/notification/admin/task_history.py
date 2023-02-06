@@ -14,11 +14,12 @@ LOG = logging.getLogger(__name__)
 class TaskHistoryAdmin(admin.ModelAdmin):
     perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
     actions = None
-    list_display_basic = ["task_id", "friendly_task_name", "task_status", "arguments", "friendly_details", "created_at",
-                          "ended_at"]
+    list_display_basic = [
+        "task_id", "database_name", "friendly_task_name", "task_status", "arguments", "friendly_details", "created_at",
+        "ended_at"
+    ]
     list_display_advanced = list_display_basic + ["user"]
-    search_fields = (
-        'task_id', "task_name", "task_status", "user", "arguments")
+    search_fields = ('task_id', "task_name", "task_status", "user", "arguments", "database_name")
     list_filter_basic = ["task_status", ]
     list_filter_advanced = list_filter_basic + ["task_name", "user", ]
     readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments',

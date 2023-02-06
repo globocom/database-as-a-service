@@ -20,6 +20,10 @@ from util import get_vm_name
 from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
+from util.task_register import TaskRegisterBase
+from workflow.workflow import (steps_for_instances,
+                               rollback_for_instances_full,
+                               total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
 from maintenance.models import (DatabaseDestroy, RestartDatabase, DatabaseCreate, DatabaseMigrate)
@@ -27,6 +31,7 @@ from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra, get_instances_for)
 from notification.scripts import script_mongo_log_rotate
 from util.providers import get_deploy_settings
+from util.task_register import database_disk_resize
 
 import json
 import requests
@@ -924,85 +929,6 @@ def handle_zabbix_alarms(database):
 
 
 @app.task(bind=True)
-def database_disk_resize(self, database, disk_offering, task_history, user):
-    from workflow.steps.util.volume_provider import ResizeVolume, Resize2fs
-
-    AuditRequest.new_request("database_disk_resize", user, "localhost")
-
-    if not database.pin_task(task_history):
-        task_history.error_in_lock(database)
-        return False
-
-    databaseinfra = database.databaseinfra
-    old_disk_offering = database.databaseinfra.disk_offering
-    resized = []
-
-    try:
-        worker_name = get_worker_name()
-        task_history = TaskHistory.register(
-            request=self.request, task_history=task_history,
-            user=user, worker_name=worker_name
-        )
-
-        task_history.update_details(
-            persist=True,
-            details='\nLoading Disk offering'
-        )
-
-        databaseinfra.disk_offering = disk_offering
-        databaseinfra.save()
-
-        for instance in databaseinfra.get_driver().get_database_instances():
-
-            task_history.update_details(
-                persist=True,
-                details='\nChanging instance {} to '
-                        'NFS {}'.format(instance, disk_offering)
-            )
-            ResizeVolume(instance).do()
-            Resize2fs(instance).do()
-            resized.append(instance)
-
-        task_history.update_details(
-            persist=True,
-            details='\nUpdate DBaaS metadata from {} to {}'.format(
-                old_disk_offering, disk_offering
-            )
-        )
-
-        task_history.update_status_for(
-            status=TaskHistory.STATUS_SUCCESS,
-            details='\nDisk resize successfully done.'
-        )
-
-        database.finish_task()
-        return True
-
-    except Exception as e:
-        error = "Disk resize ERROR: {}".format(e)
-        LOG.error(error)
-
-        if databaseinfra.disk_offering != old_disk_offering:
-            task_history.update_details(
-                persist=True, details='\nUndo update DBaaS metadata'
-            )
-            databaseinfra.disk_offering = old_disk_offering
-            databaseinfra.save()
-
-        for instance in resized:
-            task_history.update_details(
-                persist=True,
-                details='\nUndo NFS change for instance {}'.format(instance)
-            )
-            ResizeVolume(instance).do()
-
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-        database.finish_task()
-    finally:
-        AuditRequest.cleanup_request()
-
-
-@app.task(bind=True)
 def upgrade_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -1871,54 +1797,8 @@ def update_database_apps_bind_name(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Error connect prometheus')
 
 
-class TaskRegister(object):
-    TASK_CLASS = TaskHistory
-
-    @classmethod
-    def create_task(cls, params):
-        database = params.pop('database', None)
-
-        task = cls.TASK_CLASS()
-
-        if database:
-            task.object_id = database.id
-            task.object_class = database._meta.db_table
-            database_name = database.name
-        else:
-            database_name = params.pop('database_name', '')
-
-        task.database_name = database_name
-
-        for k, v in params.iteritems():
-            setattr(task, k, v)
-
-        task.save()
-
-        return task
-
+class TaskRegister(TaskRegisterBase):
     # ============  BEGIN TASKS   ==========
-
-    @classmethod
-    def database_disk_resize(cls, database, user, disk_offering, task_name=None, register_user=True, **kw):
-
-        task_params = {
-            'task_name': ('database_disk_resize' if task_name is None
-                          else task_name),
-            'arguments': 'Database name: {}'.format(database.name),
-            'database': database,
-            'relevance': TaskHistory.RELEVANCE_CRITICAL
-        }
-
-        task_params.update(**{'user': user} if register_user else {})
-        task = cls.create_task(task_params)
-        database_disk_resize.delay(
-            database=database,
-            user=user,
-            disk_offering=disk_offering,
-            task_history=task
-        )
-
-        return task
 
     @classmethod
     def database_destroy(cls, database, user, **kw):
@@ -2235,6 +2115,41 @@ class TaskRegister(object):
         )
 
     @classmethod
+    def start_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "start_database_vm",
+            'arguments': "Starting database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.start_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+    @classmethod
+    def stop_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "stop_database_vm",
+            'arguments': "Stopping database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.stop_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+
+    @classmethod
     def database_upgrade(cls, database, user, since_step=None):
 
         task_params = {
@@ -2467,6 +2382,7 @@ class TaskRegister(object):
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, environment, migration_stage)
         task_params = {
             'task_name': "region_migrate",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2493,6 +2409,7 @@ class TaskRegister(object):
         )
         task_params = {
             'task_name': "region_migrate_rollback",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2594,6 +2511,7 @@ class TaskRegister(object):
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, new_environment, migration_stage)
         task_params = {
             'task_name': "database_migrate",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2622,6 +2540,7 @@ class TaskRegister(object):
         )
         task_params = {
             'task_name': "database_migrate_rollback",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2648,7 +2567,6 @@ class TaskRegister(object):
         }
 
         task = cls.create_task(task_params)
-
         update_database_monitoring.delay(task=task, database=database, hostgroup=hostgroup, action=action,)
 
     @classmethod
@@ -2662,7 +2580,6 @@ class TaskRegister(object):
         }
 
         task = cls.create_task(task_params)
-
         update_organization_name_monitoring.delay(task=task, database=database, organization_name=organization_name)
 
     @classmethod
@@ -2697,7 +2614,6 @@ class TaskRegister(object):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         change_database_persistence.delay(**delay_params)
 
     @classmethod
@@ -2724,7 +2640,6 @@ class TaskRegister(object):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_required.delay(**delay_params)
 
     @classmethod
@@ -2751,7 +2666,6 @@ class TaskRegister(object):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_not_required.delay(**delay_params)
 
     # ============  END TASKS   ============

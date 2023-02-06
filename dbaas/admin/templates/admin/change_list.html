@@ -123,10 +123,11 @@
           </div>
         </div><!-- /navbar-inner -->
       </div>
-      <form id="changelist-form" action="" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} {% if action_form and actions_on_top and cl.full_result_count %}class="with-top-actions"{% endif %}>{% csrf_token %}
-          {% if cl.formset %}
-              <div>{{ cl.formset.management_form }}</div>
-          {% endif %}
+      <form id="changelist-form" action="" method="post"
+          {% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %}
+          {% if action_form and actions_on_top and cl.full_result_count %}class="with-top-actions"{% endif %}>
+          {% csrf_token %}
+          {% if cl.formset %}<div>{{ cl.formset.management_form }}</div>{% endif %}
           {% block result_list %}
               {% if action_form and actions_on_top and cl.full_result_count %}
                   <div class="well">
@@ -177,7 +178,19 @@
 
 {% block js_footer %}
 {{block.super}}
-    <script type="text/javascript">
+<script type="text/javascript">
+    function showAttentionDetails(text, el) {
+      var text = document.createTextNode(text);
+      var row = el.parentElement.parentElement;
+      if(row.nextSibling.textContent != text.textContent){
+          row.parentElement.insertBefore(text, row.nextSibling);
+          row.nextSibling.innerText = text;
+      }
+      else {
+        row.nextSibling.remove();
+        row.nextSibling.innerText = text;
+      }
+    }
     (function ($) {
         fix_positions_on_menu = function (){
           width = Math.max( $(window).innerWidth(), window.innerWidth);
