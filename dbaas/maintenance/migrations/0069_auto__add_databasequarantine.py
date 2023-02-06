@@ -455,6 +455,44 @@ class Migration(SchemaMigration):
             'task_schedule': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'maintenance_databasesetsslrequired_related'", 'null': 'True', 'to': u"orm['maintenance.TaskSchedule']"}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'maintenance.databasestartdatabasevm': {
+            'Meta': {'object_name': 'DatabaseStartDatabaseVM'},
+            'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'current_step': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
+            'current_step_class': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'database': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_start_database_vm'", 'to': u"orm['logical.Database']"}),
+            'finished_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'started_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'task': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_start_database_vm'", 'to': u"orm['notification.TaskHistory']"}),
+            'task_schedule': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'maintenance_databasestartdatabasevm_related'", 'null': 'True', 'to': u"orm['maintenance.TaskSchedule']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
+        u'maintenance.databasestopdatabasevm': {
+            'Meta': {'object_name': 'DatabaseStopDatabaseVM'},
+            'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'current_step': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
+            'current_step_class': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'database': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_stop_database_vm'", 'to': u"orm['logical.Database']"}),
+            'finished_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'started_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'task': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_stop_database_vm'", 'to': u"orm['notification.TaskHistory']"}),
+            'task_schedule': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'maintenance_databasestopdatabasevm_related'", 'null': 'True', 'to': u"orm['maintenance.TaskSchedule']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
+        u'maintenance.databasestopvminstancemaster': {
+            'Meta': {'unique_together': "((u'master', u'database_stop'),)", 'object_name': 'DatabaseStopVMInstanceMaster'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'database_stop': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_stop_instance'", 'to': u"orm['maintenance.DatabaseStopDatabaseVM']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'master': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'database_stop_master'", 'to': u"orm['physical.Instance']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'maintenance.databaseupgrade': {
             'Meta': {'object_name': 'DatabaseUpgrade'},
             'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
