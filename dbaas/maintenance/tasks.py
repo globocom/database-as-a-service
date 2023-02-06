@@ -238,6 +238,28 @@ def upgrade_disk_type_database(self, database, new_disk_type_upgrade, task, user
     task_upgrade_disk_type(database, new_disk_type_upgrade, task, retry_from)
 
 
+@app.task(bind=True)
+def start_database_vm(self, database, task, user, retry_from=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from task_start_database_vm import task_start_database_vm
+    task_start_database_vm(database, task, retry_from)
+
+
+@app.task(bind=True)
+def stop_database_vm(self, database, task, user, retry_from=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from task_stop_database_vm import task_stop_database_vm
+    task_stop_database_vm(database, task, retry_from)
+
+
 def _create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(request=self.request, task_history=task, user=user, worker_name=get_worker_name())
 

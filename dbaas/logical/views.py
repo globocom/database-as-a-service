@@ -24,6 +24,7 @@ from drivers.errors import CredentialAlreadyExists
 from physical.models import (Host, DiskOffering, Environment, Plan, Offering)
 from util import get_credentials_for
 from notification.tasks import TaskRegister, execute_scheduled_maintenance
+from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm, DatabaseForm
@@ -253,6 +254,14 @@ def set_attention(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def get_is_button_start_stop_disabled(start_database, stop_database):
+    if (start_database and start_database.status not in [start_database.SUCCESS, start_database.ROLLBACK]) or \
+            (stop_database and stop_database.status not in [stop_database.SUCCESS, stop_database.ROLLBACK]):
+        return 'disabled'
+    else:
+        return ''
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':
@@ -268,16 +277,20 @@ def database_details(request, context, database):
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
-        masters_quant = len(database.driver.get_master_instance(default_timeout=True))
+        masters_quant = len(database.driver.get_master_instance(default_timeout=3000))
     except TypeError:
         masters_quant = 1
     except Exception:
         masters_quant = 0
-
+    start_database = database.database_start_database_vm.last()
+    stop_database = database.database_stop_database_vm.last()
     context['masters_quant'] = masters_quant
     context['engine'] = engine
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
+    context['btn_start_stop_is_disabled'] = get_is_button_start_stop_disabled(start_database, stop_database)
+    context['last_start_database'] = start_database
+    context['last_stop_database'] = stop_database
 
     if database.databaseinfra.ssl_configured:
         context['ssl_detail'] = 'SSL is configured.'
@@ -851,6 +864,34 @@ def _upgrade_disk_type(request, database):
     Database.upgrade_disk_type(database=database, disk_offering_type=disk_offering_type, user=request.user)
 
 
+def start_database_vm(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    can_be_started, error = database.can_be_start_database_vm()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+        return
+    Database.start_database_vm(database=database, user=request.user)
+
+    return HttpResponse(json.dumps({}), content_type="application/json")
+
+
+def stop_database_vm(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    can_be_stoped, error = database.can_be_stop_database_vm()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+        return
+    Database.stop_database_vm(database=database, user=request.user)
+
+    return HttpResponse(json.dumps({}), content_type="application/json")
+
+
 def _vm_resize(request, database):
     try:
         check_is_database_dead(database.id, 'VM resize')
@@ -1111,6 +1152,8 @@ def database_history(request, context, database):
         "set_require_ssl",
         "set_not_require_ssl",
         "database_upgrade_disk_type",
+        "database_start_database_vm",
+        "database_stop_database_vm",
     ]
     for related in database_maintenances:
         context["maintenances"] += getattr(database, related).all()
@@ -2298,6 +2341,15 @@ def database_migrate(request, context, database):
         "current_stage": database.infra.migration_stage + 1,
         "is_ha": database.plan.is_ha
     }
+
+    flag_waiting = 'false'
+    waiting_tasks = TaskHistory.objects.filter(
+        task_status=TaskHistory.STATUS_WAITING,
+        database_name=database.name,
+    )
+    if len(waiting_tasks) > 0:
+        flag_waiting = 'true'
+    context['is_in_waiting'] = flag_waiting
 
     engine = '{}_{}'.format(
         database.engine.name, database.databaseinfra.engine_patch.full_version

@@ -2144,6 +2144,41 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
+    def start_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "start_database_vm",
+            'arguments': "Starting database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.start_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+    @classmethod
+    def stop_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "stop_database_vm",
+            'arguments': "Stopping database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.stop_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+
+    @classmethod
     def database_upgrade(cls, database, user, since_step=None):
 
         task_params = {
@@ -2376,6 +2411,7 @@ class TaskRegister(TaskRegisterBase):
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, environment, migration_stage)
         task_params = {
             'task_name': "region_migrate",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2402,6 +2438,7 @@ class TaskRegister(TaskRegisterBase):
         )
         task_params = {
             'task_name': "region_migrate_rollback",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2503,6 +2540,7 @@ class TaskRegister(TaskRegisterBase):
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, new_environment, migration_stage)
         task_params = {
             'task_name': "database_migrate",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2531,6 +2569,7 @@ class TaskRegister(TaskRegisterBase):
         )
         task_params = {
             'task_name': "database_migrate_rollback",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2557,7 +2596,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
-
         update_database_monitoring.delay(task=task, database=database, hostgroup=hostgroup, action=action,)
 
     @classmethod
@@ -2571,7 +2609,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
-
         update_organization_name_monitoring.delay(task=task, database=database, organization_name=organization_name)
 
     @classmethod
@@ -2606,7 +2643,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         change_database_persistence.delay(**delay_params)
 
     @classmethod
@@ -2633,7 +2669,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_required.delay(**delay_params)
 
     @classmethod
@@ -2660,7 +2695,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_not_required.delay(**delay_params)
 
     # ============  END TASKS   ============
