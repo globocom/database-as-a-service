@@ -823,6 +823,40 @@ class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
         )
 
 
+class DatabaseStartDatabaseVM(DatabaseMaintenanceTask):
+    database = models.ForeignKey(Database, verbose_name="Database",
+                                 null=False, unique=False, related_name="database_start_database_vm")
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History",
+                             null=False, related_name="database_start_database_vm")
+
+    def __unicode__(self):
+        return "Starting database: {}".format(self.database)
+
+
+class DatabaseStopDatabaseVM(DatabaseMaintenanceTask):
+    database = models.ForeignKey(Database, verbose_name="Database",
+                                 null=False, unique=False, related_name="database_stop_database_vm")
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History",
+                             null=False, related_name="database_stop_database_vm")
+
+    def __unicode__(self):
+        return "Stopping database: {}".format(self.database)
+
+
+class DatabaseStopVMInstanceMaster(BaseModel):
+    database_stop = models.ForeignKey(DatabaseStopDatabaseVM, verbose_name="Database Stop Maintenance",
+                                      related_name="database_stop_instance")
+    master = models.ForeignKey(
+        Instance, verbose_name="Master", related_name="database_stop_master"
+    )
+
+    def __unicode__(self):
+        return "{}: {}".format(self.database_stop, self.master)
+
+    class Meta:
+        unique_together = (('master', 'database_stop'), )
+
+
 class DatabaseRestore(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database", related_name="database_restore"

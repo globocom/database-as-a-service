@@ -28,15 +28,25 @@
   <div class="control-group">
     <div class="control-label"><label>Monitoring:</label></div>
     <div class="controls">
-      <a class="btn {% if database.is_monitoring %}btn-info{% endif %}
-                    {% if not database.is_monitoring %}btn-success{% endif %}
-
-            " title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring_disabled" disabled>
+      <a class="btn {% if database.is_monitoring %}btn-info{% endif %}{% if not database.is_monitoring %}btn-success{% endif %}" title="is-monitored" data-content="Is monitored" target="_blank" id="id_monitoring_disabled" disabled>
         {% if database.is_monitoring %}
             Desativar
         {% endif %}
         {% if not database.is_monitoring %}
             Ativar
+        {% endif %}
+      </a>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Start/Stop Database:</label></div>
+    <div class="controls">
+      <a class="btn {% if database.is_alive %}btn-danger{% endif %} {% if database.is_dead %}btn-success{% endif %}" title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database" {% if start_database and start_database.is_error %} disabled {% endif %}>
+        {% if database.is_alive %}
+            Stop Database
+        {% endif %}
+        {% if database.is_dead %}
+            Start Database
         {% endif %}
       </a>
     </div>
@@ -54,11 +64,10 @@
       <p class="help-block">Descreva, na caixa de texto a seguir, o motivo de atençao para este banco</p>
     </div>
   </div>
-
   <div class="control-group" id="attention_description_div">
     <div class="control-label"><label>Motivo da atenção:</label></div>
     <div class="controls">
-      <textarea required class="vLargeTextField span8" cols="40" id="attention_description" name="description" rows="10">{{ database.attention_description }}</textarea>
+      <textarea class="vLargeTextField span8" cols="40" id="attention_description" name="attention_description" rows="10">{{ database.attention_description }}</textarea>
     </div>
   </div>
   <div class="control-group">
@@ -88,15 +97,13 @@
     <div class="controls">
       <textarea required class="vLargeTextField span8" cols="40" id="id_description" name="description" rows="10">{{ database.description }}</textarea>
     </div>
-  </div>
-
+ </div>
   <div class="field-organization">
     <div class="control-group">
       <div class="control-label"><label>Organization:</label></div>
       <div class="controls"><p class="readonly">{{database.organization}}</p></div>
     </div>
   </div>
-
   <div class="control-group">
     <div class="control-label"><label>Team:</label></div>
     <div class="controls">
@@ -148,12 +155,10 @@
     <div class="control-label"><label>Environment:</label></div>
     <div class="controls"><p class="readonly">{{ database.environment }}</p></div>
   </div>
-
   <div class="control-group">
     <div class="control-label"><label>Service Account:</label></div>
     <div class="controls"><p class="readonly">{{ database.infra.service_account }}</p></div>
   </div>
-
   {% if database.has_persistence %}
     <div class="control-group">
       <div class="control-label"><label>Disk:</label></div>
@@ -164,10 +169,8 @@
             ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
           {% endif %}
         </p>
-      </div>
-      <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
+      </div>      <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
     </div>
-
     <div class="control-group">
       <div class="control-label"><label>Disk Type:</label></div>
       <div class="controls">
@@ -195,7 +198,7 @@
       </div>
       <div class="controls controls-300">{% render_detailed_capacity_html database memory %}</div>
     </div>
-    <div class="control-group">
+  <div class="control-group">
       <div class="control-label"><label>Persisted:</label></div>
       <div class="controls">
         <p class="readonly">
@@ -205,41 +208,33 @@
             No
           {% endif %}
         </p>
-      </div>
-    </div>
-  {% endif %}
+      </div>    </div>  {% endif %}
   <div class="control-group">
     <div class="control-label"><label>Offering:</label></div>
     <div class="controls"><p class="readonly">{{ database.offering }}</p></div>
-  </div>
-  <div class="control-group">
+  </div>  <div class="control-group">
     <div class="control-label"><label>SSL:</label></div>
     <div class="controls"><p class="readonly">{{ ssl_detail }}</p></div>
-  </div>
-  <div class="control-group">
+  </div>  <div class="control-group">
     <div class="control-label"><label>Created At:</label></div>
     <div class="controls"><p class="readonly">{{ database.created_at }}</p></div>
-  </div>
-    <div class="control-group">
+  </div>    <div class="control-group">
     <div class="control-label"><label>Bind name:</label></div>
     <div class="controls"><p class="readonly">{{ database.apps_bind_name }}</p></div>
-  </div>
-  {% if database.is_in_quarantine %}
+  </div>  {% if database.is_in_quarantine %}
     <div class="control-group">
       <div class="control-label"><label>Quarantine since:</label></div>
       <div class="controls"><p class="readonly">{{ database.quarantine_dt }}</p></div>
-    </div>
-    <div class="control-group">
+    </div>    <div class="control-group">
       <div class="control-label"><label>Quarantine requested by:</label></div>
       <div class="controls"><p class="readonly">{{ database.quarantine_user }}</p></div>
-    </div>
-  {% endif %}
+    </div>  {% endif %}
 </fieldset>
 {% endblock %}
 
 {% block js_footer %}
 {{ block.super }}
-<script src="{% static "assets/js/bootstrap.min.js" %}"></script>
+<script src="{% static 'assets/js/bootstrap.min.js' %}"></script>
 <script>
   var team_select = document.getElementById("id_team");
   var team_contact = document.getElementById("id_contact");
@@ -247,7 +242,9 @@
 
   jQuery(document).ready(function($) {
     if(!$("#attention_bool").prop("checked")){
-      $(attention_description_div).slideUp()
+      $("#attention_description_div").slideUp();
+    }else{
+      $("#attention_description").attr("required", "required");
     }
     $(".bar .database-bar, .bar .other-bar, .bar .free-bar").popover({
         'trigger': 'hover',
@@ -319,7 +316,36 @@
       });
     });
 
+    $("#id_start_stop_database").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_start_stop_database").attr('disabled','disabled');
+      value = $("#id_start_stop_database").text();
+      if(value.includes('Stop')){
+        url = "/logical/stop_database/"+ database_id;
+      }else{
+        url = "/logical/start_database/"+ database_id;
+      }
+      jQuery.ajax({
+          "dataType": "json", "url": url, "type": "GET",
+          complete: function () {
+            running_update = false;
+            window.location.reload();
+          },
+      }).fail(function() {
+          alert("invalid server response");
+      });
+    });
+
     $("#attention_bool").change(function() {
+      if($(this).is(":checked")){
+        $("#attention_description").attr("required", "required");
+      }
+      else{
+        $("#attention_description").removeAttr("required");
+      }
       $("#attention_description_div").slideToggle();
       $("#att_tag").slideToggle();
       if (running_update){

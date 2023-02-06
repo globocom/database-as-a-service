@@ -1089,3 +1089,37 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
 
     def undo(self):
         pass
+
+
+class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
+    def __unicode__(self):
+        return "Restore Master Instance..."
+
+    def get_master_instance_from_stop(self):
+        try:
+            stop_database = self.database.database_stop_database_vm.last().database_stop_instance.last()
+            return stop_database.master
+        except Exception as error:
+            LOG.error('Error to retrive instance from last Database Stop VM')
+            raise error
+
+    @property
+    def is_single_instance(self):
+        return not self.infra.plan.is_ha
+
+    def is_valid(self):
+        if not('mysql' in self.engine.name.lower()):
+            return False
+        if self.is_single_instance:
+            return False
+        if self.driver.get_master_instance() == self.get_master_instance_from_stop():
+            return False
+        return True
+
+    def do(self):
+        if not self.is_valid():
+            return False
+        self.driver.set_master(self.get_master_instance_from_stop())
+
+    def undo(self):
+        pass
