@@ -35,12 +35,12 @@
 </tr>
 </table>
   {% if source == 'zabbix' %}
-    <iframe id="grafana" class='grafana_frame' src="{{ grafana_url_zabbix }}&kiosk=tv"></iframe>
+    <iframe id="grafana" class='grafana_frame' src="{{ grafana_url_zabbix }}&kiosk=tv&theme=light"></iframe>
   {% endif %}
 
   {% if source == 'prometheus' %}
-    <iframe id="grafana" class='grafana_frame' style="margin-bottom: 2em" src="{{ prometheus_url_node }}&kiosk=tv"></iframe>
-    <iframe id="grafana-db" class='grafana_frame' src="{{ prometheus_url_db }}&kiosk=tv"></iframe>
+    <iframe id="grafana" class='grafana_frame' style="margin-bottom: 2em" src="{{ prometheus_url_node }}&kiosk=tv&theme=light"></iframe>
+    <iframe id="grafana-db" class='grafana_frame' src="{{ prometheus_url_db }}&kiosk=tv&theme=light"></iframe>
   {% endif %}
 
 {% endblock %}
