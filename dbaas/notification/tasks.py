@@ -6,6 +6,7 @@ import traceback
 
 from celery.utils.log import get_task_logger
 from django.db.models import Sum, Count, Q
+from django.shortcuts import get_object_or_404
 from simple_audit.models import AuditRequest
 
 from account.models import User
@@ -21,9 +22,7 @@ from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from util.task_register import TaskRegisterBase
-from workflow.workflow import (steps_for_instances,
-                               rollback_for_instances_full,
-                               total_of_steps)
+from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
 from maintenance.models import (DatabaseDestroy, RestartDatabase, DatabaseCreate, DatabaseMigrate)
@@ -124,6 +123,27 @@ def create_database(
     database_create.database = infra.databases.first()
     database_create.pool = pool
     database_create.save()
+
+    try:
+        database = get_object_or_404(Database, name=name)
+        if database.is_in_quarantine:
+            database_create.set_error()
+            task.set_status_error(
+                'Could not create database\n'
+                'Database already exists, but there is in quarantine\n'
+                'If you would like full delete this database, contact DBaaS team in Slack.'
+            )
+            return
+        else:
+            database_create.set_error()
+            task.set_status_error(
+                'Could not create database.\n'
+                'Database already exists.\n'
+                'If you would like know more informations about it, contact DBaaS team in Slack.'
+            )
+            return
+    except:
+        pass
 
     steps = get_deploy_settings(topology_path)
 
