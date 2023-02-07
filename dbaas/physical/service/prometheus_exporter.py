@@ -110,21 +110,20 @@ class RedisExporter(Exporter):
     def _change_credentials(self, host, credentials):
         config_string = self.get_service_file(host)
 
-        part1 = config_string.split('--redis.password=')[0]
-        part2 = config_string.split('--redis.password=')[1]
-        part2 = '\n' + part2.split('\n', 1)[1]
-
-        new_config_string = '{}--redis.password={}{}'.format(part1, credentials['password'], part2)
-        self.overwrite_config_file(host, new_config_string)
+        password_begin_in_config = config_string.split('--redis.password=')[1]
+        original_password = password_begin_in_config.split('\n', 1)[0]
+        if original_password != "":
+            new_config = config_string.replace(original_password, credentials['password'])
+        else:
+            new_config = config_string.replace('--redis.password=', '--redis.password=' + credentials['password'])
+        self.overwrite_config_file(host, new_config)
 
     def _change_address(self, host, address=None):
         config_string = self.get_service_file(host)
 
-        part1 = config_string.split('--redis.addr=')[0]
-        part2 = config_string.split('--redis.addr=')[1]
-        part2 = ' --' + part2.split('--', 1)[1]
-
-        new_config_string = '{}--redis.addr=redis://{}:6379{}'.format(part1, host.address, part2)
+        address_begin_in_config = config_string.split('--redis.addr=')[1]
+        original_address = address_begin_in_config.split('--', 1)[0]
+        new_config_string = config_string.replace(original_address, 'redis://{}:6379 '.format(host.address))
         self.overwrite_config_file(host, new_config_string)
 
 
@@ -163,21 +162,22 @@ class MongoDBExporter(Exporter):
     def _change_address(self, host, address=None):
         config_string = self.get_service_file(host)
 
-        part1 = config_string.split('@')[0]
-        part2 = config_string.split('@')[1]
-        part2 = ' --' + part2.split('--', 1)[1]
+        address_begin_in_config = config_string.split('@')[1]
+        original_address = address_begin_in_config.split('--', 1)[0]
 
-        new_config_string = '{}@{}:27017/admin{}'.format(part1, host.address, part2)
+        LOG.debug('Original address: %s', original_address)
+
+        new_config_string = config_string.replace(original_address, '{}:27017/admin '.format(host.address))
         self.overwrite_config_file(host, new_config_string)
 
     def _change_credentials(self, host, credentials):
         config_string = self.get_service_file(host)
 
-        part1 = config_string.split('mongodb://')[0]
-        part2 = config_string.split('mongodb://')[1]
-        part2 = '@' + part2.split('@', 1)[1]
+        credentials_begin_in_config = config_string.split('mongodb://')[1]
+        original_credentials = credentials_begin_in_config.split('@', 1)[0]
 
-        new_config_string = '{}mongodb://{}:{}{}'.format(part1, credentials['user'], credentials['password'], part2)
+        new_config_string = config_string.replace(
+            original_credentials, '{}:{}'.format(credentials['user'], credentials['password']))
         self.overwrite_config_file(host, new_config_string)
 
 
