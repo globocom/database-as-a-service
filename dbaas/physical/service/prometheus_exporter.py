@@ -21,11 +21,11 @@ class Exporter(object):
         self.restart_service(host)
 
     def change_credentials(self, host):
-        LOG.info("Changing password for Host %s", host.hostname)
+        LOG.info("Changing prometheus exporter password for Host %s", host.hostname)
         return self._change_credentials(host, self.get_infra_credentials_from_host(host))
 
     def change_address(self, host, address=None):
-        LOG.info("Changing address for Host %s", host.hostname)
+        LOG.info("Changing prometheus exporter address for Host %s", host.hostname)
         return self._change_address(host, address)
 
     def get_infra_credentials_from_host(self, host):
@@ -37,7 +37,7 @@ class Exporter(object):
         return self._overwrite_config(host, new_config_string)
 
     def restart_service(self, host):
-        LOG.info('Restarting service for Host %s', host.hostname)
+        LOG.info('Restarting prometheus exporter service for Host %s', host.hostname)
         return self._restart_service(host)
 
     @property
@@ -45,7 +45,7 @@ class Exporter(object):
         return 'cat {}'.format(self.exporter_path)
 
     def get_service_file(self, host):
-        LOG.info('Getting service file for Host %s', host.hostname)
+        LOG.info('Getting prometheus exporter service file for Host %s', host.hostname)
         return self._get_service_file(host)
 
     def _change_credentials(self, host, credentials):
@@ -72,7 +72,7 @@ class Exporter(object):
         host.ssh.run_script('mv {} {}-backup-{}'.format(
             self.exporter_path, self.exporter_path, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
 
-        LOG.info('Moving temp config file as main config file for Host %s', host.hostname)
+        LOG.info('Moving prometheus temp config file as main config file for Host %s', host.hostname)
         host.ssh.run_script('mv {} {}'.format('/tmp/new_config.service', self.exporter_path))
 
         return True

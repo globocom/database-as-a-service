@@ -6,7 +6,7 @@ LOG = logging.getLogger(__name__)
 
 
 def get_exporter(databaseinfra):  # instancia a classe de exporter correta de acordo com a engine da infra
-    LOG.info("Returning correct exporter instance for infra %s", databaseinfra.name)
+    LOG.info("Returning correct prometheus exporter instance for infra %s", databaseinfra.name)
 
     if 'redis' in databaseinfra.engine_name.lower():
         return RedisExporter(databaseinfra.environment)
@@ -15,4 +15,4 @@ def get_exporter(databaseinfra):  # instancia a classe de exporter correta de ac
     elif 'mysql' in databaseinfra.engine_name.lower():
         return MySQLExporter(databaseinfra.environment)
 
-    raise NotImplementedError('Exporter for infra engine not implemented')
+    raise NotImplementedError('Prometheus Exporter for infra engine not implemented')
