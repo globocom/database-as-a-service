@@ -154,6 +154,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
+    'dbaas.middleware.DeployMiddleware',
     'dbaas.middleware.AutoLogout',
     'dbaas.middleware.UserMiddleware',
 )

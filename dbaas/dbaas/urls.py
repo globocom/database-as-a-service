@@ -8,6 +8,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
 
+from dbaas.views import DeployView
 
 admin.autodiscover()
 
@@ -26,6 +27,7 @@ urlpatterns = patterns(
     url(r'^notification/', include('notification.urls'), name="notification"),
     url(r'^ckeditor/', include('ckeditor.urls')),
     url(r'^physical/', include('physical.urls')),
+    url(r'^deploy/', DeployView.as_view(), name='deploy'),
 )
 
 if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
