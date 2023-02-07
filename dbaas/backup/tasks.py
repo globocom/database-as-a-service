@@ -104,7 +104,8 @@ def make_instance_snapshot_backup(instance, error, group,
     snapshot = Snapshot.create(
         instance, group,
         target_volume or provider.volume,
-        environment=provider.environment
+        environment=provider.environment,
+        persistent=True if persist != 0 else False
     )
 
     snapshot_final_status = Snapshot.SUCCESS
@@ -688,6 +689,13 @@ def validate_create_backup(database, task, automatic, current_hour, force=False,
         task.set_status_warning(error, database)
         return True
 
+    LOG.info('Searcing for SUCCESSFUL PERSISTENT today backups for database %s', database)
+    infras_with_backup_persisted_today = _get_infras_with_persisted_backup_today()
+    if database.infra in infras_with_backup_persisted_today and not automatic and force:
+        warning = 'There is already a persisted backup for this database done today'
+        LOG.warning(warning)
+        return False
+
     task.add_detail('{} - Starting database {} backup'.format(
         strftime("%d/%m/%Y %H:%M:%S"),
         database))
@@ -784,6 +792,18 @@ def _get_infras_with_backup_today():
         instances__backup_instance__end_at__year=current_time.year,
         instances__backup_instance__end_at__month=current_time.month,
         instances__backup_instance__end_at__day=current_time.day).distinct()
+    return infras_with_backup_today
+
+
+def _get_infras_with_persisted_backup_today():
+    current_time = datetime.now()
+    infras_with_backup_today = DatabaseInfra.objects.filter(
+        instances__backup_instance__status=Snapshot.SUCCESS,
+        instances__backup_instance__purge_at=None,
+        instances__backup_instance__end_at__year=current_time.year,
+        instances__backup_instance__end_at__month=current_time.month,
+        instances__backup_instance__end_at__day=current_time.day,
+        instances__backup_instance__persistent=True).distinct()
     return infras_with_backup_today
 
 
