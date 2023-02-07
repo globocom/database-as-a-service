@@ -21,10 +21,12 @@ class Exporter(object):
         self.restart_service(host)
 
     def change_credentials(self, host):
+        # Changes only the credentials for the exporter (user and password) and doesn't touch the remaining configs
         LOG.info("Changing prometheus exporter password for Host %s", host.hostname)
         return self._change_credentials(host, self.get_infra_credentials_from_host(host))
 
     def change_address(self, host, address=None):
+        # Changes only the address for the exporter (localhost, 0.0.0.0) and doesn't touch the remaining configs
         LOG.info("Changing prometheus exporter address for Host %s", host.hostname)
         return self._change_address(host, address)
 
@@ -79,6 +81,20 @@ class Exporter(object):
 
 
 class RedisExporter(Exporter):
+    """
+    Config file example:
+
+    [Unit]
+    Description=Redis Exporter
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/prometheus/redis_exporter --debug --redis.addr=redis://0.0.0.0:6379 --redis.password=1234
+
+    [Install]
+    WantedBy=multi-user.target
+    """
     def __init__(self, project):
         super(RedisExporter, self).__init__(
             path='/etc/systemd/system/redis_exporter.service',
@@ -113,6 +129,20 @@ class RedisExporter(Exporter):
 
 
 class MongoDBExporter(Exporter):
+    """
+    Config file example:
+
+    [Unit]
+    Description=Mongodb Exporter
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/prometheus/mongodb_exporter --mongodb.uri=mongodb://admin:pass@0.0.0.0:27017/admin
+
+    [Install]
+    WantedBy=multi-user.target
+    """
     def __init__(self, project):
         credential = Credential.get_credentials(
             environment=project,
@@ -152,6 +182,13 @@ class MongoDBExporter(Exporter):
 
 
 class MySQLExporter(Exporter):
+    """
+    Config file example:
+
+    [client]
+    user=root
+    password=123456
+    """
     def __init__(self, project):
         credential = Credential.get_credentials(
             environment=project,
