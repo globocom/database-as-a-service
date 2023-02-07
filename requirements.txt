@@ -1,6 +1,6 @@
 
 python-faasclient==0.3.3
-cryptography==2.6
+cryptography==39.0.1
 pbr==1.10.0
 python-foreman==0.2.1
 positional==1.1.1
@@ -38,7 +38,7 @@ cffi==1.14.6
 click==3.3
 colored==1.2.1
 coverage==3.6
-cryptography==2.6
+cryptography==39.0.1
 dargparse==0.2.5
 dbaas-aclapi==1.0.14
 dbaas-cloudstack==0.9.12
