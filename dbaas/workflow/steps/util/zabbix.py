@@ -18,6 +18,11 @@ class ZabbixStep(BaseInstanceStep):
         return Credential.get_credentials(self.environment, integration)
 
     @property
+    def credentials_ro(self):
+        integration = CredentialType.objects.get(type=CredentialType.ZABBIX_READ_ONLY)
+        return Credential.get_credentials(self.environment, integration)
+
+    @property
     def can_run(self):
         try:
             _ = self.credentials
@@ -50,6 +55,22 @@ class ZabbixStep(BaseInstanceStep):
         return self.provider
 
     @property
+    def zabbix_provider_ro(self):
+        if not self.provider:
+            infra = self.infra
+            if self.plan != self.target_plan:
+                infra = copy.deepcopy(self.infra)
+                target_plan = self.target_plan
+                infra.plan = target_plan
+                infra.engine = target_plan.engine
+                infra.engine_patch = target_plan.engine.default_engine_patch
+            self.provider = factory_for(
+                databaseinfra=infra,
+                credentials=self.credentials_ro
+            )
+        return self.provider
+
+    @property
     def hosts_in_zabbix(self):
         if self.zabbix_provider.using_agent:
             monitors = []
@@ -67,6 +88,17 @@ class ZabbixStep(BaseInstanceStep):
         return monitors
 
     @property
+    def get_all_hosts_monitor_in_zabbix(self):
+        hostname = self.instance.hostname.hostname
+        host_list = list()
+        if not hostname.replace('.', '').isdigit():
+            list_hosts_in_zabbix = eval(
+                str(self.zabbix_provider_ro.api.host.get(search={'host': hostname.replace('.globoi.com', '')})))
+            for h in list_hosts_in_zabbix:
+                host_list.append(h['name'])
+        return host_list
+
+    @property
     def target_plan(self):
         return self.plan
 
@@ -79,6 +111,44 @@ class ZabbixStep(BaseInstanceStep):
 
     def undo(self):
         pass
+
+
+class DisableMonitors(ZabbixStep):
+
+    def __unicode__(self):
+        return "Disabling zabbix monitors..."
+
+    def disable_monitors(self):
+        hosts = self.get_all_hosts_monitor_in_zabbix
+        for h in hosts:
+            self.zabbix_provider.api.globo.disableMonitors(h)
+
+    def do(self):
+        hostname = self.instance.dns
+        if 'redis_sentinel' in self.infra.get_driver().topology_name():
+            if 'redis' in hostname:
+                self.disable_monitors()
+        else:
+            self.disable_monitors()
+
+
+class EnableMonitors(ZabbixStep):
+
+    def __unicode__(self):
+        return "Enabling zabbix monitors..."
+
+    def enable_monitors(self):
+        hosts = self.get_all_hosts_monitor_in_zabbix
+        for h in hosts:
+            self.zabbix_provider.api.globo.enableMonitors(h)
+
+    def do(self):
+        hostname = self.instance.dns
+        if 'redis_sentinel' in self.infra.get_driver().topology_name():
+            if 'redis' in hostname:
+                self.enable_monitors()
+        else:
+            self.enable_monitors()
 
 
 class DestroyAlarms(ZabbixStep):
