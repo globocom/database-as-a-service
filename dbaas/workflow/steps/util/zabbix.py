@@ -10,7 +10,8 @@ class ZabbixStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(ZabbixStep, self).__init__(instance)
-        self.provider = None
+        self.provider_write = None
+        self.provider_read = None
 
     @property
     def credentials(self):
@@ -40,7 +41,7 @@ class ZabbixStep(BaseInstanceStep):
 
     @property
     def zabbix_provider(self):
-        if not self.provider:
+        if not self.provider_write:
             infra = self.infra
             if self.plan != self.target_plan:
                 infra = copy.deepcopy(self.infra)
@@ -48,15 +49,15 @@ class ZabbixStep(BaseInstanceStep):
                 infra.plan = target_plan
                 infra.engine = target_plan.engine
                 infra.engine_patch = target_plan.engine.default_engine_patch
-            self.provider = factory_for(
+            self.provider_write = factory_for(
                 databaseinfra=infra,
                 credentials=self.credentials
             )
-        return self.provider
+        return self.provider_write
 
     @property
     def zabbix_provider_ro(self):
-        if not self.provider:
+        if not self.provider_read:
             infra = self.infra
             if self.plan != self.target_plan:
                 infra = copy.deepcopy(self.infra)
@@ -64,11 +65,11 @@ class ZabbixStep(BaseInstanceStep):
                 infra.plan = target_plan
                 infra.engine = target_plan.engine
                 infra.engine_patch = target_plan.engine.default_engine_patch
-            self.provider = factory_for(
+            self.provider_read = factory_for(
                 databaseinfra=infra,
                 credentials=self.credentials_ro
             )
-        return self.provider
+        return self.provider_read
 
     @property
     def hosts_in_zabbix(self):
@@ -103,8 +104,13 @@ class ZabbixStep(BaseInstanceStep):
         return self.plan
 
     def __del__(self):
-        if self.provider:
-            self.zabbix_provider.logout()
+        try:
+            if self.provider_write:
+                self.zabbix_provider.logout()
+            if self.provider_read:
+                self.zabbix_provider_ro.logout()
+        except Exception as error:
+            pass
 
     def do(self):
         raise NotImplementedError
