@@ -209,14 +209,14 @@ class MySQLExporter(Exporter):
     def _change_credentials(self, host, credentials):
         config_string = self.get_service_file(host)
 
-        part1_user = config_string.split('user=')[0]
-        part2_user = config_string.split('user=')[1]
-        part2_user = '\n' + part2_user.split('\n', 1)[1]
+        user_begin_in_config = config_string.split('user=')[1]
+        original_user = user_begin_in_config.split('\n', 1)[0]
 
-        new_config_string = '{}user={}{}'.format(part1_user, credentials['user'], part2_user)
+        new_config_string = config_string.replace('user={}'.format(original_user),
+                                                  'user={}'.format(credentials['user']))
 
-        part1_pw = new_config_string.split('password=')[0]
-
-        new_config_string = '{}password={}'.format(part1_pw, credentials['password'])
+        original_password = new_config_string.split('password=')[1]
+        new_config_string = new_config_string.replace('password={}'.format(original_password),
+                                                      'password={}'.format(credentials['password']))
 
         self.overwrite_config_file(host, new_config_string)
