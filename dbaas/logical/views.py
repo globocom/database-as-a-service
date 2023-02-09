@@ -2361,7 +2361,7 @@ def database_migrate(request, context, database):
     all_env = find_environments()
     filter_plan = find_plans(engine, topology.details, topology)
     plan_env = find_plan_environments()
-    filter_env = filter_env_avaliable(all_env, filter_plan, plan_env)
+    filter_env = filter_env_avaliable(all_env, filter_plan, plan_env, environment.name)
 
     regions = return_all_available_regions(filter_env, environment.id, current_offering.id)
     context['regions'] = regions
@@ -2409,6 +2409,18 @@ def find_environments():
 
 
 def find_plans(engine, topology_details, topology):
+
+    # Casting variables
+    engine = str(engine)
+    topology_details = str(topology_details)
+    topology = str(topology)
+
+    if 'no' in topology_details.lower():
+        filtered_env_type = 'standalone'
+    else:
+        topolog = topology_details.split(":")[1].strip().lower()
+        filtered_env_type = topolog.replace(' ', '').replace('-', '') if '-' in topolog else topolog
+
     # Database search for all physical plans available in the DBaaS
     cursor = mysql_connection()
     cursor.execute("SELECT id, name FROM physical_plan")
@@ -2422,6 +2434,12 @@ def find_plans(engine, topology_details, topology):
     ]
 
     # Filtered list of available environments according to current environment
+    plan_data = [
+        p
+        for p in plan
+        if filtered_env_type in p.get('name', '').lower().replace(' ', '')
+    ]
+
     plan_data = []
     for p in plan:
         if 'no' in str(topology_details).lower():
@@ -2433,7 +2451,7 @@ def find_plans(engine, topology_details, topology):
 
     # Formatted engine version
     engine_version = ''
-    for top in str(topology):
+    for top in topology:
         if top.isdigit():
             engine_version = engine_version + top
 
@@ -2459,7 +2477,16 @@ def find_plan_environments():
     return plan_env_data
 
 
-def filter_env_avaliable(all_env, filter_plan, plan_env):
+def filter_env_avaliable(all_env, filter_plan, plan_env, current_env):
+    # Check which environment belongs
+    tsuru = False
+    if 'tsuru' in current_env:
+        tsuru = True
+
+    prod = False
+    if 'prod' in current_env:
+        prod = True
+
     # Filtered physical plan with correlated physical plan
     filter_plan_env = [
         {
@@ -2473,7 +2500,7 @@ def filter_env_avaliable(all_env, filter_plan, plan_env):
     ]
 
     # Returning a list of filtered environments with correlated physical plan filtered
-    filter_env_raw = [
+    filter_env_plan = [
         {
             'environment': env['name'],
             'env_id': env['id']
@@ -2482,7 +2509,31 @@ def filter_env_avaliable(all_env, filter_plan, plan_env):
         for env in all_env
         if fil['env_id'] == env['id']
     ]
-    return filter_env_raw
+
+    #
+    filtered_env_env = []
+    for env_raw in filter_env_plan:
+        if tsuru and 'tsuru' in env_raw['environment']:
+            filtered_env_env.append(env_raw)
+        elif tsuru and 'tsuru' not in env_raw['environment']:
+            pass
+        elif not tsuru and 'tsuru' in env_raw['environment']:
+            pass
+        else:
+            filtered_env_env.append(env_raw)
+
+    final_filtered_env = []
+    for filtered_env in filtered_env_env:
+        if prod and 'prod' in filtered_env['environment']:
+            final_filtered_env.append(filtered_env)
+        elif prod and 'prod' not in filtered_env['environment']:
+            pass
+        elif not prod and 'prod' in filtered_env['environment']:
+            pass
+        else:
+            final_filtered_env.append(filtered_env)
+
+    return final_filtered_env
 
 
 def return_all_available_regions(filter_env, current_env_id, current_offer_id):
