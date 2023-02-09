@@ -16,7 +16,7 @@ def task_start_database_vm(database, task, retry_from=None):
         steps = get_start_database_vm_settings(topology_path)
 
         since_step = retry_from.current_step if retry_from else None
-        instances_to_start_database_vm = database.infra.get_driver().get_database_instances()
+        instances_to_start_database_vm = database.infra.instances.all()
         if steps_for_instances(
                 steps, instances_to_start_database_vm, task, start_database_vm.update_step, since_step=since_step
         ):

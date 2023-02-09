@@ -717,7 +717,7 @@ class BaseTopology(object):
     def get_stop_database_vm_steps(self):
         return [{
             'Disable monitoring and check replication': (
-                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.zabbix.DisableMonitors',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.database.checkAndFixMySQLReplication',
             )}, {
@@ -747,7 +747,7 @@ class BaseTopology(object):
             )}, {
             'Enable alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.zabbix.EnableMonitors',
             )
         }]
 

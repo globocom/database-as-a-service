@@ -52,8 +52,6 @@ class DatabaseStopDatabaseVMAdmin(DatabaseMaintenanceTaskAdmin):
                 name="stop_database_vm_retry"
             ),
         )
-        print(base)
-        print(admin)
         return admin + base
 
     def retry_view(self, request, stop_database_vm_id):
