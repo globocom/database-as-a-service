@@ -4,6 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
+from physical.factories.prometheus_exporter_factory import get_exporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
@@ -1071,6 +1072,23 @@ class MakeSnapshot(DatabaseStep):
             LOG.error('Error when creating snapshot: %s', e)
             task.set_error()
             raise e
+
+
+class ConfigurePrometheusMonitoring(DatabaseStep):
+    def __unicode__(self):
+        return "Configuring Database Prometheus exporters..."
+
+    def do(self):
+        try:
+            LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
+            exporter = get_exporter(self.infra)
+            exporter.configure_host_exporter(self.instance.hostname)
+        except Exception as e:
+            LOG.error('Failed to configure prometheus for host %s', self.instance.hostname)
+            LOG.error(e)
+
+    def undo(self):
+        pass
 
 
 class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):

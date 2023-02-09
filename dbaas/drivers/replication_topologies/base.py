@@ -251,6 +251,7 @@ class BaseTopology(object):
             'workflow.steps.util.acl.BindNewInstance',
             'workflow.steps.util.zabbix.CreateAlarms',
             'workflow.steps.util.db_monitor.CreateMonitoring',
+            'workflow.steps.util.database.ConfigurePrometheusMonitoring'
         )
 
     def get_add_database_instances_middle_steps(self):
@@ -393,6 +394,7 @@ class BaseTopology(object):
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             ),
         }]
 
@@ -717,7 +719,7 @@ class BaseTopology(object):
     def get_stop_database_vm_steps(self):
         return [{
             'Disable monitoring and check replication': (
-                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.zabbix.DisableMonitors',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.database.checkAndFixMySQLReplication',
             )}, {
@@ -747,7 +749,7 @@ class BaseTopology(object):
             )}, {
             'Enable alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.zabbix.EnableMonitors',
             )
         }]
 
