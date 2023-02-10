@@ -767,9 +767,6 @@ def database_metrics(request, context, database):
     datasource = credential.get_parameter_by_name('environment')
     environment_type = credential.get_parameter_by_name('environment_type')
 
-    prometheus_node_dashboard = get_prometheus_grafana_url_for_environment_type(
-        'prometheus_node_grafana_dashboard', environment_type)
-
     if database.engine.is_mysql:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mysql_grafana_dashboard')
         prometheus_engine_dashboard = get_prometheus_grafana_url_for_environment_type(
@@ -813,21 +810,15 @@ def database_metrics(request, context, database):
     if 'globoi.com' in hostname:
         hostname = hostname.split('.')[0]
 
-    prometheus_url_node = "{}{}?var-name={}".format(
-        credential.endpoint,
-        prometheus_node_dashboard,
-        hostname
-    )
-    context['prometheus_url_node'] = prometheus_url_node
-
-    grafana_url_prometheus_db = "{}{}?var-{}={}:{}".format(
+    grafana_url_prometheus_db = "{}{}?var-{}={}:{}&var-name={}".format(
         credential.endpoint,
         prometheus_engine_dashboard,
         prometheus_var,
         instance.address,
-        prometheus_scraper_port
+        prometheus_scraper_port,
+        hostname
     )
-    context['prometheus_url_db'] = grafana_url_prometheus_db
+    context['grafana_url_prometheus'] = grafana_url_prometheus_db
 
     return render_to_response("logical/database/details/metrics_tab.html", context, RequestContext(request))
 
