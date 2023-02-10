@@ -751,6 +751,31 @@ class DatabaseClone(DatabaseMaintenanceTask):
         super(DatabaseClone, self).update_step(step, step_class)
 
 
+class DatabaseQuarantine(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History", null=False, unique=False, related_name="databases_quarantine"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_quarantine', null=True, blank=True, on_delete=models.SET_NULL
+    )
+    name = models.CharField(max_length=200)
+    user = models.CharField(max_length=200)
+    undo = models.BooleanField(null=False, blank=False)
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_quarantine')
+    started = models.DateTimeField(verbose_name=_("started_at"), null=True)
+    finished = models.DateTimeField(verbose_name=_("finished_at"), null=True)
+
+    def __unicode__(self):
+        return "Quarantine status {}".format(self.undo)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def save(self, *args, **kwargs):
+        super(DatabaseQuarantine, self).save(*args, **kwargs)
+
+
 class DatabaseDestroy(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
