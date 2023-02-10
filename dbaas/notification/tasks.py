@@ -6,7 +6,6 @@ import traceback
 
 from celery.utils.log import get_task_logger
 from django.db.models import Sum, Count, Q
-from django.shortcuts import get_object_or_404
 from simple_audit.models import AuditRequest
 
 from account.models import User
@@ -88,18 +87,14 @@ def create_database(
     subscribe_to_email_events, is_protected, user, retry_from, **kw
 ):
     task = TaskHistory.register(
-        request=self.request, task_history=task, user=user,
-        worker_name=get_worker_name()
+        request=self.request, task_history=task, user=user, worker_name=get_worker_name()
     )
     topology_path = plan.replication_topology.class_path
 
     name = slugify(name)
     pool_name = kw.get('pool')
     if pool_name:
-        pool = Pool.objects.get(
-            name=pool_name,
-            environment=environment
-        )
+        pool = Pool.objects.get(name=pool_name, environment=environment)
     else:
         pool = None
     base_name = gen_infra_names(name, 0)
@@ -124,26 +119,24 @@ def create_database(
     database_create.pool = pool
     database_create.save()
 
-    try:
-        database = get_object_or_404(Database, name=name)
-        if database.is_in_quarantine:
+    database = Database.objects.filter(name=name)
+    if len(database) > 0:
+        if database[0].is_in_quarantine:
             database_create.set_error()
             task.set_status_error(
-                'Could not create database\n'
-                'Database already exists, but there is in quarantine\n'
-                'If you would like full delete this database, contact DBaaS team in Slack.'
+                "Could not create database.\n"
+                "Database already exists, and is in quarantine.\n"
+                "If you'd like to destroy this existent database, contact DBaaS team in Slack."
             )
             return
         else:
             database_create.set_error()
             task.set_status_error(
-                'Could not create database.\n'
-                'Database already exists.\n'
-                'If you would like know more informations about it, contact DBaaS team in Slack.'
+                "Could not create database.\n"
+                "Database already exists.\n"
+                "If you'd like to know more about it, contact DBaaS team in Slack."
             )
             return
-    except:
-        pass
 
     steps = get_deploy_settings(topology_path)
 
