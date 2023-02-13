@@ -195,3 +195,10 @@ class HostSSH(object):
 
                 LOG.warning("We caught an exception: {} .".format(err))
                 sleep(interval)
+
+    @connect_host
+    def create_temp_file(self, file_name, content):
+        ftp = self.client.open_sftp()
+        ftp.get_channel().settimeout(600)
+        ftp.putfo(BytesIO(content.encode()), '/tmp/{}'.format(file_name))
+        ftp.close()

@@ -63,6 +63,8 @@ class BackupInfo(BaseModel):
         unique=False, null=True, blank=True, on_delete=models.SET_NULL
     )
 
+    persistent = models.BooleanField(default=False)
+
     def __unicode__(self):
         return "{} from {} started at {}".format(
             self.type, self.database_name, self.start_at
@@ -89,7 +91,7 @@ class BackupInfo(BaseModel):
         self.save()
 
     @classmethod
-    def create(cls, instance, group, volume, environment=None):
+    def create(cls, instance, group, volume, environment=None, persistent=False):
         if environment is None:
             environment = instance.databaseinfra.environment
 
@@ -102,6 +104,7 @@ class BackupInfo(BaseModel):
         snapshot.group = group
         snapshot.database_name = instance.databaseinfra.databases.first().name
         snapshot.volume = volume
+        snapshot.persistent = persistent
         snapshot.save()
         return snapshot
 

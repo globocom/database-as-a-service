@@ -198,6 +198,7 @@ class MySQLSingle(BaseMysql):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -587,6 +588,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.CreateAlarmsVip',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -1153,6 +1155,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
 
@@ -1883,6 +1886,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.mysql.CreateAlarmsVip',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Check Vip': (
                 'workflow.steps.util.vip_provider.WaitVipReady',
@@ -2466,6 +2470,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
                 )
             }]
 
