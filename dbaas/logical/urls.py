@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention
+from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention, send_all_chg
 from .views import (CredentialView, CredentialSSLView,
                     credential_parameter_by_name, check_offering_sizes)
 
@@ -21,6 +21,9 @@ urlpatterns = patterns(
     url(r"^toggle_monitoring/(?P<database_id>\d*)$",
         toggle_monitoring,
         name="toggle_monitoring"),
+    url(r"^set_attention/(?P<database_id>\d*)$",
+        send_all_chg,
+        name="marked_to_send_all_changes_to_service_now"),
     url(r"^set_attention/(?P<database_id>\d*)$",
         set_attention,
         name="attention_with_gcp_settings_divergence"),
