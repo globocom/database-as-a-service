@@ -119,9 +119,9 @@ def create_database(
     database_create.pool = pool
     database_create.save()
 
-    database = Database.objects.filter(name=name)
-    if len(database) > 0:
-        if database[0].is_in_quarantine:
+    database = Database.objects.filter(name=name).first()
+    if database:
+        if database.is_in_quarantine:
             database_create.set_error()
             task.set_status_error(
                 "Could not create database.\n"
