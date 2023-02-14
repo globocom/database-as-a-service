@@ -14,7 +14,11 @@ def task_stop_database_vm(database, task, retry_from=None):
         if 'mysql' in database.infra.engine.name.lower():
             database_instance_master = DatabaseStopVMInstanceMaster()
             database_instance_master.database_stop = stop_database_vm
-            database_instance_master.master = database.infra.get_driver().get_master_instance()
+            if retry_from:
+                database_instance_master.master = DatabaseStopVMInstanceMaster.objects.get(
+                    database_stop=retry_from).master
+            else:
+                database_instance_master.master = database.infra.get_driver().get_master_instance()
             database_instance_master.save()
 
         topology_path = database.plan.replication_topology.class_path
