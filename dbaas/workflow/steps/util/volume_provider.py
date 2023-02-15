@@ -521,10 +521,10 @@ class VolumeProviderBase(BaseInstanceStep):
         if command:
             self.host.ssh.run_script(command)
 
-    def update_team_labels_disks(self, volume, team_name):
+    def update_team_labels_disks(self, vm_name, team_name):
         url = "{}volume/update_labels".format(self.base_uri)
         data = {
-            "volume_identifier": volume,
+            "vm_name": vm_name,
             "team_name": team_name
         }
         response = post(url, json=data, headers=self.headers)
@@ -544,7 +544,9 @@ class UpdateTeamLabelsDisks(VolumeProviderBase):
         return "Updating Team Labels in All Disks..."
 
     def do(self):
-        updated = self.update_team_labels_disks(self.volume.identifier, self.team_name)
+        hostname = self.host.hostname
+        hostname = str(hostname.replace('.globoi.com', ''))
+        updated = self.update_team_labels_disks(hostname, self.team_name)
         if not updated:
             raise EnvironmentError("Error in update Team Labels")
 
