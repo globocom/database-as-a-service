@@ -262,18 +262,51 @@ def get_is_button_start_stop_disabled(start_database, stop_database):
         return ''
 
 
+def check_change_team_labels(new_team, old_team, database):
+    status = True
+    try:
+        if new_team and new_team != old_team.id:
+            database.team = Team.objects.get(id=new_team)
+            database.save()
+            status, msg = database.update_team_labels()
+        else:
+            msg = 'Team has not changed'
+    except Exception as error:
+        status = False
+        msg = 'Error in update team labels in GCP: {}'.format(str(error))
+    LOG.info(msg)
+    return status, msg
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':
-        form = DatabaseDetailsForm(request.POST or None, instance=database)
-        if form.is_valid():
-            form.save()
+        new_team = request.POST.get('team') or None
+        old_team = database.team
+        status, msg_update = check_change_team_labels(new_team, old_team, database)
+        if status:
+            form = DatabaseDetailsForm(request.POST or None, instance=database)
+            if form.is_valid():
+                form.save()
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'The database "{}" was changed successfully'.format(database)
+                )
+                return HttpResponseRedirect(
+                    reverse('admin:logical_database_changelist')
+                )
+        else:
             messages.add_message(
-                request, messages.SUCCESS, 'The database "{}" was changed successfully'.format(database)
+                request, messages.ERROR,
+                'Error in update team labels in gce "{}"'.format(msg_update)
             )
-            return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
-
-    engine = '{}_{}'.format(database.engine.name, database.databaseinfra.engine_patch.full_version)
+            return HttpResponseRedirect(
+                reverse('admin:logical_database_changelist')
+            )
+    engine = '{}_{}'.format(
+        database.engine.name,
+        database.databaseinfra.engine_patch.full_version
+    )
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
@@ -403,6 +436,7 @@ def database_credentials(request, context, database):
 
 
 def database_configure_ssl(request, context, database):
+
     can_do_configure_ssl, error = database.can_do_configure_ssl()
 
     if not can_do_configure_ssl:
@@ -494,7 +528,6 @@ def database_set_ssl_not_required_retry(request, context=None, database=None, id
             error = "Database does not have set SSL not required task!"
         elif not last_configure_ssl.is_status_error:
             error = "Cannot do retry, last set SSL not required status is '{}'!".format(
-
                 last_configure_ssl.get_status_display()
             )
         else:
@@ -767,9 +800,6 @@ def database_metrics(request, context, database):
     datasource = credential.get_parameter_by_name('environment')
     environment_type = credential.get_parameter_by_name('environment_type')
 
-    prometheus_node_dashboard = get_prometheus_grafana_url_for_environment_type(
-        'prometheus_node_grafana_dashboard', environment_type)
-
     if database.engine.is_mysql:
         zabbix_engine_dashboard = Configuration.get_by_name('zabbix_mysql_grafana_dashboard')
         prometheus_engine_dashboard = get_prometheus_grafana_url_for_environment_type(
@@ -813,21 +843,15 @@ def database_metrics(request, context, database):
     if 'globoi.com' in hostname:
         hostname = hostname.split('.')[0]
 
-    prometheus_url_node = "{}{}?var-name={}".format(
-        credential.endpoint,
-        prometheus_node_dashboard,
-        hostname
-    )
-    context['prometheus_url_node'] = prometheus_url_node
-
-    grafana_url_prometheus_db = "{}{}?var-{}={}:{}".format(
+    grafana_url_prometheus_db = "{}{}?var-{}={}:{}&var-name={}".format(
         credential.endpoint,
         prometheus_engine_dashboard,
         prometheus_var,
         instance.address,
-        prometheus_scraper_port
+        prometheus_scraper_port,
+        hostname
     )
-    context['prometheus_url_db'] = grafana_url_prometheus_db
+    context['grafana_url_prometheus'] = grafana_url_prometheus_db
 
     return render_to_response("logical/database/details/metrics_tab.html", context, RequestContext(request))
 
@@ -2359,11 +2383,11 @@ def database_migrate(request, context, database):
     context['current_engine'] = full_engine
 
     all_env = find_environments()
-    filter_plan = find_plans(engine, topology.details, topology)
-    plan_env = find_plan_environments()
-    filter_env = filter_env_avaliable(all_env, filter_plan, plan_env)
+    plans_available = find_plans(str(engine), str(topology.details), str(topology))
+    plan_from_to_env = find_plans_environments()
+    filtered_env = filtered_env_avaliable(all_env, plans_available, plan_from_to_env, environment.name)
 
-    regions = return_all_available_regions(filter_env, environment.id, current_offering.id)
+    regions = return_all_available_regions(filtered_env, environment.id, current_offering.id)
     context['regions'] = regions
     context.update(**stage_info)
 
@@ -2395,7 +2419,10 @@ def dictfetchall(cursor):
 
 
 def find_environments():
-    # Database search for all environment available in the DBaaS
+    """
+    Searches for all environment available in the DBaaS
+    :return: List -> for example [{'id': 1, 'name': 'dev-gcp-hdg-sa-east1'}, {...}]
+    """
     cursor = mysql_connection()
     cursor.execute("SELECT id, name FROM physical_environment")
     raw_data = dictfetchall(cursor)
@@ -2409,6 +2436,21 @@ def find_environments():
 
 
 def find_plans(engine, topology_details, topology):
+    """
+    Searches for all plans compatible with the current configuration of the database to be migrated
+    :param engine: String -> for example 'mongodb_4.2.3'
+    :param topology_details: String -> for example 'HA: ReplicaSet'
+    :param topology: String -> for example 'MongoDB Single 4.2 GCP'
+    :return: List -> for example [{'id': 1, 'name': 'Redis Cluster 5.0 - dev-gcp-tsuru-us-east1'}, {...}]
+    """
+
+    # Formatted topology details
+    if 'no' in topology_details.lower():
+        filtered_env_type = 'standalone'
+    else:
+        topolog = topology_details.split(":")[1].strip().lower()
+        filtered_env_type = topolog.replace(' ', '').replace('-', '') if '-' in topolog else topolog
+
     # Database search for all physical plans available in the DBaaS
     cursor = mysql_connection()
     cursor.execute("SELECT id, name FROM physical_plan")
@@ -2422,22 +2464,19 @@ def find_plans(engine, topology_details, topology):
     ]
 
     # Filtered list of available environments according to current environment
-    plan_data = []
-    for p in plan:
-        if 'no' in str(topology_details).lower():
-            if 'ha' not in p.get('name', '').lower():
-                plan_data.append(p)
-        else:
-            if 'ha' in p.get('name', '').lower():
-                plan_data.append(p)
+    plan_data = [
+        p
+        for p in plan
+        if filtered_env_type in p.get('name', '').lower().replace(' ', '')
+    ]
 
     # Formatted engine version
     engine_version = ''
-    for top in str(topology):
+    for top in topology:
         if top.isdigit():
             engine_version = engine_version + top
 
-    # Final datas filtered and returning a list of all physical plans available
+    # Final datas filtered and returning all physical plans available and compatible with the database to migrated
     filter_plan = [
         plan
         for plan in plan_data
@@ -2446,8 +2485,11 @@ def find_plans(engine, topology_details, topology):
     return filter_plan
 
 
-def find_plan_environments():
-    # Database search for physical plans correlated with environments in the DBaaS
+def find_plans_environments():
+    """
+    Searches for all relationship between plan and environment
+    :return: List -> for example [{'plan_id': 1, 'environment_id': 5}, {...}]
+    """
     cursor = mysql_connection()
     cursor.execute("SELECT plan_id, environment_id FROM physical_plan_environments")
     raw_data = dictfetchall(cursor)
@@ -2459,43 +2501,81 @@ def find_plan_environments():
     return plan_env_data
 
 
-def filter_env_avaliable(all_env, filter_plan, plan_env):
-    # Filtered physical plan with correlated physical plan
-    filter_plan_env = [
+def filtered_env_avaliable(all_env, plans_available, plan_from_to_env, current_env):
+    """
+    Function that returns a list of all available environments.
+    For this, all available planes are correlated with all relations of planes and environments.
+    In addition, it filters the type of environment and the location where the database belongs.
+    :param all_env: List -> for example [{'id': 1, 'name': 'dev-gcp-tsuru-sa-east1'}, {...}]
+    :param plans_available: List -> for example [{'id': 1, 'name': 'MongoDB Standalone 4.2 - dev-gcp-hdg-sa-east1'}, {...}]
+    :param plan_from_to_env: List -> for example [{'plan_id': 1, 'environment_id': 5}, {...}]
+    :param current_env: String -> for example 'dev-gcp-hdg-us-east1'
+    :return: List -> for example [{'environment': 'dev-gcp-hdg-us-east1', 'env_id': 1}, {...}]
+    """
+    # Check the type of environment
+    tsuru = False
+    if 'tsuru' in current_env:
+        tsuru = True
+
+    # Check which environment belongs
+    prod = False
+    if 'prod' in current_env:
+        prod = True
+
+    # Filtered physical plan with available physical plans
+    filtered_plan_from_to_env = [
         {
             'plan_id': p_e['plan_id'],
             'plan_name': plan['name'],
             'env_id': p_e['environment_id']
         }
-        for p_e in plan_env
-        for plan in filter_plan
+        for p_e in plan_from_to_env
+        for plan in plans_available
         if plan["id"] == p_e["plan_id"]
     ]
 
-    # Returning a list of filtered environments with correlated physical plan filtered
-    filter_env_raw = [
+    # Returns a list of filtered envs. Correlates the final result of the list of available plans with all envs.
+    all_available_env_raw = [
         {
             'environment': env['name'],
             'env_id': env['id']
         }
-        for fil in filter_plan_env
+        for fil in filtered_plan_from_to_env
         for env in all_env
         if fil['env_id'] == env['id']
     ]
-    return filter_env_raw
+
+    # Filters the list of all available envs with the type of the current env.
+    filtered_available_env = []
+    for env_raw in all_available_env_raw:
+        if tsuru == ('tsuru' in env_raw['environment']):
+            filtered_available_env.append(env_raw)
+
+    # Filters the list of all available envs with the location the env belongs to.
+    list_filtered_env = []
+    for available_env_raw in filtered_available_env:
+        if prod == ('prod' in available_env_raw['environment']):
+            list_filtered_env.append(available_env_raw)
+
+    return list_filtered_env
 
 
-def return_all_available_regions(filter_env, current_env_id, current_offer_id):
-    # Returns a list of regions where it`s possible to migrate
-    # Correlates a list of filtered envs with a list of regions and adds only if it`s not repeated
-    sa = 'southamerica-east1'
+def return_all_available_regions(filtered_env, current_env_id, current_offer_id):
+    """
+    Returns a list of regions, envs and envs_id where it`s possible to migrate.
+    :param filtered_env: List -> for example [{'environment': 'dev-gcp-hdg-us-east1', 'env_id': 1}, {...}]
+    :param current_env_id: Int
+    :param current_offer_id: Int
+    :return: List -> for example [{'region': 'us-east1', 'environment': 'dev-gcp-tsuru-us-east1', 'environment_id': 14, 'offering_id': 'c2m1 (2 CPU + 1 GB)}, {...}]
+    """
 
+    # Correlates a list of filtered envs with a list of regions and adds only if it`s not repeated.
     cache = []
     regions = []
-    for env in filter_env:
+    for env in filtered_env:
         for region in REGIONS:
             if env['env_id'] != current_env_id:
-                if region in env['environment'] or (env['environment'] == 'gcp-lab-dev' and region == sa):
+                if region in env['environment']:
                     if region not in cache:
                         regions.append({
                             'region': region,
@@ -2531,6 +2611,7 @@ class ExecuteScheduleTaskView(RedirectView):
 
 @database_view("")
 def change_persistence_retry(request, context, database):
+
     can_do_chg_persistence, error = database.can_do_change_persistence_retry()
 
     if can_do_chg_persistence:
@@ -2565,6 +2646,7 @@ def change_persistence_retry(request, context, database):
 
 @database_view("")
 def change_persistence(request, context, database):
+
     can_do_change_persistence, error = database.can_do_change_persistence()
 
     if not can_do_change_persistence:
@@ -2586,6 +2668,7 @@ def change_persistence(request, context, database):
 
 @database_view('persistence')
 def database_persistence(request, context, database):
+
     if request.method == 'POST':
 
         if 'retry_change_persistence' in request.POST:

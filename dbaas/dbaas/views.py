@@ -1,4 +1,5 @@
 from system.models import Configuration
+from django.views.generic import TemplateView
 
 
 def external_links(request):
@@ -11,3 +12,7 @@ def external_links(request):
     return {'iaas_status': iaas_status,
             'iaas_quota': iaas_quota,
             'sofia_main_dashboard': sofia_dashboard}
+
+
+class DeployView(TemplateView):
+    template_name = 'deploy/deploy.html'
