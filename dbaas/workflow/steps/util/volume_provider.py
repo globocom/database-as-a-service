@@ -521,11 +521,32 @@ class VolumeProviderBase(BaseInstanceStep):
         if command:
             self.host.ssh.run_script(command)
 
+    def update_team_labels_disks(self, volume, team_name):
+        url = "{}volume/update_labels".format(self.base_uri)
+        data = {
+            "volume_identifier": volume,
+            "team_name": team_name
+        }
+        response = post(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
     def do(self):
         raise NotImplementedError
 
     def undo(self):
         pass
+
+
+class UpdateTeamLabelsDisks(VolumeProviderBase):
+    def __unicode__(self):
+        return "Updating Team Labels in All Disks..."
+
+    def do(self):
+        updated = self.update_team_labels_disks(self.volume.identifier, self.team_name)
+        if not updated:
+            raise EnvironmentError("Error in update Team Labels")
 
 
 class VolumeProviderBaseMigrate(VolumeProviderBase):

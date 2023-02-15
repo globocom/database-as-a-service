@@ -262,18 +262,51 @@ def get_is_button_start_stop_disabled(start_database, stop_database):
         return ''
 
 
+def check_change_team_labels(new_team, old_team, database):
+    status = True
+    try:
+        if new_team and new_team != old_team.id:
+            database.team = Team.objects.get(id=new_team)
+            database.save()
+            status, msg = database.update_team_labels()
+        else:
+            msg = 'Team has not changed'
+    except Exception as error:
+        status = False
+        msg = 'Error in update team labels in GCP: {}'.format(str(error))
+    LOG.info(msg)
+    return status, msg
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':
-        form = DatabaseDetailsForm(request.POST or None, instance=database)
-        if form.is_valid():
-            form.save()
+        new_team = request.POST.get('team') or None
+        old_team = database.team
+        status, msg_update = check_change_team_labels(new_team, old_team, database)
+        if status:
+            form = DatabaseDetailsForm(request.POST or None, instance=database)
+            if form.is_valid():
+                form.save()
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'The database "{}" was changed successfully'.format(database)
+                )
+                return HttpResponseRedirect(
+                    reverse('admin:logical_database_changelist')
+                )
+        else:
             messages.add_message(
-                request, messages.SUCCESS, 'The database "{}" was changed successfully'.format(database)
+                request, messages.ERROR,
+                'Error in update team labels in gce "{}"'.format(msg_update)
             )
-            return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
-
-    engine = '{}_{}'.format(database.engine.name, database.databaseinfra.engine_patch.full_version)
+            return HttpResponseRedirect(
+                reverse('admin:logical_database_changelist')
+            )
+    engine = '{}_{}'.format(
+        database.engine.name,
+        database.databaseinfra.engine_patch.full_version
+    )
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
@@ -403,6 +436,7 @@ def database_credentials(request, context, database):
 
 
 def database_configure_ssl(request, context, database):
+
     can_do_configure_ssl, error = database.can_do_configure_ssl()
 
     if not can_do_configure_ssl:
@@ -494,7 +528,6 @@ def database_set_ssl_not_required_retry(request, context=None, database=None, id
             error = "Database does not have set SSL not required task!"
         elif not last_configure_ssl.is_status_error:
             error = "Cannot do retry, last set SSL not required status is '{}'!".format(
-
                 last_configure_ssl.get_status_display()
             )
         else:
@@ -2578,6 +2611,7 @@ class ExecuteScheduleTaskView(RedirectView):
 
 @database_view("")
 def change_persistence_retry(request, context, database):
+
     can_do_chg_persistence, error = database.can_do_change_persistence_retry()
 
     if can_do_chg_persistence:
@@ -2612,6 +2646,7 @@ def change_persistence_retry(request, context, database):
 
 @database_view("")
 def change_persistence(request, context, database):
+
     can_do_change_persistence, error = database.can_do_change_persistence()
 
     if not can_do_change_persistence:
@@ -2633,6 +2668,7 @@ def change_persistence(request, context, database):
 
 @database_view('persistence')
 def database_persistence(request, context, database):
+
     if request.method == 'POST':
 
         if 'retry_change_persistence' in request.POST:

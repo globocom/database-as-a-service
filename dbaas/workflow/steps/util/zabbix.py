@@ -93,9 +93,13 @@ class ZabbixStep(BaseInstanceStep):
         hostname = self.instance.hostname.hostname
         host_list = list()
         if not hostname.replace('.', '').isdigit():
-            list_hosts_in_zabbix = eval(
+            list_instances_in_zabbix = eval(
                 str(self.zabbix_provider_ro.api.host.get(search={'host': hostname.replace('.globoi.com', '')})))
-            for h in list_hosts_in_zabbix:
+            for h in list_instances_in_zabbix:
+                host_list.append(h['name'])
+            list_infras_in_zabbix = eval(
+                str(self.zabbix_provider_ro.api.host.get(search={'host': self.database.infra.name})))
+            for h in list_infras_in_zabbix:
                 host_list.append(h['name'])
         return host_list
 
