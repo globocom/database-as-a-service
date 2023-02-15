@@ -20,8 +20,8 @@ from account.models import Team
 from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
 from physical.models import (
-    Host, Plan, Environment, DatabaseInfra, Instance,
-    Offering, EnginePatch, Pool, DiskOfferingType)
+    Host, Plan, Environment, DatabaseInfra, Instance, Offering, EnginePatch, Pool, DiskOfferingType
+)
 from notification.models import TaskHistory
 from util.models import BaseModel
 from maintenance.tasks import execute_scheduled_maintenance
@@ -751,6 +751,31 @@ class DatabaseClone(DatabaseMaintenanceTask):
         super(DatabaseClone, self).update_step(step, step_class)
 
 
+class DatabaseQuarantine(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History", null=False, unique=False, related_name="databases_quarantine"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_quarantine', null=True, blank=True, on_delete=models.SET_NULL
+    )
+    name = models.CharField(max_length=200)
+    user = models.CharField(max_length=200)
+    undo = models.BooleanField(null=False, blank=False)
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_quarantine')
+    started = models.DateTimeField(verbose_name=_("started_at"), null=True)
+    finished = models.DateTimeField(verbose_name=_("finished_at"), null=True)
+
+    def __unicode__(self):
+        return "Quarantine status {}".format(self.undo)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def save(self, *args, **kwargs):
+        super(DatabaseQuarantine, self).save(*args, **kwargs)
+
+
 class DatabaseDestroy(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
@@ -821,6 +846,40 @@ class DatabaseUpgradeDiskType(DatabaseMaintenanceTask):
         return "Change Disk Type of database: {} to {}".format(
             self.database, self.disk_offering_type.name
         )
+
+
+class DatabaseStartDatabaseVM(DatabaseMaintenanceTask):
+    database = models.ForeignKey(Database, verbose_name="Database",
+                                 null=False, unique=False, related_name="database_start_database_vm")
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History",
+                             null=False, related_name="database_start_database_vm")
+
+    def __unicode__(self):
+        return "Starting database: {}".format(self.database)
+
+
+class DatabaseStopDatabaseVM(DatabaseMaintenanceTask):
+    database = models.ForeignKey(Database, verbose_name="Database",
+                                 null=False, unique=False, related_name="database_stop_database_vm")
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History",
+                             null=False, related_name="database_stop_database_vm")
+
+    def __unicode__(self):
+        return "Stopping database: {}".format(self.database)
+
+
+class DatabaseStopVMInstanceMaster(BaseModel):
+    database_stop = models.ForeignKey(DatabaseStopDatabaseVM, verbose_name="Database Stop Maintenance",
+                                      related_name="database_stop_instance")
+    master = models.ForeignKey(
+        Instance, verbose_name="Master", related_name="database_stop_master"
+    )
+
+    def __unicode__(self):
+        return "{}: {}".format(self.database_stop, self.master)
+
+    class Meta:
+        unique_together = (('master', 'database_stop'), )
 
 
 class DatabaseRestore(DatabaseMaintenanceTask):
@@ -985,28 +1044,18 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
         (STAGE_2, "Stage 2"),
         (STAGE_3, "Stage 3"))
 
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, related_name="database_migrate"
-    )
+    task = models.ForeignKey(TaskHistory, verbose_name="Task History", null=False, related_name="database_migrate")
     database = models.ForeignKey(
-        Database, verbose_name="Database",
-        null=False, unique=False, related_name="database_migrate"
+        Database, verbose_name="Database", null=False, unique=False, related_name="database_migrate"
     )
-    environment = models.ForeignKey(
-        Environment, null=False, related_name="database_migrate"
-    )
+    environment = models.ForeignKey(Environment, null=False, related_name="database_migrate")
     origin_environment = models.ForeignKey(Environment, null=False)
-    offering = models.ForeignKey(
-        Offering, related_name="database_migrate", null=True, blank=True
-    )
+    offering = models.ForeignKey(Offering, related_name="database_migrate", null=True, blank=True)
     origin_offering = models.ForeignKey(Offering, null=True, blank=True)
     migration_stage = models.IntegerField(
-        choices=MIGRATION_STAGES,
-        verbose_name=_("Migration Stage"),
-        null=False,
-        blank=False,
-        default=NOT_STARTED)
+        choices=MIGRATION_STAGES, verbose_name=_("Migration Stage"), null=False, blank=False, default=NOT_STARTED
+    )
+    is_region_migrate = models.BooleanField(verbose_name=_("Is region migrate"), default=False)
 
     @property
     def host_migrate_snapshot(self):

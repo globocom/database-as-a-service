@@ -13,22 +13,21 @@ from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
 
 class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
-    list_filter = [
-        "status", "database", "environment"
-    ]
+    list_filter = ["status", "database", "environment"]
+
     search_fields = ("task__id", "task__task_id", "database__name")
+
     list_display = (
-        "database", "origin_environment", "environment",
-        "origin_offering", "offering", "migration_stage", "current_step",
-        "friendly_status", "maintenance_action", "link_task",
-        "created_at", "started_at", "finished_at"
+        "database", "origin_environment", "environment", "origin_offering", "offering", "migration_stage",
+        "current_step", "friendly_status", "maintenance_action", "link_task",
+        "created_at", "started_at", "finished_at", "is_region_migrate"
     )
+
     readonly_fields = (
-        "migration_stage", "database",
-        "origin_environment", "environment", "origin_offering",
-        "offering", "link_task", "started_at", "finished_at",
-        "status", "maintenance_action", "task_schedule",
+        "migration_stage", "database", "origin_environment", "environment", "origin_offering",
+        "offering", "link_task", "started_at", "finished_at", "status", "maintenance_action", "task_schedule",
     )
+
     ordering = ["-created_at"]
 
     def maintenance_action(self, maintenance_task):
@@ -38,16 +37,11 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url_retry = "/admin/maintenance/databasemigrate/{}/retry/".format(
-            maintenance_task.id
-        )
-        html_retry = ("<a title='Retry' class='btn btn-info' "
-                      "href='{}'>Retry</a>").format(url_retry)
+        url_retry = "/admin/maintenance/databasemigrate/{}/retry/".format(maintenance_task.id)
+        html_retry = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url_retry)
 
-        url_rollback = ("/admin/maintenance/databasemigrate/{}"
-                        "/rollback/").format(maintenance_task.id)
-        html_rollback = ("<a title='Rollback' class='btn btn-danger' "
-                         "href='{}'>Rollback</a>").format(url_rollback)
+        url_rollback = "/admin/maintenance/databasemigrate/{}/rollback/".format(maintenance_task.id)
+        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
 
         spaces = '&nbsp' * 3
         html_content = '{}{}{}'.format(html_retry, spaces, html_rollback)
@@ -76,27 +70,29 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         if not success:
             return redirect
 
+        if retry_from.is_region_migrate:
+            TaskRegister.region_migrate(
+                retry_from.database, retry_from.environment, retry_from.offering, request.user, retry_from.hosts_zones,
+                retry_from.is_region_migrate, retry_from.current_step, step_manager=retry_from
+            )
         TaskRegister.database_migrate(
-            retry_from.database, retry_from.environment, retry_from.offering,
-            request.user, retry_from.hosts_zones, retry_from.current_step,
-            step_manager=retry_from
+            retry_from.database, retry_from.environment, retry_from.offering, request.user,
+            retry_from.hosts_zones, retry_from.current_step, step_manager=retry_from
         )
         return self.redirect_to_database(retry_from)
 
     def rollback_view(self, request, database_migrate_id):
-        rollback_from = get_object_or_404(
-            DatabaseMigrate, pk=database_migrate_id
-        )
+        rollback_from = get_object_or_404(DatabaseMigrate, pk=database_migrate_id)
 
         if rollback_from.migration_stage == rollback_from.NOT_STARTED:
-            success, redirect = self.check_status(
-                request, rollback_from, 'rollback'
-            )
+            success, redirect = self.check_status(request, rollback_from, 'rollback')
             if not success:
                 return redirect
-        TaskRegister.database_migrate_rollback(
-            rollback_from.database, request.user, step_manager=rollback_from
-        )
+
+        if rollback_from.is_region_migrate:
+            TaskRegister.region_migrate_rollback(rollback_from.database, request.user, step_manager=rollback_from)
+
+        TaskRegister.database_migrate_rollback(rollback_from.database, request.user, step_manager=rollback_from)
         return self.redirect_to_database(rollback_from)
 
     def check_status(self, request, database_migrate, operation):
@@ -113,10 +109,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
         if success and not database_migrate.can_do_retry:
             success = False
-            messages.add_message(
-                request, messages.ERROR,
-                "{} is disabled".format(operation.capitalize())
-            )
+            messages.add_message(request, messages.ERROR, "{} is disabled".format(operation.capitalize()))
 
         return success, HttpResponseRedirect(
             reverse(

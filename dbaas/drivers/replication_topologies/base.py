@@ -234,7 +234,6 @@ class BaseTopology(object):
             ),
         }]
 
-
     def get_add_database_instances_first_steps(self):
         return (
             'workflow.steps.util.host_provider.AllocateIP',
@@ -252,6 +251,7 @@ class BaseTopology(object):
             'workflow.steps.util.acl.BindNewInstance',
             'workflow.steps.util.zabbix.CreateAlarms',
             'workflow.steps.util.db_monitor.CreateMonitoring',
+            'workflow.steps.util.database.ConfigurePrometheusMonitoring'
         )
 
     def get_add_database_instances_middle_steps(self):
@@ -394,6 +394,7 @@ class BaseTopology(object):
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             ),
         }]
 
@@ -588,6 +589,170 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
+
+    def get_region_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIPRegionMigrate',
+                'workflow.steps.util.host_provider.CreateVirtualMachineRegionMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+                           )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Backup and restore': (
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+                'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+                'workflow.steps.util.volume_provider.AddHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.CreatePubKeyMigrateBackupHost',
+                'workflow.steps.util.database.StopWithoutUndo',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.disk.CleanDataMigrate',
+                'workflow.steps.util.volume_provider.NewVolumeMigrateOriginalHost',
+                'workflow.steps.util.volume_provider.AttachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.MountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.RsyncFromSnapshotMigrateBackupHost',
+                'workflow.steps.util.volume_provider.WaitRsyncFromSnapshotDatabaseMigrate',
+                'workflow.steps.util.volume_provider.RemovePubKeyMigrateHostMigrate',
+                'workflow.steps.util.volume_provider.RemoveHostsAllowMigrateBackupHost',
+                'workflow.steps.util.volume_provider.UmountDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DetachDataLatestVolumeMigrate',
+                'workflow.steps.util.volume_provider.DeleteVolumeMigrateOriginalHost',
+            )}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
+            'Configure and start database': (
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Check access between instances': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
+            )}, {
+            'Stopping database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.infra.UpdateEndpointMigrateRollback',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+                'workflow.steps.util.infra.UpdateEndpointMigrate',
+            )}, {
+            'Configure SSL (DNS)': (
+                ) + self.get_configure_ssl_dns_steps() + (
+            )}, {
+            'Stop source database': (
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            )}]
+
+    def get_region_migrate_steps_stage_2(self):
+        return [{
+            'Cleaning up': (
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}]
+
+    def get_region_migrate_steps_stage_3(self):
+        raise NotImplementedError
+
+    def get_stop_database_vm_steps(self):
+        return [{
+            'Disable monitoring and check replication': (
+                'workflow.steps.util.zabbix.DisableMonitors',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+            )}, {
+            'Stopping database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Stopping VM': (
+                'workflow.steps.util.host_provider.StopIfRunning',
+            )
+        }]
+
+    def get_start_database_vm_steps(self):
+        return [{
+            'Starting VM': (
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Restoring master instance': (
+                'workflow.steps.util.database.RestoreMasterInstanceFromDatabaseStop',
+            )}, {
+            'Enable alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableMonitors',
+            )
+        }]
+
 
 class FakeTestTopology(BaseTopology):
 

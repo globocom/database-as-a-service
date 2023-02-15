@@ -26,7 +26,7 @@ delete from physical_volume;
 delete from physical_host;
 delete from physical_databaseinfraparameter;
 delete from dbaas_dnsapi_databaseinfradnslist;
-delete from physical_databaseinfra;" | docker-compose exec -T dev_mysqldb57 mysql -u root -p123 dbaas
+delete from physical_databaseinfra;" | docker-compose exec -T dev_mysqldb57 mysql -u root -p123 dbaas --column-statistics=0
 
 docker-compose down 
 

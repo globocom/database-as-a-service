@@ -244,6 +244,18 @@ class VolumeProviderBase(BaseInstanceStep):
             'host_vm': self.host_vm.name,
             'host_zone': self.host_vm.zone
         }
+
+        response = post(url, json=data, headers=self.headers)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
+    def attach_disk_region(self, volume, zone, name):
+        url = "{}attach/{}/".format(self.base_uri, volume.identifier)
+        data = {
+            'host_vm': name,
+            'host_zone': zone
+        }
         response = post(url, json=data, headers=self.headers)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -634,12 +646,10 @@ class NewVolume(VolumeProviderBase):
         if not self.instance.is_database:
             return
         snapshot = None
-        if (self.has_snapshot_on_step_manager
-           or self.restore_snapshot_from_master):
+        if (self.has_snapshot_on_step_manager or self.restore_snapshot_from_master):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
-
 
         self.create_volume(
             self.infra.name,
@@ -1146,8 +1156,7 @@ class TakeSnapshotMigrate(VolumeProviderBase):
 
             if not snapshot:
                 raise VolumeProviderSnapshotNotFoundError(
-                    'Backup was unsuccessful in {}'.format(
-                        self.instance)
+                    'Backup was unsuccessful in {}'.format(self.instance)
                 )
 
             snapshot.is_automatic = False

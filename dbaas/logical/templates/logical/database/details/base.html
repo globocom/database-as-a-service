@@ -43,6 +43,9 @@
     {% if database.is_in_quarantine %}
       <span class="label label-warning title_tag">In quarantine</span>
     {% endif %}
+    {% if database.attention %}
+      <span class="label label-warning title_tag" id="att_tag">Attention!</span>
+    {% endif %}
     <a target="_blank" id="task_running"></a>
     <div id="running_label"></div>
   </h1>

@@ -26,6 +26,8 @@ from .database_change_persistence import DatabaseChangePersistenceAdmin
 from .database_set_ssl_required import DatabaseSetSSLRequiredAdmin
 from .database_set_ssl_not_required import DatabaseSetSSLNotRequiredAdmin
 from . database_upgrade_disk_type import DatabaseUpgradeDiskTypeAdmin
+from . database_start_database_vm import DatabaseStartDatabaseVMAdmin
+from . database_stop_database_vm import DatabaseStopDatabaseVMAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -63,4 +65,12 @@ admin.site.register(
 
 admin.site.register(
     models.DatabaseUpgradeDiskType, DatabaseUpgradeDiskTypeAdmin
+)
+
+admin.site.register(
+    models.DatabaseStartDatabaseVM, DatabaseStartDatabaseVMAdmin
+)
+
+admin.site.register(
+    models.DatabaseStopDatabaseVM, DatabaseStopDatabaseVMAdmin
 )

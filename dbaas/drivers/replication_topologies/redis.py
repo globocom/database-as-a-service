@@ -57,6 +57,7 @@ class BaseRedis(BaseTopology):
             )
         }]
 
+
 class RedisSingle(BaseRedis):
 
     @property
@@ -111,6 +112,7 @@ class RedisSingle(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -177,7 +179,6 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
-
 
     def get_base_host_migrate_steps(self):
         return (
@@ -324,7 +325,6 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.SetSlave',
             ),
         }] + super(RedisSentinel, self).get_reinstallvm_steps_final()
-
 
     def get_add_database_instances_middle_steps(self):
         return (
@@ -483,6 +483,7 @@ class RedisSentinel(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -611,7 +612,6 @@ class RedisSentinel(BaseRedis):
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
 
-    ## RedisSentinel
     def get_database_migrate_steps_stage_1(self):
         return [{
             'Creating Service Account': (
@@ -674,7 +674,6 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.WaitForReplication',
         )}]
 
-    # RedisSentinel
     def get_database_migrate_steps_stage_2(self):
         return [{
             'Destroy Alarms': (
@@ -716,7 +715,6 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             )}]
 
-    # RedisSentinel
     def get_database_migrate_steps_stage_3(self):
         return [{
             'Cleaning up': (
@@ -805,10 +803,15 @@ class RedisCluster(BaseRedis):
             )}, {
             'Check ACL': (
                 'workflow.steps.util.acl.BindNewInstance',
-            )}, {
+            )},
+            # {
+            # 'Creating monitoring and alarms': (
+            #     'workflow.steps.util.zabbix.CreateAlarms',
+            #     'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            # )},
+            {
             'Creating monitoring and alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoring',
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
@@ -954,7 +957,6 @@ class RedisCluster(BaseRedis):
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
 
-    # RedisCluster
     def get_database_migrate_steps_stage_1(self):
         return [{
             'Creating Service Account': (
@@ -1014,9 +1016,9 @@ class RedisCluster(BaseRedis):
             #'Wait replication': (
             ## RICK TODO REVIEW
             #    'workflow.steps.util.database.WaitForReplication',
-        )}]
+            )}
+        ]
 
-    # RedisCluster
     def get_database_migrate_steps_stage_2(self):
         return [{
             'Destroy Alarms': (
@@ -1052,9 +1054,9 @@ class RedisCluster(BaseRedis):
             'Recreate Alarms': (
                 'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
                 'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
-            )}]
+            )}
+        ]
 
-    # RedisCluster
     def get_database_migrate_steps_stage_3(self):
         return [{
             'Cleaning up': (
@@ -1069,7 +1071,127 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
                 'workflow.steps.util.host_provider.DestroyIPMigrate',
                 'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
-        )}]
+            )}
+        ]
+
+    def get_region_migrate_steps_stage_1(self):
+        return [{
+            'Creating Service Account': (
+                'workflow.steps.util.host_provider.CreateServiceAccount',
+                'workflow.steps.util.host_provider.SetServiceAccountRoles'
+            )}, {
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.AllocateIPRegionMigrate',
+                'workflow.steps.util.host_provider.CreateVirtualMachineRegionMigrate',
+                'workflow.steps.util.infra.MigrationCreateInstance',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )}, {
+            'Check patch': (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.AttachDataVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.plan.Configure',
+            )}, {
+            'Configure SSL lib and folder': (
+                ) + self.get_configure_ssl_libs_and_folder_steps() + (
+            )}, {
+            'Configure SSL (IP)': (
+                ) + self.get_configure_ssl_ip_steps() + (
+            )}, {
+            'Configure and start database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.infra.EnableFutureInstances',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartRsyslog',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Check access between instances': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+            )}, {
+            'Replicate ACL': (
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.acl.BindNewInstanceDatabaseMigrate',
+            )}, {
+            'Configure replication': (
+                'workflow.steps.redis.cluster.AddSlaveNode',
+                'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceNotEligible',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
+            #)}, {
+            #'Wait replication': (
+            ## RICK TODO REVIEW
+            #    'workflow.steps.util.database.WaitForReplication',
+            )}
+        ]
+
+    def get_region_migrate_steps_stage_2(self):
+        return [{
+            'Destroy Alarms': (
+                'workflow.steps.util.zabbix.DestroyAlarmsDatabaseMigrate',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.RestartTelegrafRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafRollback',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrateRollback',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrateRollback',
+            )}, {
+            'Update and Check DNS': (
+                'workflow.steps.util.dns.CheckIsReadyDBMigrateRollback',
+                'workflow.steps.util.dns.ChangeEndpointDBMigrate',
+                'workflow.steps.util.dns.CheckIsReadyDBMigrate',
+            )}, {
+            'Configure Eligible Master': (
+                'workflow.steps.redis.horizontal_elasticity.database.SetFutureInstanceEligible',
+                'workflow.steps.redis.horizontal_elasticity.database.SetSourceInstanceNotEligible',
+            )}, {
+            'Change Master': (
+                #'workflow.steps.util.database.CheckIfSwitchSourceInstanceMasterMigrate',
+                'workflow.steps.redis.cluster.SetFutureInstanceMasterDatabaseMigrate',
+                ## RICK TODO REVIEW
+                #'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
+            )}, {
+            'Configure Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafSourceDBMigrate',
+                'workflow.steps.util.metric_collector.RestartTelegrafSourceDBMigrate',
+            )}, {
+            'Recreate Alarms': (
+                'workflow.steps.util.zabbix.CreateAlarmsDatabaseMigrate',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+            )}
+        ]
+
+    def get_region_migrate_steps_stage_3(self):
+        return [{
+            'Cleaning up': (
+                'workflow.steps.redis.cluster.RemoveNodeDBMigrate',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
+                'workflow.steps.util.infra.DisableSourceInstances',
+                'workflow.steps.util.database.StopSourceDatabaseMigrate',
+                'workflow.steps.util.database.StopRsyslogMigrate',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            )}, {
+            'Cleaning up 2': (
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.util.host_provider.DestroyIPMigrate',
+                'workflow.steps.util.host_provider.DestroyServiceAccountMigrate',
+            )}
+        ]
+
+
 class RedisGenericGCE(object):
     def get_single_host_migrate_steps(self):
         return [{
@@ -1122,7 +1244,6 @@ class RedisGenericGCE(object):
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
         )}]
-
 
     def get_sentinel_host_migrate_steps(self):
         return [{
@@ -1242,17 +1363,21 @@ class RedisSingleGCE(RedisSingle, RedisGenericGCE):
     def get_host_migrate_steps(self):
         return self.get_single_host_migrate_steps()
 
+
 class RedisNoPersistenceGCE(RedisNoPersistence, RedisGenericGCE):
     def get_host_migrate_steps(self):
         return self.get_single_host_migrate_steps()
+
 
 class RedisSentinelGCE(RedisSentinel, RedisGenericGCE):
     def get_host_migrate_steps(self):
         return self.get_sentinel_host_migrate_steps()
 
+
 class RedisSentinelNoPersistenceGCE(RedisSentinelNoPersistence, RedisGenericGCE):
     def get_host_migrate_steps(self):
         return self.get_sentinel_host_migrate_steps()
+
 
 class RedisClusterGCE(RedisCluster, RedisGenericGCE):
     def get_host_migrate_steps(self):

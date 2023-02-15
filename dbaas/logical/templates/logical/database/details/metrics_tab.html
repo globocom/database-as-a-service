@@ -39,8 +39,7 @@
   {% endif %}
 
   {% if source == 'prometheus' %}
-    <iframe id="grafana" class='grafana_frame' style="margin-bottom: 2em" src="{{ prometheus_url_node }}&kiosk=tv"></iframe>
-    <iframe id="grafana-db" class='grafana_frame' src="{{ prometheus_url_db }}&kiosk=tv"></iframe>
+    <iframe id="grafana" class='grafana_frame' style="margin-bottom: 2em" src="{{ grafana_url_prometheus }}&kiosk=tv"></iframe>
   {% endif %}
 
 {% endblock %}

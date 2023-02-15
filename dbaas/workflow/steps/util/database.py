@@ -4,6 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
+from physical.factories.prometheus_exporter_factory import get_exporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
@@ -1071,3 +1072,54 @@ class MakeSnapshot(DatabaseStep):
             LOG.error('Error when creating snapshot: %s', e)
             task.set_error()
             raise e
+
+
+class ConfigurePrometheusMonitoring(DatabaseStep):
+    def __unicode__(self):
+        return "Configuring Database Prometheus exporters..."
+
+    def do(self):
+        try:
+            LOG.info('Configuring Database Prometheus exporters for infra %s', self.infra.name)
+            exporter = get_exporter(self.infra)
+            exporter.configure_host_exporter(self.instance.hostname)
+        except Exception as e:
+            LOG.error('Failed to configure prometheus for host %s', self.instance.hostname)
+            LOG.error(e)
+
+    def undo(self):
+        pass
+
+
+class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
+    def __unicode__(self):
+        return "Restore Master Instance..."
+
+    def get_master_instance_from_stop(self):
+        try:
+            stop_database = self.database.database_stop_database_vm.last().database_stop_instance.last()
+            return stop_database.master
+        except Exception as error:
+            LOG.error('Error to retrive instance from last Database Stop VM')
+            raise error
+
+    @property
+    def is_single_instance(self):
+        return not self.infra.plan.is_ha
+
+    def is_valid(self):
+        if not('mysql' in self.engine.name.lower()):
+            return False
+        if self.is_single_instance:
+            return False
+        if self.driver.get_master_instance() == self.get_master_instance_from_stop():
+            return False
+        return True
+
+    def do(self):
+        if not self.is_valid():
+            return False
+        self.driver.set_master(self.get_master_instance_from_stop())
+
+    def undo(self):
+        pass

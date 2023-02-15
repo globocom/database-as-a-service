@@ -5,12 +5,12 @@
 {% block title %}{{ title }} | DBaaS{% endblock %}
 
 {% block extrastyle %}
-<link rel="shortcut icon" type="image/png" href="{% static "db-dev-logo.png" %}"/>
+<link rel="shortcut icon" type="image/png" href="{% static "dbaas_logo.png" %}"/>
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/admin-dbaas.css" %}" />
 {% endblock %}
 
 {% block branding %}
-    <a href="{% url 'admin:index' %}" class="brand" id="site-name"><img src="/static/0.0.11/db-dev-logo.png" alt="" width="25px" id="site-name-img" style="float: left; margin-top: 0px; padding-right: 10px;">DBaaS</a>
+    <a href="{% url 'admin:index' %}" class="brand" id="site-name"><img src="/static/0.0.11/dbaas_logo.png" alt="" width="25px" id="site-name-img" style="float: left; margin-top: 0px; padding-right: 10px;">DBaaS</a>
     {% get_configuration 'docs_url' 'config_docs_url' %}
     {% if config_docs_url %}
       <a href="{{ config_docs_url }}" target="_blank" class="brand" id="site-docs">Docs</a>

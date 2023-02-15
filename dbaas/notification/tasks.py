@@ -12,29 +12,21 @@ from account.models import User
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
-from physical.models import (Plan, DatabaseInfra,
-                             Instance, Pool)
+from physical.models import (Plan, DatabaseInfra, Instance, Pool)
 from util import email_notifications, get_worker_name
 from util.decorators import only_one
 from util import providers as util_providers
 from util import get_vm_name
 from system.models import Configuration
 from notification.models import TaskHistory
+from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from util.task_register import TaskRegisterBase
-from workflow.workflow import (steps_for_instances,
-                               rollback_for_instances_full,
-                               total_of_steps)
+from workflow.workflow import (steps_for_instances, rollback_for_instances_full, total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
-from maintenance.models import (
-    DatabaseDestroy,
-    RestartDatabase,
-    DatabaseCreate,
-    DatabaseMigrate
-)
+from maintenance.models import (DatabaseDestroy, RestartDatabase, DatabaseCreate, DatabaseMigrate, DatabaseQuarantine)
 from util import slugify, gen_infra_names
-from maintenance.tasks_create_database import (get_or_create_infra,
-                                               get_instances_for)
+from maintenance.tasks_create_database import (get_or_create_infra, get_instances_for)
 from notification.scripts import script_mongo_log_rotate
 from util.providers import get_deploy_settings
 from util.task_register import database_disk_resize
@@ -153,6 +145,28 @@ def create_database(
 
 
 @app.task(bind=True)
+def quarantine_database(self, database, user, start_datetime, undo=False, task=None):
+
+    infra = database.databaseinfra
+
+    database_quarantine = DatabaseQuarantine()
+    database_quarantine.task = task
+    database_quarantine.database = infra.databases.first()
+    database_quarantine.name = database.name
+    database_quarantine.user = user.username if user else task.user
+    database_quarantine.undo = undo
+    database_quarantine.infra = database.infra
+    database_quarantine.started_at = start_datetime
+    database_quarantine.finished_at = datetime.now()
+    database_quarantine.save()
+
+    if undo:
+        task.set_status_success('Database not in quarantine')
+    else:
+        task.set_status_success('Database in quarantine')
+
+
+@app.task(bind=True)
 def destroy_database(self, database, task_history=None, user=None):
     # register History
     AuditRequest.new_request("destroy_database", user, "localhost")
@@ -237,8 +251,7 @@ def destroy_database_retry(self, rollback_from, task, user):
 
 
 @app.task(bind=True)
-def clone_database(self, origin_database, clone_name, plan, environment,
-                   task_history=None, user=None, retry_from=None):
+def clone_database(self, origin_database, clone_name, plan, environment, task_history=None, user=None, retry_from=None):
     AuditRequest.new_request("clone_database", user, "localhost")
     worker_name = get_worker_name()
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
@@ -881,8 +894,7 @@ def change_mongodb_log_rotate(self):
 
 @app.task(bind=True)
 @only_one(key="executescheduledmaintenancetask")
-def execute_scheduled_maintenance(self, task=None, user=None,
-                                  is_automatic=True):
+def execute_scheduled_maintenance(self, task=None, user=None, is_automatic=True):
     LOG.info("Searching Scheduled tasks")
     if user is None:
         user = User.objects.get(username='admin')
@@ -1008,8 +1020,7 @@ def migrate_engine(self, database, user, task, since_step=0):
     instances = database.infra.instances.all()
 
     success = steps_for_instances(
-        steps, instances, task,
-        database_migrate_engine_obj.update_step, since_step
+        steps, instances, task, database_migrate_engine_obj.update_step, since_step
     )
 
     if success:
@@ -1018,9 +1029,7 @@ def migrate_engine(self, database, user, task, since_step=0):
         infra.engine_patch = target_plan.engine.default_engine_patch
         infra.save()
 
-        instance_type = getattr(
-            Instance, target_plan.engine.engine_type.name.upper(), 0
-        )
+        instance_type = getattr(Instance, target_plan.engine.engine_type.name.upper(), 0)
 
         # Setting new Instance Type for all instances
         infra.instances.update(instance_type=instance_type)
@@ -1030,8 +1039,7 @@ def migrate_engine(self, database, user, task, since_step=0):
     else:
         database_migrate_engine_obj.set_error()
         task.update_status_for(
-            TaskHistory.STATUS_ERROR,
-            'Could not do migrate.\nMigrate Engine doesn\'t have rollback'
+            TaskHistory.STATUS_ERROR, 'Could not do migrate.\nMigrate Engine doesn\'t have rollback'
         )
 
 
@@ -1198,8 +1206,7 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
 @app.task(bind=True)
 def add_instances_to_database(
-    self, database, user, task, number_of_instances=1,
-    number_of_instances_before_task=0, since_step=0
+    self, database, user, task, number_of_instances=1, number_of_instances_before_task=0, since_step=0
 ):
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
@@ -1339,9 +1346,7 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
 
 
 @app.task(bind=True)
-def remove_readonly_instance(
-    self, database, user, task, instance, since_step=None, step_manager=None
-):
+def remove_readonly_instance(self, database, user, task, instance, since_step=None, step_manager=None):
     from workflow.workflow import steps_for_instances
     from util.providers import get_remove_readonly_instance_steps
 
@@ -1387,8 +1392,7 @@ def remove_readonly_instance(
 
 
 @app.task(bind=True)
-def resize_database(self, database, user, task, offering,
-                    original_offering=None, since_step=0):
+def resize_database(self, database, user, task, offering, original_offering=None, since_step=0):
 
     self.request.kwargs['database'] = database
     self.request.kwargs['offering'] = offering
@@ -1577,8 +1581,7 @@ def update_database_monitoring(self, task, database, hostgroup, action):
 
 
 @app.task(bind=True)
-def update_organization_name_monitoring(self, task, database,
-                                        organization_name):
+def update_organization_name_monitoring(self, task, database, organization_name):
     from workflow.steps.util.db_monitor import UpdateInfraOrganizationName
 
     worker_name = get_worker_name()
@@ -1608,8 +1611,7 @@ def update_organization_name_monitoring(self, task, database,
 
 
 @app.task(bind=True)
-def change_database_persistence(self, database, user, task,
-                                source_plan, target_plan, since_step=0):
+def change_database_persistence(self, database, user, task, source_plan, target_plan, since_step=0):
 
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -1816,7 +1818,16 @@ def update_database_apps_bind_name(self):
 
 
 class TaskRegister(TaskRegisterBase):
-    # ============  BEGIN TASKS   ==========
+    @classmethod
+    def database_quarantine(cls, database, user, start_datetime, undo):
+        task_params = {
+            'task_name': 'database_quarantine',
+            'arguments': 'Database quarantine status: {}'.format(undo),
+            'user': user,
+            'database': database
+        }
+        task = cls.create_task(task_params)
+        quarantine_database(database, user, start_datetime, undo=undo, task=task)
 
     @classmethod
     def database_destroy(cls, database, user, **kw):
@@ -1849,13 +1860,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_resize_retry(cls,
-                              database,
-                              user,
-                              offering,
-                              original_offering,
-                              since_step,
-                              **kw):
+    def database_resize_retry(cls, database, user, offering, original_offering, since_step, **kw):
         task_params = {
             'task_name': 'resize_database_retry',
             'arguments': "Retrying resize database {}".format(database),
@@ -1875,9 +1880,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_resize_rollback(
-            cls, from_resize, user
-    ):
+    def database_resize_rollback(cls, from_resize, user):
         task_params = {
             'task_name': 'resize_database_rollback',
             'arguments': "Rollback resize database {}".format(
@@ -1892,8 +1895,7 @@ class TaskRegister(TaskRegisterBase):
 
     @classmethod
     def database_add_instances(
-        cls, database, user, number_of_instances,
-        number_of_instances_before_task, since_step=None
+        cls, database, user, number_of_instances, number_of_instances_before_task, since_step=None
     ):
         task_params = {
             'task_name': 'add_database_instances',
@@ -1924,9 +1926,7 @@ class TaskRegister(TaskRegisterBase):
         add_instances_to_database.delay(**delay_params)
 
     @classmethod
-    def database_add_instances_rollback(
-        cls, manager_obj, user
-    ):
+    def database_add_instances_rollback(cls, manager_obj, user):
         task_params = {
             'task_name': 'resize_database_rollback',
             'arguments': "Rollback Add Instance to database {}".format(
@@ -1941,9 +1941,7 @@ class TaskRegister(TaskRegisterBase):
         add_instances_to_database_rollback.delay(manager_obj, user, task)
 
     @classmethod
-    def database_remove_instance(
-        cls, database, user, instance, since_step=None, step_manager=None
-    ):
+    def database_remove_instance(cls, database, user, instance, since_step=None, step_manager=None):
         task_params = {
             'task_name': "remove_database_instance",
             'arguments': "Removing instance {} on database {}".format(
@@ -1985,10 +1983,7 @@ class TaskRegister(TaskRegisterBase):
         analyze_databases.delay(task_history=task)
 
     @classmethod
-    def database_clone(
-        cls, origin_database, user, clone_name, plan, environment,
-        retry_from=None
-    ):
+    def database_clone(cls, origin_database, user, clone_name, plan, environment, retry_from=None):
 
         task_params = {
             'task_name': 'clone_database',
@@ -2006,10 +2001,8 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_create(cls, user, name, plan, environment, team,
-                        project, description, backup_hour=2,
-                        maintenance_window=1, maintenance_day=1,
-                        subscribe_to_email_events=True, register_user=True,
+    def database_create(cls, user, name, plan, environment, team, project, description, backup_hour=2,
+                        maintenance_window=1, maintenance_day=1, subscribe_to_email_events=True, register_user=True,
                         is_protected=False, retry_from=None, **kw):
         task_params = {
             'task_name': "create_database",
@@ -2029,8 +2022,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_create_rollback(cls, rollback_from, user,
-                                 extra_task_params=None):
+    def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
@@ -2048,8 +2040,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_clone_rollback(cls, rollback_from, user,
-                                extra_task_params=None):
+    def database_clone_rollback(cls, rollback_from, user, extra_task_params=None):
         task_params = {
             'task_name': "clone_database_rollback",
             'arguments': "Database name: {}".format(rollback_from.name),
@@ -2124,8 +2115,7 @@ class TaskRegister(TaskRegisterBase):
     def restore_snapshot(cls, database, user, snapshot, retry_from=None):
         task_params = {
             'task_name': "restore_snapshot",
-            'arguments': "Restoring {} to an older version.".format(
-                          database.name),
+            'arguments': "Restoring {} to an older version.".format(database.name),
             'database': database,
             'user': user,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
@@ -2134,16 +2124,14 @@ class TaskRegister(TaskRegisterBase):
         task = cls.create_task(task_params)
 
         maintenace_tasks.restore_database.delay(
-            database=database, task=task, snapshot=snapshot, user=user,
-            retry_from=retry_from
+            database=database, task=task, snapshot=snapshot, user=user, retry_from=retry_from
         )
 
     @classmethod
     def upgrade_disk_type(cls, database, new_disk_type_upgrade, user, retry_from=None):
         task_params = {
             'task_name': "upgrade_disk_type",
-            'arguments': "Upgrading disk type of {} to {}".format(
-                database.name, new_disk_type_upgrade),
+            'arguments': "Upgrading disk type of {} to {}".format(database.name, new_disk_type_upgrade),
             'database': database,
             'user': user,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
@@ -2152,9 +2140,43 @@ class TaskRegister(TaskRegisterBase):
         task = cls.create_task(task_params)
 
         maintenace_tasks.upgrade_disk_type_database.delay(
-            database=database, new_disk_type_upgrade=new_disk_type_upgrade, task=task, user=user,
+            database=database, new_disk_type_upgrade=new_disk_type_upgrade, task=task, user=user, retry_from=retry_from
+        )
+
+    @classmethod
+    def start_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "start_database_vm",
+            'arguments': "Starting database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.start_database_vm.delay(
+            database=database, task=task, user=user,
             retry_from=retry_from
         )
+
+    @classmethod
+    def stop_database_vm(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "stop_database_vm",
+            'arguments': "Stopping database {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.stop_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
 
     @classmethod
     def database_upgrade(cls, database, user, since_step=None):
@@ -2363,55 +2385,93 @@ class TaskRegister(TaskRegisterBase):
         configure_ssl_database.delay(**delay_params)
 
     @classmethod
-    def host_migrate(cls, host, zone, new_environment, user, database,
-                     since_step=None, step_manager=None, zone_origin=None):
+    def host_migrate(
+            cls, host, zone, new_environment, user, database, since_step=None, step_manager=None, zone_origin=None
+    ):
         task_params = {
             'task_name': "host_migrate",
             'database': database,
-            'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
-                host, zone, new_environment
-            ),
+            'arguments': "Host: {}, Zone: {}, New Environment: {}".format(host, zone, new_environment),
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return maintenace_tasks.node_zone_migrate.delay(
-            host=host, zone=zone, new_environment=new_environment,
-            task=task, since_step=since_step,
+            host=host, zone=zone, new_environment=new_environment, task=task, since_step=since_step,
             step_manager=step_manager, zone_origin=zone_origin
         )
 
     @classmethod
-    def recreate_slave(cls, host, user,
-                       since_step=None, step_manager=None):
+    def region_migrate(cls, database, environment, offering, user, hosts_zones, flag_region, since_step=None, step_manager=None):
+        if step_manager:
+            migration_stage = step_manager.migration_stage
+        else:
+            migration_stage = database.infra.migration_stage + 1
+
+        args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, environment, migration_stage)
+        task_params = {
+            'task_name': "region_migrate",
+            'database': database,
+            'arguments': args,
+        }
+        if user:
+            task_params['user'] = user
+
+        task = cls.create_task(task_params)
+        return maintenace_tasks.region_migrate.delay(
+            database=database, environment=environment, offering=offering, task=task, hosts_zones=hosts_zones,
+            flag_region=flag_region, since_step=since_step, step_manager=step_manager
+        )
+
+    @classmethod
+    def region_migrate_rollback(cls, database, user, step_manager=None, migration_stage=None):
+
+        if step_manager:
+            region_migrate_steps = step_manager
+        else:
+            region_migrate_steps = DatabaseMigrate.objects.filter(
+                database=database, migration_stage=migration_stage, status=DatabaseMigrate.SUCCESS
+            ).last()
+
+        args = "Database: {}, Environment: {}, Migration Stage: {}".format(
+            database, region_migrate_steps.environment, region_migrate_steps.migration_stage
+        )
+        task_params = {
+            'task_name': "region_migrate_rollback",
+            'database': database,
+            'arguments': args,
+        }
+        if user:
+            task_params['user'] = user
+
+        task = cls.create_task(task_params)
+
+        return maintenace_tasks.region_migrate_rollback.delay(region_migrate_steps, task)
+
+
+    @classmethod
+    def recreate_slave(cls, host, user, since_step=None, step_manager=None):
         db = Database.objects.get(databaseinfra__instances__hostname=host)
         task_params = {
             'task_name': "recreate_slave",
-            'arguments': "Database: {}, Host: {}".format(
-                db.name, host
-            ),
+            'arguments': "Database: {}, Host: {}".format(db.name, host),
             'database': db
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return maintenace_tasks.recreate_slave.delay(
-            database=db,
-            host=host, task=task,
-            since_step=since_step,
-            step_manager=step_manager
+            database=db, host=host, task=task, since_step=since_step, step_manager=step_manager
         )
 
     @classmethod
-    def update_ssl(cls, database, user,
-                   since_step=None, step_manager=None, scheduled_task=None,
-                   is_automatic=False, **kw):
+    def update_ssl(
+            cls, database, user, since_step=None, step_manager=None, scheduled_task=None, is_automatic=False, **kw
+    ):
         task_params = {
             'task_name': "update_ssl",
             'database': database,
-            'arguments': "Database: {}".format(
-                database
-            ),
+            'arguments': "Database: {}".format(database),
         }
         auto_rollback = False
         if user:
@@ -2429,15 +2489,13 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def restart_database(cls, database, user,
-                         since_step=None, step_manager=None,
-                         scheduled_task=None, is_automatic=False, **kw):
+    def restart_database(
+            cls, database, user, since_step=None, step_manager=None, scheduled_task=None, is_automatic=False, **kw
+    ):
         task_params = {
             'task_name': "restart_database",
             'database': database,
-            'arguments': "Database: {}".format(
-                database
-            ),
+            'arguments': "Database: {}".format(database),
         }
         auto_rollback = kw.get('auto_rollback')
         auto_cleanup = kw.get('auto_cleanup')
@@ -2472,18 +2530,17 @@ class TaskRegister(TaskRegisterBase):
 
     @classmethod
     def database_migrate(
-        cls, database, new_environment, new_offering, user, hosts_zones,
-        since_step=None, step_manager=None
+        cls, database, new_environment, new_offering, user, hosts_zones, since_step=None, step_manager=None
     ):
         if step_manager:
             migration_stage = step_manager.migration_stage
         else:
             migration_stage = database.infra.migration_stage + 1
 
-        args = "Database: {}, Environment: {}, Migration Stage: {}".format(
-                database, new_environment, migration_stage)
+        args = "Database: {}, Environment: {}, Migration Stage: {}".format(database, new_environment, migration_stage)
         task_params = {
             'task_name': "database_migrate",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2498,26 +2555,21 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def database_migrate_rollback(
-        cls, database, user, step_manager=None,
-        migration_stage=None
-    ):
+    def database_migrate_rollback(cls, database, user, step_manager=None, migration_stage=None):
 
         if step_manager:
             database_migrate = step_manager
         else:
             database_migrate = DatabaseMigrate.objects.filter(
-                database=database,
-                migration_stage=migration_stage,
-                status=DatabaseMigrate.SUCCESS
+                database=database, migration_stage=migration_stage, status=DatabaseMigrate.SUCCESS
             ).last()
 
         args = "Database: {}, Environment: {}, Migration Stage: {}".format(
-                database,
-                database_migrate.environment,
-                database_migrate.migration_stage)
+                database, database_migrate.environment, database_migrate.migration_stage
+        )
         task_params = {
             'task_name': "database_migrate_rollback",
+            'database': database,
             'arguments': args,
         }
         if user:
@@ -2525,9 +2577,7 @@ class TaskRegister(TaskRegisterBase):
 
         task = cls.create_task(task_params)
 
-        return maintenace_tasks.database_environment_migrate_rollback.delay(
-            database_migrate, task
-        )
+        return maintenace_tasks.database_environment_migrate_rollback.delay(database_migrate, task)
 
     @classmethod
     def update_database_monitoring(cls, database, hostgroup, action):
@@ -2538,8 +2588,7 @@ class TaskRegister(TaskRegisterBase):
             LOG.error(error)
             return
 
-        args = "Database: {}, Hostgroup: {}, Action: {}".format(
-                database, hostgroup, action)
+        args = "Database: {}, Hostgroup: {}, Action: {}".format(database, hostgroup, action)
         task_params = {
             'task_name': "update_database_monitoring",
             'arguments': args,
@@ -2547,19 +2596,12 @@ class TaskRegister(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
-
-        update_database_monitoring.delay(
-            task=task,
-            database=database,
-            hostgroup=hostgroup,
-            action=action,
-        )
+        update_database_monitoring.delay(task=task, database=database, hostgroup=hostgroup, action=action,)
 
     @classmethod
     def update_organization_name_monitoring(cls, database, organization_name):
 
-        args = "Database: {}, Organization Name: {}".format(
-                database, organization_name)
+        args = "Database: {}, Organization Name: {}".format(database, organization_name)
         task_params = {
             'task_name': "update_organization_name_monitoring",
             'arguments': args,
@@ -2567,12 +2609,7 @@ class TaskRegister(TaskRegisterBase):
         }
 
         task = cls.create_task(task_params)
-
-        update_organization_name_monitoring.delay(
-            task=task,
-            database=database,
-            organization_name=organization_name
-        )
+        update_organization_name_monitoring.delay(task=task, database=database, organization_name=organization_name)
 
     @classmethod
     def database_change_persistence(cls, database, user, since_step=None):
@@ -2593,8 +2630,7 @@ class TaskRegister(TaskRegisterBase):
 
         if since_step:
             task_params['task_name'] = 'change_database_persistence_retry'
-            task_params['arguments'] = ('Retrying changing database '
-                                        'persistence {}').format(database)
+            task_params['arguments'] = 'Retrying changing database persistence {}'.format(database)
 
         task = cls.create_task(task_params)
 
@@ -2607,7 +2643,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         change_database_persistence.delay(**delay_params)
 
     @classmethod
@@ -2623,8 +2658,7 @@ class TaskRegister(TaskRegisterBase):
 
         if since_step:
             task_params['task_name'] = 'database_set_ssl_required_retry'
-            task_params['arguments'] = ('Retrying setting database SSL'
-                                        ' Required {}').format(database)
+            task_params['arguments'] = 'Retrying setting database SSL Required {}'.format(database)
 
         task = cls.create_task(task_params)
 
@@ -2635,7 +2669,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_required.delay(**delay_params)
 
     @classmethod
@@ -2643,8 +2676,7 @@ class TaskRegister(TaskRegisterBase):
 
         task_params = {
             'task_name': 'database_set_ssl_not)required',
-            'arguments': 'Setting database SSL Not Required {}'.format(
-                database),
+            'arguments': 'Setting database SSL Not Required {}'.format(database),
             'database': database,
             'user': user,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
@@ -2652,8 +2684,7 @@ class TaskRegister(TaskRegisterBase):
 
         if since_step:
             task_params['task_name'] = 'database_set_ssl_required_retry'
-            task_params['arguments'] = ('Retrying setting database SSL'
-                                        ' Not Required {}').format(database)
+            task_params['arguments'] = 'Retrying setting database SSL Not Required {}'.format(database)
 
         task = cls.create_task(task_params)
 
@@ -2664,7 +2695,6 @@ class TaskRegister(TaskRegisterBase):
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
-
         database_set_ssl_not_required.delay(**delay_params)
 
     # ============  END TASKS   ============

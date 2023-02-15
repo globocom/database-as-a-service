@@ -134,6 +134,12 @@ class Database(BaseModel):
     is_monitoring = models.BooleanField(
         verbose_name=_("Is database being monitored?"), default=True
     )
+    attention = models.BooleanField(
+        verbose_name=_("The database has GCP divergences?"), default=False, blank=True
+    )
+    attention_description = models.TextField(
+        verbose_name=_("Database GCP divergences descriptions."), default="", null=True, blank=True
+    )
     quarantine_dt = models.DateField(
         verbose_name=_("Quarantine date"), null=True, blank=True,
         editable=False
@@ -425,6 +431,7 @@ class Database(BaseModel):
 
                     instance = factory_for(self.databaseinfra)
                     instance.try_update_user(new_credential)
+            # Add step to stop database
 
     def clean(self):
         if not self.pk:
@@ -695,6 +702,25 @@ class Database(BaseModel):
             database=database, new_disk_type_upgrade=disk_offering_type, user=user
         )
 
+    @classmethod
+    def start_database_vm(cls, database, user):
+        from notification.tasks import TaskRegister
+
+        LOG.info("Starting database with params: database {}, user: {}".format(database, user))
+
+        TaskRegister.start_database_vm(
+            database=database, user=user
+        )
+
+    @classmethod
+    def stop_database_vm(cls, database, user):
+        from notification.tasks import TaskRegister
+
+        LOG.info("Starting database with params: database {}, user: {}".format(database, user))
+
+        TaskRegister.stop_database_vm(
+            database=database, user=user
+        )
 
     @classmethod
     def resize(cls, database, offering, user):
@@ -885,6 +911,16 @@ class Database(BaseModel):
 
         return False
 
+    @property
+    def is_alive(self):
+        if self.status == Database.ALIVE:
+            return True
+
+        if self.database_status and self.database_status.is_alive:
+            return True
+
+        return False
+
     @classmethod
     def disk_resize(cls, database, new_disk_offering, user):
         from physical.models import DiskOffering
@@ -962,6 +998,22 @@ class Database(BaseModel):
             return False, ("Database is being used by another task, please "
                            "check your tasks")
 
+        return True, None
+
+    def can_be_start_database_vm(self):
+        if self.status != self.DEAD:
+            return False, "Database is not dead and cannot be started"
+        if self.is_being_used_elsewhere():
+            return False, ("Database is being used by another task, please "
+                           "check your tasks")
+        return True, None
+
+    def can_be_stop_database_vm(self):
+        if self.status != self.ALIVE and self.is_dead:
+            return False, "Database is not alive and cannot be stoped"
+        if self.is_being_used_elsewhere():
+            return False, ("Database is being used by another task, please "
+                           "check your tasks")
         return True, None
 
     def can_be_deleted(self):
