@@ -387,6 +387,15 @@
       running_update = false;
     });
 
+    $("#checkbox-chg").change(function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      send_all_changes();
+      running_update = false;
+    });
+
     $("#attention_description").focusout(function() {
       if (running_update){
         return;
@@ -403,6 +412,19 @@
           "type": "GET",
           "url": "/logical/set_attention/" + database_id +
           "?att_bool="+att_bool_text+"&att_descr="+att_desc_text,
+          complete: function () {
+            running_update = false;
+          },
+      }).fail(function() {
+          alert("invalid server response");
+      });
+    }
+
+    function send_all_changes(){
+      chg_bool = $("#checkbox-chg").prop("checked");
+      jQuery.ajax({
+          "type": "GET",
+          "url": "/logical/send_all_chg/" + database_id + "?chg_bool="+chg_bool,
           complete: function () {
             running_update = false;
           },

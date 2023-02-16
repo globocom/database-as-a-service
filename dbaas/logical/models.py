@@ -173,9 +173,9 @@ class Database(BaseModel):
     apps_bind_name = models.TextField(
         verbose_name=_("apps_bind_name"), null=True, blank=True
     )
-    # send_all_chg = models.BooleanField(
-    #     verbose_name=_("Send all changes to Service Now"), default=False, blank=True
-    # )
+    send_all_chg = models.BooleanField(
+        verbose_name=_("Send all changes to Service Now"), default=False, blank=True
+    )
 
     def validate_unique(self, *args, **kwargs):
         ''' Validate if database name is unique

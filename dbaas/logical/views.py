@@ -240,10 +240,10 @@ def toggle_monitoring(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
-def send_all_chg(request, database_id):
+def funct_send_all_chg(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
-        database.send_all_chg = request.GET.get('att_bool') == 'true'
+        database.send_all_chg = request.GET.get('chg_bool') == 'true'
         database.save()
     except (Database.DoesNotExist, ValueError):
         return

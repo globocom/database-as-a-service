@@ -102,6 +102,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     """
     Task API
     """
+    all_chg_tasks_names = []
 
     chg_tasks_names = [
         'notification.tasks.destroy_database',
