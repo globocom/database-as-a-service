@@ -185,8 +185,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         params = self.request.GET.dict()
+        db = Database.objects.filter(name=params.get('database_name', None)).first()
 
-        db = Database.objects.filter(name=params.get('database_name', None))
         flag = False
         if db:
             flag = db.send_all_chg
