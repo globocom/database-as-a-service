@@ -102,7 +102,41 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     """
     Task API
     """
-    all_chg_tasks_names = []
+    all_chg_tasks_names = [
+        'maintenance.tasks.create_database_rollback',
+        'maintenance.tasks.database_environment_migrate_rollback',
+        'maintenance.tasks.node_zone_migrate_rollback',
+        'maintenance.tasks.region_migrate',
+        'maintenance.tasks.region_migrate_rollback',
+        'maintenance.tasks.restore_database',
+        'maintenance.tasks.rollback_create_database',
+        'maintenance.tasks.start_database_vm',
+        'maintenance.tasks.stop_database_vm',
+        'host_migrate',
+        'maintenance.tasks.update_ssl',
+        'maintenance.tasks.update_ssl_rollback',
+        'maintenance.tasks.upgrade_disk_type_database',
+        'make_database_backup',
+        'migrating_filer',
+        'migrating_zone',
+        'notification.tasks.add_instances_to_database_rollback',
+        'notification.tasks.change_mongodb_log_rotate',
+        'notification.tasks.change_parameters_database',
+        'notification.tasks.clone_database_rollback',
+        'notification.tasks.configure_ssl_database',
+        'notification.tasks.database_set_ssl_not_required',
+        'notification.tasks.database_set_ssl_required',
+        'notification.tasks.destroy_database_retry',
+        'notification.tasks.resize_database_rollback',
+        'notification.tasks.resize_database_retry',
+        'notification.tasks.switch_write_database',
+        'region_migration.tasks.execute_database_region_migration',
+        'region_migration.tasks.execute_database_region_migration_undo',
+        'resize_disk_from_zabbix_alert',
+        'switch_masters_in_zone',
+        'update_config_files',
+        'notification.tasks.database_quarantine',
+    ]
 
     chg_tasks_names = [
         'notification.tasks.destroy_database',
@@ -151,10 +185,16 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         params = self.request.GET.dict()
+
+        db = Database.objects.filter(name=params.get('database_name', None))
+        flag = False
+        if db:
+            flag = db.send_all_chg
+
         filter_params = {}
         for k, v in params.iteritems():
             if k == 'exclude_system_tasks':
-                filter_params['task_name__in'] = self.chg_tasks_names
+                filter_params['task_name__in'] = self.chg_tasks_names + self.all_chg_tasks_names if flag else self.chg_tasks_names
             elif k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
         return self.model.objects.filter(**filter_params)
