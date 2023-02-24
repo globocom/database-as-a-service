@@ -1396,6 +1396,14 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
         )
 
 
+class MongoDBReplicaset44(MongoDBReplicaset42):
+    def get_upgrade_steps_final(self):
+        return super().get_upgrade_steps_final()
+
+    def get_upgrade_steps_extra(self):
+        return super().get_upgrade_steps_extra()
+
+
 class MongoDBSingle42(MongoDBSingle):
 
     def get_upgrade_steps_final(self):
@@ -1422,6 +1430,14 @@ class MongoDBSingle42(MongoDBSingle):
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
+
+
+class MongoDBSingle44(MongoDBSingle42):
+    def get_upgrade_steps_final(self):
+        return super().get_upgrade_steps_final()
+
+    def get_upgrade_steps_extra(self):
+        return super().get_upgrade_steps_extra()
 
 
 class MongoDBSingleK8s(MongoDBSingle):
@@ -1678,6 +1694,11 @@ class MongoGenericGCE(object):
         )
 
 
+class MongoDBSingle44GCE(MongoGenericGCE, MongoDBSingle44):
+    def get_host_migrate_steps(self):
+        return self.get_single_migration_steps()
+
+
 class MongoDBSingle42GCE(MongoGenericGCE, MongoDBSingle42):
     def get_host_migrate_steps(self):
         return self.get_single_migration_steps()
@@ -1686,6 +1707,11 @@ class MongoDBSingle42GCE(MongoGenericGCE, MongoDBSingle42):
 class MongoDBSingleGCE(MongoGenericGCE, MongoDBSingle):
     def get_host_migrate_steps(self):
         return self.get_single_migration_steps()
+
+
+class MongoDBReplicaset44GCE(MongoGenericGCE, MongoDBReplicaset44):
+    def get_host_migrate_steps(self):
+        return self.get_replica_migration_steps()
 
 
 class MongoDBReplicaset42GCE(MongoGenericGCE, MongoDBReplicaset42):
