@@ -135,7 +135,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'resize_disk_from_zabbix_alert',
         'switch_masters_in_zone',
         'update_config_files',
-        'notification.tasks.database_quarantine',
+        'database_quarantine',
     ]
 
     chg_tasks_names = [
@@ -185,16 +185,25 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         params = self.request.GET.dict()
-        db = Database.objects.filter(name=params.get('database_name', None)).first()
-
-        flag = False
-        if db:
-            flag = db.send_all_chg
+        database = Database.objects.all()
 
         filter_params = {}
         for k, v in params.iteritems():
             if k == 'exclude_system_tasks':
-                filter_params['task_name__in'] = self.chg_tasks_names + self.all_chg_tasks_names if flag else self.chg_tasks_names
+                filter_params['task_name__in'] = self.chg_tasks_names
             elif k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
-        return self.model.objects.filter(**filter_params)
+
+        database_name_list = [
+            db.name
+            for db in database
+            if db.send_all_chg
+        ]
+
+        filter_param_chg = {
+            'task_name__in': self.chg_tasks_names + self.all_chg_tasks_names,
+            'database_name__in': database_name_list
+        }
+        result_chg = self.model.objects.filter(**filter_param_chg)
+        result = self.model.objects.filter(**filter_params)
+        return (result_chg | result).order_by('-created_at')
