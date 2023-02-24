@@ -193,17 +193,24 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
                 filter_params['task_name__in'] = self.chg_tasks_names
             elif k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
+        result = self.model.objects.filter(**filter_params)
 
         database_name_list = [
             db.name
             for db in database
             if db.send_all_chg
         ]
+        result_chg = []
+        if database_name_list:
+            filter_param_chg = {
+                'task_name__in': self.chg_tasks_names + self.all_chg_tasks_names,
+                'database_name__in': database_name_list
+            }
+            for key, value in params.iteritems():
+                if key not in ['exclude_system_tasks', 'database_name']:
+                    filter_param_chg[key] = value
+            result_chg = self.model.objects.filter(**filter_param_chg)
 
-        filter_param_chg = {
-            'task_name__in': self.chg_tasks_names + self.all_chg_tasks_names,
-            'database_name__in': database_name_list
-        }
-        result_chg = self.model.objects.filter(**filter_param_chg)
-        result = self.model.objects.filter(**filter_params)
-        return (result_chg | result).order_by('-created_at')
+        if result_chg:
+            return (result_chg | result).order_by('-created_at')
+        return result
