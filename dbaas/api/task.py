@@ -200,17 +200,15 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
             for db in database
             if db.send_all_chg
         ]
-        result_chg = []
+
         if database_name_list:
             filter_param_chg = {
                 'task_name__in': self.chg_tasks_names + self.all_chg_tasks_names,
                 'database_name__in': database_name_list
             }
             for key, value in params.iteritems():
-                if key not in ['exclude_system_tasks', 'database_name']:
+                if key not in ['exclude_system_tasks', 'database_name'] and key.split('__')[0] in self.filter_fields:
                     filter_param_chg[key] = value
             result_chg = self.model.objects.filter(**filter_param_chg)
-
-        if result_chg:
-            return (result_chg | result).order_by('-created_at')
+            return (result_chg | result).order_by('updated_at')
         return result
