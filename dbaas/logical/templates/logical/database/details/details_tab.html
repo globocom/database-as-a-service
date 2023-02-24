@@ -62,9 +62,9 @@
     <div class="controls">
       <label class="checkbox">
         {% if database.attention %}
-        <input  checked="checked" id="attention_bool" type="checkbox"/>
+            <input  checked="checked" id="attention_bool" type="checkbox"/>
         {% else %}
-        <input  id="attention_bool" type="checkbox"/>
+            <input  id="attention_bool" type="checkbox"/>
         {% endif %}
         <span><label class="vCheckboxLabel" for="attention_bool">Este banco precisa de atenção especial</label></span>
       </label>
@@ -80,9 +80,25 @@
   <div class="control-group">
     <div class="control-label"><label>Changes in Service Now:</label></div>
     <div class="controls">
-      <a href="{{ database.get_chg_register_url }}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">
-        <i class="icon-file icon-white"></i>
-      </a>
+      <table>
+        <th>
+          <td>
+            <a href="{{ database.get_chg_register_url }}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">
+                <i class="icon-file icon-white"></i>
+            </a>
+          </td>
+          <td>
+            <label class="checkbox" style="padding-left: 40px;">
+              {% if database.send_all_chg %}
+                <input checked="checked" id="checkbox-chg" type="checkbox"/>
+              {% else %}
+                <input id="checkbox-chg" type="checkbox" title="Não esqueça de salvar as alterações!"/>
+              {% endif %}
+              <span><label class="CheckboxLabel" for="attention_bool">Enviar todas as changes</label></span>
+            </label>
+          </td>
+        </th>
+      </table>
     </div>
   </div>
   <div class="control-group">
@@ -371,6 +387,15 @@
       running_update = false;
     });
 
+    $("#checkbox-chg").change(function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      send_all_changes();
+      running_update = false;
+    });
+
     $("#attention_description").focusout(function() {
       if (running_update){
         return;
@@ -387,6 +412,19 @@
           "type": "GET",
           "url": "/logical/set_attention/" + database_id +
           "?att_bool="+att_bool_text+"&att_descr="+att_desc_text,
+          complete: function () {
+            running_update = false;
+          },
+      }).fail(function() {
+          alert("invalid server response");
+      });
+    }
+
+    function send_all_changes(){
+      chg_bool = $("#checkbox-chg").prop("checked");
+      jQuery.ajax({
+          "type": "GET",
+          "url": "/logical/send_all_chg/" + database_id + "?chg_bool="+chg_bool,
           complete: function () {
             running_update = false;
           },

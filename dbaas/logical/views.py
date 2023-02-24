@@ -240,14 +240,29 @@ def toggle_monitoring(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def funct_send_all_chg(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+        database.send_all_chg = request.GET.get('chg_bool') == 'true'
+        database.save()
+    except (Database.DoesNotExist, ValueError):
+        return
+
+    instances_status = []
+    output = json.dumps({
+        'database_status': database.status_html,
+        'instances_status': instances_status
+    })
+    return HttpResponse(output, content_type="application/json")
+
 def set_attention(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
         database.attention = request.GET.get('att_bool') == 'true'
         database.attention_description = request.GET.get('att_descr')
+        database.save()
     except (Database.DoesNotExist, ValueError):
         return
-    database.save()
     instances_status = []
     output = json.dumps({'database_status': database.status_html,
                          'instances_status': instances_status})
