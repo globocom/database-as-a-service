@@ -2519,7 +2519,7 @@ def filtered_env_avaliable(all_env, plans_available, plan_from_to_env, current_e
 
     # Check which environment belongs
     prod = False
-    if 'prod' in current_env:
+    if 'prd' in current_env:
         prod = True
 
     # Filtered physical plan with available physical plans
@@ -2554,7 +2554,7 @@ def filtered_env_avaliable(all_env, plans_available, plan_from_to_env, current_e
     # Filters the list of all available envs with the location the env belongs to.
     list_filtered_env = []
     for available_env_raw in filtered_available_env:
-        if prod == ('prod' in available_env_raw['environment']):
+        if prod == ('prd' in available_env_raw['environment']):
             list_filtered_env.append(available_env_raw)
 
     return list_filtered_env
