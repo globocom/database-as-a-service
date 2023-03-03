@@ -64,8 +64,10 @@ class DatabaseReport(ListView):
 
     def vm_by_line_database_report(self):
 
-        header = ['Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = [
+            'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'cpu', 'memory', 'disk'
+        ]
 
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
@@ -92,7 +94,10 @@ class DatabaseReport(ListView):
                     database.team.organization.name,
                     database.created_at,
                     database.is_in_quarantine,
-                    database.apps_bind_name
+                    database.apps_bind_name,
+                    database.infra.hosts[0].offering.name.split('(')[1].split('+')[0],
+                    database.infra.hosts[0].offering.name.split('(')[1].split('+')[1].split(')')[0],
+                    database.infra.disk_offering.name.split('-')[1]
                 ]
                 writer.writerow(data)
 
@@ -100,8 +105,10 @@ class DatabaseReport(ListView):
 
     def default_database_report(self):
 
-        header = ['Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = [
+            'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'cpu', 'memory', 'disk'
+        ]
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
@@ -129,7 +136,10 @@ class DatabaseReport(ListView):
                 database.team.organization.name,
                 database.created_at,
                 database.is_in_quarantine,
-                database.apps_bind_name
+                database.apps_bind_name,
+                database.infra.hosts[0].offering.name.split('(')[1].split('+')[0],
+                database.infra.hosts[0].offering.name.split('(')[1].split('+')[1].split(')')[0],
+                database.infra.disk_offering.name.split('-')[1]
             ]
             writer.writerow(data)
 
