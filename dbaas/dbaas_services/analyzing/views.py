@@ -66,7 +66,7 @@ class DatabaseReport(ListView):
 
         header = [
             'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'cpu + memory', 'disk'
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'CPU', 'Memory in MB', 'Disk in Gb'
         ]
 
         databases = Database.objects.all()
@@ -95,8 +95,9 @@ class DatabaseReport(ListView):
                     database.created_at,
                     database.is_in_quarantine,
                     database.apps_bind_name,
-                    database.infra.hosts[0].offering.name,
-                    database.infra.disk_offering.name
+                    database.infra.offering.cpus,
+                    database.infra.offering.memory_size_mb,
+                    database.infra.disk_offering.size_gb()
                 ]
                 writer.writerow(data)
 
@@ -106,7 +107,7 @@ class DatabaseReport(ListView):
 
         header = [
             'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'cpu + memory', 'disk'
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'CPU', 'Memory in MB', 'Disk in Gb'
         ]
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
@@ -136,8 +137,9 @@ class DatabaseReport(ListView):
                 database.created_at,
                 database.is_in_quarantine,
                 database.apps_bind_name,
-                database.infra.hosts[0].offering.name,
-                database.infra.disk_offering.name
+                database.infra.offering.cpus,
+                database.infra.offering.memory_size_mb,
+                database.infra.disk_offering.size_gb()
             ]
             writer.writerow(data)
 
