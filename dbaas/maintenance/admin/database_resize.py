@@ -10,12 +10,12 @@ class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
 
     list_display = (
         "database", "database_team", "source_offer_name", "target_offer_name",
-        "current_step", "friendly_status", "maintenance_action", "link_task",
+        "current_step", "current_step_class", "friendly_status", "maintenance_action", "link_task",
         "started_at", "finished_at"
     )
 
     readonly_fields = (
-        "current_step_class", "database", "source_offer", "source_offer_name",
+        "database", "source_offer", "source_offer_name",
         "target_offer", "target_offer_name", "link_task",
         "started_at", "finished_at", "status", "maintenance_action",
         "task_schedule"

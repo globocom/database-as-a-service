@@ -71,6 +71,14 @@ class ConfigurationBase(object):
             value = default
         return ParameterObject(value, default)
 
+    def get_parameter_not_greater_than_default(self, parameter_name, default):
+        value = self.databaseinfra.get_parameter_value_by_parameter_name(
+            parameter_name=parameter_name
+        )
+        if not value or (int(value) > int(default)):
+            value = default
+        return ParameterObject(value, default)
+
     def __getattribute__(self, item):
         if item == 'databaseinfra':
             return object.__getattribute__(self, item)
@@ -404,7 +412,7 @@ class ConfigurationMySQL(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def innodb_buffer_pool_size(self):
+    def innodb_buffer_pool_size_old(self):
         parameter_name = inspect.stack()[0][3]
         if self.memory_size_in_mb < 1024:
             default = self.memory_size_in_bytes / 4
@@ -414,6 +422,16 @@ class ConfigurationMySQL(ConfigurationBase):
             default = (self.memory_size_in_bytes * 3) / 4
         default = int(default)
         return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_buffer_pool_size(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.memory_size_in_mb < 6144:
+            default = self.memory_size_in_bytes / 4
+        elif self.memory_size_in_mb > 6144:
+            default = self.memory_size_in_bytes / 2
+        default = int(default)
+        return self.get_parameter_not_greater_than_default(parameter_name, default)
 
     @property
     def innodb_log_file_size(self):
