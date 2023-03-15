@@ -41,19 +41,19 @@
   <div class="control-group">
     <div class="control-label"><label>Start/Stop Database:</label></div>
     <div class="controls">
-      <a class="btn {% if database.status == database.DEAD %}btn-success{% else %}btn-danger{% endif %}" title="start-stop-database" data-content="Start/Stop Database" target="_blank" id="id_start_stop_database" {{ btn_start_stop_is_disabled }}>
+      <button class="btn {% if database.status == database.DEAD %}btn-success{% else %}btn-danger{% endif %}" data-toggle="modal" id="start_stop_database_btn" data-target="#start_stop_database" {{ btn_start_stop_is_disabled }}>
         {% if database.status == database.DEAD %}
             Start Database
         {% else %}
             Stop Database
         {% endif %}
-      </a>
+      </button>
       {%if last_start_database and last_start_database.is_status_error %}
-        <a class="resize_button btn btn-warning" href="{% url 'admin:start_database_vm_retry' last_start_database.id %}" title="Go to disk resize page">Retry</a>
+        <a class="resize_button btn btn-warning" href="{% url 'admin:start_database_vm_retry' last_start_database.id %}" title="Go to start database page">Retry</a>
         <p><a href="{% url 'admin:maintenance_databasestartdatabasevm_change' last_start_database.id %}" target='_blank'>Last start database </a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_start_database.task.id %}" target='_blank'>task</a> and do retry of upgrade disk type by clicking in one of above buttons</p>
       {% endif %}
       {%if last_stop_database and last_stop_database.is_status_error %}
-        <a class="resize_button btn btn-warning" href="{% url 'admin:stop_database_vm_retry' last_stop_database.id %}" title="Go to disk resize page">Retry</a>
+        <a class="resize_button btn btn-warning" href="{% url 'admin:stop_database_vm_retry' last_stop_database.id %}" title="Go to stop database page">Retry</a>
         <p><a href="{% url 'admin:maintenance_databasestopdatabasevm_change' last_stop_database.id %}" target='_blank'>Last stop database </a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_stop_database.task.id %}" target='_blank'>task</a> and do retry of upgrade disk type by clicking in one of above buttons</p>
       {% endif %}
     </div>
@@ -262,6 +262,8 @@
   </div>
   {% endif %}
 </fieldset>
+{% include "admin/confirmation_modal.html" with modal_id="start_stop_database" confirmation_message="Are you sure you want to Start/Stop the database now?" box_title="Start/Stop the Database" button_type="button" button_value="Start/Stop" button_name="start_stop_database_confirm" id_optional="id=id_start_stop_database" %}
+
 {% endblock %}
 
 {% block js_footer %}
@@ -354,19 +356,21 @@
       }
       running_update = true;
       $("#id_start_stop_database").attr('disabled','disabled');
-      value = $("#id_start_stop_database").text();
+      value = $("#id_start_stop_database").val();
       if(value.includes('Stop')){
         url = "/logical/stop_database/"+ database_id;
       }else{
         url = "/logical/start_database/"+ database_id;
       }
       jQuery.ajax({
-          "dataType": "json", "url": url, "type": "GET",
-          complete: function () {
-            running_update = false;
-          },
+          "dataType": "json",
+          "url": url,
+          "type": "GET"
       }).fail(function() {
           alert("invalid server response");
+      }).done(function(){
+          running_update = false;
+          window.location.reload();
       });
     });
 
@@ -420,6 +424,14 @@
       });
     }
 
+
+    $("#start_stop_database_btn").click(function() {
+      $("#start_stop_database .modal_message").text('Are you sure you want to {% if database.status == database.DEAD %}Start{% else %}Stop{% endif %} your database now?');
+      $("#start_stop_database .modal-title").text('{% if database.status == database.DEAD %}Start{% else %}Stop{% endif %} Database');
+      $("#start_stop_database #id_start_stop_database").val('{% if database.status == database.DEAD %}Start{% else %}Stop{% endif %}');
+    });
+
+
     function send_all_changes(){
       chg_bool = $("#checkbox-chg").prop("checked");
       jQuery.ajax({
@@ -432,6 +444,7 @@
           alert("invalid server response");
       });
     }
+
 });
 
 
