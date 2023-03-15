@@ -82,12 +82,12 @@ def can_migrate(database, task, migration_stage, rollback):
 
     if last_mig.status == DatabaseMigrate.WAITING:
         task.set_status_error(
-            "Could not run migration. Found a 'Waiting' database migration: '{}'".format(last_mig)
+            "Could not run migration. Found a 'Waiting' region migration: '{}'".format(last_mig)
         )
         return False
     elif last_mig.status == DatabaseMigrate.RUNNING:
         task.set_status_error(
-            "Could not run migration. Found a 'Running' database migration: '{}'".format(last_mig)
+            "Could not run migration. Found a 'Running' region migration: '{}'".format(last_mig)
         )
         return False
     elif last_mig.status == DatabaseMigrate.SUCCESS:
@@ -98,7 +98,7 @@ def can_migrate(database, task, migration_stage, rollback):
         completed_migration_stage = last_mig.migration_stage - 1
     else:
         task.set_status_error(
-            "Unknown database migration status: '{}'. For migration: '{}'".format(last_mig.status, last_mig)
+            "Unknown region migration status: '{}'. For migration: '{}'".format(last_mig.status, last_mig)
         )
         return False
     return True
@@ -151,11 +151,11 @@ def region_migrate(database, new_environment, new_offering, task, hosts_zones, f
             infra.save()
 
         database_migrate.set_success()
-        task.set_status_success('Database migrated with success')
+        task.set_status_success('Database migrated with success to new region')
 
     else:
         database_migrate.set_error()
-        task.set_status_error('Could not migrate database')
+        task.set_status_error('Could not migrate database to new region')
 
 
 def rollback_region_migrate(step_manager, task):
@@ -207,7 +207,7 @@ def can_migrate_check_steps(steps, instances, since_step, database_migrate, task
         lock_databases_for(instances, task, True)
         database_migrate.set_error()
         task.set_status_error(
-            "Could not migrate database. \n" \
+            "Could not migrate database to new region. \n" \
             "Last step in last migration was '{}'\n" \
             "It is trying to execute '{}'.\n" \
             "Probably there was a deploy after last migration.\n" \

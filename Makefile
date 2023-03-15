@@ -124,7 +124,7 @@ migrate:
 	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))
 
 dev_docker_build:
-	@cp requirements* dev/. && cd dev && docker build -t dbaas_dev .
+	@cp requirements.txt dev/. && cd dev && docker build -t dbaas_dev .
 
 dev_docker_setup:
 	@cd dev && ./setup_db.sh $(filter-out $@,$(MAKECMDGOALS))

@@ -240,14 +240,29 @@ def toggle_monitoring(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def funct_send_all_chg(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+        database.send_all_chg = request.GET.get('chg_bool') == 'true'
+        database.save()
+    except (Database.DoesNotExist, ValueError):
+        return
+
+    instances_status = []
+    output = json.dumps({
+        'database_status': database.status_html,
+        'instances_status': instances_status
+    })
+    return HttpResponse(output, content_type="application/json")
+
 def set_attention(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
         database.attention = request.GET.get('att_bool') == 'true'
         database.attention_description = request.GET.get('att_descr')
+        database.save()
     except (Database.DoesNotExist, ValueError):
         return
-    database.save()
     instances_status = []
     output = json.dumps({'database_status': database.status_html,
                          'instances_status': instances_status})
@@ -2519,7 +2534,7 @@ def filtered_env_avaliable(all_env, plans_available, plan_from_to_env, current_e
 
     # Check which environment belongs
     prod = False
-    if 'prod' in current_env:
+    if 'prd' in current_env:
         prod = True
 
     # Filtered physical plan with available physical plans
@@ -2554,7 +2569,7 @@ def filtered_env_avaliable(all_env, plans_available, plan_from_to_env, current_e
     # Filters the list of all available envs with the location the env belongs to.
     list_filtered_env = []
     for available_env_raw in filtered_available_env:
-        if prod == ('prod' in available_env_raw['environment']):
+        if prod == ('prd' in available_env_raw['environment']):
             list_filtered_env.append(available_env_raw)
 
     return list_filtered_env

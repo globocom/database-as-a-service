@@ -121,12 +121,10 @@ class Database(BaseModel):
         DatabaseInfra, related_name="databases", on_delete=models.PROTECT
     )
     project = models.ForeignKey(
-        Project, related_name="databases", on_delete=models.PROTECT, null=True,
-        blank=True
+        Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True
     )
     team = models.ForeignKey(
-        Team, related_name="databases", null=True, blank=True,
-        help_text=_("Team that is accountable for the database")
+        Team, related_name="databases", null=True, blank=True, help_text=_("Team that is accountable for the database")
     )
     is_in_quarantine = models.BooleanField(
         verbose_name=_("Is database in quarantine?"), default=False
@@ -141,8 +139,7 @@ class Database(BaseModel):
         verbose_name=_("Database GCP divergences descriptions."), default="", null=True, blank=True
     )
     quarantine_dt = models.DateField(
-        verbose_name=_("Quarantine date"), null=True, blank=True,
-        editable=False
+        verbose_name=_("Quarantine date"), null=True, blank=True, editable=False
     )
     description = models.TextField(
         verbose_name=_("Description"), null=True, blank=True
@@ -150,8 +147,7 @@ class Database(BaseModel):
     status = models.IntegerField(choices=DB_STATUS, default=2)
     used_size_in_bytes = models.FloatField(default=0.0)
     environment = models.ForeignKey(
-        Environment, related_name="databases", on_delete=models.PROTECT,
-        db_index=True
+        Environment, related_name="databases", on_delete=models.PROTECT, db_index=True
     )
     backup_path = models.CharField(
         verbose_name=_("Backup path"), max_length=300, null=True, blank=True,
@@ -169,15 +165,16 @@ class Database(BaseModel):
         help_text=_("When marked, the disk will be resized automatically.")
     )
     is_protected = models.BooleanField(
-        verbose_name=_("Protected"), default=False,
-        help_text=_("When marked, the database can not be deleted.")
+        verbose_name=_("Protected"), default=False, help_text=_("When marked, the database can not be deleted.")
     )
     quarantine_user = models.ForeignKey(
-        User, related_name='databases_quarantine',
-        null=True, blank=True, editable=False
+        User, related_name='databases_quarantine', null=True, blank=True, editable=False
     )
     apps_bind_name = models.TextField(
         verbose_name=_("apps_bind_name"), null=True, blank=True
+    )
+    send_all_chg = models.BooleanField(
+        verbose_name=_("Send all changes to Service Now"), default=False, blank=True
     )
 
     def validate_unique(self, *args, **kwargs):
@@ -287,7 +284,6 @@ class Database(BaseModel):
             self.environment,
             CredentialType.GCP_LOG
         )
-
 
     def pin_task(self, task):
         try:
@@ -646,9 +642,7 @@ class Database(BaseModel):
     @property
     def capacity(self):
         if self.status:
-            return round(
-                ((1.0 * self.used_size_in_bytes / self.total_size)
-                 if self.total_size else 0, 2))
+            return round(((1.0 * self.used_size_in_bytes / self.total_size) if self.total_size else 0, 2))
 
     @classmethod
     def purge_quarantine(self):
@@ -932,8 +926,7 @@ class Database(BaseModel):
             database=database, user=user, disk_offering=disk_offering
         )
 
-    def update_host_disk_used_size(self, host_address, used_size_kb,
-                                   total_size_kb=None):
+    def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
         instance = self.databaseinfra.instances.filter(
             address=host_address
         ).first()
@@ -1254,7 +1247,6 @@ class Database(BaseModel):
             return False, error
         return True, None
 
-
     def can_do_set_ssl_required_retry(self):
         error = None
         if self.is_in_quarantine:
@@ -1309,7 +1301,6 @@ class Database(BaseModel):
         if error:
             return False, error
         return True, None
-
 
     def destroy(self, user):
         if not self.is_in_quarantine:
