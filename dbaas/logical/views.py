@@ -280,7 +280,7 @@ def get_is_button_start_stop_disabled(start_database, stop_database):
 def check_change_team_labels(new_team, old_team, database):
     status = True
     try:
-        if new_team and new_team != old_team.id:
+        if new_team and int(new_team) != int(old_team.id):
             database.team = Team.objects.get(id=new_team)
             database.save()
             status, msg = database.update_team_labels()
@@ -2029,7 +2029,7 @@ def database_backup(request, context, database):
             groups.append(group)
             context['snapshots'].append(backup)
 
-    context['snapshots'] = context['snapshots']
+    context['snapshots'] = sorted(context['snapshots'], key=lambda snapshot: snapshot.created_at)
     context['environments'] = Environment.objects.all()
     context['plans'] = Plan.objects.filter(
         engine=database.engine, is_active=True,
