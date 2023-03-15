@@ -46,7 +46,11 @@
                     <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }} do</a></td>
                   {% endif %}
                 {% else %}
-                  <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+                  {% if maintenance.verbose_name == 'database migrate' and maintenance.is_region_migrate %}
+                    <td><a href={{ maintenance.url }}>region migrate</a></td>
+                  {% else %}
+                    <td><a href={{ maintenance.url }}>{{ maintenance.verbose_name }}</a></td>
+                  {% endif %}
                 {% endif %}
               {% else %}
                 <td>{{ maintenance.verbose_name }}</td>
