@@ -64,8 +64,11 @@ class DatabaseReport(ListView):
 
     def vm_by_line_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = [
+            'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'CPU', 'Memory in MB', 'Disk in Gb',
+            'Engine type'
+        ]
 
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
@@ -79,26 +82,36 @@ class DatabaseReport(ListView):
 
         for database in databases:
             for instance in database.infra.instances.all():
-                data = [database.name,
-                        instance.hostname.hostname.encode("utf-8"),
-                        database.environment,
-                        database.team,
-                        database.team.name,
-                        database.team.team_area,
-                        database.team.email,
-                        database.team.contacts,
-                        database.team.organization.name,
-                        database.created_at,
-                        database.is_in_quarantine,
-                        database.apps_bind_name]
+                data = [
+                    database.name,
+                    database.attention_description,
+                    instance.hostname.hostname.encode("utf-8"),
+                    database.environment,
+                    database.team,
+                    database.team.name,
+                    database.team.team_area,
+                    database.team.email,
+                    database.team.contacts,
+                    database.team.organization.name,
+                    database.created_at,
+                    database.is_in_quarantine,
+                    database.apps_bind_name,
+                    database.infra.offering.cpus,
+                    database.infra.offering.memory_size_mb,
+                    database.infra.disk_offering.size_gb(),
+                    database.engine_type
+                ]
                 writer.writerow(data)
 
         return response
 
     def default_database_report(self):
 
-        header = ['Name', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
-                  'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name']
+        header = [
+            'Name', 'Observacao', 'VM', 'Env', 'Team', 'Team Name', 'Team Area', 'Email', 'Emergency Contacts',
+            'Team Organization', 'Created At', 'In Quarantine', 'Apps Bind Name', 'CPU', 'Memory in MB', 'Disk in Gb',
+            'Engine type'
+        ]
         databases = Database.objects.all()
         response = HttpResponse(content_type='text/csv')
 
@@ -110,20 +123,28 @@ class DatabaseReport(ListView):
         writer.writerow(header)
 
         for database in databases:
-            hostname = [instance.hostname.hostname.encode("utf-8") for instance in
-                        database.infra.instances.all()]
-            data = [database.name,
-                    hostname,
-                    database.environment,
-                    database.team,
-                    database.team.name,
-                    database.team.team_area,
-                    database.team.email,
-                    database.team.contacts,
-                    database.team.organization.name,
-                    database.created_at,
-                    database.is_in_quarantine,
-                    database.apps_bind_name]
+            hostname = [
+                instance.hostname.hostname.encode("utf-8") for instance in database.infra.instances.all()
+            ]
+            data = [
+                database.name,
+                database.attention_description,
+                hostname,
+                database.environment,
+                database.team,
+                database.team.name,
+                database.team.team_area,
+                database.team.email,
+                database.team.contacts,
+                database.team.organization.name,
+                database.created_at,
+                database.is_in_quarantine,
+                database.apps_bind_name,
+                database.infra.offering.cpus,
+                database.infra.offering.memory_size_mb,
+                database.infra.disk_offering.size_gb(),
+                database.engine_type
+            ]
             writer.writerow(data)
 
         return response
