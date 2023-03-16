@@ -85,26 +85,49 @@ class DatabaseReport(ListView):
 
         for database in databases:
             for instance in database.infra.instances.all():
-                data = [
-                    database.name,
-                    database.attention_description,
-                    instance.hostname.hostname.encode("utf-8"),
-                    database.environment,
-                    database.team,
-                    database.team.name,
-                    database.team.team_area,
-                    database.team.email,
-                    database.team.contacts,
-                    database.team.organization.name,
-                    database.created_at,
-                    database.is_in_quarantine,
-                    database.apps_bind_name,
-                    database.infra.offering.cpus,
-                    database.infra.offering.memory_size_mb,
-                    database.infra.disk_offering.size_gb(),
-                    database.engine_type
-                ]
-                writer.writerow(data)
+                try:
+                    data = [
+                        database.name,
+                        database.attention_description,
+                        instance.hostname.hostname.encode("utf-8"),
+                        database.environment,
+                        database.team,
+                        database.team.name,
+                        database.team.team_area,
+                        database.team.email,
+                        database.team.contacts,
+                        database.team.organization.name,
+                        database.created_at,
+                        database.is_in_quarantine,
+                        database.apps_bind_name,
+                        database.infra.offering.cpus,
+                        database.infra.offering.memory_size_mb,
+                        database.infra.disk_offering.size_gb(),
+                        database.engine_type
+                    ]
+                    writer.writerow(data)
+                except Exception as e:
+                    data = [
+                        database.name,
+                        database.attention_description,
+                        instance.hostname.hostname.encode("utf-8"),
+                        database.environment,
+                        database.team,
+                        database.team.name,
+                        database.team.team_area,
+                        database.team.email,
+                        database.team.contacts,
+                        database.team.organization.name,
+                        database.created_at,
+                        database.is_in_quarantine,
+                        database.apps_bind_name,
+                        '',
+                        '',
+                        '',
+                        database.engine_type
+                    ]
+                    writer.writerow(data)
+                    LOG.error('Error generating csv. Error: {}'.format(e))
 
         return response
 
