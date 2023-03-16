@@ -2302,33 +2302,31 @@ def database_migrate(request, context, database):
             hp = Provider(database.infra.instances.first(), environment)
             hp_zones = sorted(hp.list_zones())
 
-            if len(hp_zones) > 0:
-                zone = hp_zones[0]['name']
-
-            instances = database.infra.instances.all().order_by('shard', 'id')
-            for instance in instances:
-                host_id = instance.hostname.id
-                break
-
-            if environment not in current_offering.environments.all():
-                messages.add_message(
-                    request, messages.ERROR, "There is no offering {} to {} environment".format(current_offering, environment)
-                )
-                return
+            hp_zones_list = []
+            for hp_zone in hp_zones:
+                hp_zones_list.append(hp_zone.get('name'))
 
             hosts_zones = OrderedDict()
-            host = get_object_or_404(Host, pk=host_id)
-            hosts_zones[host] = zone
+            data = json.loads(request.POST.get('hosts_zones'))
+            for host_id, zone in data.items():
+                if zone not in hp_zones_list and database.infra.migration_stage == database.infra.NOT_STARTED:
+                    error = "Zone {} isn't available in {} environment".format(zone, environment)
+                    messages.add_message(request, messages.ERROR, error)
+                    return
 
-            if not database.infra.migration_stage == database.infra.NOT_STARTED:
-                error = "Zone {} isn't available in {} environment".format(zone, environment)
-                messages.add_message(request, messages.ERROR, error)
-                return
+                host = get_object_or_404(Host, pk=host_id)
+                hosts_zones[host] = zone
+                if environment not in current_offering.environments.all():
+                    messages.add_message(
+                        request, messages.ERROR,
+                        "There is no offering {} to {} environment".format(current_offering, environment)
+                    )
+                    return
 
-            if hosts_zones and 'gcp' in environment.name:
-                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones, flag_region)
-            else:
+            if not hosts_zones and not ('gcp' in environment.name):
                 messages.add_message(request, messages.ERROR, "There is no host to migrate")
+            else:
+                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones, flag_region)
         return
 
     hosts = set()
