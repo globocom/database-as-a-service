@@ -336,8 +336,13 @@
 
     $("#migrate_region_btn_modal").click(function() {
       var $select = $("#migrate_region");
-      window.MigrateManager.migrate_database({{database.id}}, $("#migrate_region").val(), 0, 0);
+      var hosts_zones_region = {}
+      $(".host-zone").each(function(id, obj) {
+        hosts_zones_region[obj.dataset['hostId'].toString()] = obj.value;
+      })
+      window.MigrateManager.migrate_database({{database.id}}, $("#migrate_region").val(), 0, hosts_zones_region);
     });
+
 
     $("#full_rollback_migrate_stage_btn_modal").click(function() {
       //window.MigrateManager.full_rollback_migrate_stage({{database.id}}, 10);
@@ -365,6 +370,15 @@
       load_region($environment.val());
     });
     $("#migrate_environment").change()
+
+    $("#migrate_region").on("change", function() {
+      var $environment = $(this);
+      control_migrate_button();
+      load_offerings($environment.val())
+      load_zones($environment.val());
+      load_region($environment.val());
+    });
+    $("#migrate_region").change()
 
     function check_offering(new_offering, old_offering, modal_id){
       $.ajax({
