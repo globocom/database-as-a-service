@@ -309,6 +309,24 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def new_take_snapshot(self, persist=0):
+        url = "{}new_snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+
+        data = {
+            "engine": self.engine.name,
+            "db_name": self.database_name,
+            "team_name": self.team_name
+        }
+        response = post(url, json=data, headers=self.headers)
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
     def delete_snapshot(self, snapshot, force):
         self.force_environment = snapshot.environment
 

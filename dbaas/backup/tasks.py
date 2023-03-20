@@ -211,6 +211,120 @@ def make_instance_snapshot_backup(instance, error, group,
 
     return snapshot
 
+def make_instance_new_snapshot_backup(
+    instance, error, group, provider_class=VolumeProviderSnapshot, target_volume=None,
+    current_hour=None, task=None, persist=0
+):
+    LOG.info("Make instance backup for {}".format(instance))
+    provider = provider_class(instance)
+    infra = instance.databaseinfra
+    database = infra.databases.first()
+
+    backup_retry_attempts = Configuration.get_by_name_as_int('backup_retry_attempts', default=3)
+
+    snapshot = Snapshot.create(
+        instance, group, target_volume or provider.volume,
+        environment=provider.environment, persistent=True if persist != 0 else False
+    )
+
+    snapshot_final_status = Snapshot.SUCCESS
+
+    locked = None
+    client = None
+    driver = infra.get_driver()
+    try:
+        client = driver.get_client(instance)
+        locked = lock_instance(driver, instance, client)
+        if not locked:
+            snapshot_final_status = Snapshot.WARNING
+
+        if 'MySQL' in type(driver).__name__:
+            mysql_binlog_save(client, instance)
+
+        has_snapshot = Snapshot.objects.filter(
+            status=Snapshot.WARNING, instance=instance, end_at__year=datetime.now().year,
+            end_at__month=datetime.now().month, end_at__day=datetime.now().day
+        )
+        backup_hour_list = Configuration.get_by_name_as_list('make_database_backup_hour')
+        if not snapshot_final_status == Snapshot.WARNING and not has_snapshot:
+            for _ in range(backup_retry_attempts):
+                try:
+                    response = None
+                    response = provider.new_take_snapshot(persist=persist)
+                    break
+                except IndexError as e:
+                    content, response = e
+                    if response.status_code == 503:
+                        errormsg = "{} - 503 error creating snapshot for instance: {}. It will try again in 30 seconds. ".format(
+                            strftime("%d/%m/%Y %H:%M:%S"), instance
+                        )
+                        LOG.error(errormsg)
+                        if task:
+                            task.add_detail(errormsg)
+                        sleep(30)
+                    else:
+                        raise e
+
+            snapshot.done(response)
+            snapshot.save()
+        else:
+            if str(current_hour) in backup_hour_list:
+                raise Exception("Backup with WARNING already created today.")
+    except Exception as e:
+        errormsg = "Error creating snapshot: {}".format(e)
+        error['errormsg'] = errormsg
+        set_backup_error(infra, snapshot, errormsg)
+        return snapshot
+    finally:
+        unlock_instance(driver, instance, client)
+
+    if not snapshot.size:
+        command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
+            snapshot.snapshot_name
+        )
+        try:
+            output = instance.hostname.ssh.run_script(command)
+            size = int(output['stdout'][0])
+            snapshot.size = size
+        except Exception as e:
+            snapshot.size = 0
+            LOG.error("Error exec remote command {}".format(e))
+
+    backup_path = database.backup_path
+    if backup_path:
+        now = datetime.now()
+        target_path = "{}/{}/{}/{}/{}".format(
+            backup_path,
+            now.strftime("%Y_%m_%d"),
+            instance.hostname.hostname.split('.')[0],
+            now.strftime("%Y%m%d%H%M%S"),
+            infra.name
+        )
+        snapshot_path = "/data/.snapshot/{}/data/".format(
+            snapshot.snapshot_name
+        )
+        command = """
+        if [ -d "{backup_path}" ]
+        then
+            rm -rf {backup_path}/20[0-9][0-9]_[0-1][0-9]_[0-3][0-9] &
+            mkdir -p {target_path}
+            cp -r {snapshot_path} {target_path} &
+        fi
+        """.format(backup_path=backup_path,
+                   target_path=target_path,
+                   snapshot_path=snapshot_path)
+        try:
+            instance.hostname.ssh.run_script(command)
+        except Exception as e:
+            LOG.error("Error exec remote command {}".format(e))
+
+    snapshot.status = snapshot_final_status
+    snapshot.end_at = datetime.now()
+    snapshot.save()
+    register_backup_dbmonitor(infra, snapshot)
+
+    return snapshot
+
 
 def make_instance_snapshot_backup_upgrade_disk(instance, error, group, provider_class=VolumeProviderSnapshot,
                                                target_volume=None,
