@@ -1433,7 +1433,20 @@ def resize_database(self, database, user, task, offering, original_offering=None
     class_path = infra.plan.replication_topology.class_path
     steps = util_providers.get_resize_settings(class_path)
 
-    instances_to_resize = infra.get_driver().get_database_instances()
+    db_instances = infra.get_driver().get_database_instances()
+
+    master_instance = []
+    instances_to_resize = []
+
+    driver = infra.get_driver()
+    for instance in db_instances:
+        if driver.check_instance_is_master(instance):
+            master_instance.append(instance)
+        else:
+            instances_to_resize.append(instance)
+
+    instances_to_resize.extend(master_instance)
+
     success = steps_for_instances(
         steps, instances_to_resize, task,
         database_resize.update_step, since_step
