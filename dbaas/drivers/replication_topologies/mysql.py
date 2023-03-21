@@ -490,15 +490,21 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.vip_provider.CreateVip',
+
                 'workflow.steps.util.vip_provider.CreateInstanceGroup',
+
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
                 'workflow.steps.util.vip_provider.AllocateIP',
+
                 'workflow.steps.util.vip_provider.AllocateDNS',
+
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
+
                 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
                 'workflow.steps.util.dns.RegisterDNSVip',
+                'workflow.steps.util.provider'
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
@@ -617,11 +623,11 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vip_provider.AddInstancesInGroup',
                 'workflow.steps.util.vip_provider.CreateHeathcheck',
                 'workflow.steps.util.vip_provider.CreateBackendService',
-                'workflow.steps.util.vip_provider.AllocateIP',
-                'workflow.steps.util.vip_provider.AllocateDNS',
+                'workflow.steps.util.vip_provider.AllocateIP', #-> cria o ingress
+                'workflow.steps.util.vip_provider.AllocateDNS', #-> cria geristro do DatabaseInfraDNSList
                 'workflow.steps.util.vip_provider.CreateForwardingRule',
-                'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
-                'workflow.steps.util.dns.RegisterDNSVip',
+                'workflow.steps.util.vip_provider.AddLoadBalanceLabels', # ->custos/identificação
+                'workflow.steps.util.dns.RegisterDNSVip', # -> pede um DNS para a globo baseado no IP do ingress
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
