@@ -85,49 +85,26 @@ class DatabaseReport(ListView):
 
         for database in databases:
             for instance in database.infra.instances.all():
-                try:
-                    data = [
-                        database.name,
-                        database.attention_description,
-                        instance.hostname.hostname.encode("utf-8"),
-                        database.environment,
-                        database.team,
-                        database.team.name,
-                        database.team.team_area,
-                        database.team.email,
-                        database.team.contacts,
-                        database.team.organization.name,
-                        database.created_at,
-                        database.is_in_quarantine,
-                        database.apps_bind_name,
-                        database.infra.offering.cpus,
-                        database.infra.offering.memory_size_mb,
-                        database.infra.disk_offering.size_gb(),
-                        database.engine_type
-                    ]
-                    writer.writerow(data)
-                except Exception as e:
-                    data = [
-                        database.name,
-                        database.attention_description,
-                        instance.hostname.hostname.encode("utf-8"),
-                        database.environment,
-                        database.team,
-                        database.team.name,
-                        database.team.team_area,
-                        database.team.email,
-                        database.team.contacts,
-                        database.team.organization.name,
-                        database.created_at,
-                        database.is_in_quarantine,
-                        database.apps_bind_name,
-                        '',
-                        '',
-                        '',
-                        database.engine_type
-                    ]
-                    writer.writerow(data)
-                    LOG.error('Error generating csv. Error: {}'.format(e))
+                data = [
+                    database.name,
+                    database.attention_description,
+                    instance.hostname.hostname.encode("utf-8"),
+                    database.environment,
+                    self._check_values(database, 'team'),
+                    self._check_values(database, 'team_name'),
+                    self._check_values(database, 'team_area'),
+                    self._check_values(database, 'team_email'),
+                    self._check_values(database, 'team_contacts'),
+                    self._check_values(database, 'team_organization'),
+                    database.created_at,
+                    database.is_in_quarantine,
+                    database.apps_bind_name,
+                    self._check_values(database, 'cpu'),
+                    self._check_values(database, 'memory_size'),
+                    self._check_values(database, 'disk_size'),
+                    database.engine_type
+                ]
+                writer.writerow(data)
 
         return response
 
@@ -152,49 +129,80 @@ class DatabaseReport(ListView):
             hostname = [
                 instance.hostname.hostname.encode("utf-8") for instance in database.infra.instances.all()
             ]
-            try:
-                data = [
-                    database.name,
-                    database.attention_description,
-                    hostname,
-                    database.environment,
-                    database.team,
-                    database.team.name,
-                    database.team.team_area,
-                    database.team.email,
-                    database.team.contacts,
-                    database.team.organization.name,
-                    database.created_at,
-                    database.is_in_quarantine,
-                    database.apps_bind_name,
-                    database.infra.offering.cpus,
-                    database.infra.offering.memory_size_mb,
-                    database.infra.disk_offering.size_gb(),
-                    database.engine_type
-                ]
-                writer.writerow(data)
-
-            except Exception as e:
-                data = [
-                    database.name,
-                    database.attention_description,
-                    hostname,
-                    database.environment,
-                    database.team,
-                    database.team.name,
-                    database.team.team_area,
-                    database.team.email,
-                    database.team.contacts,
-                    database.team.organization.name,
-                    database.created_at,
-                    database.is_in_quarantine,
-                    database.apps_bind_name,
-                    '',
-                    '',
-                    '',
-                    database.engine_type
-                ]
-                writer.writerow(data)
-                LOG.error('Error generating csv. Error: {}'. format(e))
+            data = [
+                database.name,
+                database.attention_description,
+                hostname,
+                database.environment,
+                self._check_values(database, 'team'),
+                self._check_values(database, 'team_name'),
+                self._check_values(database, 'team_area'),
+                self._check_values(database, 'team_email'),
+                self._check_values(database, 'team_contacts'),
+                self._check_values(database, 'team_organization'),
+                database.created_at,
+                database.is_in_quarantine,
+                database.apps_bind_name,
+                self._check_values(database, 'cpu'),
+                self._check_values(database, 'memory_size'),
+                self._check_values(database, 'disk_size'),
+                database.engine_type
+            ]
+            writer.writerow(data)
 
         return response
+
+    def _check_values(self, database, attr):
+        if attr == 'team':
+            try:
+                return database.team
+            except:
+                return ''
+
+        if attr == 'team_name':
+            try:
+                return database.team.name
+            except:
+                return ''
+
+        if attr == 'team_area':
+            try:
+                return database.team.team_area
+            except:
+                return ''
+
+        if attr == 'team_email':
+            try:
+                return database.team.email
+            except:
+                return ''
+
+        if attr == 'team_contacts':
+            try:
+                return database.team.contacts
+            except:
+                return ''
+
+        if attr == 'team_organization':
+            try:
+                return database.team.organization.name
+            except:
+                return ''
+
+        if attr == 'cpu':
+            try:
+                return database.infra.offering.cpus
+            except:
+                return 0
+
+        if attr == 'memory_size':
+            try:
+                return database.infra.offering.memory_size_mb
+            except:
+                return 0
+
+        if attr == 'disk_size':
+            try:
+                return database.infra.disk_offering.size_gb()
+            except:
+                return 0
