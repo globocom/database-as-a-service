@@ -265,6 +265,22 @@ def make_instance_new_snapshot_backup(
                     else:
                         raise e
 
+                if response.get('identifier', ''):
+                    status = 201
+                    while status != 200:
+                        try:
+                            sleep(30)
+                            status_response = provider.take_snapshot_status(response['identifier'])
+                            if status_response.status_code in [200, 202]:
+                                unlock_instance(driver, instance, client)
+                                break
+                            status = status_response
+                        except:
+                            errormsg = "Error creating snapshot. Request status: {}".format(status_response.status_code)
+                            error['errormsg'] = errormsg
+                            set_backup_error(infra, snapshot, errormsg)
+                            LOG.error(errormsg)
+
             snapshot.done(response)
             snapshot.save()
         else:

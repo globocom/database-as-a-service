@@ -327,6 +327,16 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def take_snapshot_status(self, identifier):
+        url = "{}new_snapshot/{}/status".format(self.base_uri, identifier)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
+        response = get(url, headers=self.headers)
+
+        if not response.ok:
+            raise ConnectionError(response.content, response)
+        return response.json()
+
     def delete_snapshot(self, snapshot, force):
         self.force_environment = snapshot.environment
 
