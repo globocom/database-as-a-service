@@ -4,11 +4,13 @@ from dbaas_credentials.models import CredentialType
 
 class IngressProvider(object):
 
-    def __init__(self, instance, environment):
+    def __init__(self, instance):
         self.instance = instance
         self._team = None
-        self._vm_credential = None
-        self._environment = environment
+        self._url = 'https://dbdev-ingress-provider-dev.apps.tsuru.dev.gcp.i.globo/provider/'
+        self._ip = None
+        self._port = None
+
 
     @property
     def infra(self):
@@ -26,71 +28,64 @@ class IngressProvider(object):
     def engine(self):
         return self.infra.engine.full_name_for_host_provider
 
-    @property
-    def credential(self):
-        if not self._credential:
-            self._credential = get_credentials_for(
-                self.environment, CredentialType.VIP_PROVIDER
-            )
-
-        return self._credential
-
-    @property
-    def vm_credential(self):
-        if not self._vm_credential:
-            self._vm_credential = get_credentials_for(
-                self.environment, CredentialType.VM,
-            )
-
-        return self._vm_credential
-
-    @property
-    def provider(self):
-        return self.credential.project
+    # @property
+    # def credential(self):
+    #     if not self._credential:
+    #         self._credential = get_credentials_for(
+    #             self.environment, CredentialType.VIP_PROVIDER
+    #         )
+    #
+    #     return self._credential
+    #
+    # @property
+    # def vm_credential(self):
+    #     if not self._vm_credential:
+    #         self._vm_credential = get_credentials_for(
+    #             self.environment, CredentialType.VM,
+    #         )
+    #
+    #     return self._vm_credential
+    #
+    # @property
+    # def provider(self):
+    #     return self.credential.project
 
     def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
         return action(url, **kw)
 
-    def create_ingress(self, infra, port, team_name, equipments,
-                   vip_dns, database_name='', future_vip=False):
-    ##
-        url = "{}/{}/{}/vip/new".format(
-            self.credential.endpoint, self.provider, self.environment
-        )
+    def create_ingress(self, infra, port, team_name):
+        url = f'{self._url}'
         data = {
-            "group": infra.name,
-            "port": port,
-            "team_name": team_name,
-            "equipments": equipments,
-            "vip_dns": vip_dns,
-            "database_name": database_name
+            "team": team_name,
+            "bank_port": port,
+            "bank_address": [str(infra.hosts[0].address)],
+            "bank_type": str(infra.get_driver()['name']),
+            "bank_name": infra.name_prefix,
+            "bank_service_account": str(infra.service_account)
         }
-        ## faz a request
-        response = self._request(post, url, json=data, timeout=600)
+
+        response = self._request(post, url, json=data, timeout=6000)
 
         if response.status_code not in [200, 201]:
-            raise VipProviderCreateVIPException(response.content, response)
-
-        if response.status_code == 200:
-            return None
-
-        content = response.json()
+            raise response.raise_for_status()
 
         try:
-            original_vip = Vip.objects.get(infra=infra)
-        except Vip.DoesNotExist:
-            original_vip = None
-        vip = Vip()
-        vip.identifier = content["identifier"]
-        vip.infra = infra
-        vip.vip_ip = content["ip"]
-        if original_vip:
-            vip.original_vip = original_vip
-        vip.save()
+            ingress = response.json()['value']
+        except Exception:
+            raise Exception
+        return ingress
 
-        return vip
+    def check_ip(self, id):
+        url = f'{self._url}{id}'
+        response = self._request(get, url, json=data, timeout=6000)
+
+        while response['value']['ip_external'] == '':
+            sleep(2)
+            response = self._request(get, url, json=data, timeout=6000)
+
+        return response['value']
 
 
 class IngressProviderStep(BaseInstanceStep):
@@ -116,7 +111,6 @@ class IngressProviderStep(BaseInstanceStep):
     @property
     def equipments(self):
         equipments = []
-        ## TODO CHECK
         for instance in self.infra.instances.filter(future_instance=None):
             host = instance.hostname
             if host.future_host:
@@ -165,7 +159,7 @@ class IngressProviderStep(BaseInstanceStep):
         pass
 
 
-class AllocateProvider(VipProviderStep):
+class AllocateProvider(IngressProviderStep):
 
     def __init__(self, instance, environment):
         self.url = "pudim.com.br"
@@ -176,24 +170,22 @@ class AllocateProvider(VipProviderStep):
     def __unicode__(self):
         return "Allocating Provider on k8s cluster..."
 
+    def update_infra_endpoint(self, ip):
+        infra = self.infra
+        infra.endpoint = "{}:{}".format(ip, 3306)
+        infra.save()
+
     def do(self):
         if not self.is_valid:
             return
 
-        data = {
-            "team": "team A",
-            "bank_port": 27017,
-            "bank_address": ["10.96.166.229"],
-            "bank_type": "mongodb",
-            "bank_name": "test_dani_dbaas_dev",
-            "bank_service_account": "testdanidb167821582559@gglobo-dbaaslab-dev-qa.iam.gserviceaccount.com"
-        }
-        ## faz a request
-        response = self.IngProvUtils._request(post, self.url, json=data, timeout=6000)
+        response = self.IngressProvider.create_ingress(infra, port, team_name)
 
+        if not response['ip_external']:
+            response = self.IngressProvider.check_ip(response['ip'])
         dns = add_dns_record(
-            self.infra, self.infra.name,
-            self.vip_ip, FOXHA, is_database=False)
+        self.infra, self.infra.name,
+        self.response, FOXHA, is_database=False)
 
         if dns is None:
             return
@@ -233,7 +225,7 @@ class CheckProviderIp(object):
 
         dns = add_dns_record(
             self.infra, self.infra.name,
-            self.vip_ip, FOXHA, is_database=False)
+            response['ip_external'], FOXHA, is_database=False)
 
         if dns is None:
             return
