@@ -249,9 +249,26 @@ def make_instance_new_snapshot_backup(
         if not snapshot_final_status == Snapshot.WARNING and not has_snapshot:
             for _ in range(backup_retry_attempts):
                 try:
+                    status = 201
                     response = None
                     response = provider.new_take_snapshot(persist=persist)
+
+                    while status != 200:
+                        sleep(30)
+                        status_response = provider.take_snapshot_status(response['identifier'])
+                        if status_response.status_code in [200, 202]:
+                            unlock_instance(driver, instance, client)
+                        if status_response.status_code == 200:
+                            break
+                        if status_response >= 400:
+                            raise error
+                        status = status_response.status_code
                     break
+
+                except Exception as exp:
+                    content, response = exp
+                    LOG.error(exp)
+
                 except IndexError as e:
                     content, response = e
                     if response.status_code == 503:
@@ -265,27 +282,12 @@ def make_instance_new_snapshot_backup(
                     else:
                         raise e
 
-                if response.get('identifier', ''):
-                    status = 201
-                    while status != 200:
-                        try:
-                            sleep(30)
-                            status_response = provider.take_snapshot_status(response['identifier'])
-                            if status_response.status_code in [200, 202]:
-                                unlock_instance(driver, instance, client)
-                                break
-                            status = status_response
-                        except:
-                            errormsg = "Error creating snapshot. Request status: {}".format(status_response.status_code)
-                            error['errormsg'] = errormsg
-                            set_backup_error(infra, snapshot, errormsg)
-                            LOG.error(errormsg)
-
             snapshot.done(response)
             snapshot.save()
         else:
             if str(current_hour) in backup_hour_list:
                 raise Exception("Backup with WARNING already created today.")
+
     except Exception as e:
         errormsg = "Error creating snapshot: {}".format(e)
         error['errormsg'] = errormsg
@@ -872,6 +874,8 @@ def _create_database_backup(instance, task, group, current_hour, persist):
 
     error = {}
     try:
+        LOG.info('------------------')
+        LOG.info('Starting make database snapshot')
         snapshot = make_instance_snapshot_backup(
             instance=instance,
             error=error,

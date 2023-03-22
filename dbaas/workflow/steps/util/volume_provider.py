@@ -304,6 +304,7 @@ class VolumeProviderBase(BaseInstanceStep):
             "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
+        LOG.info('AAAAAAAAAAAAAAAAAAAAAAAA')
 
         if not response.ok:
             raise IndexError(response.content, response)
@@ -315,13 +316,13 @@ class VolumeProviderBase(BaseInstanceStep):
             url += '?persist=1'
 
         LOG.info('Calling create snapshot URL: %s' % url)
-
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
             "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
+        LOG.info('Snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
             raise IndexError(response.content, response)
@@ -332,9 +333,10 @@ class VolumeProviderBase(BaseInstanceStep):
 
         LOG.info('Calling to check snapshot status. URL: %s' % url)
         response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'. format(response.status_code))
 
         if not response.ok:
-            raise ConnectionError(response.content, response)
+            raise Exception(response.content, response)
         return response.json()
 
     def delete_snapshot(self, snapshot, force):
