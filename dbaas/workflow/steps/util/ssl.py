@@ -832,8 +832,8 @@ class MoveSSLFolder(SSL):
         return self.run_script(script)
 
     def move_folder(self, source, dest):
-        script = 'mv {} {}'.format(
-            source, dest
+        script = 'rm -rf {};mv {} {}'.format(
+            dest, source, dest
         )
         return self.run_script(script)
 
