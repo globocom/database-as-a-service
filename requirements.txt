@@ -1,5 +1,5 @@
 
-python-faasclient==0.3.3
+python-faasclient==0.0.1
 cryptography==2.6
 pbr==1.10.0
 python-foreman==0.2.1
