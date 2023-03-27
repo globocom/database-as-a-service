@@ -1,4 +1,16 @@
-FROM python:2.7.9-slim
+FROM debian:stretch-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        wget \
+        python2.7 \
+        python2.7-dev \
+        python-pip \
+        python-setuptools \
+        python-wheel \
+    && rm -rf /var/lib/apt/lists/*
 ENV PYTHONUNBUFFERED 1
 ENV DEBIAN_FRONTEND "noninteractive apt-get install PACKAGE"
 ENV PYTHONDONTWRITEBYTECODE 1
