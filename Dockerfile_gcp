@@ -31,7 +31,7 @@ RUN apt-get install -y ncdu --force-yes
 RUN apt install -y --force-yes curl
 
 # So we can install mysql libs properly
-RUN apt install -y --force-yes libmysqlclient-dev
+RUN apt install -y --force-yes default-libmysqlclient-dev
 
 # So we can install LDAP
 RUN apt install -y --force-yes python-ldap
