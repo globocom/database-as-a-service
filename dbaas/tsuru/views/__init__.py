@@ -6,3 +6,4 @@ from serviceAdd import ServiceAdd
 from serviceRemove import ServiceRemove
 from serviceUnitBind import ServiceUnitBind
 from serviceAppBind import ServiceAppBind
+from serviceJobBind import ServiceJobBind
