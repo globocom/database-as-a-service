@@ -1,5 +1,12 @@
 from requests import post, get
+from time import sleep
+from physical.models import Vip
+from dbaas_dnsapi.models import FOXHA
 from dbaas_credentials.models import CredentialType
+from dbaas_dnsapi.utils import add_dns_record
+from base import BaseInstanceStep
+from dbaas_dnsapi.provider import DNSAPIProvider
+import socket
 
 
 class IngressProvider(object):
@@ -11,146 +18,89 @@ class IngressProvider(object):
         self._ip = None
         self._port = None
 
-
     @property
     def infra(self):
         return self.instance.databaseinfra
-
-    @property
-    def environment(self):
-        return self._environment
 
     @property
     def host(self):
         return self.instance.hostname
 
     @property
-    def engine(self):
-        return self.infra.engine.full_name_for_host_provider
+    def team(self):
+        return self.infra.databases.first().team.name
 
-    # @property
-    # def credential(self):
-    #     if not self._credential:
-    #         self._credential = get_credentials_for(
-    #             self.environment, CredentialType.VIP_PROVIDER
-    #         )
-    #
-    #     return self._credential
-    #
-    # @property
-    # def vm_credential(self):
-    #     if not self._vm_credential:
-    #         self._vm_credential = get_credentials_for(
-    #             self.environment, CredentialType.VM,
-    #         )
-    #
-    #     return self._vm_credential
-    #
-    # @property
-    # def provider(self):
-    #     return self.credential.project
+    @property
+    def port(self):
+        return int(self.instance.port)
+
+    @property
+    def is_database(self):
+        return self.instance.is_database
+
 
     def _request(self, action, url, **kw):
-        auth = (self.credential.user, self.credential.password,)
-        kw.update(**{'auth': auth} if self.credential.user else {})
-        return action(url, **kw)
+        return action(url, verify=False, **kw)
+
+    @property
+    def ip(self):
+        return self._ip
 
     def create_ingress(self, infra, port, team_name):
-        url = f'{self._url}'
         data = {
             "team": team_name,
             "bank_port": port,
             "bank_address": [str(infra.hosts[0].address)],
-            "bank_type": str(infra.get_driver()['name']),
+            "bank_type": 'MySQLFOXHA',
             "bank_name": infra.name_prefix,
             "bank_service_account": str(infra.service_account)
         }
-
-        response = self._request(post, url, json=data, timeout=6000)
-
-        if response.status_code not in [200, 201]:
-            raise response.raise_for_status()
-
         try:
+            response = self._request(post, self._url, json=data, timeout=6000)
+
+            if response.status_code not in [200, 201]:
+                raise response.raise_for_status()
             ingress = response.json()['value']
-        except Exception:
+
+        except Exception as error:
+            print(error)
             raise Exception
+        self._port = ingress['port_external']
+        self._team = team_name
         return ingress
 
     def check_ip(self, id):
-        url = f'{self._url}{id}'
-        response = self._request(get, url, json=data, timeout=6000)
-
-        while response['value']['ip_external'] == '':
-            sleep(2)
-            response = self._request(get, url, json=data, timeout=6000)
-
-        return response['value']
+        url = "{}{}".format(self._url, id)
+        response = self._request(get, url, json={}, timeout=6000)
+        print('checking if IP is available...')
+        while response.json()['value']['ip_external'] == '':
+            sleep(3)
+            print('checking...')
+            response = self._request(get, url, json={}, timeout=6000)
+        self._ip = response.json()['value']['ip_external']
+        print('IP is available!!!')
+        return response.json()['value']
 
 
 class IngressProviderStep(BaseInstanceStep):
 
     def __init__(self, instance=None):
         super(IngressProviderStep, self).__init__(instance)
-        self.credentials = None
-        self._provider = None
+        self._ingress_provider = None
 
     @property
-    def provider(self):
-        if not self._provider:
-            self._provider = Provider(self.instance, self.environment)
-        return self._provider
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
 
     @property
-    def vm_properties(self):
-        if not (hasattr(self, '_vm_properties') and self._vm_properties):
-            self._vm_properties = self.host_prov_client.get_vm_by_host(
-                self.host)
-        return self._vm_properties
+    def vip_ip(self):
+        return self.ingressprovider.ip
 
     @property
-    def equipments(self):
-        equipments = []
-        for instance in self.infra.instances.filter(future_instance=None):
-            host = instance.hostname
-            if host.future_host:
-                host = host.future_host
-            vm_info = self.host_prov_client.get_vm_by_host(host)
-            equipment = {
-                'host_address': host.address,
-                'port': instance.port,
-                'identifier': vm_info.identifier,
-                'zone': vm_info.zone,
-                'group': vm_info.group,
-                'name': vm_info.name
-            }
-            equipments.append(equipment)
-        return equipments
-
-    @property
-    def team(self):
-        if self.has_database:
-            return self.database.team.name
-        elif self.create:
-            return self.create.team.name
-        elif (self.step_manager
-              and hasattr(self.step_manager, 'origin_database')):
-            return self.step_manager.origin_database.team.name
-
-    @property
-    def current_vip(self):
-        vip = Vip.objects.filter(infra=self.infra)
-        if vip.exists():
-            return vip.last()
-
-        return None
-
-    @property
-    def current_instance_group(self):
-        if not self.current_vip:
-            return None
-
-        return VipInstanceGroup.objects.filter(vip=self.current_vip)
+    def ingressprovider(self):
+        if not self._ingress_provider:
+            self._ingress_provider = IngressProvider(self.instance)
+        return self._ingress_provider
 
     def do(self):
         raise NotImplementedError
@@ -161,77 +111,107 @@ class IngressProviderStep(BaseInstanceStep):
 
 class AllocateProvider(IngressProviderStep):
 
-    def __init__(self, instance, environment):
-        self.url = "pudim.com.br"
-        self.instance = instance
-        self._vm_credential = None
-        self._environment = environment
-
     def __unicode__(self):
         return "Allocating Provider on k8s cluster..."
 
-    def update_infra_endpoint(self, ip):
-        infra = self.infra
-        infra.endpoint = "{}:{}".format(ip, 3306)
-        infra.save()
+    def update_infra_endpoint(self, ip, port):
+        self.infra.endpoint = "{}:{}".format(ip, port)
+        self.infra.save()
+
+    def generate_new_vip(self):
+        ingress = self.ingressprovider.create_ingress(
+            self.infra,
+            self.ingressprovider.port,
+            self.team_name)
+        if not ingress['ip_external']:
+            ingress = self.ingressprovider.check_ip(ingress['id'])
+            print('*-------------------------------------------------------*')
+            print('ingress: ', ingress)
+        return ingress
+
+
+    def register_ingress_vip(self):
+        try:
+            original_vip = Vip.objects.get(infra=self.infra)
+        except Vip.DoesNotExist:
+            original_vip = None
+        vip = Vip()
+        vip.identifier = response['port_external']
+        vip.infra = self.infra
+        vip.vip_ip = response['ip_external']
+        if original_vip:
+            vip.original_vip = original_vip
+        vip.save()
+        print('*-----------------------////////----------------------------*')
+        return vip
+
+    def insert_dns_on_infra(self, ingress):
+        if self._vip.vip_ip == ingress['ip_external']:
+            # SUSPEITA DE ERRO
+            dns = add_dns_record(
+                databaseinfra=self.infra,
+                name=self.infra.name,
+                ip=ingress['ip_external'],
+                type=FOXHA,
+                is_database=False
+            )
+            if dns is None:
+                return
+        self.infra.endpoint_dns = "{}:{}".format(dns, response['port_external'])
+        self.infra.save()
 
     def do(self):
         if not self.is_valid:
             return
-
-        response = self.IngressProvider.create_ingress(infra, port, team_name)
-
-        if not response['ip_external']:
-            response = self.IngressProvider.check_ip(response['ip'])
-        dns = add_dns_record(
-        self.infra, self.infra.name,
-        self.response, FOXHA, is_database=False)
-
-        if dns is None:
-            return
-
-        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
-        self.infra.save()
+        ingress = self.generate_new_vip()
+        self.update_infra_endpoint(ingress['ip_external'], ingress['port_external'])
+        self._vip = self.register_ingress_vip()
+        self.insert_dns_on_infra(ingress)
+        return True
 
     def undo(self):
         pass
 
 
-class CheckProviderIp(object):
+class RegisterDNSIngress(IngressProviderStep):
 
-    def __init__(self, instance, environment):
-        self.url = "pudim.com.br"
-        self.instance = instance
-        self._vm_credential = None
-        self._environment = environment
+    def __init__(self, *args, **kw):
+        super(RegisterDNSIngress, self).__init__(*args, **kw)
+        self.provider = DNSAPIProvider
+        self.do_export = True
 
     def __unicode__(self):
-        return "Retrieving Provider IP..."
+        return "Registry dns for VIP..."
+
+    @staticmethod
+    def is_ipv4(ip):
+        try:
+            socket.inet_aton(ip)
+            return True
+        except socket.error:
+            return False
+
+    def _do_database_dns_for_ip(self, func):
+        if not self.is_valid:
+            return
+        try:
+            ip = self.ingressprovider.ip
+            if ip is None:
+                ip = self.instance.address
+        except Exception as error:
+            pass
+        return func(
+            databaseinfra=self.ingressprovider.infra,
+            ip=self.ingressprovider.ip,
+            do_export=self.do_export,
+            env=self.ingressprovider.infra.environment,
+            **{'dns_type': 'CNAME'} if not self.is_ipv4(ip) else {}
+        )
 
     def do(self):
         if not self.is_valid:
             return
-
-        data = {
-            "team": "team A",
-            "bank_port": 27017,
-            "bank_address": ["10.96.166.229"],
-            "bank_type": "mongodb",
-            "bank_name": "test_dani_dbaas_dev",
-            "bank_service_account": "testdanidb167821582559@gglobo-dbaaslab-dev-qa.iam.gserviceaccount.com"
-        }
-        ## faz a request
-        response = self._request(post, url, json=data, timeout=6000)
-
-        dns = add_dns_record(
-            self.infra, self.infra.name,
-            response['ip_external'], FOXHA, is_database=False)
-
-        if dns is None:
-            return
-
-        self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
-        self.infra.save()
+        self._do_database_dns_for_ip(self.provider.create_database_dns_for_ip)
 
     def undo(self):
-        pass
+        self._do_database_dns_for_ip(self.provider.remove_databases_dns_for_ip)
