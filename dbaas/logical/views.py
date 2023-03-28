@@ -1117,6 +1117,17 @@ def database_resizes(request, context, database):
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
 
+    user_teams = request.user.team_set.all()
+    teams_names = []
+    for team in user_teams:
+        teams_names.append(team.name)
+
+    show_resize_btns = False
+    if request.user.is_superuser or 'dbaas' in teams_names:
+        show_resize_btns = True
+
+    context['show_resize_btns'] = show_resize_btns
+
     return render_to_response(
         "logical/database/details/resizes_tab.html",
         context, RequestContext(request)
@@ -2722,4 +2733,11 @@ def check_offering_sizes(request):
     response_json = json.dumps({'status': status,
                                 'cpus': cpus,
                                 'memory': memory})
+    return HttpResponse(response_json, content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def resize_vm_from_btn(request, database_id, resize_target):    
+    response_json = json.dumps({'db_id': database_id, 'target': resize_target})
     return HttpResponse(response_json, content_type="application/json")
