@@ -45,9 +45,9 @@
       <div class="control-group">
         <div class="control-label"><label>AutoResize:</label></div>
         <div class="controls">
-          <a href="{% url 'resize_vm_from_btn' 'cpu_ram' %}" target="_blank" class="btn btn-success">Resize CPU & RAM</a>
-          <a href="{% url 'resize_vm_from_btn' 'cpu' %}" target="_blank" class="btn btn-primary">Resize CPU</a>
-          <a href="{% url 'resize_vm_from_btn' 'ram' %}" target="_blank" class="btn btn-info">Resize RAM</a>
+          <a href="{% url 'resize_vm_from_btn' database.id 'cpu_ram' %}" target="_blank" class="btn btn-success">Resize CPU & RAM</a>
+          <a href="{% url 'resize_vm_from_btn' database.id 'cpu' %}" target="_blank" class="btn btn-primary">Resize CPU</a>
+          <a href="{% url 'resize_vm_from_btn' database.id 'ram' %}" target="_blank" class="btn btn-info">Resize RAM</a>
         </div>
       </div>
       {% endif %}

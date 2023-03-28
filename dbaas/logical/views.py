@@ -2738,6 +2738,6 @@ def check_offering_sizes(request):
 
 @login_required()
 @method_decorator(csrf_exempt)
-def resize_vm_from_btn(request, resize_target):    
-    response_json = json.dumps({'target': resize_target})
+def resize_vm_from_btn(request, database_id, resize_target):    
+    response_json = json.dumps({'db_id': database_id, 'target': resize_target})
     return HttpResponse(response_json, content_type="application/json")

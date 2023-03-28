@@ -36,7 +36,7 @@ urlpatterns = patterns(
     url(r"^check_offering_sizes/",
         check_offering_sizes,
         name="check_offering_sizes"),
-    url(r"^resize_vm/(?P<resize_target>[\w\-\_]+)",
+    url(r"^resize_vm/(?P<database_id>\d*)/(?P<resize_target>[\w\-\_]+)",
         resize_vm_from_btn,
         name="resize_vm_from_btn")
 )
