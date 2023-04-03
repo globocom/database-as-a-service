@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from django.core import serializers
 from workflow.steps.util.base import HostProviderClient
 
 from dbaas_credentials.models import CredentialType
@@ -2739,5 +2740,7 @@ def check_offering_sizes(request):
 @login_required()
 @method_decorator(csrf_exempt)
 def resize_vm_from_btn(request, database_id, resize_target):    
-    response_json = json.dumps({'db_id': database_id, 'target': resize_target})
-    return HttpResponse(response_json, content_type="application/json")
+    database = get_object_or_404(Database, pk=database_id)
+
+    future_offering = database.get_future_offering(resize_target)
+    return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
