@@ -820,6 +820,31 @@ class BackupSSLFolder(SSL):
         return self.run_script(script)
 
 
+class MoveSSLFolder(SSL):
+    source_ssl_dir = '/data/ssl'
+    backup_ssl_dir = '/data/ssl-BKP'
+
+    def __unicode__(self):
+        return "Moving backup of SSL folder..."
+
+    def remove_created_folder(self, folder):
+        script = 'rm -rf {}'.format(folder)
+        return self.run_script(script)
+
+    def move_folder(self, source, dest):
+        script = 'rm -rf {};mv {} {}'.format(
+            dest, source, dest
+        )
+        return self.run_script(script)
+
+    def do(self):
+        return self.move_folder(source=self.source_ssl_dir, dest=self.backup_ssl_dir)
+
+    def undo(self):
+        if self.remove_created_folder(self.source_ssl_dir):
+            return self.move_folder(source=self.backup_ssl_dir, dest=self.source_ssl_dir)
+
+
 class RestoreSSLFolder4Rollback(BackupSSLFolder):
     def __unicode__(self):
         return "Restore SSL folder if doing rollback..."

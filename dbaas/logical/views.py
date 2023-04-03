@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from django.core import serializers
 from workflow.steps.util.base import HostProviderClient
 
 from dbaas_credentials.models import CredentialType
@@ -1116,6 +1117,17 @@ def database_resizes(request, context, database):
             break
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
+
+    user_teams = request.user.team_set.all()
+    teams_names = []
+    for team in user_teams:
+        teams_names.append(team.name)
+
+    show_resize_btns = False
+    if request.user.is_superuser or 'dbaas' in teams_names:
+        show_resize_btns = True
+
+    context['show_resize_btns'] = show_resize_btns
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
@@ -2723,3 +2735,12 @@ def check_offering_sizes(request):
                                 'cpus': cpus,
                                 'memory': memory})
     return HttpResponse(response_json, content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def resize_vm_from_btn(request, database_id, resize_target):    
+    database = get_object_or_404(Database, pk=database_id)
+
+    future_offering = database.get_future_offering(resize_target)
+    return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
