@@ -28,6 +28,7 @@ from .database_set_ssl_not_required import DatabaseSetSSLNotRequiredAdmin
 from . database_upgrade_disk_type import DatabaseUpgradeDiskTypeAdmin
 from . database_start_database_vm import DatabaseStartDatabaseVMAdmin
 from . database_stop_database_vm import DatabaseStopDatabaseVMAdmin
+from . database_auto_upgrade_vm_offering import DatabaseAutoUpgradeVMOferringAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -73,4 +74,8 @@ admin.site.register(
 
 admin.site.register(
     models.DatabaseStopDatabaseVM, DatabaseStopDatabaseVMAdmin
+)
+
+admin.site.register(
+    models.DatabaseAutoUpgradeVMOffering, DatabaseAutoUpgradeVMOferringAdmin
 )
