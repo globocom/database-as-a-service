@@ -17,7 +17,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment
+from physical.models import DatabaseInfra, Environment, Offering
 from drivers import factory_for
 from system.models import Configuration
 from account.models import Team
@@ -1373,6 +1373,67 @@ class Database(BaseModel):
             LOG.error(msg)
             status = False
         return status, msg
+    
+    def get_future_offering(self, resize_target):
+        LOG.info('Buscando Future Offering de %s para database %s -> Offer atual: %s', resize_target, self.name, self.infra.offering.name)
+        current_offer = self.infra.offering
+        environment = self.environment
+
+        future_offer = None
+
+        # Busca ofertas disponíveis para o environment
+        possible_offerings_environment = self.get_possible_future_offerings_for_environment(environment)
+
+        if resize_target == 'cpu':
+            # Busca por offer > de CPU e >= de RAM
+            future_offer = self.get_next_offer_for_cpu(environment, current_offer, possible_offerings_environment)
+
+        elif resize_target == 'ram':
+            # Busca por offer >= de CPU e > de RAM
+            future_offer = self.get_next_offer_for_ram(environment, current_offer, possible_offerings_environment)
+            
+        elif resize_target == 'cpu_ram':
+            # Busca por offer > de CPU e > de RAM
+            future_offer = self.get_next_offer_for_cpu_ram(environment, current_offer, possible_offerings_environment)
+            
+        LOG.info('Future Offering selecionada: %s', future_offer.name)
+
+        return future_offer
+    
+    def get_possible_future_offerings_for_environment(self, environment):
+        # Busca na Configuration os nomes resumidos (ex: c2m2) das offerings disponíveis no DBaaS para auto upgrade
+        possible_offerings_names = Configuration.get_by_name_as_list(
+            'allowed_future_offerings_names_auto_upgrade_vm'
+            )
+        LOG.info('Possiveis offerings no DBaaS: %s', possible_offerings_names)
+        
+        possible_offerings_environment = []
+
+        # traz o nome real das Offerings, ja filtrando pelo environment
+        for possible_offer in possible_offerings_names:
+            offer_with_name = environment.offerings.filter(name__icontains=possible_offer).first()
+            if offer_with_name:
+                possible_offerings_environment.append(offer_with_name.name)
+
+        return possible_offerings_environment
+    
+    def get_next_offer_for_cpu(self, environment, current_offer, possible_offerings_environment):
+        return environment.offerings.filter(
+                cpus__gt=current_offer.cpus, 
+                memory_size_mb__gte=current_offer.memory_size_mb,
+                name__in=possible_offerings_environment).order_by('cpus', 'memory_size_mb').first()
+
+    def get_next_offer_for_ram(self, environment, current_offer, possible_offerings_environment):
+        return environment.offerings.filter(
+            cpus__gte=current_offer.cpus, 
+            memory_size_mb__gt=current_offer.memory_size_mb,
+            name__in=possible_offerings_environment).order_by('cpus', 'memory_size_mb').first()
+
+    def get_next_offer_for_cpu_ram(self, environment, current_offer, possible_offerings_environment):
+        return environment.offerings.filter(
+            cpus__gt=current_offer.cpus, 
+            memory_size_mb__gt=current_offer.memory_size_mb,
+            name__in=possible_offerings_environment).order_by('cpus', 'memory_size_mb').first()
 
 
 class DatabaseLock(BaseModel):
