@@ -920,7 +920,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_auto_upgrade_database_vm_offering(self):
         return [{
             'Set Future Offering': (
-                'workflow.steps.util.database.GetFutureOfferingForDatabase'
+                'workflow.steps.util.database.GetFutureOfferingForDatabase',
             )
         }]
 

@@ -141,6 +141,12 @@ class BaseInstanceStep(object):
         resize = self.database.resizes.last()
         if resize and resize.is_running:
             return resize
+        
+    @property
+    def auto_upgrade(self):
+        auto_upgrade = self.database.autoupgrades.last()
+        if auto_upgrade and auto_upgrade.is_running:
+            return auto_upgrade
 
     @property
     def is_valid(self):

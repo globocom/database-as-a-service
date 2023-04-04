@@ -84,7 +84,8 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         TaskRegister.auto_upgrade_database_vm_offering(
             database=retry_from.database,
             user=request.user,
-            retry_from=retry_from
+            retry_from=retry_from,
+            resize_target=retry_from.resize_target
         )
 
         url = reverse('admin:notification_taskhistory_changelist')

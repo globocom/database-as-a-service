@@ -5,11 +5,12 @@ from workflow.workflow import steps_for_instances
 LOG = logging.getLogger(__name__)
 
 
-def task_auto_upgrade_vm_offering(database, task, retry_from=None):
+def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target=None):
     try:
         auto_upgrade_vm = DatabaseAutoUpgradeVMOffering()
         auto_upgrade_vm.task = task
         auto_upgrade_vm.database = database
+        auto_upgrade_vm.resize_target = resize_target
         auto_upgrade_vm.save()
 
         topology_path = database.plan.replication_topology.class_path

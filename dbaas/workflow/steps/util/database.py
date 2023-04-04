@@ -1126,10 +1126,26 @@ class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
 
 
 class GetFutureOfferingForDatabase(DatabaseStep):
-    def do(self):
-        if not self.is_valid():
+    def __unicode__(self):
+        return "Getting Future Offering..."
+    
+    @property
+    def is_valid(self):
+        instances = self.infra.instances.all()
+        LOG.debug(instances[0].id)
+        LOG.debug(self.instance.id)
+        if instances[0].id != self.instance.id:
             return False
-        self.database.get_future_offering()
+        
+        return True
+    
+    def do(self):
+        LOG.debug(self.is_valid)  
+        if not self.is_valid:
+            return
+        
+        self.auto_upgrade.target_offer = self.database.get_future_offering(self.auto_upgrade.resize_target)
+        self.auto_upgrade.save()    
 
     def undo(self):
         pass
