@@ -916,6 +916,13 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
+    
+    def get_auto_upgrade_database_vm_offering(self):
+        return [{
+            'Set Future Offering': (
+                'workflow.steps.util.database.GetFutureOfferingForDatabase'
+            )
+        }]
 
     def get_host_migrate_steps(self):
         return [{

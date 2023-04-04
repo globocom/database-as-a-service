@@ -1123,3 +1123,13 @@ class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
 
     def undo(self):
         pass
+
+
+class GetFutureOfferingForDatabase(DatabaseStep):
+    def do(self):
+        if not self.is_valid():
+            return False
+        self.database.get_future_offering()
+
+    def undo(self):
+        pass
