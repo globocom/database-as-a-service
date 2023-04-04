@@ -1346,11 +1346,7 @@ class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
         null=False, related_name="database_auto_upgrade_vm_offering"
-    )
-
-    def __unicode__(self):
-        return "{} Auto Upgrade VM Offeriing".format(self.database.name)
-    
+    )    
 
     def __unicode__(self):
         return "Auto Upgrading VM Offering for database: {}".format(self.database)
