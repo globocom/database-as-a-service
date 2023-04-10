@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from django.core.exceptions import ObjectDoesNotExist
+
 from physical.models import Instance, Ip
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -45,6 +47,20 @@ class OfferingMigration(Offering):
     @property
     def target_offering(self):
         return self.infra_offering.offering.equivalent_offering
+    
+
+class OfferingAutoUpgrade(Offering):
+    
+    @property
+    def is_valid(self):
+        try:
+            return self.instance.hostname.id
+        except ObjectDoesNotExist:
+            return False
+
+    def do(self):
+        if self.is_valid:
+            super(OfferingAutoUpgrade, self).do()
 
 
 class Memory(Update):

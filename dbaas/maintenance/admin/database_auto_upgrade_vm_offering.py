@@ -22,9 +22,10 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "task",
+        "database", "task", "resize_target",
         "started_at", "link_task", "finished_at", "status",
-        "maintenance_action", "task_schedule"
+        "maintenance_action", "task_schedule",
+        "number_of_instances", "number_of_instances_before"
     )
 
     def maintenance_action(self, maintenance):

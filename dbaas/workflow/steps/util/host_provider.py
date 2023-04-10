@@ -730,6 +730,27 @@ class CreateVirtualMachine(HostProviderStep):
             host.delete()
 
 
+class CreateVirtualMachineAutoUpgrade(CreateVirtualMachine):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+    def create_instance(self, host):
+        self.instance.hostname = host
+        self.instance.address = host.address
+        self.instance.read_only = False
+        self.instance.save()
+
+    def do(self):
+        if self.is_valid:
+            super(CreateVirtualMachineAutoUpgrade, self).do()
+    
+    def undo(self):
+        if self.is_valid:
+            super(CreateVirtualMachineAutoUpgrade, self).undo()
+
+
 class AllocateIP(HostProviderStep):
 
     def __unicode__(self):
@@ -743,6 +764,21 @@ class AllocateIP(HostProviderStep):
         if self.instance.static_ip:
             self.provider.destroy_static_ip(self.instance.static_ip)
             self.instance.static_ip.delete()
+
+
+class AllocateIPAutoUpgrade(AllocateIP):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(AllocateIPAutoUpgrade, self).do()
+    
+    def undo(self):
+        if self.is_valid:
+            super(AllocateIPAutoUpgrade, self).undo()
 
 class AllocateIPRegionMigrate(HostProviderStep):
 

@@ -1348,16 +1348,26 @@ class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
         null=False, related_name="database_autoupgrades"
     )
     source_offer = models.ForeignKey(
-        Offering, verbose_name="Source", null=True, blank=True,
+        Offering, null=True, blank=True, verbose_name='Source Offering',
         unique=False, related_name="database_autoupgrades_source",
         on_delete=models.SET_NULL
     )
     target_offer = models.ForeignKey(
-        Offering, verbose_name="Target", null=True, blank=True,
+        Offering, null=True, blank=True, verbose_name='Target Offering',
         unique=False, related_name="database_autoupgrades_target",
         on_delete=models.SET_NULL
     )
-    resize_target = models.CharField(verbose_name='Resize Target', max_length=10, default='cpu')
+    resize_target = models.CharField(
+        verbose_name='Resize Target', 
+        max_length=10, default='cpu'
+    )
+
+    number_of_instances = models.PositiveIntegerField(
+        verbose_name="Number of Instances", null=False, unique=False, default=1
+    )
+    number_of_instances_before = models.PositiveIntegerField(
+        verbose_name="Number of Instances Before", null=True, unique=False, default=3
+    )
 
     def __unicode__(self):
         return "Auto Upgrading VM Offering for database: {}".format(self.database)

@@ -629,6 +629,8 @@ class NewVolume(VolumeProviderBase):
     def _remove_volume(self, volume, host):
         self.destroy_volume(volume)
 
+    base_snapshot = None
+
     @property
     def restore_snapshot_from_master(self):
         return False
@@ -653,6 +655,8 @@ class NewVolume(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
+        elif self.base_snapshot is not None:
+            snapshot = self.base_snapshot
 
         self.create_volume(
             self.infra.name,
@@ -734,6 +738,46 @@ class NewVolumeFromMaster(NewVolume):
     @property
     def restore_snapshot_from_master(self):
         return True
+    
+
+class NewVolumeFromSnapshot(NewVolume):
+    def __unicode__(self):
+        return 'New Volume from last Snapshot...'
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    @property
+    def provider_class(self):
+        return NewVolumeFromSnapshot
+    
+    def base_snapshot(self):
+        hosts = self.infra.hosts
+        volumes = []
+
+        for host in hosts:
+            volumes.extend(host.volumes.all())
+        
+        snapshots = []
+
+        for volume in volumes:
+            snapshots.extend(volume.backups.all())
+
+        if len(snapshots) < 1:
+            raise Exception('Nao foi encontrada nenhuma Snapshot para criacao do novo Volume!')
+
+        oldest = snapshots[0]
+        for snapshot in snapshots:
+            if snapshot.created_at > oldest.created_at and snapshot.end_at is not None:
+                oldest = snapshot
+
+        self.base_snapshot = oldest
+
+    def do(self):
+        if self.is_valid:
+            self.base_snapshot()
+            super(NewVolumeFromSnapshot, self).do()
 
 
 class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
@@ -843,6 +887,19 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+class MountDataVolumeAutoUpgrade(MountDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(MountDataVolumeAutoUpgrade, self).is_valid
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        super(MountDataVolumeAutoUpgrade, self).do()
 
 
 class MountDataVolumeUpgradeDiskType(MountDataVolume):
@@ -2333,6 +2390,20 @@ class AttachDataVolume(VolumeProviderBase):
         if not self.is_valid:
             return
         self.detach_disk(self.volume)
+
+
+class AttachDataVolumeAutoUpgrade(AttachDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(AttachDataVolumeAutoUpgrade, self).is_valid
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        super(AttachDataVolumeAutoUpgrade, self).do()
 
 
 class AttachDataVolumeUpgradeDiskType(VolumeProviderBase):

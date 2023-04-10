@@ -919,10 +919,21 @@ class MongoDBReplicaset(BaseMongoDB):
     
     def get_auto_upgrade_database_vm_offering(self):
         return [{
-            'Set Future Offering': (
-                'workflow.steps.util.database.GetFutureOfferingForDatabase',
-            )
-        }]
+            'Create new VM': (
+                'workflow.steps.util.infra.OfferingAutoUpgrade',
+                'workflow.steps.util.host_provider.AllocateIPAutoUpgrade',
+                'workflow.steps.util.host_provider.CreateVirtualMachineAutoUpgrade',
+                # 'workflow.steps.util.dns.CreateDNS',
+                # 'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.vm.WaitingBeReadyAutoUpgrade',
+                'workflow.steps.util.vm.UpdateOSDescriptionAutoUpgrade',
+            )}, {
+            'Attach new Volume': (
+                'workflow.steps.util.volume_provider.NewVolumeFromSnapshot',
+                'workflow.steps.util.volume_provider.AttachDataVolumeAutoUpgrade',
+                'workflow.steps.util.volume_provider.MountDataVolumeAutoUpgrade',
+            )}
+        ]
 
     def get_host_migrate_steps(self):
         return [{
