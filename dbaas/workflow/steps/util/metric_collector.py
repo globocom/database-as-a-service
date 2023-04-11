@@ -92,6 +92,15 @@ class ConfigureTelegraf(MetricsCollector):
         template_script = self.plan.script.metric_collector_template
         script = build_context_script(self.script_variables, template_script)
         return self.host.ssh.run_script(script)
+    
+
+class ConfigureTelegrafAutoUpgrade(ConfigureTelegraf):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ConfigureTelegrafAutoUpgrade, self).is_valid
 
 
 class ConfigureTelegrafRollback(ConfigureTelegraf):
@@ -138,6 +147,15 @@ class RestartTelegraf(MetricsCollector):
             action='restart'
         )
         self.host.ssh.run_script(script)
+
+
+class RestartTelegrafAutoUpgrade(RestartTelegraf):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(RestartTelegrafAutoUpgrade, self).is_valid
 
 
 class RestartTelegrafRollback(RestartTelegraf):

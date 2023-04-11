@@ -753,26 +753,7 @@ class NewVolumeFromSnapshot(NewVolume):
         return NewVolumeFromSnapshot
     
     def base_snapshot(self):
-        hosts = self.infra.hosts
-        volumes = []
-
-        for host in hosts:
-            volumes.extend(host.volumes.all())
-        
-        snapshots = []
-
-        for volume in volumes:
-            snapshots.extend(volume.backups.all())
-
-        if len(snapshots) < 1:
-            raise Exception('Nao foi encontrada nenhuma Snapshot para criacao do novo Volume!')
-
-        oldest = snapshots[0]
-        for snapshot in snapshots:
-            if snapshot.created_at > oldest.created_at and snapshot.end_at is not None:
-                oldest = snapshot
-
-        self.base_snapshot = oldest
+        self.base_snapshot = self.resize.base_snapshot
 
     def do(self):
         if self.is_valid:

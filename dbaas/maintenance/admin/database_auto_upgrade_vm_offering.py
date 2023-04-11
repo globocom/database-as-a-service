@@ -25,7 +25,8 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         "database", "task", "resize_target",
         "started_at", "link_task", "finished_at", "status",
         "maintenance_action", "task_schedule",
-        "number_of_instances", "number_of_instances_before"
+        "number_of_instances", "number_of_instances_before",
+        "base_snapshot"
     )
 
     def maintenance_action(self, maintenance):

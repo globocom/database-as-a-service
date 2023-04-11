@@ -233,8 +233,11 @@ class Initialization(PlanStep):
             )
 
 
-# class InitializationForUpgrade(Initialization, PlanStepUpgrade):
-#     pass
+class InitializationAutoUpgrade(Initialization):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class InitializationForUpgrade(PlanStepUpgrade):
@@ -430,6 +433,13 @@ class Configure(PlanStep):
             )
 
 
+class ConfigureAutoUpgrade(Configure):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+
 class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
@@ -592,6 +602,16 @@ class ConfigureLog(Configure):
                     script_variables=self.script_variables
                 )
             )
+
+
+class ConfigureLogAutoUpgrade(ConfigureLog):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+
+        return super(ConfigureLogAutoUpgrade, self).is_valid
 
 
 class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):

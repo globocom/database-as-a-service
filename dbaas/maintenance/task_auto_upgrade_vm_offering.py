@@ -11,24 +11,55 @@ from util import get_vm_name
 LOG = logging.getLogger(__name__)
 
 
+def get_base_snapshot(database):
+    hosts = database.infra.hosts
+    volumes = []
+
+    for host in hosts:
+        volumes.extend(host.volumes.all())
+    
+    snapshots = []
+
+    for volume in volumes:
+        snapshots.extend(volume.backups.all())
+
+    base_snapshot = None
+    for snapshot in snapshots:
+        if (base_snapshot is None or snapshot.created_at > base_snapshot.created_at) and snapshot.end_at is not None and snapshot.purge_at is None:
+            base_snapshot = snapshot
+
+    if base_snapshot is None:
+        raise AssertionError('Nao foi encontrada nenhuma Snapshot para criacao do novo Volume!')
+    
+    return base_snapshot
+
+
+def create_maintenance(database, task, resize_target):
+    base_snapshot = get_base_snapshot(database)
+
+    number_of_instances_before_task = database.infra.last_vm_created
+    number_of_instances = 1
+
+    auto_upgrade_vm = DatabaseAutoUpgradeVMOffering()
+    auto_upgrade_vm.task = task
+    auto_upgrade_vm.database = database
+    auto_upgrade_vm.resize_target = resize_target
+    auto_upgrade_vm.source_offer = database.infra.offering
+    auto_upgrade_vm.target_offer = database.get_future_offering(resize_target)  
+    auto_upgrade_vm.number_of_instances = number_of_instances
+    auto_upgrade_vm.number_of_instances_before = (number_of_instances_before_task)
+    auto_upgrade_vm.base_snapshot = base_snapshot
+    auto_upgrade_vm.save()
+
+    return auto_upgrade_vm, number_of_instances, number_of_instances_before_task
+
+
 def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target=None):
     try:
-        number_of_instances_before_task = database.infra.last_vm_created
-        number_of_instances = 1
-
-        auto_upgrade_vm = DatabaseAutoUpgradeVMOffering()
-        auto_upgrade_vm.task = task
-        auto_upgrade_vm.database = database
-        auto_upgrade_vm.resize_target = resize_target
-        auto_upgrade_vm.source_offer = database.infra.offering
-        auto_upgrade_vm.target_offer = database.get_future_offering(resize_target)  
-        auto_upgrade_vm.number_of_instances = number_of_instances
-        auto_upgrade_vm.number_of_instances_before = (number_of_instances_before_task)
-        auto_upgrade_vm.save()
-
         infra = database.infra
-        plan = infra.plan
         driver = infra.get_driver()
+
+        auto_upgrade_vm, number_of_instances, number_of_instances_before_task = create_maintenance(database, task, resize_target)
 
         topology_path = database.plan.replication_topology.class_path
         steps = get_auto_upgrade_vm_settings(topology_path)

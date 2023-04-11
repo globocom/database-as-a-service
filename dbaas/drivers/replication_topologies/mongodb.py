@@ -932,6 +932,31 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.NewVolumeFromSnapshot',
                 'workflow.steps.util.volume_provider.AttachDataVolumeAutoUpgrade',
                 'workflow.steps.util.volume_provider.MountDataVolumeAutoUpgrade',
+            )}, {
+            'Set SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunningIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredAutoUpgrade',
+                'workflow.steps.util.ssl.UpdateExpireAtDateAutoUpgrade',
+            )}, {
+            'Configure Plan': (
+                'workflow.steps.util.plan.ConfigureAutoUpgrade',
+                'workflow.steps.util.plan.ConfigureLogAutoUpgrade',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafAutoUpgrade',
+                'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepAutoUpgrade',
+                'workflow.steps.util.database.StartCheckOnlyOsProcessAutoUpgrade',
+            )}, {
+            'Add Instance to ReplicaSet': (
+                'workflow.steps.mongodb.database.AddInstanceToReplicaSetAutoUpgrade',
+            )}, {
+            'Restart Telegraf and Rsyslog': (
+                'workflow.steps.util.metric_collector.RestartTelegrafAutoUpgrade',
+                'workflow.steps.util.database.StartRsyslogAutoUpgrade'
             )}
         ]
 

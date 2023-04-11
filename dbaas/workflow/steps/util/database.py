@@ -217,6 +217,15 @@ class StartCheckOnlyOsProcess(Start):
                 )
 
 
+class StartCheckOnlyOsProcessAutoUpgrade(StartCheckOnlyOsProcess):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(StartCheckOnlyOsProcessAutoUpgrade, self).is_valid
+
+
 class StartRsyslog(DatabaseStep):
 
     def __unicode__(self):
@@ -251,6 +260,13 @@ class StartRsyslog(DatabaseStep):
         if not self.is_valid:
             return
         return self._stop()
+    
+
+class StartRsyslogAutoUpgrade(StartRsyslog):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopRsyslog(StartRsyslog):

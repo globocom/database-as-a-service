@@ -1369,6 +1369,11 @@ class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
         verbose_name="Number of Instances Before", null=True, unique=False, default=3
     )
 
+    base_snapshot = models.ForeignKey(
+        Snapshot, verbose_name='Base Snapshot', 
+        null=True, related_name='database_autoupgrades',
+        default=None)
+
     def __unicode__(self):
         return "Auto Upgrading VM Offering for database: {}".format(self.database)
 

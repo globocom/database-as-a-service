@@ -69,6 +69,19 @@ class AddInstanceToReplicaSet(DatabaseReplicaSet):
             remove.do()
 
 
+class AddInstanceToReplicaSetAutoUpgrade(AddInstanceToReplicaSet):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(AddInstanceToReplicaSetAutoUpgrade, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            super(AddInstanceToReplicaSetAutoUpgrade, self).do()
+
+
 class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
 
     def __unicode__(self):
