@@ -86,7 +86,7 @@ def unlock_instance(driver, instance, client):
         return False
 
 
-def make_instance_snapshot_backup(instance, error, group,
+def make_instance_old_snapshot_backup(instance, error, group,
                                   provider_class=VolumeProviderSnapshot,
                                   target_volume=None,
                                   current_hour=None,
@@ -211,7 +211,7 @@ def make_instance_snapshot_backup(instance, error, group,
 
     return snapshot
 
-def make_instance_new_snapshot_backup(
+def make_instance_snapshot_backup(
     instance, error, group, provider_class=VolumeProviderSnapshot, target_volume=None,
     current_hour=None, task=None, persist=0
 ):
@@ -247,27 +247,18 @@ def make_instance_new_snapshot_backup(
         )
         backup_hour_list = Configuration.get_by_name_as_list('make_database_backup_hour')
         if not snapshot_final_status == Snapshot.WARNING and not has_snapshot:
+            cont = 0
             for _ in range(backup_retry_attempts):
+                cont += 1
                 try:
-                    status = 201
-                    response = None
-                    response = provider.new_take_snapshot(persist=persist)
+                    code = 201
+                    response, data = provider.new_take_snapshot(persist=persist)
 
-                    while status != 200:
-                        sleep(30)
-                        status_response = provider.take_snapshot_status(response['identifier'])
-                        if status_response.status_code in [200, 202]:
-                            unlock_instance(driver, instance, client)
-                        if status_response.status_code == 200:
-                            break
-                        if status_response >= 400:
-                            raise error
-                        status = status_response.status_code
-                    break
+                    if response.status_code < 400:
+                        break
 
-                except Exception as exp:
-                    content, response = exp
-                    LOG.error(exp)
+                    if cont >= 3:
+                        raise IndexError
 
                 except IndexError as e:
                     content, response = e
@@ -282,8 +273,23 @@ def make_instance_new_snapshot_backup(
                     else:
                         raise e
 
-            snapshot.done(response)
-            snapshot.save()
+            if response.status_code < 400:
+                while code != 200:
+                    sleep(20)
+                    snap_response, snap_status = provider.take_snapshot_status(data['identifier'])
+                    if snap_response.status_code in [200, 202]:
+                        unlock_instance(driver, instance, client)
+                    if snap_response.status_code == 200:
+                        break
+                    if snap_response.status_code >= 400:
+                        raise error
+                    code = snap_response.status_code
+
+                snapshot.done(snap_status)
+                snapshot.save()
+            else:
+                errormsg = response['message']
+                set_backup_error(infra, snapshot, errormsg)
         else:
             if str(current_hour) in backup_hour_list:
                 raise Exception("Backup with WARNING already created today.")
@@ -874,7 +880,6 @@ def _create_database_backup(instance, task, group, current_hour, persist):
 
     error = {}
     try:
-        LOG.info('------------------')
         LOG.info('Starting make database snapshot')
         snapshot = make_instance_snapshot_backup(
             instance=instance,
