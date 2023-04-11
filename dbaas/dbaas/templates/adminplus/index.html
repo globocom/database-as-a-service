@@ -20,7 +20,9 @@
                 </thead>
                 <tbody>
                     {% for path, name in custom_list %}
-                    <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
+                        {% if is_dba or name == 'Plan details' %}
+                        <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>

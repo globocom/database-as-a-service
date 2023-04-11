@@ -47,23 +47,28 @@ class DatabaseReport(ListView):
         from_teams = [x.role for x in Team.objects.filter(users=request.user)]
         role_dba = Role.objects.get(name='role_dba')
 
-        if role_dba not in from_teams:
-            return render(request, 'databases/index.html', {"has_perm": False})
+        if role_dba in from_teams:
+            return render(request, 'databases/index.html', {"has_perm": True})
 
     def get(self, request, *args, **kwargs):
-        self.has_perm(request)
+        if self.has_perm(request):
+           return render(request, 'databases/index.html', {"has_perm": True})
 
-        return render(request, 'databases/index.html', {"has_perm": True})
+        return HttpResponseRedirect(reverse('admin:index'))
+
 
     def post(self, request, *args, **kwargs):
-        self.has_perm(request)
+        if self.has_perm(request):
+            database_report = request.POST.get("database_report", "")
 
-        database_report = request.POST.get("database_report", "")
 
-        if database_report == 'database_report':
-            return self.default_database_report()
-        else:
-            return self.vm_by_line_database_report()
+            if database_report == 'database_report':
+                return self.default_database_report()
+            else:
+                return self.vm_by_line_database_report()
+
+        return HttpResponseRedirect(reverse('admin:index'))
+
 
     def vm_by_line_database_report(self):
 
