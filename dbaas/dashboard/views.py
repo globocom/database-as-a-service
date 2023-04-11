@@ -45,12 +45,3 @@ def databaseinfra(request, infra_id):
     dbinfra = DatabaseInfra.objects.get(pk=infra_id)
     databases = Database.objects.filter(databaseinfra=dbinfra)
     return render_to_response("dashboard/databaseinfra.html", {'infra': dbinfra, 'databases': databases}, context_instance=RequestContext(request))
-
-
-@login_required
-def sofia_dashboard(request):
-    sofia_grafana_url = Configuration.get_by_name('sofia_grafana_url')
-    sofia_grafana_datasource = Configuration.get_by_name('sofia_grafana_datasource')
-    sofia_dashboard = "{}?var-datasource={}".format(sofia_grafana_url, sofia_grafana_datasource)
-
-    return render_to_response("dashboard/sofia_dashboard.html", {'sofia_dashboard':sofia_dashboard}, context_instance=RequestContext(request))
