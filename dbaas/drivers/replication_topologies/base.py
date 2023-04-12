@@ -732,6 +732,9 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.StopIfRunning',
             )
         }]
+    
+    def get_auto_upgrade_database_vm_offering(self):
+        raise NotImplementedError('Not implemented for topology')
 
     def get_start_database_vm_steps(self):
         return [{

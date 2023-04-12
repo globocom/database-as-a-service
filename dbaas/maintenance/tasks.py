@@ -259,6 +259,16 @@ def stop_database_vm(self, database, task, user, retry_from=None):
     from task_stop_database_vm import task_stop_database_vm
     task_stop_database_vm(database, task, retry_from)
 
+@app.task(bind=True)
+def auto_upgrade_database_vm_offering(self, database, task, user, retry_from=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from task_auto_upgrade_vm_offering import task_auto_upgrade_vm_offering
+    task_auto_upgrade_vm_offering(database, task, retry_from)
+
 
 def _create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(request=self.request, task_history=task, user=user, worker_name=get_worker_name())
