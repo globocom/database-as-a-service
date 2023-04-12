@@ -953,10 +953,20 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Add Instance to ReplicaSet': (
                 'workflow.steps.mongodb.database.AddInstanceToReplicaSetAutoUpgrade',
+                'workflow.steps.util.database.WaitForReplicationAutoUpgrade',
             )}, {
             'Restart Telegraf and Rsyslog': (
                 'workflow.steps.util.metric_collector.RestartTelegrafAutoUpgrade',
-                'workflow.steps.util.database.StartRsyslogAutoUpgrade'
+                'workflow.steps.util.database.StartRsyslogAutoUpgrade',
+            )}, {
+            'Replicate ACLs': (
+                'workflow.steps.util.acl.ReplicateAcls2NewInstanceAutoUpgrade',
+                'workflow.steps.util.acl.BindNewInstanceAutoUpgrade',
+            )}, {
+            'Add Alarms and Monitoring': (
+                'workflow.steps.util.zabbix.CreateAlarmsAutoUpgrade',
+                'workflow.steps.util.db_monitor.CreateMonitoringAutoUpgrade',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoringAutoUpgrade',
             )}
         ]
 

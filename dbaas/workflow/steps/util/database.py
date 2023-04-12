@@ -414,6 +414,17 @@ class WaitForReplication(DatabaseStep):
                 raise ReplicationNotRunningError
 
 
+class WaitForReplicationAutoUpgrade(WaitForReplication):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(WaitForReplicationAutoUpgrade, self).do()
+
+
 class CheckIsUp(DatabaseStep):
 
     def __unicode__(self):
@@ -1105,6 +1116,19 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
 
     def undo(self):
         pass
+
+
+class ConfigurePrometheusMonitoringAutoUpgrade(ConfigurePrometheusMonitoring):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ConfigurePrometheusMonitoringAutoUpgrade, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            return super(ConfigurePrometheusMonitoringAutoUpgrade, self).do()
 
 
 class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):

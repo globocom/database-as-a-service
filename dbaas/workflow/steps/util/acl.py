@@ -67,6 +67,20 @@ class ReplicateAcls2NewInstance(ACLStep):
         )
 
 
+class ReplicateAcls2NewInstanceAutoUpgrade(ReplicateAcls2NewInstance):
+    
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ReplicateAcls2NewInstanceAutoUpgrade, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            super(ReplicateAcls2NewInstanceAutoUpgrade, self).do()
+        
+
+
 class ReplicateAclsMigrate(ReplicateAcls2NewInstance):
 
     @property
@@ -144,6 +158,15 @@ class BindNewInstance(ACLStep):
     def undo(self):
         pass
 
+
+class BindNewInstanceAutoUpgrade(BindNewInstance):
+    
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        
+        return super(BindNewInstanceAutoUpgrade, self).is_valid
 
 class BindNewInstanceDatabaseMigrate(BindNewInstance):
     def add_acl_for_vip(self, database, app_name):
