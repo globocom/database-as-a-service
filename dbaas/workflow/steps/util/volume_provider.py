@@ -292,22 +292,51 @@ class VolumeProviderBase(BaseInstanceStep):
         return output
 
     def take_snapshot(self, persist=0):
-        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        url = "{}old/snapshot/{}".format(self.base_uri, self.volume.identifier)
         if persist != 0:
             url += '?persist=1'
 
         LOG.info('Calling create snapshot URL: %s' % url)
-
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
             "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
+        LOG.info('Old snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
+
+    def new_take_snapshot(self, persist=0):
+        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+        data = {
+            "engine": self.engine.name,
+            "db_name": self.database_name,
+            "team_name": self.team_name
+        }
+        response = post(url, json=data, headers=self.headers)
+        LOG.info('New snapshot create status code: {}'.format(response.status_code))
+
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response, response.json()
+
+    def take_snapshot_status(self, identifier):
+        url = "{}snapshot/{}/state".format(self.base_uri, identifier)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
+        response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'. format(response.status_code))
+
+        if not response.ok:
+            raise Exception(response.content, response)
+        return response, response.json()
 
     def delete_snapshot(self, snapshot, force):
         self.force_environment = snapshot.environment
