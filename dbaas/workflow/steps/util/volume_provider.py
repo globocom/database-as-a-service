@@ -324,7 +324,7 @@ class VolumeProviderBase(BaseInstanceStep):
         LOG.info('New snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
-            raise IndexError(response.content, response)
+            return response, response.content
         return response, response.json()
 
     def take_snapshot_status(self, identifier):

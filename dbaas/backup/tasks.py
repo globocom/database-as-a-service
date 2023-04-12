@@ -261,7 +261,7 @@ def make_instance_snapshot_backup(
                         raise IndexError
 
                 except IndexError as e:
-                    content, response = e
+                    response, content = e
                     if response.status_code == 503:
                         errormsg = "{} - 503 error creating snapshot for instance: {}. It will try again in 30 seconds. ".format(
                             strftime("%d/%m/%Y %H:%M:%S"), instance
