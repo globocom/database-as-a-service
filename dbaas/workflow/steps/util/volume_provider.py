@@ -292,7 +292,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return output
 
     def take_snapshot(self, persist=0):
-        url = "{}old/snapshot/{}".format(self.base_uri, self.volume.identifier)
+        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
         if persist != 0:
             url += '?persist=1'
 
