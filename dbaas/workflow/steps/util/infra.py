@@ -52,7 +52,7 @@ class OfferingMigration(Offering):
 class OfferingAutoUpgrade(Offering):
     
     @property
-    def is_valid(self):
+    def is_valid(self): # executa somente para VMs pre-existentes
         try:
             return self.instance.hostname.id
         except ObjectDoesNotExist:

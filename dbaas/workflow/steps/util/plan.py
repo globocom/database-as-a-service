@@ -433,7 +433,7 @@ class Configure(PlanStep):
             )
 
 
-class ConfigureAutoUpgrade(Configure):
+class ConfigureTemporaryInstance(Configure):
 
     @property
     def is_valid(self):
@@ -604,14 +604,14 @@ class ConfigureLog(Configure):
             )
 
 
-class ConfigureLogAutoUpgrade(ConfigureLog):
+class ConfigureLogTemporaryInstance(ConfigureLog):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
 
-        return super(ConfigureLogAutoUpgrade, self).is_valid
+        return super(ConfigureLogTemporaryInstance, self).is_valid
 
 
 class ConfigureLogForNewInfra(ConfigureLog, PlanStepNewInfra):

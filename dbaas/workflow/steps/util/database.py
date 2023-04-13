@@ -217,13 +217,13 @@ class StartCheckOnlyOsProcess(Start):
                 )
 
 
-class StartCheckOnlyOsProcessAutoUpgrade(StartCheckOnlyOsProcess):
+class StartCheckOnlyOsProcessTemporaryInstance(StartCheckOnlyOsProcess):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(StartCheckOnlyOsProcessAutoUpgrade, self).is_valid
+        return super(StartCheckOnlyOsProcessTemporaryInstance, self).is_valid
 
 
 class StartRsyslog(DatabaseStep):
@@ -262,7 +262,7 @@ class StartRsyslog(DatabaseStep):
         return self._stop()
     
 
-class StartRsyslogAutoUpgrade(StartRsyslog):
+class StartRsyslogTemporaryInstance(StartRsyslog):
     
     @property
     def is_valid(self):
@@ -414,7 +414,7 @@ class WaitForReplication(DatabaseStep):
                 raise ReplicationNotRunningError
 
 
-class WaitForReplicationAutoUpgrade(WaitForReplication):
+class WaitForReplicationTemporaryInstance(WaitForReplication):
 
     @property
     def is_valid(self):
@@ -422,7 +422,7 @@ class WaitForReplicationAutoUpgrade(WaitForReplication):
     
     def do(self):
         if self.is_valid:
-            super(WaitForReplicationAutoUpgrade, self).do()
+            super(WaitForReplicationTemporaryInstance, self).do()
 
 
 class CheckIsUp(DatabaseStep):
@@ -1118,17 +1118,17 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
         pass
 
 
-class ConfigurePrometheusMonitoringAutoUpgrade(ConfigurePrometheusMonitoring):
+class ConfigurePrometheusMonitoringTemporaryInstance(ConfigurePrometheusMonitoring):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(ConfigurePrometheusMonitoringAutoUpgrade, self).is_valid
+        return super(ConfigurePrometheusMonitoringTemporaryInstance, self).is_valid
     
     def do(self):
         if self.is_valid:
-            return super(ConfigurePrometheusMonitoringAutoUpgrade, self).do()
+            return super(ConfigurePrometheusMonitoringTemporaryInstance, self).do()
 
 
 class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
@@ -1163,22 +1163,3 @@ class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):
 
     def undo(self):
         pass
-
-
-class UpdateInfraOffering(DatabaseStep):
-    def __unicode__(self):
-        return "Update infra Offering..."
-    
-    @property
-    def is_valid(self):
-        if self.resize and self.resize.target_offer is not None:
-            return True
-        return False
-    
-    def do(self):
-        if self.is_valid:
-            self.infra.offering = self.resize.target_offer
-            self.infra.save()
-
-        else:
-            raise Exception('No target offer was found.')

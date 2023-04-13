@@ -64,17 +64,17 @@ class CreateMonitoring(DBMonitorStep):
         DisableMonitoring(self.instance).do()
 
 
-class CreateMonitoringAutoUpgrade(CreateMonitoring):
+class CreateMonitoringTemporaryInstance(CreateMonitoring):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(CreateMonitoringAutoUpgrade, self).is_valid
+        return super(CreateMonitoringTemporaryInstance, self).is_valid
     
     def do(self):
         if self.is_valid:
-            return super(CreateMonitoringAutoUpgrade, self).do()
+            return super(CreateMonitoringTemporaryInstance, self).do()
 
 
 class DisableInfraMonitoring(DBMonitorStep):

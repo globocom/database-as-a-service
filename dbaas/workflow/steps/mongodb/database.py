@@ -69,17 +69,17 @@ class AddInstanceToReplicaSet(DatabaseReplicaSet):
             remove.do()
 
 
-class AddInstanceToReplicaSetAutoUpgrade(AddInstanceToReplicaSet):
+class AddInstanceToReplicaSetTemporaryInstance(AddInstanceToReplicaSet):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(AddInstanceToReplicaSetAutoUpgrade, self).is_valid
+        return super(AddInstanceToReplicaSetTemporaryInstance, self).is_valid
     
     def do(self):
         if self.is_valid:
-            super(AddInstanceToReplicaSetAutoUpgrade, self).do()
+            super(AddInstanceToReplicaSetTemporaryInstance, self).do()
 
 
 class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):

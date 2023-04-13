@@ -921,52 +921,52 @@ class MongoDBReplicaset(BaseMongoDB):
         return [{
             'Create new VM': (
                 'workflow.steps.util.infra.OfferingAutoUpgrade',
-                'workflow.steps.util.host_provider.AllocateIPAutoUpgrade',
-                'workflow.steps.util.host_provider.CreateVirtualMachineAutoUpgrade',
+                'workflow.steps.util.host_provider.AllocateIPTemporaryInstance',
+                'workflow.steps.util.host_provider.CreateVirtualMachineTemporaryInstance',
                 # 'workflow.steps.util.dns.CreateDNS',
                 # 'workflow.steps.util.dns.CheckIsReady',
-                'workflow.steps.util.vm.WaitingBeReadyAutoUpgrade',
-                'workflow.steps.util.vm.UpdateOSDescriptionAutoUpgrade',
+                'workflow.steps.util.vm.WaitingBeReadyTemporaryInstance',
+                'workflow.steps.util.vm.UpdateOSDescriptionTemporaryInstance',
             )}, {
             'Attach new Volume': (
                 'workflow.steps.util.volume_provider.NewVolumeFromSnapshot',
-                'workflow.steps.util.volume_provider.AttachDataVolumeAutoUpgrade',
-                'workflow.steps.util.volume_provider.MountDataVolumeAutoUpgrade',
+                'workflow.steps.util.volume_provider.AttachDataVolumeTemporaryInstance',
+                'workflow.steps.util.volume_provider.MountDataVolumeTemporaryInstance',
             )}, {
             'Set SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunningIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.RequestSSLForInfraIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredAutoUpgrade',
-                'workflow.steps.util.ssl.UpdateExpireAtDateAutoUpgrade',
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunningIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.UpdateExpireAtDateTemporaryInstance',
             )}, {
             'Configure Plan': (
-                'workflow.steps.util.plan.ConfigureAutoUpgrade',
-                'workflow.steps.util.plan.ConfigureLogAutoUpgrade',
-                'workflow.steps.util.metric_collector.ConfigureTelegrafAutoUpgrade',
-                'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepAutoUpgrade',
-                'workflow.steps.util.database.StartCheckOnlyOsProcessAutoUpgrade',
+                'workflow.steps.util.plan.ConfigureTemporaryInstance',
+                'workflow.steps.util.plan.ConfigureLogTemporaryInstance',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafTemporaryInstance',
+                'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepTemporaryInstance',
+                'workflow.steps.util.database.StartCheckOnlyOsProcessTemporaryInstance',
             )}, {
             'Add Instance to ReplicaSet': (
-                'workflow.steps.mongodb.database.AddInstanceToReplicaSetAutoUpgrade',
-                'workflow.steps.util.database.WaitForReplicationAutoUpgrade',
+                'workflow.steps.mongodb.database.AddInstanceToReplicaSetTemporaryInstance',
+                'workflow.steps.util.database.WaitForReplicationTemporaryInstance',
             )}, {
             'Restart Telegraf and Rsyslog': (
-                'workflow.steps.util.metric_collector.RestartTelegrafAutoUpgrade',
-                'workflow.steps.util.database.StartRsyslogAutoUpgrade',
+                'workflow.steps.util.metric_collector.RestartTelegrafTemporaryInstance',
+                'workflow.steps.util.database.StartRsyslogTemporaryInstance',
             )}, {
             'Replicate ACLs': (
-                'workflow.steps.util.acl.ReplicateAcls2NewInstanceAutoUpgrade',
-                'workflow.steps.util.acl.BindNewInstanceAutoUpgrade',
+                'workflow.steps.util.acl.ReplicateAcls2NewInstanceTemporaryInstance',
+                'workflow.steps.util.acl.BindNewInstanceTemporaryInstance',
             )}, {
             'Add Alarms and Monitoring': (
-                'workflow.steps.util.zabbix.CreateAlarmsAutoUpgrade',
-                'workflow.steps.util.db_monitor.CreateMonitoringAutoUpgrade',
-                'workflow.steps.util.database.ConfigurePrometheusMonitoringAutoUpgrade',
+                'workflow.steps.util.zabbix.CreateAlarmsTemporaryInstance',
+                'workflow.steps.util.db_monitor.CreateMonitoringTemporaryInstance',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoringTemporaryInstance',
             )}
         ]
 

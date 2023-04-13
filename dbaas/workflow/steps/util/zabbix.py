@@ -202,13 +202,13 @@ class CreateAlarms(ZabbixStep):
         DestroyAlarms(self.instance).do()
 
 
-class CreateAlarmsAutoUpgrade(CreateAlarms):
+class CreateAlarmsTemporaryInstance(CreateAlarms):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(CreateAlarmsAutoUpgrade, self).is_valid
+        return super(CreateAlarmsTemporaryInstance, self).is_valid
 
 
 class CreateAlarmsDatabaseMigrateBase(ZabbixStep):

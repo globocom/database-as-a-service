@@ -148,13 +148,14 @@ class IfConguredSSLValidator(SSL):
         return self.infra.ssl_configured
     
 
-class IfTemporaryAndConfigured(IfConguredSSLValidator):
-    
+class IfConguredSSLValidatorForTemporaryInstance(IfConguredSSLValidator):
+    # Valida se a instance eh temporaria E configurada com o ssl
+
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(IfTemporaryAndConfigured, self).is_valid
+        return super(IfConguredSSLValidatorForTemporaryInstance, self).is_valid
 
 
 class UpdateOpenSSlLib(SSL):
@@ -180,7 +181,7 @@ class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
     pass
 
 
-class UpdateOpenSSlLibIfConfiguredAutoUpgrade(UpdateOpenSSlLib, IfTemporaryAndConfigured):
+class UpdateOpenSSlLibIfConfiguredTemporaryInstance(UpdateOpenSSlLib, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -205,7 +206,7 @@ class MongoDBUpdateCertificatesIfConfigured(MongoDBUpdateCertificates,
     pass
 
 
-class MongoDBUpdateCertificatesIfConfiguredAutoUpgrade(MongoDBUpdateCertificates, IfTemporaryAndConfigured):
+class MongoDBUpdateCertificatesIfConfiguredTemporaryInstance(MongoDBUpdateCertificates, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -238,7 +239,7 @@ class CreateSSLFolderRollbackIfRunningIfConfigured(CreateSSLFolderRollbackIfRunn
     pass
 
 
-class CreateSSLFolderRollbackIfRunningIfConfiguredAutoUpgrade(CreateSSLFolderRollbackIfRunning, IfTemporaryAndConfigured):
+class CreateSSLFolderRollbackIfRunningIfConfiguredTemporaryInstance(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -403,7 +404,7 @@ class MongoDBCreateSSLConfForInfraIfConfigured(MongoDBCreateSSLConfForInfra,
     pass
 
 
-class MongoDBCreateSSLConfForInfraIfConfiguredAutoUpgrade(MongoDBCreateSSLConfForInfra, IfTemporaryAndConfigured):
+class MongoDBCreateSSLConfForInfraIfConfiguredTemporaryInstance(MongoDBCreateSSLConfForInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -463,7 +464,7 @@ class RequestSSLForInfraIfConfigured(RequestSSLForInfra,
     pass
 
 
-class RequestSSLForInfraIfConfiguredAutoUpgrade(RequestSSLForInfra, IfTemporaryAndConfigured):
+class RequestSSLForInfraIfConfiguredTemporaryInstance(RequestSSLForInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -548,7 +549,7 @@ class CreateJsonRequestFileInfraIfConfigured(CreateJsonRequestFileInfra,
     pass
 
 
-class CreateJsonRequestFileInfraIfConfiguredAutoUpgrade(CreateJsonRequestFileInfra, IfTemporaryAndConfigured):
+class CreateJsonRequestFileInfraIfConfiguredTemporaryInstance(CreateJsonRequestFileInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -639,7 +640,7 @@ class CreateCertificateInfraMongoDBIfConfigured(CreateCertificateInfraMongoDB,
     pass
 
 
-class CreateCertificateInfraMongoDBIfConfiguredAutoUpgrade(CreateCertificateInfraMongoDB, IfTemporaryAndConfigured):
+class CreateCertificateInfraMongoDBIfConfiguredTemporaryInstance(CreateCertificateInfraMongoDB, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -697,7 +698,7 @@ class SetSSLFilesAccessMongoDBIfConfigured(SetSSLFilesAccessMongoDB,
     pass
 
 
-class SetSSLFilesAccessMongoDBIfConfiguredAutoUpgrade(SetSSLFilesAccessMongoDB, IfTemporaryAndConfigured):
+class SetSSLFilesAccessMongoDBIfConfiguredTemporaryInstance(SetSSLFilesAccessMongoDB, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -784,7 +785,7 @@ class UpdateExpireAtDate(SSL):
         pass
 
 
-class UpdateExpireAtDateAutoUpgrade(UpdateExpireAtDate):
+class UpdateExpireAtDateTemporaryInstance(UpdateExpireAtDate):
 
     @property
     def is_valid(self):
