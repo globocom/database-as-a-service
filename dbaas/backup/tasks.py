@@ -86,12 +86,12 @@ def unlock_instance(driver, instance, client):
         return False
 
 
-def make_instance_old_snapshot_backup(instance, error, group,
-                                  provider_class=VolumeProviderSnapshot,
-                                  target_volume=None,
-                                  current_hour=None,
-                                  task=None,
-                                  persist=0):
+def make_instance_dccm_snapshot_backup(instance, error, group,
+                                       provider_class=VolumeProviderSnapshot,
+                                       target_volume=None,
+                                       current_hour=None,
+                                       task=None,
+                                       persist=0):
     LOG.info("Make instance backup for {}".format(instance))
     provider = provider_class(instance)
     infra = instance.databaseinfra
@@ -211,7 +211,8 @@ def make_instance_old_snapshot_backup(instance, error, group,
 
     return snapshot
 
-def make_instance_snapshot_backup(
+
+def make_instance_gcp_snapshot_backup(
     instance, error, group, provider_class=VolumeProviderSnapshot, target_volume=None,
     current_hour=None, task=None, persist=0
 ):
@@ -348,6 +349,30 @@ def make_instance_snapshot_backup(
     register_backup_dbmonitor(infra, snapshot)
 
     return snapshot
+
+
+def make_instance_snapshot_backup(instance, error, group,
+                                  provider_class=VolumeProviderSnapshot,
+                                  target_volume=None,
+                                  current_hour=None,
+                                  task=None,
+                                  persist=0):
+    infra = instance.databaseinfra
+    env = infra.environment
+    if env.name == 'prod':
+        return make_instance_dccm_snapshot_backup(instance, error, group,
+                                                  provider_class=provider_class,
+                                                  target_volume=target_volume,
+                                                  current_hour=current_hour,
+                                                  task=task,
+                                                  persist=persist)
+    else:
+        return make_instance_gcp_snapshot_backup(instance, error, group,
+                                                 provider_class=provider_class,
+                                                 target_volume=target_volume,
+                                                 current_hour=current_hour,
+                                                 task=task,
+                                                 persist=persist)
 
 
 def make_instance_snapshot_backup_upgrade_disk(instance, error, group, provider_class=VolumeProviderSnapshot,
