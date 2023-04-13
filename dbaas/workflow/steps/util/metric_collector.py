@@ -149,13 +149,13 @@ class RestartTelegraf(MetricsCollector):
         self.host.ssh.run_script(script)
 
 
-class RestartTelegrafAutoUpgrade(RestartTelegraf):
+class RestartTelegrafTemporaryInstance(RestartTelegraf):
 
     @property
     def is_valid(self):
         if not self.instance.temporary:
             return False
-        return super(RestartTelegrafAutoUpgrade, self).is_valid
+        return super(RestartTelegrafTemporaryInstance, self).is_valid
 
 
 class RestartTelegrafRollback(RestartTelegraf):

@@ -51,7 +51,7 @@ class WaitingBeReady(VmStep):
             raise EnvironmentError('VM is not ready')
 
 
-class WaitingBeReadyAutoUpgrade(WaitingBeReady):
+class WaitingBeReadyTemporaryInstance(WaitingBeReady):
     
     @property
     def is_valid(self):
@@ -59,7 +59,7 @@ class WaitingBeReadyAutoUpgrade(WaitingBeReady):
     
     def do(self):
         if self.is_valid:
-            super(WaitingBeReadyAutoUpgrade, self).do()
+            super(WaitingBeReadyTemporaryInstance, self).do()
 
 
 class WaitingBeReadyRollback(WaitingBeReady):
@@ -83,7 +83,7 @@ class UpdateOSDescription(VmStep):
         self.host.update_os_description()
 
 
-class UpdateOSDescriptionAutoUpgrade(UpdateOSDescription):
+class UpdateOSDescriptionTemporaryInstance(UpdateOSDescription):
     
     @property
     def is_valid(self):
@@ -91,7 +91,7 @@ class UpdateOSDescriptionAutoUpgrade(UpdateOSDescription):
     
     def do(self):
         if self.is_valid:
-            super(UpdateOSDescriptionAutoUpgrade, self).do()
+            super(UpdateOSDescriptionTemporaryInstance, self).do()
 
 
 class ChangeMaster(VmStep):
