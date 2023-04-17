@@ -22,9 +22,11 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "task",
+        "database", "task", "resize_target",
         "started_at", "link_task", "finished_at", "status",
-        "maintenance_action", "task_schedule"
+        "maintenance_action", "task_schedule",
+        "number_of_instances", "number_of_instances_before",
+        "base_snapshot"
     )
 
     def maintenance_action(self, maintenance):
@@ -84,7 +86,8 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         TaskRegister.auto_upgrade_database_vm_offering(
             database=retry_from.database,
             user=request.user,
-            retry_from=retry_from
+            retry_from=retry_from,
+            resize_target=retry_from.resize_target
         )
 
         url = reverse('admin:notification_taskhistory_changelist')

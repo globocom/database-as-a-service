@@ -146,6 +146,16 @@ class IfConguredSSLValidator(SSL):
     @property
     def is_valid(self):
         return self.infra.ssl_configured
+    
+
+class IfConguredSSLValidatorForTemporaryInstance(IfConguredSSLValidator):
+    # Valida se a instance eh temporaria E configurada com o ssl
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(IfConguredSSLValidatorForTemporaryInstance, self).is_valid
 
 
 class UpdateOpenSSlLib(SSL):
@@ -171,6 +181,10 @@ class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
     pass
 
 
+class UpdateOpenSSlLibIfConfiguredTemporaryInstance(UpdateOpenSSlLib, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class MongoDBUpdateCertificates(SSL):
 
     def __unicode__(self):
@@ -189,6 +203,10 @@ class MongoDBUpdateCertificates(SSL):
 
 class MongoDBUpdateCertificatesIfConfigured(MongoDBUpdateCertificates,
                                             IfConguredSSLValidator):
+    pass
+
+
+class MongoDBUpdateCertificatesIfConfiguredTemporaryInstance(MongoDBUpdateCertificates, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -218,6 +236,10 @@ class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
 
 
 class CreateSSLFolderRollbackIfRunningIfConfigured(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidator):
+    pass
+
+
+class CreateSSLFolderRollbackIfRunningIfConfiguredTemporaryInstance(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -382,6 +404,10 @@ class MongoDBCreateSSLConfForInfraIfConfigured(MongoDBCreateSSLConfForInfra,
     pass
 
 
+class MongoDBCreateSSLConfForInfraIfConfiguredTemporaryInstance(MongoDBCreateSSLConfForInfra, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class MongoDBCreateSSLConfForInfraIP(MongoDBCreateSSLConfigFile,
                                      InfraSSLBaseName,
                                      InstanceSSLDNSIp):
@@ -435,6 +461,10 @@ class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
 
 class RequestSSLForInfraIfConfigured(RequestSSLForInfra,
                                      IfConguredSSLValidator):
+    pass
+
+
+class RequestSSLForInfraIfConfiguredTemporaryInstance(RequestSSLForInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -516,6 +546,10 @@ class CreateJsonRequestFileInfra(CreateJsonRequestFile, InfraSSLBaseName):
 
 class CreateJsonRequestFileInfraIfConfigured(CreateJsonRequestFileInfra,
                                              IfConguredSSLValidator):
+    pass
+
+
+class CreateJsonRequestFileInfraIfConfiguredTemporaryInstance(CreateJsonRequestFileInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -606,6 +640,10 @@ class CreateCertificateInfraMongoDBIfConfigured(CreateCertificateInfraMongoDB,
     pass
 
 
+class CreateCertificateInfraMongoDBIfConfiguredTemporaryInstance(CreateCertificateInfraMongoDB, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class CreateCertificateInfra(CreateCertificate, InfraSSLBaseName):
     pass
 
@@ -657,6 +695,10 @@ class SetSSLFilesAccessMongoDB(SSL):
 
 class SetSSLFilesAccessMongoDBIfConfigured(SetSSLFilesAccessMongoDB,
                                            IfConguredSSLValidator):
+    pass
+
+
+class SetSSLFilesAccessMongoDBIfConfiguredTemporaryInstance(SetSSLFilesAccessMongoDB, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -741,6 +783,13 @@ class UpdateExpireAtDate(SSL):
 
     def undo(self):
         pass
+
+
+class UpdateExpireAtDateTemporaryInstance(UpdateExpireAtDate):
+
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured and self.instance.temporary
 
 
 class UpdateExpireAtDateRollback(UpdateExpireAtDate):

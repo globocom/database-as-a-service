@@ -98,6 +98,15 @@ class MongoDBCHGBinStep(DatabaseUpgradePatchStep):
         self.host.ssh.run_script(script)
 
 
+class MongoDBCHGBinStepTemporaryInstance(MongoDBCHGBinStep):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(MongoDBCHGBinStepTemporaryInstance, self).is_valid
+
+
 class MongoDBCHGBinStepRollback(MongoDBCHGBinStep):
 
     def do(self):

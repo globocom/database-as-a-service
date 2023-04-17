@@ -217,6 +217,15 @@ class StartCheckOnlyOsProcess(Start):
                 )
 
 
+class StartCheckOnlyOsProcessTemporaryInstance(StartCheckOnlyOsProcess):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(StartCheckOnlyOsProcessTemporaryInstance, self).is_valid
+
+
 class StartRsyslog(DatabaseStep):
 
     def __unicode__(self):
@@ -251,6 +260,13 @@ class StartRsyslog(DatabaseStep):
         if not self.is_valid:
             return
         return self._stop()
+    
+
+class StartRsyslogTemporaryInstance(StartRsyslog):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopRsyslog(StartRsyslog):
@@ -396,6 +412,17 @@ class WaitForReplication(DatabaseStep):
             sleep(CHECK_SECONDS)
             if not self.check_replication_ok(instance):
                 raise ReplicationNotRunningError
+
+
+class WaitForReplicationTemporaryInstance(WaitForReplication):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(WaitForReplicationTemporaryInstance, self).do()
 
 
 class CheckIsUp(DatabaseStep):
@@ -1089,6 +1116,19 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
 
     def undo(self):
         pass
+
+
+class ConfigurePrometheusMonitoringTemporaryInstance(ConfigurePrometheusMonitoring):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ConfigurePrometheusMonitoringTemporaryInstance, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            return super(ConfigurePrometheusMonitoringTemporaryInstance, self).do()
 
 
 class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):

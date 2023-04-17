@@ -141,6 +141,11 @@ class BaseInstanceStep(object):
         resize = self.database.resizes.last()
         if resize and resize.is_running:
             return resize
+        
+        # se nao encontrar resize manual, busca por um automático
+        auto_resize = self.database.autoupgrades.last()
+        if auto_resize and auto_resize.is_running:
+            return auto_resize
 
     @property
     def is_valid(self):

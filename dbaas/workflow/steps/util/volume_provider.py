@@ -78,6 +78,7 @@ class VolumeProviderBase(BaseInstanceStep):
         self._credential = None
         self.host_prov_client = HostProviderClient(self.environment)
         self._host_vm = None
+        self.base_snapshot = None
 
     @property
     def driver(self):
@@ -682,6 +683,8 @@ class NewVolume(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
+        elif self.base_snapshot is not None:
+            snapshot = self.base_snapshot
 
         self.create_volume(
             self.infra.name,
@@ -763,6 +766,24 @@ class NewVolumeFromMaster(NewVolume):
     @property
     def restore_snapshot_from_master(self):
         return True
+    
+
+class NewVolumeFromSnapshot(NewVolume):
+    def __unicode__(self):
+        return 'New Volume from last Snapshot...'
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    @property
+    def provider_class(self):
+        return NewVolumeFromSnapshot
+
+    def do(self):
+        if self.is_valid:
+            self.base_snapshot = self.resize.base_snapshot
+            super(NewVolumeFromSnapshot, self).do()
 
 
 class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
@@ -872,6 +893,19 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+class MountDataVolumeTemporaryInstance(MountDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(MountDataVolumeTemporaryInstance, self).is_valid
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        super(MountDataVolumeTemporaryInstance, self).do()
 
 
 class MountDataVolumeUpgradeDiskType(MountDataVolume):
@@ -2362,6 +2396,20 @@ class AttachDataVolume(VolumeProviderBase):
         if not self.is_valid:
             return
         self.detach_disk(self.volume)
+
+
+class AttachDataVolumeTemporaryInstance(AttachDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(AttachDataVolumeTemporaryInstance, self).is_valid
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        super(AttachDataVolumeTemporaryInstance, self).do()
 
 
 class AttachDataVolumeUpgradeDiskType(VolumeProviderBase):

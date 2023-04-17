@@ -2747,7 +2747,7 @@ def resize_vm_from_btn(request, database_id, resize_target):
     LOG.info("Starting database auto upgrade: database {}, user: {}".format(database, user))
 
     TaskRegister.auto_upgrade_database_vm_offering(
-        database=database, user=user
+        database=database, user=user, resize_target=resize_target
     )
 
     future_offering = database.get_future_offering(resize_target)
