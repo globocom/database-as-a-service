@@ -292,7 +292,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return output
 
     def take_snapshot(self, persist=0):
-        url = "{}old/snapshot/{}".format(self.base_uri, self.volume.identifier)
+        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
         if persist != 0:
             url += '?persist=1'
 
@@ -310,7 +310,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def new_take_snapshot(self, persist=0):
-        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        url = "{}gcp/snapshot/{}".format(self.base_uri, self.volume.identifier)
         if persist != 0:
             url += '?persist=1'
 
@@ -324,7 +324,7 @@ class VolumeProviderBase(BaseInstanceStep):
         LOG.info('New snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
-            raise IndexError(response.content, response)
+            return response, response.content
         return response, response.json()
 
     def take_snapshot_status(self, identifier):
