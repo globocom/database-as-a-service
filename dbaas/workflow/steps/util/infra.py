@@ -19,6 +19,10 @@ class Update(BaseInstanceStep):
 class Offering(Update):
     def __unicode__(self):
         return "Updating offering info..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     @property
     def target_offering(self):
@@ -36,6 +40,9 @@ class Offering(Update):
         self.instance.hostname.save()
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         self.change_infra_offering(self.target_offering)
 
     def undo(self):

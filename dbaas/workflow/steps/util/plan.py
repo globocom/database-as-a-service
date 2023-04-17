@@ -529,6 +529,10 @@ class ConfigureForUpgradeOnlyDBConfigFile(
 
 class ResizeConfigure(ConfigureOnlyDBConfigFile):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def do(self):
         self._pack = self.resize.target_offer
         super(ResizeConfigure, self).do()
@@ -590,6 +594,9 @@ class ConfigureLog(Configure):
     @property
     def is_valid(self):
         if not super(ConfigureLog, self).is_valid:
+            return False
+        
+        if self.instance.temporary:
             return False
 
         return self.host.is_ol6

@@ -516,8 +516,15 @@ class Stop(HostProviderStep):
 
     def __unicode__(self):
         return "Stopping VM..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         stopped = self.provider.stop()
         if not stopped:
             raise EnvironmentError("Could not stop VM")
@@ -535,10 +542,17 @@ class StopIfRunning(Stop):
 
 class Start(HostProviderStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Starting VM..."
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         started = self.provider.start()
         if not started:
             raise EnvironmentError("Could not start VM")
@@ -599,6 +613,10 @@ class ReinstallTemplate(HostProviderStep):
 
 class ChangeOffering(HostProviderStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
         self.target_offering = self.resize.target_offer
@@ -607,6 +625,9 @@ class ChangeOffering(HostProviderStep):
         return "Resizing VM..."
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         success = self.provider.new_offering(self.target_offering)
         if not success:
             raise Exception("Could not change offering")

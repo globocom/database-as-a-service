@@ -132,6 +132,12 @@ class Stop(DatabaseStep):
     @property
     def undo_klass(self):
         return Start
+    
+    @property
+    def is_valid(self):
+        if self.instance.temporary:
+            return False
+        return super(Stop, self).is_valid
 
     def do(self):
         if not self.is_valid:
@@ -179,6 +185,10 @@ class Start(DatabaseStep):
 
     def __unicode__(self):
         return "Starting database..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     @property
     def undo_klass(self):
@@ -196,6 +206,13 @@ class Start(DatabaseStep):
 
     def undo(self):
         self.undo_klass(self.instance).do()
+
+
+class StartDatabaseTemporaryInstance(Start):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StartWithoutUndo(Start):
@@ -273,6 +290,10 @@ class StopRsyslog(StartRsyslog):
 
     def __unicode__(self):
         return "Stopping rsyslog..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
         if not self.is_valid:
@@ -333,9 +354,13 @@ class StartSlave(DatabaseStep):
 
     def __unicode__(self):
         return "Starting slave..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         CheckIsUp(self.instance)
@@ -347,11 +372,15 @@ class StartSlave(DatabaseStep):
 
 class StopSlave(DatabaseStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Stopping slave..."
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         CheckIsUp(self.instance)
@@ -377,6 +406,10 @@ class WaitForReplication(DatabaseStep):
 
     def __unicode__(self):
         return "Waiting for replication ok..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def check_replication_ok(self, instance):
         attempts = 0
@@ -393,7 +426,7 @@ class WaitForReplication(DatabaseStep):
         return True
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         not_running = []
@@ -429,13 +462,24 @@ class CheckIsUp(DatabaseStep):
 
     def __unicode__(self):
         return "Checking database is up..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
-        if not self.instance.is_database:
+        if not self.instance.is_database or not self.is_valid:
             return
 
         if not self.is_up():
             raise EnvironmentError('Database is down, should be up')
+        
+
+class CheckIsUpTemporaryInstance(CheckIsUp):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class CheckIsUpRollback(CheckIsUp):
