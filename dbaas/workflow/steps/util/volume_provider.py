@@ -402,13 +402,15 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def get_snapshot_state(self, snapshot):
-        url = "{}snapshot/{}/state".format(
-            self.base_uri, snapshot.snapshopt_id
-        )
+        url = "{}snapshot/{}/state".format(self.base_uri, snapshot.snapshopt_id)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
         response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'.format(response.status_code))
+
         if not response.ok:
             raise VolumeProviderGetSnapshotState(response.content, response)
-        return response.json()['state']
+        return response, response.json()
 
     def _get_command(self, url, payload, exception_class):
         response = get(url, json=payload, headers=self.headers)
@@ -2097,6 +2099,7 @@ class TakeSnapshotOldDisk(TakeSnapshot):
 
 
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
+    #TODO: colocar estas variáveis no .env OU no Configuration
     ATTEMPTS = 60
     DELAY = 5
 
@@ -2113,8 +2116,8 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
 
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
-            snapshot_state = self.get_snapshot_state(snapshot)
-            if snapshot_state == state:
+            response, snapshot_state = self.get_snapshot_state(snapshot)
+            if snapshot_state['snapshot_status'] == state:
                 return True
             sleep(self.DELAY)
         raise EnvironmentError("Snapshot {} is {} should be {}".format(
@@ -2131,8 +2134,7 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def do(self):
         if not self.is_valid:
             return
-
-        self.waiting_be('available', self.snapshot)
+        self.waiting_be('READY', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):
