@@ -310,7 +310,7 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def new_take_snapshot(self, persist=0):
-        url = "{}snapshot/{}".format(self.base_uri, self.volume.identifier)
+        url = "{}gcp/snapshot/{}".format(self.base_uri, self.volume.identifier)
         if persist != 0:
             url += '?persist=1'
 
