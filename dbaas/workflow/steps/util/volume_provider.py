@@ -2134,6 +2134,10 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def do(self):
         if not self.is_valid:
             return
+        # Solucao de contorno para resolver recreate slave DCCM
+        if self.environment.name == 'prod':
+            return
+
         self.waiting_be('READY', self.snapshot)
 
 
