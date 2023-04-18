@@ -1336,6 +1336,20 @@ class DatabaseSetSSLNotRequired(DatabaseMaintenanceTask):
 
     def __unicode__(self):
         return "{} set SSL Not Required".format(self.database.name)
+    
+
+class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="auto_upgrade_vm_offering"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="database_auto_upgrade_vm_offering"
+    )    
+
+    def __unicode__(self):
+        return "Auto Upgrading VM Offering for database: {}".format(self.database)
 
 
 simple_audit.register(Maintenance)
@@ -1353,6 +1367,7 @@ simple_audit.register(RestartDatabase)
 simple_audit.register(DatabaseChangePersistence)
 simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
+simple_audit.register(DatabaseAutoUpgradeVMOffering)
 
 
 #########################################################

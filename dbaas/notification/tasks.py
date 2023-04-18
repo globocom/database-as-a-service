@@ -82,9 +82,8 @@ def get_instances_for_retry_destroy(infra, instances_last_destroy):
 
 @app.task(bind=True)
 def create_database(
-    self, name, plan, environment, team, project, description,
-    task, backup_hour, maintenance_window, maintenance_day,
-    subscribe_to_email_events, is_protected, user, retry_from, **kw
+    self, name, plan, environment, team, project, description, task, backup_hour,
+    maintenance_window, maintenance_day, subscribe_to_email_events, is_protected, user, retry_from, **kw
 ):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user, worker_name=get_worker_name()
@@ -98,9 +97,9 @@ def create_database(
     else:
         pool = None
     base_name = gen_infra_names(name, 0)
-    infra = get_or_create_infra(base_name, plan, environment, backup_hour,
-                                maintenance_window, maintenance_day,
-                                retry_from, pool=pool)
+    infra = get_or_create_infra(
+        base_name, plan, environment, backup_hour, maintenance_window, maintenance_day, retry_from, pool=pool
+    )
     instances = get_instances_for(infra, topology_path)
 
     database_create = DatabaseCreate()
@@ -120,23 +119,24 @@ def create_database(
     database_create.save()
 
     database = Database.objects.filter(name=name).first()
-    if database:
-        if database.is_in_quarantine:
-            database_create.set_error()
-            task.set_status_error(
-                "Could not create database.\n"
-                "Database already exists, and is in quarantine.\n"
-                "If you'd like to destroy this existent database, contact DBaaS team in Slack."
-            )
-            return
-        else:
-            database_create.set_error()
-            task.set_status_error(
-                "Could not create database.\n"
-                "Database already exists.\n"
-                "If you'd like to know more about it, contact DBaaS team in Slack."
-            )
-            return
+    if not retry_from:
+        if database:
+            if database.is_in_quarantine:
+                database_create.set_error()
+                task.set_status_error(
+                    "Could not create database.\n"
+                    "Database already exists, and is in quarantine.\n"
+                    "If you'd like to destroy this existent database, contact DBaaS team in Slack."
+                )
+                return
+            else:
+                database_create.set_error()
+                task.set_status_error(
+                    "Could not create database.\n"
+                    "Database already exists.\n"
+                    "If you'd like to know more about it, contact DBaaS team in Slack."
+                )
+                return
 
     steps = get_deploy_settings(topology_path)
 
@@ -2188,6 +2188,23 @@ class TaskRegister(TaskRegisterBase):
         task = cls.create_task(task_params)
 
         maintenace_tasks.stop_database_vm.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
+
+    @classmethod
+    def auto_upgrade_database_vm_offering(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "auto_upgrade_database_vm_offering",
+            'arguments': "Upgrading database VM Offering{}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.auto_upgrade_database_vm_offering.delay(
             database=database, task=task, user=user,
             retry_from=retry_from
         )

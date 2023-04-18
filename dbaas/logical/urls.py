@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention, funct_send_all_chg
 from .views import (CredentialView, CredentialSSLView,
-                    credential_parameter_by_name, check_offering_sizes)
+                    credential_parameter_by_name, check_offering_sizes, resize_vm_from_btn)
 
 
 urlpatterns = patterns(
@@ -36,4 +36,7 @@ urlpatterns = patterns(
     url(r"^check_offering_sizes/",
         check_offering_sizes,
         name="check_offering_sizes"),
+    url(r"^resize_vm/(?P<database_id>\d*)/(?P<resize_target>[\w\-\_]+)",
+        resize_vm_from_btn,
+        name="resize_vm_from_btn")
 )

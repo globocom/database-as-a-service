@@ -297,17 +297,46 @@ class VolumeProviderBase(BaseInstanceStep):
             url += '?persist=1'
 
         LOG.info('Calling create snapshot URL: %s' % url)
-
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
             "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
+        LOG.info('Old snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
+
+    def new_take_snapshot(self, persist=0):
+        url = "{}gcp/snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+        data = {
+            "engine": self.engine.name,
+            "db_name": self.database_name,
+            "team_name": self.team_name
+        }
+        response = post(url, json=data, headers=self.headers)
+        LOG.info('New snapshot create status code: {}'.format(response.status_code))
+
+        if not response.ok:
+            return response, response.content
+        return response, response.json()
+
+    def take_snapshot_status(self, identifier):
+        url = "{}snapshot/{}/state".format(self.base_uri, identifier)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
+        response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'. format(response.status_code))
+
+        if not response.ok:
+            raise Exception(response.content, response)
+        return response, response.json()
 
     def delete_snapshot(self, snapshot, force):
         self.force_environment = snapshot.environment
@@ -372,13 +401,15 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def get_snapshot_state(self, snapshot):
-        url = "{}snapshot/{}/state".format(
-            self.base_uri, snapshot.snapshopt_id
-        )
+        url = "{}snapshot/{}/state".format(self.base_uri, snapshot.snapshopt_id)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
         response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'.format(response.status_code))
+
         if not response.ok:
             raise VolumeProviderGetSnapshotState(response.content, response)
-        return response.json()['state']
+        return response, response.json()
 
     def _get_command(self, url, payload, exception_class):
         response = get(url, json=payload, headers=self.headers)
@@ -2034,6 +2065,7 @@ class TakeSnapshotOldDisk(TakeSnapshot):
 
 
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
+    #TODO: colocar estas variáveis no .env OU no Configuration
     ATTEMPTS = 60
     DELAY = 5
 
@@ -2050,8 +2082,8 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
 
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
-            snapshot_state = self.get_snapshot_state(snapshot)
-            if snapshot_state == state:
+            response, snapshot_state = self.get_snapshot_state(snapshot)
+            if snapshot_state['snapshot_status'] == state:
                 return True
             sleep(self.DELAY)
         raise EnvironmentError("Snapshot {} is {} should be {}".format(
@@ -2068,8 +2100,11 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def do(self):
         if not self.is_valid:
             return
+        # Solucao de contorno para resolver recreate slave DCCM
+        if self.environment.name == 'prod':
+            return
 
-        self.waiting_be('available', self.snapshot)
+        self.waiting_be('READY', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):
