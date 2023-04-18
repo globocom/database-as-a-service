@@ -68,7 +68,7 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
         steps = get_auto_upgrade_vm_settings(topology_path)
 
         since_step = retry_from.current_step if retry_from else None
-        instances = list(database.infra.instances.all())
+        instances = infra.get_driver().get_database_instances()
 
         last_vm_created = number_of_instances_before_task
 
