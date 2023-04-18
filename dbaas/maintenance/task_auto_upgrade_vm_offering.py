@@ -40,6 +40,7 @@ def create_maintenance(database, task, resize_target, retry_from):
     number_of_instances_before_task = database.infra.last_vm_created
     number_of_instances = 1
 
+    # se vindo de um retry, traz informacoes de offering da maintenance original
     source_offer = retry_from.source_offer if retry_from else database.infra.offering
     target_offer = retry_from.target_offer if retry_from else database.get_future_offering(resize_target)
 
@@ -68,7 +69,7 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
         steps = get_auto_upgrade_vm_settings(topology_path)
 
         since_step = retry_from.current_step if retry_from else None
-        instances = infra.get_driver().get_database_instances()
+        instances = infra.get_driver().get_database_instances()  # nao traz a instance do árbitro (mongodb)
 
         last_vm_created = number_of_instances_before_task
 
