@@ -185,7 +185,7 @@ class ChangeMasterTemporaryInstance(ChangeMaster):
             else:
                 return
 
-            raise error
+        raise error
 
     def do(self):
         if not self.is_valid:
