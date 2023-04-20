@@ -719,6 +719,15 @@ class DestroyVolume(NewVolume):
 
     def undo(self):
         return
+    
+
+class DestroyVolumeTemporaryInstance(DestroyVolume):
+
+    def do(self):
+        if not self.instance.temporary:
+            return
+        
+        return super(DestroyVolumeTemporaryInstance, self).do()
 
 
 class DestroyFirstVolume(NewVolume):
@@ -2262,6 +2271,13 @@ class DetachDataVolume(VolumeProviderBase):
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
             MountDataVolume(self.instance).do()
+
+    
+class DetachDataVolumeTemporaryInstance(DetachDataVolume):
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database and self.instance.temporary
 
 
 class DetachFirstVolume(VolumeProviderBase):

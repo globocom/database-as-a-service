@@ -191,7 +191,34 @@ class ChangeMasterTemporaryInstance(ChangeMaster):
         if not self.is_valid:
             return
 
-        self.change_master()  
+        self.change_master()
+
+
+class ChangeMasterNotTemporaryInstance(ChangeMasterTemporaryInstance):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ChangeMasterTemporaryInstance, self).is_valid
+    
+    def change_master(self):
+        error = None
+
+        for _ in range(CHANGE_MASTER_ATTEMPS):
+            if self.is_slave:
+                return
+            try:
+                self.driver.check_replication_and_switch(self.target_instance)
+                if self.check_master_is_temporary():
+                    raise Exception('Master is the temporary instance')
+            except Exception as e:
+                error = e
+                sleep(CHANGE_MASTER_SECONDS)
+            else:
+                return
+
+        raise error
 
 
 class ChangeMasterDatabaseMigrate(ChangeMaster):

@@ -49,6 +49,19 @@ class DisableMonitoring(DBMonitorStep):
         self._enable_monitoring()
 
 
+class DisableMonitoringTemporaryInstance(DisableMonitoring):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DisableMonitoringTemporaryInstance, self).do()
+
+
 class CreateMonitoring(DBMonitorStep):
 
     def __unicode__(self):

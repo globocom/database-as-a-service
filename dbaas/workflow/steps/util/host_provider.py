@@ -751,6 +751,22 @@ class CreateVirtualMachine(HostProviderStep):
             host.delete()
 
 
+class DestroyVirtualMachineTemporaryInstance(CreateVirtualMachine):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyVirtualMachineTemporaryInstance, self).undo()
+
+
 class CreateVirtualMachineTemporaryInstance(CreateVirtualMachine):
     
     @property
@@ -1176,6 +1192,22 @@ class DestroyIPMigrate(AllocateIP):
 
     def undo(self):
         raise NotImplementedError
+    
+
+class DestroyIPTemporaryInstance(DestroyIPMigrate):
+
+    def __unicode__(self):
+        return "Destroy IP..."
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyIPTemporaryInstance, self).do()
 
 
 class DestroyServiceAccountMigrate(CreateServiceAccount):

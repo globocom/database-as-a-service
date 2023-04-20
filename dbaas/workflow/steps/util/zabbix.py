@@ -178,6 +178,19 @@ class DestroyAlarms(ZabbixStep):
                 self.zabbix_provider.delete_instance_monitors(host)
 
 
+class DestroyAlarmsTemporaryInstance(DestroyAlarms):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyAlarmsTemporaryInstance, self).do()
+
+
 class CreateAlarms(ZabbixStep):
 
     def __unicode__(self):

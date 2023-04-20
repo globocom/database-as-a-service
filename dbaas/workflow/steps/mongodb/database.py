@@ -113,6 +113,19 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
         add.do()
 
 
+class RemoveInstanceFromReplicaSetTemporaryInstance(RemoveInstanceFromReplicaSet):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(RemoveInstanceFromReplicaSetTemporaryInstance, self).do()
+
+
 class RemoveInstanceFromReplicaSetWithouUndo(RemoveInstanceFromReplicaSet):
     def undo(self):
         raise NotImplementedError
