@@ -307,6 +307,19 @@ class CreateDNS(DNSStep):
             )
 
 
+class DestroyDNSTemporaryInstance(CreateDNS):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyDNSTemporaryInstance, self).undo()
+
+
 class RegisterDNSVip(DNSStep):
 
     def __init__(self, *args, **kw):

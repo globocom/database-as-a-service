@@ -991,8 +991,26 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.infra.Offering',
                 'workflow.steps.util.vm.InstanceIsSlave',
                 'workflow.steps.util.zabbix.EnableAlarms',
-            )
-        }]
+            )}, {
+            'Returning Primary to original VM': (
+                'workflow.steps.util.vm.ChangeMasterNotTemporaryInstance',
+            )}, {
+            'Destroying temporary VM': (
+                'workflow.steps.util.db_monitor.DisableMonitoringTemporaryInstance',
+                'workflow.steps.util.zabbix.DestroyAlarmsTemporaryInstance',
+
+                'workflow.steps.util.database.StopRsyslogTemporaryInstance',
+                'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetTemporaryInstance',
+                'workflow.steps.util.database.StopTemporaryInstance',
+
+                'workflow.steps.util.volume_provider.DetachDataVolumeTemporaryInstance',
+                'workflow.steps.util.volume_provider.DestroyVolumeTemporaryInstance',
+
+                # 'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineTemporaryInstance',
+                'workflow.steps.util.host_provider.DestroyIPTemporaryInstance',
+            )}
+        ]
 
     def get_host_migrate_steps(self):
         return [{

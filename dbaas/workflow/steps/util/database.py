@@ -159,6 +159,13 @@ class Stop(DatabaseStep):
         self.undo_klass(self.instance).do()
 
 
+class StopTemporaryInstance(Stop):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+
 class StopIfRunning(Stop):
 
     @property
@@ -304,6 +311,13 @@ class StopRsyslog(StartRsyslog):
         if not self.is_valid:
             return
         self._start()
+
+
+class StopRsyslogTemporaryInstance(StopRsyslog):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopRsyslogIfRunning(StopRsyslog):
