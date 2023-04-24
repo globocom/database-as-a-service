@@ -38,7 +38,6 @@ class IngressProvider(object):
     def is_database(self):
         return self.instance.is_database
 
-
     def _request(self, action, url, **kw):
         return action(url, verify=False, **kw)
 
@@ -129,16 +128,17 @@ class AllocateProvider(IngressProviderStep):
             print('ingress: ', ingress)
         return ingress
 
-
-    def register_ingress_vip(self):
+    def register_ingress_vip(self, ingress):
+        print('*-----------------------------------*INGRESS*-----------------------------------*')
+        print(ingress)
         try:
             original_vip = Vip.objects.get(infra=self.infra)
         except Vip.DoesNotExist:
             original_vip = None
         vip = Vip()
-        vip.identifier = response['port_external']
+        vip.identifier = ingress['port_external']
         vip.infra = self.infra
-        vip.vip_ip = response['ip_external']
+        vip.vip_ip = ingress['ip_external']
         if original_vip:
             vip.original_vip = original_vip
         vip.save()
@@ -147,7 +147,7 @@ class AllocateProvider(IngressProviderStep):
 
     def insert_dns_on_infra(self, ingress):
         if self._vip.vip_ip == ingress['ip_external']:
-            # SUSPEITA DE ERRO
+            print('*-----------------------INSERTING DNS----------------------------*')
             dns = add_dns_record(
                 databaseinfra=self.infra,
                 name=self.infra.name,
@@ -157,7 +157,7 @@ class AllocateProvider(IngressProviderStep):
             )
             if dns is None:
                 return
-        self.infra.endpoint_dns = "{}:{}".format(dns, response['port_external'])
+        self.infra.endpoint_dns = "{}:{}".format(dns, ingress['port_external'])
         self.infra.save()
 
     def do(self):
@@ -165,7 +165,7 @@ class AllocateProvider(IngressProviderStep):
             return
         ingress = self.generate_new_vip()
         self.update_infra_endpoint(ingress['ip_external'], ingress['port_external'])
-        self._vip = self.register_ingress_vip()
+        self._vip = self.register_ingress_vip(ingress)
         self.insert_dns_on_infra(ingress)
         return True
 
@@ -202,7 +202,7 @@ class RegisterDNSIngress(IngressProviderStep):
             pass
         return func(
             databaseinfra=self.ingressprovider.infra,
-            ip=self.ingressprovider.ip,
+            ip=ip,
             do_export=self.do_export,
             env=self.ingressprovider.infra.environment,
             **{'dns_type': 'CNAME'} if not self.is_ipv4(ip) else {}

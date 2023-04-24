@@ -120,23 +120,24 @@ def create_database(
     database_create.save()
 
     database = Database.objects.filter(name=name).first()
-    if database:
-        if database.is_in_quarantine:
-            database_create.set_error()
-            task.set_status_error(
-                "Could not create database.\n"
-                "Database already exists, and is in quarantine.\n"
-                "If you'd like to destroy this existent database, contact DBaaS team in Slack."
-            )
-            return
-        else:
-            database_create.set_error()
-            task.set_status_error(
-                "Could not create database.\n"
-                "Database already exists.\n"
-                "If you'd like to know more about it, contact DBaaS team in Slack."
-            )
-            return
+    if not retry_from:
+        if database:
+            if database.is_in_quarantine:
+                database_create.set_error()
+                task.set_status_error(
+                    "Could not create database.\n"
+                    "Database already exists, and is in quarantine.\n"
+                    "If you'd like to destroy this existent database, contact DBaaS team in Slack."
+                )
+                return
+            else:
+                database_create.set_error()
+                task.set_status_error(
+                    "Could not create database.\n"
+                    "Database already exists.\n"
+                    "If you'd like to know more about it, contact DBaaS team in Slack."
+                )
+                return
 
     steps = get_deploy_settings(topology_path)
 
