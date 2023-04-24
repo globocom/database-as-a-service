@@ -949,7 +949,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.plan.ConfigureLogTemporaryInstance',
                 'workflow.steps.util.metric_collector.ConfigureTelegrafTemporaryInstance',
                 'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepTemporaryInstance',
+                'workflow.steps.util.database.StartDatabaseTemporaryInstance',
                 'workflow.steps.util.database.StartCheckOnlyOsProcessTemporaryInstance',
+                'workflow.steps.util.database.CheckIsUpTemporaryInstance',
             )}, {
             'Add Instance to ReplicaSet': (
                 'workflow.steps.mongodb.database.AddInstanceToReplicaSetTemporaryInstance',
@@ -967,8 +969,30 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.zabbix.CreateAlarmsTemporaryInstance',
                 'workflow.steps.util.db_monitor.CreateMonitoringTemporaryInstance',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoringTemporaryInstance',
-            )}
-        ]
+            )}, {
+            'Changing Primary': (
+                'workflow.steps.util.vm.ChangeMasterTemporaryInstance',
+            )}, {
+            'Resizing database': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.database.StopSlave',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ResizeConfigure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.ChangeOffering',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.infra.Offering',
+                'workflow.steps.util.vm.InstanceIsSlave',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
 
     def get_host_migrate_steps(self):
         return [{

@@ -311,13 +311,21 @@ class CreateAlarmsForMigrateEngine(CreateAlarms):
 
 class DisableAlarms(ZabbixStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Disabling Zabbix alarms..."
 
     def do(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.disable_alarms()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.enable_alarms()
 
 
@@ -325,8 +333,15 @@ class EnableAlarms(ZabbixStep):
 
     def __unicode__(self):
         return "Enabling Zabbix alarms..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         self.zabbix_provider.enable_alarms()
 
     def undo(self):
