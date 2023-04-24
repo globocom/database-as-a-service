@@ -1376,6 +1376,20 @@ class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
 
     def __unicode__(self):
         return "Auto Upgrading VM Offering for database: {}".format(self.database)
+    
+
+class DatabaseConfigureDBParams(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="dbparamsconfigures"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="dbparamsconfigures"
+    )
+
+    def __unicode__(self):
+        return "Configuring DB Parameters for database: {}".format(self.database)
 
 
 simple_audit.register(Maintenance)
@@ -1394,6 +1408,7 @@ simple_audit.register(DatabaseChangePersistence)
 simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
 simple_audit.register(DatabaseAutoUpgradeVMOffering)
+simple_audit.register(DatabaseConfigureDBParams)
 
 
 #########################################################
