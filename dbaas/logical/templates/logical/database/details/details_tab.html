@@ -359,9 +359,12 @@
       value = $("#id_start_stop_database").val();
       if(value.includes('Stop')){
         url = "/logical/stop_database/"+ database_id;
+        att_manually_stopped = true;
       }else{
         url = "/logical/start_database/"+ database_id;
+        att_manually_stopped = false
       }
+
       jQuery.ajax({
           "dataType": "json",
           "url": url,
@@ -369,6 +372,18 @@
       }).fail(function() {
           alert("invalid server response");
       }).done(function(){
+
+          jQuery.ajax({
+              "type": "GET",
+              "url": "/logical/set_manually_stopped/" + database_id +
+              "?manually_stopped="+att_manually_stopped,
+              complete: function () {
+                running_update = false;
+              },
+          }).fail(function() {
+              alert("invalid server response");
+          });
+
           running_update = false;
           window.location.reload();
       });

@@ -132,6 +132,9 @@ class Database(BaseModel):
     is_monitoring = models.BooleanField(
         verbose_name=_("Is database being monitored?"), default=True
     )
+    was_manually_stopped = models.BooleanField(
+        verbose_name=_("The database was manually stoppped?"), default=False
+    )
     attention = models.BooleanField(
         verbose_name=_("The database has GCP divergences?"), default=False, blank=True
     )

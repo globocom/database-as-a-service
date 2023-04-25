@@ -240,6 +240,19 @@ def toggle_monitoring(request, database_id):
     return HttpResponse(output, content_type="application/json")
 
 
+def set_manually_stopped(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    database.was_manually_stopped = request.GET.get('manually_stopped') == 'true'
+    database.save()
+    instances_status = []
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
+
+
 def funct_send_all_chg(request, database_id):
     try:
         database = Database.objects.get(id=database_id)

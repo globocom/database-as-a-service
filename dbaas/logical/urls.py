@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url
-from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention, funct_send_all_chg
+from .views import (refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention,
+                    funct_send_all_chg, set_manually_stopped)
 from .views import (CredentialView, CredentialSSLView,
                     credential_parameter_by_name, check_offering_sizes)
 
@@ -20,6 +21,9 @@ urlpatterns = patterns(
         name="logical_database_stop_database_vm"),
     url(r"^toggle_monitoring/(?P<database_id>\d*)$",
         toggle_monitoring,
+        name="toggle_monitoring"),
+    url(r"^set_manually_stopped/(?P<database_id>\d*)$",
+        set_manually_stopped,
         name="toggle_monitoring"),
     url(r"^send_all_chg/(?P<database_id>\d*)$",
         funct_send_all_chg,
