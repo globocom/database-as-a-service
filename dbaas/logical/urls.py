@@ -24,7 +24,7 @@ urlpatterns = patterns(
         name="toggle_monitoring"),
     url(r"^set_manually_stopped/(?P<database_id>\d*)$",
         set_manually_stopped,
-        name="toggle_monitoring"),
+        name="set_manually_stopped"),
     url(r"^send_all_chg/(?P<database_id>\d*)$",
         funct_send_all_chg,
         name="marked_to_send_all_changes_to_service_now"),

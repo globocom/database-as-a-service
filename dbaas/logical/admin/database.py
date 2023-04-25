@@ -245,7 +245,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         html_default = '<span class="label label-{}">{}</span>'
         manually_stopped = ""
         if database.was_manually_stopped:
-            manually_stopped = html_default.format("warning", "Manually Stopped")
+            manually_stopped = html_default.format("important", "Manually Stopped")
 
         return format_html(manually_stopped)
 
