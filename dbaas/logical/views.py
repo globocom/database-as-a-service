@@ -2752,3 +2752,20 @@ def resize_vm_from_btn(request, database_id, resize_target):
 
     future_offering = database.get_future_offering(resize_target)
     return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def auto_configure_db_params_btn(request, database_id):
+    database = get_object_or_404(Database, pk=database_id)
+    user = request.user
+
+    from notification.tasks import TaskRegister
+
+    LOG.info("Starting database auto upgrade: database {}, user: {}".format(database, user))
+
+    TaskRegister.configure_db_params(
+        database=database, user=user
+    )
+
+    return HttpResponse(({'success'}), content_type="application/json")

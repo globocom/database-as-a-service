@@ -17,6 +17,7 @@ def create_maintenance(database, task):
 
 
 def task_configure_db_params(database, task, retry_from=None):
+    configure_db_params = None
     try:
         infra = database.infra
         configure_db_params = create_maintenance(database, task)
@@ -40,6 +41,9 @@ def task_configure_db_params(database, task, retry_from=None):
                 'Please check error message and do retry'
             )
     except Exception as erro:
+        if configure_db_params is not None:
+            configure_db_params.set_error()
+        
         task.set_status_error('Error: {erro}.\n'
                               'To create task task_auto_upgrade_vm!\n'
                               'Please check error message and start new task.'.format(erro=erro))
