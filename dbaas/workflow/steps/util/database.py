@@ -647,6 +647,31 @@ class ChangeDynamicParameters(DatabaseStep):
             )
 
 
+class CreateParameterChange(DatabaseStep):
+    
+    def __unicode__(self):
+        return "Creating Parameter changes registers..."
+    
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+        
+        from physical.models import DatabaseInfraParameter
+        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(self.infra)
+        
+        if len(changed_parameters) != 0:
+            return False
+        
+        return True
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        self.driver.create_db_params_changes(self.database)
+
+
 class SetParameterStatus(DatabaseStep):
 
     def __unicode__(self):

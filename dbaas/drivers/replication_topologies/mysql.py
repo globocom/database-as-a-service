@@ -210,6 +210,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.MakeSnapshot',
             )
         }]
+    
+    def get_configure_db_params_steps(self):
+        return [{
+            'Configuring DB Params': (
+                'workflow.steps.util.database.CreateParameterChange',
+                'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
+                'workflow.steps.util.database.ChangeDynamicParameters',
+            )}] + self.get_change_parameter_steps_final()
 
     def get_host_migrate_steps(self):
         return [{

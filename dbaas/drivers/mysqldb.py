@@ -13,6 +13,7 @@ from system.models import Configuration
 from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers import errors as driver_errors
+from django.core.exceptions import ObjectDoesNotExist
 
 
 LOG = logging.getLogger(__name__)
@@ -537,7 +538,57 @@ class MySQL(BaseDriver):
 
     def get_start_pty_default(self):
         return True
+    
+    def create_db_params_changes(self, database):
+        from physical.models import DatabaseInfraParameter
 
+        parameter = self.get_max_connections_parameter()
+        value = self.get_max_connections_value(database)
+
+        LOG.info('Parameter {} will be set to {}'.format(parameter.name, value))
+
+        DatabaseInfraParameter.update_parameter_value(
+            databaseinfra=database.databaseinfra,
+            parameter=parameter,
+            value=value
+        )
+        
+    def get_max_connections_parameter(self):
+        from physical.models import Parameter
+
+        param = Parameter.objects.filter(name='max_connections').first()
+        if not param:
+            raise ObjectDoesNotExist('Parametro max_connections nao foi encontrado')
+        
+        return param
+    
+    def get_max_connections_value(self, database):
+        from system.models import Configuration
+
+        steps = Configuration.get_by_name('max_connections_steps')
+        if not steps:
+            raise ObjectDoesNotExist('Configuration max_connections_steps nao foi encontrado')
+        
+        offering = database.databaseinfra.offering
+        return self.get_max_connections_value_from_steps(steps, offering)
+
+
+    def get_max_connections_value_from_steps(self, steps, offering):
+        # steps ~= "0:1000,32768:2000,65536:4000"
+        steps_list = steps.split(',')
+        steps_map = {}
+
+        for step in steps_list:
+            # step ~= "0:1000"
+            steps_map[step.split(':')[0]] = step.split(':')[1]
+
+        ram = str(offering.memory_size_mb)
+        
+        # steps_map ~= {'0': '1000', '32768': '2000'...}
+        if ram not in steps_map:
+            return int(steps_map['0'])
+        
+        return int(steps_map[ram])
 
 class MySQLFOXHA(MySQL):
 
