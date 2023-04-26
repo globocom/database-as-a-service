@@ -372,18 +372,6 @@
       }).fail(function() {
           alert("invalid server response");
       }).done(function(){
-
-          jQuery.ajax({
-              "type": "GET",
-              "url": "/logical/set_manually_stopped/" + database_id +
-              "?manually_stopped="+att_manually_stopped,
-              complete: function () {
-                running_update = false;
-              },
-          }).fail(function() {
-              alert("invalid server response");
-          });
-
           running_update = false;
           window.location.reload();
       });

@@ -29,6 +29,10 @@ def task_stop_database_vm(database, task, retry_from=None):
         if steps_for_instances(
                 steps, instances_to_stop_database_vm, task, stop_database_vm.update_step, since_step=since_step
         ):
+
+            database.was_manually_stopped = True
+            database.save()
+
             database.update_status()
             stop_database_vm.set_success()
             task.set_status_success('Stopping Database is done')
