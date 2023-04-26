@@ -2773,7 +2773,7 @@ def auto_configure_db_params_btn(request, database_id):
 
     from notification.tasks import TaskRegister
 
-    LOG.info("Starting database auto upgrade: database {}, user: {}".format(database, user))
+    LOG.info("Starting auto configure DB Params: database {}, user: {}".format(database, user))
 
     TaskRegister.configure_db_params(
         database=database, user=user
