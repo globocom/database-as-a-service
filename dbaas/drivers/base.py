@@ -473,6 +473,9 @@ class BaseDriver(object):
             credential_type=self.credential_type
         )
         return credential.user, credential.password
+    
+    def create_db_params_changes(self, database):
+        raise NotImplementedError('Not implemented for Driver')
 
 
 class DatabaseStatus(object):

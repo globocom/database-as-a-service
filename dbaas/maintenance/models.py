@@ -1381,11 +1381,11 @@ class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
 class DatabaseConfigureDBParams(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
-        null=False, unique=False, related_name="dbparamsconfigures"
+        null=False, unique=False, related_name="configuredbparams"
     )
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
-        null=False, related_name="dbparamsconfigures"
+        null=False, related_name="configuredbparams"
     )
 
     def __unicode__(self):

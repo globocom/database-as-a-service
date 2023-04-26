@@ -33,11 +33,11 @@ def task_configure_db_params(database, task, retry_from=None):
         ):
             database.update_status()
             configure_db_params.set_success()
-            task.set_status_success('Auto Upgrade Database Offering is done')
+            task.set_status_success('Auto Configure DB Params is done!')
         else:
             configure_db_params.set_error()
             task.set_status_error(
-                'Could not update database offering\n'
+                'Could not configure DB Paramsg\n'
                 'Please check error message and do retry'
             )
     except Exception as erro:
@@ -45,8 +45,8 @@ def task_configure_db_params(database, task, retry_from=None):
             configure_db_params.set_error()
         
         task.set_status_error('Error: {erro}.\n'
-                              'To create task task_auto_upgrade_vm!\n'
+                              'To create task task_auto_configure_db_params!\n'
                               'Please check error message and start new task.'.format(erro=erro))
         LOG.error('Error: {erro}.\n'
-                  'To create task task_auto_upgrade_vm!\n'
+                  'To create task task_auto_configure_db_params!\n'
                   'Please check error message and start new task.'.format(erro=erro))
