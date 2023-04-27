@@ -217,6 +217,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.CreateParameterChange',
                 'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
                 'workflow.steps.util.database.ChangeDynamicParameters',
+                'workflow.steps.util.database.UpdateKernelParameters',
             )}] + self.get_change_parameter_steps_final()
 
     def get_host_migrate_steps(self):
