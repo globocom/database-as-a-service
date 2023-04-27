@@ -698,7 +698,7 @@ class UpdateKernelParameters(DatabaseStep):
             return
         
         script = build_update_kernel_params_script()
-        LOG.info('Executing ' + script + ' on ' + self.instance)
+        LOG.info('Executing ' + script + ' on ' + self.host.hostname)
         self.host.ssh.run_script(script)
 
 class SetParameterStatus(DatabaseStep):
