@@ -5,10 +5,12 @@
 <fieldset class="module aligned ">
   <div class="panel-heading">
     <h3 class="panel-title">Custom Parameters</h3>
+    {% if show_auto_configure_btn %}
+      <a href="{% url 'auto_configure_db_params_btn' database.id %}" target="_blank" class="btn btn-primary">AutoConfigure DB Params</a>
+    {% endif %}
   </div>
 
   <div class="panel-body">
-
     <table id="table-parameters" class="table table-striped table-hover" data-database-id="{{database.pk}}" >
       <thead>
         <tr>

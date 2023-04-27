@@ -178,6 +178,19 @@ class DestroyAlarms(ZabbixStep):
                 self.zabbix_provider.delete_instance_monitors(host)
 
 
+class DestroyAlarmsTemporaryInstance(DestroyAlarms):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyAlarmsTemporaryInstance, self).do()
+
+
 class CreateAlarms(ZabbixStep):
 
     def __unicode__(self):
@@ -200,6 +213,15 @@ class CreateAlarms(ZabbixStep):
 
     def undo(self):
         DestroyAlarms(self.instance).do()
+
+
+class CreateAlarmsTemporaryInstance(CreateAlarms):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(CreateAlarmsTemporaryInstance, self).is_valid
 
 
 class CreateAlarmsDatabaseMigrateBase(ZabbixStep):
@@ -302,13 +324,21 @@ class CreateAlarmsForMigrateEngine(CreateAlarms):
 
 class DisableAlarms(ZabbixStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Disabling Zabbix alarms..."
 
     def do(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.disable_alarms()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.enable_alarms()
 
 
@@ -316,8 +346,15 @@ class EnableAlarms(ZabbixStep):
 
     def __unicode__(self):
         return "Enabling Zabbix alarms..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         self.zabbix_provider.enable_alarms()
 
     def undo(self):

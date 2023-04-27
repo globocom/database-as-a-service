@@ -916,6 +916,101 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
         }]
+    
+    def get_auto_upgrade_database_vm_offering(self):
+        return [{
+            'Create new VM': (
+                'workflow.steps.util.infra.OfferingAutoUpgrade',
+                'workflow.steps.util.host_provider.AllocateIPTemporaryInstance',
+                'workflow.steps.util.host_provider.CreateVirtualMachineTemporaryInstance',
+                # 'workflow.steps.util.dns.CreateDNS',
+                # 'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.vm.WaitingBeReadyTemporaryInstance',
+                'workflow.steps.util.vm.UpdateOSDescriptionTemporaryInstance',
+            )}, {
+            'Attach new Volume': (
+                'workflow.steps.util.volume_provider.NewVolumeFromSnapshot',
+                'workflow.steps.util.volume_provider.AttachDataVolumeTemporaryInstance',
+                'workflow.steps.util.volume_provider.MountDataVolumeTemporaryInstance',
+            )}, {
+            'Set SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunningIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDBIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfiguredTemporaryInstance',
+                'workflow.steps.util.ssl.UpdateExpireAtDateTemporaryInstance',
+            )}, {
+            'Configure Plan': (
+                'workflow.steps.util.plan.ConfigureTemporaryInstance',
+                'workflow.steps.util.plan.ConfigureLogTemporaryInstance',
+                'workflow.steps.util.metric_collector.ConfigureTelegrafTemporaryInstance',
+                'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStepTemporaryInstance',
+                'workflow.steps.util.database.StartDatabaseTemporaryInstance',
+                'workflow.steps.util.database.StartCheckOnlyOsProcessTemporaryInstance',
+                'workflow.steps.util.database.CheckIsUpTemporaryInstance',
+            )}, {
+            'Add Instance to ReplicaSet': (
+                'workflow.steps.mongodb.database.AddInstanceToReplicaSetTemporaryInstance',
+                'workflow.steps.util.database.WaitForReplicationTemporaryInstance',
+            )}, {
+            'Restart Telegraf and Rsyslog': (
+                'workflow.steps.util.metric_collector.RestartTelegrafTemporaryInstance',
+                'workflow.steps.util.database.StartRsyslogTemporaryInstance',
+            )}, {
+            'Replicate ACLs': (
+                'workflow.steps.util.acl.ReplicateAcls2NewInstanceTemporaryInstance',
+                'workflow.steps.util.acl.BindNewInstanceTemporaryInstance',
+            )}, {
+            'Add Alarms and Monitoring': (
+                'workflow.steps.util.zabbix.CreateAlarmsTemporaryInstance',
+                'workflow.steps.util.db_monitor.CreateMonitoringTemporaryInstance',
+                'workflow.steps.util.database.ConfigurePrometheusMonitoringTemporaryInstance',
+            )}, {
+            'Changing Primary': (
+                'workflow.steps.util.vm.ChangeMasterTemporaryInstance',
+            )}, {
+            'Resizing database': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.database.StopSlave',
+                'workflow.steps.util.database.StopRsyslog',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ResizeConfigure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.ChangeOffering',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.infra.Offering',
+                'workflow.steps.util.vm.InstanceIsSlave',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}, {
+            'Returning Primary to original VM': (
+                'workflow.steps.util.vm.ChangeMasterNotTemporaryInstance',
+            )}, {
+            'Destroying temporary VM': (
+                'workflow.steps.util.db_monitor.DisableMonitoringTemporaryInstance',
+                'workflow.steps.util.zabbix.DestroyAlarmsTemporaryInstance',
+
+                'workflow.steps.util.database.StopRsyslogTemporaryInstance',
+                'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSetTemporaryInstance',
+                'workflow.steps.util.database.StopTemporaryInstance',
+
+                'workflow.steps.util.volume_provider.DetachDataVolumeTemporaryInstance',
+                'workflow.steps.util.volume_provider.DestroyVolumeTemporaryInstance',
+
+                # 'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineTemporaryInstance',
+                'workflow.steps.util.host_provider.DestroyIPTemporaryInstance',
+            )}
+        ]
 
     def get_host_migrate_steps(self):
         return [{

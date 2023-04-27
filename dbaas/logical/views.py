@@ -693,6 +693,17 @@ class DatabaseParameters(TemplateView):
         self.context['form_status'] = self.form_status
         self.context['last_change_parameters'] = last_change_parameters
 
+        user_teams = self.request.user.team_set.all()
+        teams_names = []
+        for team in user_teams:
+            teams_names.append(team.name)
+
+        show_auto_configure_btn = False
+        if self.request.user.is_superuser or 'dbaas' in teams_names:
+            show_auto_configure_btn = True
+
+        self.context['show_auto_configure_btn'] = show_auto_configure_btn
+
         return self.context
 
     def post(self, request, *args, **kwargs):
@@ -2747,8 +2758,25 @@ def resize_vm_from_btn(request, database_id, resize_target):
     LOG.info("Starting database auto upgrade: database {}, user: {}".format(database, user))
 
     TaskRegister.auto_upgrade_database_vm_offering(
-        database=database, user=user
+        database=database, user=user, resize_target=resize_target
     )
 
     future_offering = database.get_future_offering(resize_target)
     return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def auto_configure_db_params_btn(request, database_id):
+    database = get_object_or_404(Database, pk=database_id)
+    user = request.user
+
+    from notification.tasks import TaskRegister
+
+    LOG.info("Starting auto configure DB Params: database {}, user: {}".format(database, user))
+
+    TaskRegister.configure_db_params(
+        database=database, user=user
+    )
+
+    return HttpResponse(({'success'}), content_type="application/json")

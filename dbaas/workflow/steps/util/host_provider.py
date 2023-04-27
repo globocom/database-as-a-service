@@ -516,8 +516,15 @@ class Stop(HostProviderStep):
 
     def __unicode__(self):
         return "Stopping VM..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         stopped = self.provider.stop()
         if not stopped:
             raise EnvironmentError("Could not stop VM")
@@ -535,10 +542,17 @@ class StopIfRunning(Stop):
 
 class Start(HostProviderStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Starting VM..."
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         started = self.provider.start()
         if not started:
             raise EnvironmentError("Could not start VM")
@@ -599,6 +613,10 @@ class ReinstallTemplate(HostProviderStep):
 
 class ChangeOffering(HostProviderStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
         self.target_offering = self.resize.target_offer
@@ -607,6 +625,9 @@ class ChangeOffering(HostProviderStep):
         return "Resizing VM..."
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         success = self.provider.new_offering(self.target_offering)
         if not success:
             raise Exception("Could not change offering")
@@ -730,6 +751,43 @@ class CreateVirtualMachine(HostProviderStep):
             host.delete()
 
 
+class DestroyVirtualMachineTemporaryInstance(CreateVirtualMachine):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyVirtualMachineTemporaryInstance, self).undo()
+
+
+class CreateVirtualMachineTemporaryInstance(CreateVirtualMachine):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+    def create_instance(self, host):
+        self.instance.hostname = host
+        self.instance.address = host.address
+        self.instance.read_only = False
+        self.instance.save()
+
+    def do(self):
+        if self.is_valid:
+            super(CreateVirtualMachineTemporaryInstance, self).do()
+    
+    def undo(self):
+        if self.is_valid:
+            super(CreateVirtualMachineTemporaryInstance, self).undo()
+
+
 class AllocateIP(HostProviderStep):
 
     def __unicode__(self):
@@ -743,6 +801,21 @@ class AllocateIP(HostProviderStep):
         if self.instance.static_ip:
             self.provider.destroy_static_ip(self.instance.static_ip)
             self.instance.static_ip.delete()
+
+
+class AllocateIPTemporaryInstance(AllocateIP):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(AllocateIPTemporaryInstance, self).do()
+    
+    def undo(self):
+        if self.is_valid:
+            super(AllocateIPTemporaryInstance, self).undo()
 
 class AllocateIPRegionMigrate(HostProviderStep):
 
@@ -1119,6 +1192,22 @@ class DestroyIPMigrate(AllocateIP):
 
     def undo(self):
         raise NotImplementedError
+    
+
+class DestroyIPTemporaryInstance(DestroyIPMigrate):
+
+    def __unicode__(self):
+        return "Destroy IP..."
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyIPTemporaryInstance, self).do()
 
 
 class DestroyServiceAccountMigrate(CreateServiceAccount):

@@ -7,11 +7,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
-from ..models import DatabaseAutoUpgradeVMOffering
+from ..models import DatabaseConfigureDBParams
 from notification.tasks import TaskRegister
 
 
-class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
+class DatabaseConfigureDBParamsAdmin(DatabaseMaintenanceTaskAdmin):
     search_fields = (
         "database__name", "database__databaseinfra__name", "task__id", "task__task_id"
     )
@@ -22,11 +22,10 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
     )
 
     readonly_fields = (
-        "database", "task", "resize_target",
-        "started_at", "link_task", "finished_at", "status",
+        "database", "task", "started_at", 
+        "link_task", "finished_at", "status",
         "maintenance_action", "task_schedule",
-        "number_of_instances", "number_of_instances_before",
-        "base_snapshot"
+        
     )
 
     def maintenance_action(self, maintenance):
@@ -36,7 +35,7 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance.can_do_retry:
             return 'N/A'
 
-        url = "/admin/maintenance/databaseautoupgradevmoffering/{}/retry/".format(
+        url = "/admin/maintenance/databaseconfiguredbparams/{}/retry/".format(
             maintenance.id
         )
         html = ("<a title='Retry' class='btn btn-info' "
@@ -44,27 +43,27 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         return format_html(html)
 
     def get_urls(self):
-        base = super(DatabaseAutoUpgradeVMOferringAdmin, self).get_urls()
+        base = super(DatabaseConfigureDBParamsAdmin, self).get_urls()
 
         admin = patterns(
             '',
             url(
-                r'^/?(?P<auto_upgrade_vm_offering_id>\d+)/retry/$',
+                r'^/?(?P<configure_db_params_id>\d+)/retry/$',
                 self.admin_site.admin_view(self.retry_view),
-                name="auto_upgrade_vm_offering_retry"
+                name="configure_db_params_retry"
             ),
         )
         return admin + base
 
-    def retry_view(self, request, auto_upgrade_vm_offering_id):
-        retry_from = get_object_or_404(DatabaseAutoUpgradeVMOffering, pk=auto_upgrade_vm_offering_id)
+    def retry_view(self, request, configure_db_params_id):
+        retry_from = get_object_or_404(DatabaseConfigureDBParams, pk=configure_db_params_id)
 
         error = False
         if not retry_from.is_status_error:
             error = True
             messages.add_message(
                 request, messages.ERROR,
-                "You can not do retry because auto upgrade database vm offering status is '{}'".format(
+                "You can not do retry because configure db params status is '{}'".format(
                     retry_from.get_status_display()
                 ),
             )
@@ -72,24 +71,23 @@ class DatabaseAutoUpgradeVMOferringAdmin(DatabaseMaintenanceTaskAdmin):
         if not retry_from.can_do_retry:
             error = True
             messages.add_message(
-                request, messages.ERROR, "Auto Upgrade VM Offering retry is disabled"
+                request, messages.ERROR, "Configure DB Params retry is disabled"
             )
 
         if error:
             return HttpResponseRedirect(
                 reverse(
-                    'admin:maintenance_databaseautoupgradevmoffering_change',
-                    args=(auto_upgrade_vm_offering_id,)
+                    'admin:maintenance_configuredbparams_change',
+                    args=(configure_db_params_id,)
                 )
             )
 
-        TaskRegister.auto_upgrade_database_vm_offering(
+        TaskRegister.configure_db_params(
             database=retry_from.database,
             user=request.user,
-            retry_from=retry_from,
-            resize_target=retry_from.resize_target
+            retry_from=retry_from
         )
 
         url = reverse('admin:notification_taskhistory_changelist')
-        filter = "user={}".format(request.user.username)
-        return HttpResponseRedirect('{}?{}'.format(url, filter))
+        filters = "user={}".format(request.user.username)
+        return HttpResponseRedirect('{}?{}'.format(url, filters))

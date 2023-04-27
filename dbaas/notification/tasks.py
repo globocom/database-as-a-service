@@ -2193,7 +2193,7 @@ class TaskRegister(TaskRegisterBase):
         )
 
     @classmethod
-    def auto_upgrade_database_vm_offering(cls, database, user, retry_from=None):
+    def auto_upgrade_database_vm_offering(cls, database, user, retry_from=None, resize_target=None):
         task_params = {
             'task_name': "auto_upgrade_database_vm_offering",
             'arguments': "Upgrading database VM Offering{}".format(database.name),
@@ -2205,6 +2205,24 @@ class TaskRegister(TaskRegisterBase):
         task = cls.create_task(task_params)
 
         maintenace_tasks.auto_upgrade_database_vm_offering.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from, resize_target=resize_target
+        )
+
+    
+    @classmethod
+    def configure_db_params(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "configure_db_params",
+            'arguments': "Configuring DB params - {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.configure_db_params.delay(
             database=database, task=task, user=user,
             retry_from=retry_from
         )

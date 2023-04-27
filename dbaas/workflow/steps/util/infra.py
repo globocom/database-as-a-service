@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from django.core.exceptions import ObjectDoesNotExist
+
 from physical.models import Instance, Ip
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -17,6 +19,10 @@ class Update(BaseInstanceStep):
 class Offering(Update):
     def __unicode__(self):
         return "Updating offering info..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     @property
     def target_offering(self):
@@ -34,6 +40,9 @@ class Offering(Update):
         self.instance.hostname.save()
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         self.change_infra_offering(self.target_offering)
 
     def undo(self):
@@ -45,6 +54,20 @@ class OfferingMigration(Offering):
     @property
     def target_offering(self):
         return self.infra_offering.offering.equivalent_offering
+    
+
+class OfferingAutoUpgrade(Offering):
+    
+    @property
+    def is_valid(self): # executa somente para VMs pre-existentes
+        try:
+            return self.instance.hostname.id
+        except ObjectDoesNotExist:
+            return False
+
+    def do(self):
+        if self.is_valid:
+            super(OfferingAutoUpgrade, self).do()
 
 
 class Memory(Update):

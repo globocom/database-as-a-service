@@ -69,6 +69,19 @@ class AddInstanceToReplicaSet(DatabaseReplicaSet):
             remove.do()
 
 
+class AddInstanceToReplicaSetTemporaryInstance(AddInstanceToReplicaSet):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(AddInstanceToReplicaSetTemporaryInstance, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            super(AddInstanceToReplicaSetTemporaryInstance, self).do()
+
+
 class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
 
     def __unicode__(self):
@@ -98,6 +111,19 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
         add = AddInstanceToReplicaSet(self.instance)
         add.host_address = self.host_address
         add.do()
+
+
+class RemoveInstanceFromReplicaSetTemporaryInstance(RemoveInstanceFromReplicaSet):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(RemoveInstanceFromReplicaSetTemporaryInstance, self).do()
 
 
 class RemoveInstanceFromReplicaSetWithouUndo(RemoveInstanceFromReplicaSet):
