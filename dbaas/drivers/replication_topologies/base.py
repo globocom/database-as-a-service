@@ -736,6 +736,9 @@ class BaseTopology(object):
     
     def get_auto_upgrade_database_vm_offering(self):
         raise NotImplementedError('Not implemented for topology')
+    
+    def get_configure_db_params_steps(self):
+        raise NotImplementedError('Not implemented for topology')
 
     def get_start_database_vm_steps(self):
         return [{

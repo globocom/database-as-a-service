@@ -7,6 +7,7 @@ from logical.models import Database
 from physical.factories.prometheus_exporter_factory import get_exporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
+from workflow.steps.mysql.util import build_update_kernel_params_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util.ssl import InfraSSLBaseName
@@ -646,6 +647,59 @@ class ChangeDynamicParameters(DatabaseStep):
                 value=changed_parameter.value
             )
 
+
+class CreateParameterChange(DatabaseStep):
+    
+    def __unicode__(self):
+        return "Creating Parameter changes registers..."
+    
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+        
+        from physical.models import DatabaseInfraParameter
+        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(self.infra)
+        
+        if len(changed_parameters) != 0:
+            return False
+        
+        return True
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        self.driver.create_db_params_changes(self.database)
+
+
+class UpdateKernelParameters(DatabaseStep):
+    def __unicode__(self):
+        return "Updating Kernel params..."
+    
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+        
+        # check if fs.file-max is already equal or bigger then the one we want to set
+        output = self.host.ssh.run_script('sysctl fs.file-max')
+        LOG.info('Current fs.file-max = ' + output['stdout'][0])
+
+        # output[stdout] ~= ['fs.file-max = 201023']
+        if int(output['stdout'][0].split('= ')[1]) >= 67677:
+            return False
+        
+        return True
+
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        script = build_update_kernel_params_script()
+        LOG.info('Executing ' + script + ' on ' + self.host.hostname)
+        self.host.ssh.run_script(script)
 
 class SetParameterStatus(DatabaseStep):
 

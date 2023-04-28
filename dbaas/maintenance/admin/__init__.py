@@ -29,6 +29,7 @@ from . database_upgrade_disk_type import DatabaseUpgradeDiskTypeAdmin
 from . database_start_database_vm import DatabaseStartDatabaseVMAdmin
 from . database_stop_database_vm import DatabaseStopDatabaseVMAdmin
 from . database_auto_upgrade_vm_offering import DatabaseAutoUpgradeVMOferringAdmin
+from . database_configure_db_params import DatabaseConfigureDBParamsAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -78,4 +79,8 @@ admin.site.register(
 
 admin.site.register(
     models.DatabaseAutoUpgradeVMOffering, DatabaseAutoUpgradeVMOferringAdmin
+)
+
+admin.site.register(
+    models.DatabaseConfigureDBParams, DatabaseConfigureDBParamsAdmin
 )
