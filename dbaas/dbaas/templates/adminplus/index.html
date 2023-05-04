@@ -1,5 +1,7 @@
 {% extends "admin/index.html" %}
 
+{% load config_tags %}
+
 {% block sidebar %}
   {{ block.super }}
 
@@ -20,7 +22,7 @@
                 </thead>
                 <tbody>
                     {% for path, name in custom_list %}
-                        {% if is_dba or name == 'Plan details' %}
+                        {% if user|is_dba:name %}
                         <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
                         {% endif %}
                     {% endfor %}
