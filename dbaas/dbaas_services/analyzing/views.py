@@ -42,7 +42,7 @@ class SubUsedResourceReport(ListView):
 
 class DatabaseReport(ListView):
 
-    def has_perm(self, request):
+    def has_permission(self, request):
         UserMiddleware.set_current_user(request.user)
         from_teams = [x.role for x in Team.objects.filter(users=request.user)]
         role_dba = Role.objects.get(name='role_dba')
@@ -50,24 +50,22 @@ class DatabaseReport(ListView):
         if role_dba in from_teams:
             return render(request, 'databases/index.html', {"has_perm": True})
 
-    def get(self, request, *args, **kwargs):
-        if self.has_perm(request):
-           return render(request, 'databases/index.html', {"has_perm": True})
 
-        return HttpResponseRedirect(reverse('admin:index'))
+    def get(self, request, *args, **kwargs):
+        if self.has_permission(request):
+            return render(request, 'databases/index.html', {"has_perm": True})
+        else:
+            return HttpResponseRedirect(reverse('admin:index'))
 
 
     def post(self, request, *args, **kwargs):
-        if self.has_perm(request):
+        if self.has_permission(request):
             database_report = request.POST.get("database_report", "")
-
 
             if database_report == 'database_report':
                 return self.default_database_report()
             else:
                 return self.vm_by_line_database_report()
-
-        return HttpResponseRedirect(reverse('admin:index'))
 
 
     def vm_by_line_database_report(self):
