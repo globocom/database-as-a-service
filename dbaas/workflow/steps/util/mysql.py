@@ -229,19 +229,12 @@ class SaveMySQLBinlog(MySQLStep):
         client = driver.get_client(self.instance)
 
 
-class StopDatabaseSaveMySQLBinlog(MySQLStep):
+class SaveMySQLBinlogToStopDatabase(MySQLStep):
 
     def __unicode__(self):
         return "Saving binlog position to stop database..."
 
-    @property
-    def is_valid(self):
-        return self.instance.is_slave
-
     def do(self):
-        if not self.is_valid:
-            return
-
         driver = self.infra.get_driver()
         client = driver.get_client(self.instance)
 

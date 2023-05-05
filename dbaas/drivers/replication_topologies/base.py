@@ -724,7 +724,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.checkAndFixMySQLReplication',
             )}, {
             'Stopping database': (
-                'workflow.steps.util.mysql.StopDatabaseSaveMySQLBinlog',
+                'workflow.steps.util.mysql.SaveMySQLBinlogToStopDatabase',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
