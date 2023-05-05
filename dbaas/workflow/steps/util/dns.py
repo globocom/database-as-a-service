@@ -307,7 +307,25 @@ class CreateDNS(DNSStep):
             )
 
 
+class CreateDNSTemporaryInstance(CreateDNS):
+
+    def __unicode__(self):
+        return "Destroying DNS..."
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(CreateDNSTemporaryInstance, self).do()
+
+
 class DestroyDNSTemporaryInstance(CreateDNS):
+
+
 
     @property
     def is_valid(self):
@@ -419,6 +437,20 @@ class CheckIsReady(DNSStep):
 
         for instance in self.instance.hostname.instances.all():
             self._check_dns_for(instance.dns, self.host.address)
+
+
+class CheckIsReadyTemporaryInstance(CheckIsReady):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(CheckIsReadyTemporaryInstance, self).do()
+
 
 '''
 class CheckVipIsReady(CheckIsReady):
