@@ -923,8 +923,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.infra.OfferingAutoUpgrade',
                 'workflow.steps.util.host_provider.AllocateIPTemporaryInstance',
                 'workflow.steps.util.host_provider.CreateVirtualMachineTemporaryInstance',
-                # 'workflow.steps.util.dns.CreateDNS',
-                # 'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.dns.CreateDNSTemporaryInstance',
+                'workflow.steps.util.dns.CheckIsReadyTemporaryInstance',
                 'workflow.steps.util.vm.WaitingBeReadyTemporaryInstance',
                 'workflow.steps.util.vm.UpdateOSDescriptionTemporaryInstance',
             )}, {
@@ -1006,7 +1006,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.DetachDataVolumeTemporaryInstance',
                 'workflow.steps.util.volume_provider.DestroyVolumeTemporaryInstance',
 
-                # 'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
+                'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineTemporaryInstance',
                 'workflow.steps.util.host_provider.DestroyIPTemporaryInstance',
             )}
