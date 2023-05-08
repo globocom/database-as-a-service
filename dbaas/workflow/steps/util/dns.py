@@ -309,9 +309,6 @@ class CreateDNS(DNSStep):
 
 class CreateDNSTemporaryInstance(CreateDNS):
 
-    def __unicode__(self):
-        return "Destroying DNS..."
-
     @property
     def is_valid(self):
         return self.instance.temporary
@@ -325,7 +322,8 @@ class CreateDNSTemporaryInstance(CreateDNS):
 
 class DestroyDNSTemporaryInstance(CreateDNS):
 
-
+    def __unicode__(self):
+        return "Destroying DNS..."
 
     @property
     def is_valid(self):
