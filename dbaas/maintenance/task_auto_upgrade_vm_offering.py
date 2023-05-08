@@ -59,6 +59,7 @@ def create_maintenance(database, task, resize_target, retry_from):
 
 
 def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target=None):
+    auto_upgrade_vm = None
     try:
         infra = database.infra
         driver = infra.get_driver()
@@ -113,6 +114,9 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
                 'Please check error message and do retry'
             )
     except Exception as erro:
+        if auto_upgrade_vm is not None:
+            auto_upgrade_vm.set_error()
+
         task.set_status_error('Error: {erro}.\n'
                               'To create task task_auto_upgrade_vm!\n'
                               'Please check error message and start new task.'.format(erro=erro))
