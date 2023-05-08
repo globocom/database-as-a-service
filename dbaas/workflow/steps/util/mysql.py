@@ -229,7 +229,7 @@ class SaveMySQLBinlog(MySQLStep):
         client = driver.get_client(self.instance)
 
 
-class SaveMySQLBinlogToStopDatabase(MySQLStep):
+class SaveMySqlBinlog(MySQLStep):
 
     def __unicode__(self):
         return "Saving binlog position to stop database..."
