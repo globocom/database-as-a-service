@@ -11,7 +11,8 @@ build:
   before_script:
     # - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
       # Install CA certs, openssl to https downloads, python for gcloud sdk
-    - apk add python3
+    RUN apk update; apk add python3 python3-dev py-pip make g++ py3-virtualenv
+    # - apk add python3
     - apk add --update make ca-certificates openssl
     - update-ca-certificates
     # Write our GCP service account private key into a file
