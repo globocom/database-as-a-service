@@ -209,7 +209,7 @@ class MySQLSingle(BaseMysql):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
     
     def get_configure_db_params_steps(self):
         return [{
@@ -608,7 +608,7 @@ class MySQLFoxHA(MySQLSingle):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
