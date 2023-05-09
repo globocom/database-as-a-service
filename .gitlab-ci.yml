@@ -25,6 +25,8 @@ build:
     - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
   script:
     - echo 'build'
+  when: manual
+
 
 dev:
   stage: publish
