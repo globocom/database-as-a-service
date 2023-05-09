@@ -26,6 +26,9 @@ build:
     - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
   script:
     - echo 'build'
+    - docker build -t $IMAGE_NAME .
+    - docker tag $IMAGE_NAME "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME"
+    - docker push "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME:latest"
 
 dev:
   stage: publish
