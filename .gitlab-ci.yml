@@ -4,7 +4,8 @@ stages:
 
 build:
   # Use the official docker image.
-  image: docker:latest
+  # image: docker:latest
+  dockerfile: Dockerfile
   stage: build
   services:
     - docker:dind
