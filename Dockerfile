@@ -4,6 +4,14 @@ FROM python:2.7.9-slim
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
+# waiting for redhat bugfix
+# https://discuss.circleci.com/t/failed-to-fetch-jessie-updates/29246
+RUN rm /etc/apt/sources.list
+RUN echo "deb http://archive.debian.org/debian/ jessie-backports main" | tee -a /etc/apt/sources.list
+RUN echo "deb-src http://archive.debian.org/debian/ jessie-backports main" | tee -a /etc/apt/sources.list
+RUN echo "Acquire::Check-Valid-Until false;" | tee -a /etc/apt/apt.conf.d/10-nocheckvalid
+RUN echo 'Package: *\nPin: origin "archive.debian.org"\nPin-Priority: 500' | tee -a /etc/apt/preferences.d/10-archive-pin
+
 # Maybe run upgrade as well???
 RUN apt-get update
 
