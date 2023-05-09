@@ -1,3 +1,6 @@
+stages:
+  - build
+  - publish
 
 build:
   # Use the official docker image.
@@ -20,25 +23,24 @@ build:
     - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
 
 dev:
-  stage: apply
+  stage: publish
   tags:
     - dbaas-gcp
-    
   when: manual
   script:
     - echo 'hello world!'
 
 
-stages:
-  - publish
-publish:
-  stage: publish
-  script:
-    - docker build -t $IMAGE_NAME .
-    - docker tag $IMAGE_NAME "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME"
-    - docker push "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME:latest"
-  only:
-    - master
+# stages:
+#   - publish
+# publish:
+#   stage: publish
+#   script:
+#     - docker build -t $IMAGE_NAME .
+#     - docker tag $IMAGE_NAME "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME"
+#     - docker push "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME:latest"
+#   only:
+#     - master
 
 
 #   # Default branch leaves tag empty (= latest tag)
