@@ -564,16 +564,16 @@ class MySQLFoxHA(MySQLSingle):
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra', # mysql_foxha_57_configuration.sh
                 'workflow.steps.util.plan.ConfigureLogForNewInfra', # rsyslog_config.sh
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf', # desativar? não tem mais o sofia...
                 'workflow.steps.util.database.Start', # start database
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.util.database.StartRsyslog',
-                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf', # desativar? não tem mais o sofia...
+                'workflow.steps.util.database.StartRsyslog', # start rsyslog. `sudo systemctl start rsyslog.service` e no ol6 era `/etc/init.d/rsyslog start`
+                'workflow.steps.util.database.CheckIsUp', #checa se o is_up() do host retorna true
             )}, {
             'Check database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.StartMonit',
+                'workflow.steps.util.plan.StartReplicationNewInfra',  # run mysql_foxha_57_start_replication.sh
+                'workflow.steps.util.database.CheckIsUp', #
+                'workflow.steps.util.database.StartMonit', # sudo systemctl start monit.service
             )}, {
             'FoxHA configure': (
                 'workflow.steps.util.fox.ConfigureGroup',
