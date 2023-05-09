@@ -157,8 +157,30 @@ def disk_resize_notification(database, new_disk, usage_percentage):
     )
 
 
-def schedule_task_notification(database, scheduled_task, is_new,
-                               is_task_warning=False):
+def upgrade_offering_notification(database, resize_target):
+    LOG.info('Notifying auto upgrade offering to database: {}'.format(database))
+
+    current_offering = database.databaseinfra.offering
+    future_offering = database.get_future_offering(resize_target)
+
+    subject = _('[DBaaS] Database {} auto upgrade offering to {}').format(database, future_offering.name)
+    template = "auto_upgrade_offering_notification"
+
+    context = {
+        'domain': get_domain(),
+        'database': database,
+        'current_offering': current_offering,
+        'future_offering': future_offering,
+        'database_url': get_database_url(database.id)
+    }
+
+    send_mail_template(
+        subject, template, email_from(), email_to(database.team),
+        fail_silently=False, attachments=None, context=context
+    )
+
+
+def schedule_task_notification(database, scheduled_task, is_new, is_task_warning=False):
 
     subject_tmpl = '[DBaaS] Automatic Task {} for Database {}'
     if is_task_warning:
