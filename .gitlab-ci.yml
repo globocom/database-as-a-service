@@ -5,16 +5,14 @@ stages:
 build:
   # Use the official docker image.
   image: docker:latest
-  # image: python:2.7.9-slim
-  # image:
-    # dockerfile: Dockerfile
   stage: build
   services:
     - docker:dind
   before_script:
     # - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
       # Install CA certs, openssl to https downloads, python for gcloud sdk
-    - apk add --update make ca-certificates openssl python
+    - apk add python3
+    - apk add --update make ca-certificates openssl
     - update-ca-certificates
     # Write our GCP service account private key into a file
     - echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
@@ -26,8 +24,6 @@ build:
     - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
   script:
     - echo 'build'
-  when: manual
-
 
 dev:
   stage: publish
