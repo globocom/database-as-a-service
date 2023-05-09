@@ -4,9 +4,9 @@ stages:
 
 build:
   # Use the official docker image.
-  # image: docker:latest
-  image:
-    dockerfile: Dockerfile
+  image: python:2.7.9-slim
+  # image:
+    # dockerfile: Dockerfile
   stage: build
   services:
     - docker:dind
