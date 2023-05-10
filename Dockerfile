@@ -1,5 +1,5 @@
 # FROM python:2.7.9-slim
-FROM us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:latest
+FROM us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:v1.0
 # Python optimization to run on docker
 # ENV PYTHONUNBUFFERED 1
 # ENV PYTHONDONTWRITEBYTECODE 1
