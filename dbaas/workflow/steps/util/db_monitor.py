@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
+import requests
 from dbaas_dbmonitor.provider import DBMonitorProvider
 from workflow.steps.util.base import BaseInstanceStep
+from system.models import Configuration as conf
 
 LOG = logging.getLogger(__name__)
 
@@ -12,11 +14,35 @@ class DBMonitorStep(BaseInstanceStep):
         super(DBMonitorStep, self).__init__(instance)
         self.provider = DBMonitorProvider()
 
+    @property
+    def dbmonitor_database_id(self):
+        url = conf.get_by_name('dbmonitor_url_get_database_id').format(self.infra.name)
+        database_id = None
+        response = requests.get(url)
+        if response.status_code == 200:
+            ### Raise an exception when api returns more than one dbmonitor_database object
+            if len(response.json()) > 1:
+                raise Exception('Teste exception')
+            database_id = response.json()[0].get('id')
+        return database_id
+
     def _enable_monitoring(self):
-        self.provider.enabled_dbmonitor_monitoring_instance(self.instance)
+        status = True
+        url = conf.get_by_name('dbmonitor_url_activate_monitoring').format(self.dbmonitor_database_id)
+        response = requests.get(url)
+        if response.status_code != 200:
+            status = False
+        return status
+        # self.provider.enabled_dbmonitor_monitoring_instance(self.instance)
 
     def _disable_monitoring(self):
-        self.provider.disabled_dbmonitor_monitoring_instance(self.instance)
+        status = True
+        url = conf.get_by_name('dbmonitor_url_deactivate_monitoring').format(self.dbmonitor_database_id)
+        response = requests.get(url)
+        if response.status_code != 200:
+            status = False
+        return status
+        # self.provider.disabled_dbmonitor_monitoring_instance(self.instance)
 
     def do(self):
         raise NotImplementedError
