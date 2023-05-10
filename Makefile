@@ -12,6 +12,7 @@ export CHECK_SCRIPT
 export PWD=$(shell pwd)
 export PROJECT_PATH=$(shell dirname $$PWD)
 
+
 # Use make -e DBAAS_DATABASE_HOST=another_host to replace default value		 
 
 default:
@@ -207,7 +208,46 @@ docker_run:
 
 
 docker_stop:
-	docker stop dbaas_app	
+	docker stop dbaas_app
+
+
+teste:
+	make set_env PROJECT_ENV=PROD
+
+set_env:
+	@echo "tag usada:${PROJECT_ENV}"
+	@if [ ${PROJECT_ENV} = "DEV" ]; then\
+    	echo 'changing project to DEV';\
+    	LOWERCASE_ENV="dev";\
+    	gcloud config set project gglobo-dbaaslab-dev-qa;\
+	elif [ ${PROJECT_ENV} = "PROD" ]; then\
+		echo 'changing project to PROD';\
+		LOWERCASE_ENV="prod";\
+		gcloud config set project gglobo-dbaas-hub;\
+	else\
+		echo "PROJECT_ENV not found. Exiting";\
+		exit 1;\
+	fi\
+
+
+
+get_last_tag:
+	gcloud secrets versions access "latest" --secret "my-secret"
+	gcloud config set project gglobo-dbaas-hub
+
+set_new_tag:
+	@echo "tag usada:${TAG}"
+	@echo "exemplo de uso make set_tag TAG=v1.02 ENV=dev"
+	SECRET=$TAG
+	SECRET_NAME=DBDEV_DEV_DBAAS_IMAGE_VERSION
+	echo $SECRET | gcloud secrets create $SECRET_NAME --locations=us-east1,southamerica-east1 --replication-policy="user-managed" --labels="env_type=$LOWERCASE_ENV" --data-file=-
+	if [ $? -eq 0 ]; then
+		echo "Created the new secret sucessfully"
+	else
+		echo "Secret already exists, updating its version!"
+		echo $SECRET | gcloud secrets versions add $SECRET_NAME --data-file=-
+	fi
+
 
 docker_deploy_gcp:
 	@echo "tag usada:${TAG}"
