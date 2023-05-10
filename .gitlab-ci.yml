@@ -25,7 +25,7 @@ build:
      - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
      - gcloud auth configure-docker us-east1-docker.pkg.dev
      - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
-     - docker pull us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:latest
+     - docker pull us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:v1.0
   script:
     - echo 'build'
     - docker build -t $IMAGE_NAME .
