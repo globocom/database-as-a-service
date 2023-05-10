@@ -58,7 +58,7 @@ class BaseRedis(BaseTopology):
         }]
     
     def get_configure_db_params_steps(self):
-        return []
+        return ()
 
 
 class RedisSingle(BaseRedis):
