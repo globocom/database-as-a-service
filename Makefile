@@ -213,8 +213,45 @@ docker_stop:
 
 teste:
 	make set_env PROJECT_ENV=PROD
+buildbegin:
+	@TEST="ON"; \
+	echo "$${TEST}"; \
+	if [ "$${TEST}" = "ON" ]; then echo "PASSED"; else echo "FAILED"; fi
 
+buildbegin3:
+	@TEST="ON"; \
+	echo "$${TEST}"; \
+	if [ "$${TEST}" = "ON" ]; then \
+		echo "PASSED"; \
+	else \
+		echo "FAILED";\
+	fi
+
+buildbegin4:
+	if [ "${PROJECT_ENV}" = "DEV" ]; then\
+    	echo 'changing project to DEV';\
+	fi
+
+buildbegin2:
+	TEST="ON"; \
+	echo "$${TEST}"
 set_env:
+	@echo "Project env:${PROJECT_ENV}"; \
+	if [ "${PROJECT_ENV}" = "DEV" ]; then \
+    	echo 'changing project to DEV'; \
+    	LOWERCASE_ENV="dev"; \
+    	gcloud config set project gglobo-dbaaslab-dev-qa; \
+	elif [ "${PROJECT_ENV}" = "PROD" ]; then \
+		echo 'changing project to PROD'; \
+		LOWERCASE_ENV="prod"; \
+		gcloud config set project gglobo-dbaas-hub; \
+	else\
+		echo "PROJECT_ENV not found. Exiting";\
+		echo "please call like this: make set_env PROJECT_ENV=PROD or DEV";\
+		exit 1;\
+	fi\
+
+set_env_old:
 	@echo "tag usada:${PROJECT_ENV}"
 	@if [ ${PROJECT_ENV} = "DEV" ]; then\
     	echo 'changing project to DEV';\
@@ -229,15 +266,15 @@ set_env:
 		exit 1;\
 	fi\
 
-
-
 get_last_tag:
 	gcloud secrets versions access "latest" --secret "my-secret"
 	gcloud config set project gglobo-dbaas-hub
 
 set_new_tag:
 	@echo "tag usada:${TAG}"
-	@echo "exemplo de uso make set_tag TAG=v1.02 ENV=dev"
+	@echo "exemplo de uso make set_tag TAG=v1.02 ENV=DEV"
+	@echo "exemplo de uso make set_tag TAG=v1.034 ENV=PROD"
+	make set_env PROJECT_ENV=${ENV}
 	SECRET=$TAG
 	SECRET_NAME=DBDEV_DEV_DBAAS_IMAGE_VERSION
 	echo $SECRET | gcloud secrets create $SECRET_NAME --locations=us-east1,southamerica-east1 --replication-policy="user-managed" --labels="env_type=$LOWERCASE_ENV" --data-file=-
