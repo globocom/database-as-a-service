@@ -51,6 +51,8 @@ dev:
      - gcloud auth configure-docker us-east1-docker.pkg.dev
   script:
     - echo 'hello world!'
+    - ssh gitlab-ci-ssh@$GLCOUD_DEV_IP
+    - echo 'the end'
 
 
 # stages:
