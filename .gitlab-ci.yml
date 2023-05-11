@@ -7,6 +7,7 @@ build:
   # image: docker:latest
   image: docker.artifactory.globoi.com/tsuru/terraform-gke:latest
   stage: build
+  when: manual
   services:
     - docker:dind
   before_script:
