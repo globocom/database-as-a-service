@@ -181,7 +181,7 @@ class BaseMongoDB(BaseTopology):
         )
     
     def get_configure_db_params_steps(self):
-        return ()
+        return []
 
 
 class MongoDBSingle(BaseMongoDB):
@@ -1669,7 +1669,7 @@ class MongoGenericGCE(object):
         }] + self.get_configure_db_params_steps()
     
     def get_configure_db_params_steps(self):
-        return ()
+        return []
 
     def get_replica_migration_steps(self):
         return [{

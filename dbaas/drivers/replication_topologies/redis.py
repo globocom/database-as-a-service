@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 from base import BaseTopology, InstanceDeploy
 from physical.models import Instance
@@ -58,7 +59,7 @@ class BaseRedis(BaseTopology):
         }]
     
     def get_configure_db_params_steps(self):
-        return ()
+        return []
 
 
 class RedisSingle(BaseRedis):
