@@ -2761,8 +2761,7 @@ def resize_vm_from_btn(request, database_id, resize_target):
         database=database, user=user, resize_target=resize_target
     )
 
-    future_offering = database.get_future_offering(resize_target)
-    return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")
 
 
 @login_required()
