@@ -6,7 +6,6 @@
   <div class="panel-heading">
     <h3 class="panel-title">Custom Parameters</h3>
     {% if show_auto_configure_btn %}
-{#        href="{% url 'auto_configure_db_params_btn' database.id %}"#}
       <a href="#" data-toggle="modal" id="autoconfig_btn" data-target="#autoconfig_params" target="_blank" class="btn btn-primary">AutoConfigure DB Params</a>
       <em>* Atualiza somente o max_connections (MySQL) e não gera downtime!</em>
     {% endif %}
