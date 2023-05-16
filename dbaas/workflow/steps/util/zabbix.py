@@ -334,6 +334,7 @@ class DisableAlarms(ZabbixStep):
     def do(self):
         if not self.is_valid:
             return
+        # Try and Exception to fix error Session terminated
         try:
             self.zabbix_provider.disable_alarms()
         except:
@@ -343,6 +344,7 @@ class DisableAlarms(ZabbixStep):
     def undo(self):
         if not self.is_valid:
             return
+        # Try and Exception to fix error Session terminated
         try:
             self.zabbix_provider.enable_alarms()
         except:
@@ -362,6 +364,7 @@ class EnableAlarms(ZabbixStep):
     def do(self):
         if not self.is_valid:
             return
+        # Try and Exception to fix error Session terminated
         try:
             self.zabbix_provider.enable_alarms()
         except:
@@ -371,6 +374,7 @@ class EnableAlarms(ZabbixStep):
     def undo(self):
         if not self.is_valid:
             return
+        # Try and Exception to fix error Session terminated
         try:
             self.zabbix_provider.disable_alarms()
         except:
