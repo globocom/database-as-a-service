@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist
 
 from physical.models import Instance, Ip
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
+LOG = logging.getLogger(__name__)
 
 class Update(BaseInstanceStep):
     def __init__(self, instance):
@@ -59,7 +62,7 @@ class OfferingMigration(Offering):
 class OfferingAutoUpgrade(Offering):
     
     @property
-    def is_valid(self): # executa somente para VMs pre-existentes
+    def is_valid(self):  # executa somente para VMs pre-existentes
         try:
             return self.instance.hostname.id
         except ObjectDoesNotExist:

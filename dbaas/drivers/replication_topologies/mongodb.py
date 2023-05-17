@@ -919,6 +919,9 @@ class MongoDBReplicaset(BaseMongoDB):
     
     def get_auto_upgrade_database_vm_offering(self):
         return [{
+            'Take new Snapshot': (
+                'workflow.steps.util.volume_provider.TakeSnapshotForSecondaryOrReadOnly',
+            )}, {
             'Create new VM': (
                 'workflow.steps.util.infra.OfferingAutoUpgrade',
                 'workflow.steps.util.host_provider.AllocateIPTemporaryInstance',
