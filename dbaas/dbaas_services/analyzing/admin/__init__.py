@@ -11,4 +11,4 @@ admin.site.register(models.AnalyzeRepository, AnalyzeRepositoryAdmin)
 admin.site.register(models.ExecutionPlan, ExecutionPlanAdmin)
 admin.site.register_view('/admin/analyzing/report/',
                          name='Database Report',
-                         view=DatabaseReport)
+                         view=DatabaseReport, visible=True)

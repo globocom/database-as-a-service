@@ -19,3 +19,12 @@ def get_config(conf_name=None):
         "description": c.description,
         "hash": c.hash
     }
+
+
+@register.filter
+def is_dba(user, name):
+    list_validation = Configuration.get_by_name_as_list('list_validation_custom_views')
+    is_dba = user.team_set.filter(role__name="role_dba").exists()
+    if is_dba or name in list_validation:
+        return True
+    return False
