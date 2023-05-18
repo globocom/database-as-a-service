@@ -45,40 +45,14 @@
       <div class="control-group">
         <div class="control-label"><label>AutoResize:</label></div>
         <div class="controls">
-          <a href="{% url 'resize_vm_from_btn' database.id 'cpu_ram' %}" target="_blank" class="btn btn-success">Resize CPU & RAM</a>
-          <a href="{% url 'resize_vm_from_btn' database.id 'cpu' %}" target="_blank" class="btn btn-primary">Resize CPU</a>
-          <a href="{% url 'resize_vm_from_btn' database.id 'ram' %}" target="_blank" class="btn btn-info">Resize RAM</a>
+          <a href="#" target="_blank" class="btn btn-success autoupgrade_database_btn" data-toggle="modal" id="cpu_ram" data-target="#autoupgrade_vm">Resize CPU & RAM</a>
+          <a href="#" target="_blank" class="btn btn-primary autoupgrade_database_btn" data-toggle="modal" id="cpu" data-target="#autoupgrade_vm">Resize CPU</a>
+          <a href="#" target="_blank" class="btn btn-info autoupgrade_database_btn" data-toggle="modal" id="ram" data-target="#autoupgrade_vm">Resize RAM</a>
         </div>
       </div>
       {% endif %}
   {% endif %}
-<!--  <div class="control-group">-->
-<!--    <div class="control-label"><label>Disk offering:</label></div>-->
-<!--    <div class="controls">-->
-<!--      <select id="id_disk_offering" name="disk_offering">-->
-<!--        {% for disk_offering in disk_offerings %}-->
-<!--          <option value="{{disk_offering.id}}"-->
-<!--            {% if disk_offering == database.infra.disk_offering %}-->
-<!--              selected="selected">*-->
-<!--            {% else %}-->
-<!--              >-->
-<!--            {% endif %}-->
-<!--            {{disk_offering}}-->
-<!--          </option>-->
-<!--        {% endfor %}-->
-<!--      </select>-->
-<!--      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>-->
-<!--    </div>-->
-<!--  </div>-->
-<!--  <div class="control-group">-->
-<!--    <div class="controls">-->
-<!--      <label class="checkbox">-->
-<!--        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>-->
-<!--        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>-->
-<!--      </label>-->
-<!--      <p class="help-block">When marked, the disk will be resized automatically.</p>-->
-<!--    </div>-->
-<!--  </div>-->
+
   {% if available_patches %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
@@ -114,6 +88,7 @@
 
 {% include "admin/confirmation_modal_input.html" with modal_id="resize_vm" title="Resize VM" body_text="logical/modal/vm_offering_body.html" input_name="resize_vm_yes" submit_button_value="Resize" submit_button_name="vm_resize" submit_button_id="id_resize_vm_btn_modal" %}
 
+{% include "admin/confirmation_modal.html" with modal_id="autoupgrade_vm" confirmation_message="Are you sure you want AutoUpgrade database offer now?" box_title="AutoUpgrade Offer" button_type="button" button_value="AutoUpgrade Database" button_name="autoupgrade_db_confirm" id_optional="id=id_autoupgrade_db" %}
 
 {% endblock %}
 
@@ -122,6 +97,9 @@
 {{ block.super }}
 
 <script>
+  var database_id = '{{ database.id }}';
+  var running_update = false;
+
   function status_resize(btn_id, current_value, selected_value) {
     btn = document.getElementById(btn_id)
     btn.disabled = current_value == selected_value
@@ -146,6 +124,32 @@
           }
       });
     }
+
+  $(".autoupgrade_database_btn").click(function() {
+      $("#id_autoupgrade_db").val($(this).attr('id'));
+    });
+
+  $("#id_autoupgrade_db").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_autoupgrade_db").attr('disabled','disabled');
+      value = $("#id_autoupgrade_db").val();
+      url = "/logical/resize_vm/"+ database_id + "/" + value;
+
+      jQuery.ajax({
+          "dataType": "json",
+          "url": url,
+          "type": "GET"
+      }).success(function(){
+          running_update = false;
+          window.location.reload();
+      }).error(function() {
+          alert("invalid server response");
+      });
+    });
+
   jQuery(document).ready(function($) {
     document.onkeydown = function () {
         switch (event.keyCode) {
@@ -157,6 +161,7 @@
                 }
         }
     }
+
     var currentForm;
 
     $("#id_disk_offering").on("change", function() {
