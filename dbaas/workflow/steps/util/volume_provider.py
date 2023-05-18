@@ -791,9 +791,33 @@ class NewVolumeFromSnapshot(NewVolume):
     def provider_class(self):
         return NewVolumeFromSnapshot
 
+    def get_base_snapshot(self):  # busca a ultima snapshot válida criada
+        hosts = self.infra.hosts
+        volumes = []
+
+        for host in hosts:
+            volumes.extend(host.volumes.all())
+
+        snapshots = []
+
+        for volume in volumes:
+            snapshots.extend(volume.backups.all())
+
+        base_snapshot = None
+        for snapshot in snapshots:
+            if (base_snapshot is None or snapshot.created_at > base_snapshot.created_at) and \
+                    snapshot.end_at is not None and snapshot.purge_at is None:
+                base_snapshot = snapshot
+
+        if base_snapshot is None:
+            raise AssertionError('Nao foi encontrada nenhuma Snapshot para criacao do novo Volume!')
+
+        return base_snapshot
+
     def do(self):
         if self.is_valid:
-            self.base_snapshot = self.resize.base_snapshot
+            self.base_snapshot = self.get_base_snapshot()
+            LOG.debug("New Volume usara Snapshot: %s", self.base_snapshot)
             super(NewVolumeFromSnapshot, self).do()
 
 
@@ -1170,6 +1194,74 @@ class UmountDataVolumeMigrate(MountDataVolumeMigrate):
 
     def undo(self):
         return super(UmountDataVolumeMigrate, self).do()
+
+
+class TakeSnapshotForSecondaryOrReadOnly(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Taking Snapshot for Secondary or ReadOnly Host..."
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+    @property
+    def provider_class(self):
+        return VolumeProviderBase
+
+    def instance_for_backup(self):
+        read_only_instance = self.database.infra.instances.filter(read_only=True).first()
+        if read_only_instance:
+            return read_only_instance
+
+        instances = self.database.infra.instances.all()
+        driver = instances[0].databaseinfra.get_driver()
+
+        for instance in instances:
+            if not driver.check_instance_is_master(instance):
+                return instance
+
+        raise Exception("Nao foi encontrada instance secundaria ou ReadOnly")
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        from backup.tasks import make_instance_snapshot_backup
+        from backup.models import BackupGroup
+
+        group = BackupGroup()
+        group.save()
+
+        instance = self.instance_for_backup()
+        LOG.debug("Instance for backup: %s", instance)
+
+        snapshot = make_instance_snapshot_backup(
+            instance,
+            {},
+            group,
+            provider_class=self.provider_class,
+            target_volume=None
+        )
+
+        if not snapshot:
+            raise VolumeProviderSnapshotNotFoundError(
+                'Backup was unsuccessful in {}'.format(self.instance)
+            )
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+
+        if snapshot.was_error:
+            error = 'Backup was unsuccessful.'
+            if snapshot.error:
+                error = '{} Error: {}'.format(error, snapshot.error)
+                raise VolumeProviderSnapshotHasErrorStatus(error)
 
 
 class TakeSnapshotMigrate(VolumeProviderBase):

@@ -307,6 +307,11 @@ class BaseDriver(object):
 
         return instances
 
+    def get_temporary_instances(self):
+        instances = [instance if instance.temporary is True else None
+                     for instance in self.databaseinfra.instances.all()]
+        return filter(None, instances)
+
     def start_slave(self, instance):
         pass
 
