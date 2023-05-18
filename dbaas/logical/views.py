@@ -2778,4 +2778,4 @@ def auto_configure_db_params_btn(request, database_id):
         database=database, user=user
     )
 
-    return HttpResponse(({'success'}), content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")
