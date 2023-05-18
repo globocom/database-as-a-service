@@ -209,7 +209,7 @@ class MySQLSingle(BaseMysql):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
     
     def get_configure_db_params_steps(self):
         return [{
@@ -608,7 +608,7 @@ class MySQLFoxHA(MySQLSingle):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
@@ -894,7 +894,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_reinstallvm_steps_final()
+        }] + self.get_reinstallvm_steps_final() + self.get_configure_db_params_steps()
 
     def get_upgrade_steps(self):
         return [{
@@ -1175,7 +1175,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_base_host_migrate_steps(self):
         return (
@@ -2490,7 +2490,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
                 )
-            }]
+            }] + self.get_configure_db_params_steps()
 
     def get_reinstallvm_steps(self):
         return [{
@@ -2528,4 +2528,4 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_reinstallvm_steps_final()
+        }] + self.get_reinstallvm_steps_final() + self.get_configure_db_params_steps()
