@@ -495,7 +495,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Creating virtual machine': (
                 'workflow.steps.util.host_provider.AllocateIP',
-                'workflow.steps.util.host_provider.CreateVirtualMachine',
+                'workflow.steps.util.host_provider.CreateMySqlFoxVirtualMachineWithEnvTag',
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.vip_provider.CreateVip',
