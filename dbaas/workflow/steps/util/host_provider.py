@@ -281,6 +281,7 @@ class Provider(BaseInstanceStep):
             data['init_user'] = init_user
         if init_password:
             data['init_password'] = init_password
+
         dev = ['dev-gcp-hdg-us-east1', 'dev-gcp-hdg-sa-east1', 'dev-gcp-hdg-us-central1',
                'dev-gcp-tsuru-us-east1', 'dev-gcp-tsuru-sa-east1', 'dev-gcp-tsuru-us-central1',
                'gcp-lab-dev']
@@ -288,17 +289,16 @@ class Provider(BaseInstanceStep):
         prod = ['prod-gcp-hdg-us-east1', 'prod-gcp-hdg-sa-east-1', 'prod-gcp-hdg-us-central1',
                 'prod-gcp-tsuru-us-east1', 'prod-gcp-tsuru-sa-east1', 'prod-gcp-tsuru-us-central1',
                 'gcp-lab-prod']
-        tag = 'dbaas-nodes-dev'
+        tag = ''
         env = infra.environment.name
         if env in dev:
             tag = 'dbaas-nodes-dev'
-            print('TAG IS dbaas-nodes-dev')
         elif env in devqa:
             tag = 'dbaas-nodes-devqa'
-            print('TAG IS dbaas-nodes-devqa')
         elif env in prod:
             tag = 'dbaas-nodes-prod'
-            print('TAG IS dbaas-nodes-prod')
+        data['environment_tag'] = tag
+
         response = self._request(post, url, json=data, timeout=900)
         if response.status_code != 201:
             raise HostProviderCreateVMException(response.content, response)
