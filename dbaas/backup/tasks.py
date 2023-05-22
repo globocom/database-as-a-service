@@ -230,11 +230,9 @@ def make_instance_gcp_snapshot_backup(
 
     snapshot_final_status = Snapshot.SUCCESS
 
-    locked = None
-    client = None
     driver = infra.get_driver()
+    client = driver.get_client(instance)
     try:
-        client = driver.get_client(instance)
         locked = lock_instance(driver, instance, client)
         if not locked:
             snapshot_final_status = Snapshot.WARNING
@@ -242,58 +240,61 @@ def make_instance_gcp_snapshot_backup(
         if 'MySQL' in type(driver).__name__:
             mysql_binlog_save(client, instance)
 
-        has_snapshot = Snapshot.objects.filter(
+        has_snapshot_with_status_warning = Snapshot.objects.filter(
             status=Snapshot.WARNING, instance=instance, end_at__year=datetime.now().year,
             end_at__month=datetime.now().month, end_at__day=datetime.now().day
         )
-        backup_hour_list = Configuration.get_by_name_as_list('make_database_backup_hour')
-        if not snapshot_final_status == Snapshot.WARNING and not has_snapshot:
-            cont = 0
-            for _ in range(backup_retry_attempts):
-                cont += 1
-                try:
-                    code = 201
-                    response, data = provider.new_take_snapshot(persist=persist)
 
-                    if response.status_code < 400:
-                        break
+        if has_snapshot_with_status_warning:
+            raise Exception("Backup with WARNING already created today.")
 
-                    if cont >= 3:
-                        raise IndexError
+        if snapshot_final_status == Snapshot.WARNING:
+            raise Exception("Snapshot has status WARNING, check the logs.")
 
-                except IndexError as e:
-                    response, content = e
-                    if response.status_code == 503:
-                        errormsg = "{} - 503 error creating snapshot for instance: {}. It will try again in 30 seconds. ".format(
-                            strftime("%d/%m/%Y %H:%M:%S"), instance
-                        )
-                        LOG.error(errormsg)
-                        if task:
-                            task.add_detail(errormsg)
-                        sleep(30)
-                    else:
-                        raise e
+        cont = 0
+        for _ in range(backup_retry_attempts):
+            cont += 1
+            try:
+                code = 201
+                response, data = provider.new_take_snapshot(persist=persist)
 
-            if response.status_code < 400:
-                while code != 200:
-                    sleep(20)
-                    snap_response, snap_status = provider.take_snapshot_status(data['identifier'])
-                    if snap_response.status_code in [200, 202]:
-                        unlock_instance(driver, instance, client)
-                    if snap_response.status_code == 200:
-                        break
-                    if snap_response.status_code >= 400:
-                        raise error
-                    code = snap_response.status_code
+                if response.status_code < 400:
+                    break
 
-                snapshot.done(snap_status)
-                snapshot.save()
-            else:
-                errormsg = response['message']
-                set_backup_error(infra, snapshot, errormsg)
+                if cont >= 3:
+                    raise IndexError
+
+            except IndexError as e:
+                response, content = e
+                if response.status_code == 503:
+                    errormsg = "{} - 503 error creating snapshot for instance: {}. It will try again in 30 seconds. ".format(
+                        strftime("%d/%m/%Y %H:%M:%S"), instance
+                    )
+                    LOG.error(errormsg)
+                    if task:
+                        task.add_detail(errormsg)
+                    sleep(30)
+                else:
+                    raise e
+
+        if response.status_code < 400:
+            while code != 200:
+                sleep(20)
+                snap_response, snap_status = provider.take_snapshot_status(data['identifier'])
+                if snap_response.status_code in [200, 202]:
+                    unlock_instance(driver, instance, client)
+                if snap_response.status_code == 200:
+                    break
+                if snap_response.status_code >= 400:
+                    raise error
+                code = snap_response.status_code
+
+            snapshot.done(snap_status)
+            snapshot.save()
         else:
-            if str(current_hour) in backup_hour_list:
-                raise Exception("Backup with WARNING already created today.")
+            errormsg = response['message']
+            set_backup_error(infra, snapshot, errormsg)
+            raise Exception(errormsg)
 
     except Exception as e:
         errormsg = "Error creating snapshot: {}".format(e)
