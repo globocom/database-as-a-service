@@ -146,6 +146,16 @@ class IfConguredSSLValidator(SSL):
     @property
     def is_valid(self):
         return self.infra.ssl_configured
+    
+
+class IfConguredSSLValidatorForTemporaryInstance(IfConguredSSLValidator):
+    # Valida se a instance eh temporaria E configurada com o ssl
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(IfConguredSSLValidatorForTemporaryInstance, self).is_valid
 
 
 class UpdateOpenSSlLib(SSL):
@@ -171,6 +181,10 @@ class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
     pass
 
 
+class UpdateOpenSSlLibIfConfiguredTemporaryInstance(UpdateOpenSSlLib, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class MongoDBUpdateCertificates(SSL):
 
     def __unicode__(self):
@@ -189,6 +203,10 @@ class MongoDBUpdateCertificates(SSL):
 
 class MongoDBUpdateCertificatesIfConfigured(MongoDBUpdateCertificates,
                                             IfConguredSSLValidator):
+    pass
+
+
+class MongoDBUpdateCertificatesIfConfiguredTemporaryInstance(MongoDBUpdateCertificates, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -218,6 +236,10 @@ class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
 
 
 class CreateSSLFolderRollbackIfRunningIfConfigured(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidator):
+    pass
+
+
+class CreateSSLFolderRollbackIfRunningIfConfiguredTemporaryInstance(CreateSSLFolderRollbackIfRunning, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -382,6 +404,10 @@ class MongoDBCreateSSLConfForInfraIfConfigured(MongoDBCreateSSLConfForInfra,
     pass
 
 
+class MongoDBCreateSSLConfForInfraIfConfiguredTemporaryInstance(MongoDBCreateSSLConfForInfra, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class MongoDBCreateSSLConfForInfraIP(MongoDBCreateSSLConfigFile,
                                      InfraSSLBaseName,
                                      InstanceSSLDNSIp):
@@ -435,6 +461,10 @@ class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
 
 class RequestSSLForInfraIfConfigured(RequestSSLForInfra,
                                      IfConguredSSLValidator):
+    pass
+
+
+class RequestSSLForInfraIfConfiguredTemporaryInstance(RequestSSLForInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -516,6 +546,10 @@ class CreateJsonRequestFileInfra(CreateJsonRequestFile, InfraSSLBaseName):
 
 class CreateJsonRequestFileInfraIfConfigured(CreateJsonRequestFileInfra,
                                              IfConguredSSLValidator):
+    pass
+
+
+class CreateJsonRequestFileInfraIfConfiguredTemporaryInstance(CreateJsonRequestFileInfra, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -606,6 +640,10 @@ class CreateCertificateInfraMongoDBIfConfigured(CreateCertificateInfraMongoDB,
     pass
 
 
+class CreateCertificateInfraMongoDBIfConfiguredTemporaryInstance(CreateCertificateInfraMongoDB, IfConguredSSLValidatorForTemporaryInstance):
+    pass
+
+
 class CreateCertificateInfra(CreateCertificate, InfraSSLBaseName):
     pass
 
@@ -657,6 +695,10 @@ class SetSSLFilesAccessMongoDB(SSL):
 
 class SetSSLFilesAccessMongoDBIfConfigured(SetSSLFilesAccessMongoDB,
                                            IfConguredSSLValidator):
+    pass
+
+
+class SetSSLFilesAccessMongoDBIfConfiguredTemporaryInstance(SetSSLFilesAccessMongoDB, IfConguredSSLValidatorForTemporaryInstance):
     pass
 
 
@@ -743,6 +785,13 @@ class UpdateExpireAtDate(SSL):
         pass
 
 
+class UpdateExpireAtDateTemporaryInstance(UpdateExpireAtDate):
+
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured and self.instance.temporary
+
+
 class UpdateExpireAtDateRollback(UpdateExpireAtDate):
     def __unicode__(self):
         return "Update expire_at date if Rollback..."
@@ -818,6 +867,31 @@ class BackupSSLFolder(SSL):
                   '&& rm -rf {1} '
                   '|| exit 0'.format(self.source_ssl_dir, self.backup_ssl_dir))
         return self.run_script(script)
+
+
+class MoveSSLFolder(SSL):
+    source_ssl_dir = '/data/ssl'
+    backup_ssl_dir = '/data/ssl-BKP'
+
+    def __unicode__(self):
+        return "Moving backup of SSL folder..."
+
+    def remove_created_folder(self, folder):
+        script = 'rm -rf {}'.format(folder)
+        return self.run_script(script)
+
+    def move_folder(self, source, dest):
+        script = 'rm -rf {};mv {} {}'.format(
+            dest, source, dest
+        )
+        return self.run_script(script)
+
+    def do(self):
+        return self.move_folder(source=self.source_ssl_dir, dest=self.backup_ssl_dir)
+
+    def undo(self):
+        if self.remove_created_folder(self.source_ssl_dir):
+            return self.move_folder(source=self.backup_ssl_dir, dest=self.source_ssl_dir)
 
 
 class RestoreSSLFolder4Rollback(BackupSSLFolder):

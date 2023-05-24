@@ -1492,6 +1492,7 @@ class Instance(BaseModel):
     shard = models.IntegerField(null=True, blank=True)
     used_size_in_bytes = models.FloatField(null=True, blank=True)
     total_size_in_bytes = models.FloatField(null=True, blank=True)
+    temporary = models.BooleanField(verbose_name=_("Is instance temporary"), default=False)
 
     class Meta:
         unique_together = (

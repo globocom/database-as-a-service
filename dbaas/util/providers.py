@@ -152,3 +152,10 @@ def get_start_database_vm_settings(class_path):
 
 def get_stop_database_vm_settings(class_path):
     return get_replication_topology_instance(class_path).get_stop_database_vm_steps()
+
+
+def get_auto_upgrade_vm_settings(class_path):
+    return get_replication_topology_instance(class_path).get_auto_upgrade_database_vm_offering()
+
+def get_configure_db_params_settings(class_path):
+    return get_replication_topology_instance(class_path).get_configure_db_params_steps()

@@ -307,6 +307,11 @@ class BaseDriver(object):
 
         return instances
 
+    def get_temporary_instances(self):
+        instances = [instance if instance.temporary is True else None
+                     for instance in self.databaseinfra.instances.all()]
+        return filter(None, instances)
+
     def start_slave(self, instance):
         pass
 
@@ -473,6 +478,9 @@ class BaseDriver(object):
             credential_type=self.credential_type
         )
         return credential.user, credential.password
+    
+    def create_db_params_changes(self, database):
+        raise NotImplementedError('Not implemented for Driver')
 
 
 class DatabaseStatus(object):

@@ -7,6 +7,7 @@ from logical.models import Database
 from physical.factories.prometheus_exporter_factory import get_exporter
 from util import build_context_script
 from workflow.steps.mongodb.util import build_change_oplogsize_script
+from workflow.steps.mysql.util import build_update_kernel_params_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util.ssl import InfraSSLBaseName
@@ -132,6 +133,12 @@ class Stop(DatabaseStep):
     @property
     def undo_klass(self):
         return Start
+    
+    @property
+    def is_valid(self):
+        if self.instance.temporary:
+            return False
+        return super(Stop, self).is_valid
 
     def do(self):
         if not self.is_valid:
@@ -151,6 +158,13 @@ class Stop(DatabaseStep):
 
     def undo(self):
         self.undo_klass(self.instance).do()
+
+
+class StopTemporaryInstance(Stop):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopIfRunning(Stop):
@@ -179,6 +193,10 @@ class Start(DatabaseStep):
 
     def __unicode__(self):
         return "Starting database..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     @property
     def undo_klass(self):
@@ -198,6 +216,13 @@ class Start(DatabaseStep):
         self.undo_klass(self.instance).do()
 
 
+class StartDatabaseTemporaryInstance(Start):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+
 class StartWithoutUndo(Start):
     def undo(self):
         pass
@@ -215,6 +240,15 @@ class StartCheckOnlyOsProcess(Start):
                     'Could not start database {}: {}'.format(
                         return_code, output)
                 )
+
+
+class StartCheckOnlyOsProcessTemporaryInstance(StartCheckOnlyOsProcess):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(StartCheckOnlyOsProcessTemporaryInstance, self).is_valid
 
 
 class StartRsyslog(DatabaseStep):
@@ -251,12 +285,23 @@ class StartRsyslog(DatabaseStep):
         if not self.is_valid:
             return
         return self._stop()
+    
+
+class StartRsyslogTemporaryInstance(StartRsyslog):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopRsyslog(StartRsyslog):
 
     def __unicode__(self):
         return "Stopping rsyslog..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
         if not self.is_valid:
@@ -267,6 +312,13 @@ class StopRsyslog(StartRsyslog):
         if not self.is_valid:
             return
         self._start()
+
+
+class StopRsyslogTemporaryInstance(StopRsyslog):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class StopRsyslogIfRunning(StopRsyslog):
@@ -317,9 +369,13 @@ class StartSlave(DatabaseStep):
 
     def __unicode__(self):
         return "Starting slave..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         CheckIsUp(self.instance)
@@ -331,11 +387,15 @@ class StartSlave(DatabaseStep):
 
 class StopSlave(DatabaseStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Stopping slave..."
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         CheckIsUp(self.instance)
@@ -361,6 +421,10 @@ class WaitForReplication(DatabaseStep):
 
     def __unicode__(self):
         return "Waiting for replication ok..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def check_replication_ok(self, instance):
         attempts = 0
@@ -377,7 +441,7 @@ class WaitForReplication(DatabaseStep):
         return True
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.infra.plan.is_ha or not self.is_valid:
             return
 
         not_running = []
@@ -398,17 +462,55 @@ class WaitForReplication(DatabaseStep):
                 raise ReplicationNotRunningError
 
 
+class WaitForReplicationTemporaryInstance(WaitForReplication):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):        
+        if not self.infra.plan.is_ha or not self.is_valid:
+            return
+
+        not_running = []
+        sleep(CHECK_SECONDS)
+        try:
+            if not self.check_replication_ok(self.instance):
+                not_running.append(self.instance)
+        except ReplicationNotRunningError:
+            not_running.append(self.instance)
+
+        for instance in not_running:
+            self.driver.stop_slave(instance)
+            sleep(CHECK_SECONDS)
+            self.driver.start_slave(instance)
+            sleep(CHECK_SECONDS)
+            if not self.check_replication_ok(instance):
+                raise ReplicationNotRunningError
+
+
 class CheckIsUp(DatabaseStep):
 
     def __unicode__(self):
         return "Checking database is up..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
-        if not self.instance.is_database:
+        if not self.instance.is_database or not self.is_valid:
             return
 
         if not self.is_up():
             raise EnvironmentError('Database is down, should be up')
+        
+
+class CheckIsUpTemporaryInstance(CheckIsUp):
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
 
 
 class CheckIsUpRollback(CheckIsUp):
@@ -561,6 +663,59 @@ class ChangeDynamicParameters(DatabaseStep):
                 value=changed_parameter.value
             )
 
+
+class CreateParameterChange(DatabaseStep):
+    
+    def __unicode__(self):
+        return "Creating Parameter changes registers..."
+    
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+        
+        from physical.models import DatabaseInfraParameter
+        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(self.infra)
+        
+        if len(changed_parameters) != 0:
+            return False
+        
+        return True
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        self.driver.create_db_params_changes(self.database)
+
+
+class UpdateKernelParameters(DatabaseStep):
+    def __unicode__(self):
+        return "Updating Kernel params..."
+    
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+        
+        # check if fs.file-max is already equal or bigger then the one we want to set
+        output = self.host.ssh.run_script('sysctl fs.file-max')
+        LOG.info('Current fs.file-max = ' + output['stdout'][0])
+
+        # output[stdout] ~= ['fs.file-max = 201023']
+        if int(output['stdout'][0].split('= ')[1]) >= 67677:
+            return False
+        
+        return True
+
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        script = build_update_kernel_params_script()
+        LOG.info('Executing ' + script + ' on ' + self.host.hostname)
+        self.host.ssh.run_script(script)
 
 class SetParameterStatus(DatabaseStep):
 
@@ -1089,6 +1244,19 @@ class ConfigurePrometheusMonitoring(DatabaseStep):
 
     def undo(self):
         pass
+
+
+class ConfigurePrometheusMonitoringTemporaryInstance(ConfigurePrometheusMonitoring):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ConfigurePrometheusMonitoringTemporaryInstance, self).is_valid
+    
+    def do(self):
+        if self.is_valid:
+            return super(ConfigurePrometheusMonitoringTemporaryInstance, self).do()
 
 
 class RestoreMasterInstanceFromDatabaseStop(DatabaseStep):

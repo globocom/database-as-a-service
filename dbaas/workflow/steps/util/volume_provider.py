@@ -78,6 +78,7 @@ class VolumeProviderBase(BaseInstanceStep):
         self._credential = None
         self.host_prov_client = HostProviderClient(self.environment)
         self._host_vm = None
+        self.base_snapshot = None
 
     @property
     def driver(self):
@@ -297,17 +298,46 @@ class VolumeProviderBase(BaseInstanceStep):
             url += '?persist=1'
 
         LOG.info('Calling create snapshot URL: %s' % url)
-
         data = {
             "engine": self.engine.name,
             "db_name": self.database_name,
             "team_name": self.team_name
         }
         response = post(url, json=data, headers=self.headers)
+        LOG.info('Old snapshot create status code: {}'.format(response.status_code))
 
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
+
+    def new_take_snapshot(self, persist=0):
+        url = "{}gcp/snapshot/{}".format(self.base_uri, self.volume.identifier)
+        if persist != 0:
+            url += '?persist=1'
+
+        LOG.info('Calling create snapshot URL: %s' % url)
+        data = {
+            "engine": self.engine.name,
+            "db_name": self.database_name,
+            "team_name": self.team_name
+        }
+        response = post(url, json=data, headers=self.headers)
+        LOG.info('New snapshot create status code: {}'.format(response.status_code))
+
+        if not response.ok:
+            return response, response.content
+        return response, response.json()
+
+    def take_snapshot_status(self, identifier):
+        url = "{}snapshot/{}/state".format(self.base_uri, identifier)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
+        response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'. format(response.status_code))
+
+        if not response.ok:
+            raise Exception(response.content, response)
+        return response, response.json()
 
     def delete_snapshot(self, snapshot, force):
         self.force_environment = snapshot.environment
@@ -372,13 +402,15 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def get_snapshot_state(self, snapshot):
-        url = "{}snapshot/{}/state".format(
-            self.base_uri, snapshot.snapshopt_id
-        )
+        url = "{}snapshot/{}/state".format(self.base_uri, snapshot.snapshopt_id)
+
+        LOG.info('Calling to check snapshot status. URL: %s' % url)
         response = get(url, headers=self.headers)
+        LOG.info('Snapshot status status_code: {}'.format(response.status_code))
+
         if not response.ok:
             raise VolumeProviderGetSnapshotState(response.content, response)
-        return response.json()['state']
+        return response, response.json()
 
     def _get_command(self, url, payload, exception_class):
         response = get(url, json=payload, headers=self.headers)
@@ -653,6 +685,8 @@ class NewVolume(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         elif self.host_migrate:
             snapshot = self.host_migrate.snapshot
+        elif self.base_snapshot is not None:
+            snapshot = self.base_snapshot
 
         self.create_volume(
             self.infra.name,
@@ -687,6 +721,15 @@ class DestroyVolume(NewVolume):
 
     def undo(self):
         return
+    
+
+class DestroyVolumeTemporaryInstance(DestroyVolume):
+
+    def do(self):
+        if not self.instance.temporary:
+            return
+        
+        return super(DestroyVolumeTemporaryInstance, self).do()
 
 
 class DestroyFirstVolume(NewVolume):
@@ -734,6 +777,48 @@ class NewVolumeFromMaster(NewVolume):
     @property
     def restore_snapshot_from_master(self):
         return True
+    
+
+class NewVolumeFromSnapshot(NewVolume):
+    def __unicode__(self):
+        return 'New Volume from last Snapshot...'
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    @property
+    def provider_class(self):
+        return NewVolumeFromSnapshot
+
+    def get_base_snapshot(self):  # busca a ultima snapshot válida criada
+        hosts = self.infra.hosts
+        volumes = []
+
+        for host in hosts:
+            volumes.extend(host.volumes.all())
+
+        snapshots = []
+
+        for volume in volumes:
+            snapshots.extend(volume.backups.all())
+
+        base_snapshot = None
+        for snapshot in snapshots:
+            if (base_snapshot is None or snapshot.created_at > base_snapshot.created_at) and \
+                    snapshot.end_at is not None and snapshot.purge_at is None:
+                base_snapshot = snapshot
+
+        if base_snapshot is None:
+            raise AssertionError('Nao foi encontrada nenhuma Snapshot para criacao do novo Volume!')
+
+        return base_snapshot
+
+    def do(self):
+        if self.is_valid:
+            self.base_snapshot = self.get_base_snapshot()
+            LOG.debug("New Volume usara Snapshot: %s", self.base_snapshot)
+            super(NewVolumeFromSnapshot, self).do()
 
 
 class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
@@ -843,6 +928,19 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+class MountDataVolumeTemporaryInstance(MountDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(MountDataVolumeTemporaryInstance, self).is_valid
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        super(MountDataVolumeTemporaryInstance, self).do()
 
 
 class MountDataVolumeUpgradeDiskType(MountDataVolume):
@@ -1096,6 +1194,74 @@ class UmountDataVolumeMigrate(MountDataVolumeMigrate):
 
     def undo(self):
         return super(UmountDataVolumeMigrate, self).do()
+
+
+class TakeSnapshotForSecondaryOrReadOnly(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Taking Snapshot for Secondary or ReadOnly Host..."
+
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+
+    @property
+    def provider_class(self):
+        return VolumeProviderBase
+
+    def instance_for_backup(self):
+        read_only_instance = self.database.infra.instances.filter(read_only=True).first()
+        if read_only_instance:
+            return read_only_instance
+
+        instances = self.database.infra.instances.all()
+        driver = instances[0].databaseinfra.get_driver()
+
+        for instance in instances:
+            if not driver.check_instance_is_master(instance):
+                return instance
+
+        raise Exception("Nao foi encontrada instance secundaria ou ReadOnly")
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        from backup.tasks import make_instance_snapshot_backup
+        from backup.models import BackupGroup
+
+        group = BackupGroup()
+        group.save()
+
+        instance = self.instance_for_backup()
+        LOG.debug("Instance for backup: %s", instance)
+
+        snapshot = make_instance_snapshot_backup(
+            instance,
+            {},
+            group,
+            provider_class=self.provider_class,
+            target_volume=None
+        )
+
+        if not snapshot:
+            raise VolumeProviderSnapshotNotFoundError(
+                'Backup was unsuccessful in {}'.format(self.instance)
+            )
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if snapshot.has_warning:
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
+
+        if snapshot.was_error:
+            error = 'Backup was unsuccessful.'
+            if snapshot.error:
+                error = '{} Error: {}'.format(error, snapshot.error)
+                raise VolumeProviderSnapshotHasErrorStatus(error)
 
 
 class TakeSnapshotMigrate(VolumeProviderBase):
@@ -2034,6 +2200,7 @@ class TakeSnapshotOldDisk(TakeSnapshot):
 
 
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
+    #TODO: colocar estas variáveis no .env OU no Configuration
     ATTEMPTS = 60
     DELAY = 5
 
@@ -2050,8 +2217,8 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
 
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
-            snapshot_state = self.get_snapshot_state(snapshot)
-            if snapshot_state == state:
+            response, snapshot_state = self.get_snapshot_state(snapshot)
+            if snapshot_state['snapshot_status'] == state:
                 return True
             sleep(self.DELAY)
         raise EnvironmentError("Snapshot {} is {} should be {}".format(
@@ -2068,8 +2235,11 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def do(self):
         if not self.is_valid:
             return
+        # Solucao de contorno para resolver recreate slave DCCM
+        if self.environment.name == 'prod':
+            return
 
-        self.waiting_be('available', self.snapshot)
+        self.waiting_be('READY', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):
@@ -2199,6 +2369,13 @@ class DetachDataVolume(VolumeProviderBase):
         if hasattr(self, 'host_migrate'):
             AttachDataVolume(self.instance).do()
             MountDataVolume(self.instance).do()
+
+    
+class DetachDataVolumeTemporaryInstance(DetachDataVolume):
+
+    @property
+    def is_valid(self):
+        return self.instance.is_database and self.instance.temporary
 
 
 class DetachFirstVolume(VolumeProviderBase):
@@ -2333,6 +2510,20 @@ class AttachDataVolume(VolumeProviderBase):
         if not self.is_valid:
             return
         self.detach_disk(self.volume)
+
+
+class AttachDataVolumeTemporaryInstance(AttachDataVolume):
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(AttachDataVolumeTemporaryInstance, self).is_valid
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        super(AttachDataVolumeTemporaryInstance, self).do()
 
 
 class AttachDataVolumeUpgradeDiskType(VolumeProviderBase):

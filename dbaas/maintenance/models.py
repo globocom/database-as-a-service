@@ -1336,6 +1336,60 @@ class DatabaseSetSSLNotRequired(DatabaseMaintenanceTask):
 
     def __unicode__(self):
         return "{} set SSL Not Required".format(self.database.name)
+    
+
+class DatabaseAutoUpgradeVMOffering(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="autoupgrades"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="database_autoupgrades"
+    )
+    source_offer = models.ForeignKey(
+        Offering, null=True, blank=True, verbose_name='Source Offering',
+        unique=False, related_name="database_autoupgrades_source",
+        on_delete=models.SET_NULL
+    )
+    target_offer = models.ForeignKey(
+        Offering, null=True, blank=True, verbose_name='Target Offering',
+        unique=False, related_name="database_autoupgrades_target",
+        on_delete=models.SET_NULL
+    )
+    resize_target = models.CharField(
+        verbose_name='Resize Target', 
+        max_length=10, default='cpu'
+    )
+
+    number_of_instances = models.PositiveIntegerField(
+        verbose_name="Number of Instances", null=False, unique=False, default=1
+    )
+    number_of_instances_before = models.PositiveIntegerField(
+        verbose_name="Number of Instances Before", null=True, unique=False, default=3
+    )
+
+    base_snapshot = models.ForeignKey(
+        Snapshot, verbose_name='Base Snapshot', 
+        null=True, related_name='database_autoupgrades',
+        default=None)
+
+    def __unicode__(self):
+        return "Auto Upgrading VM Offering for database: {}".format(self.database)
+    
+
+class DatabaseConfigureDBParams(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="configuredbparams"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="configuredbparams"
+    )
+
+    def __unicode__(self):
+        return "Configuring DB Parameters for database: {}".format(self.database)
 
 
 simple_audit.register(Maintenance)
@@ -1353,6 +1407,8 @@ simple_audit.register(RestartDatabase)
 simple_audit.register(DatabaseChangePersistence)
 simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
+simple_audit.register(DatabaseAutoUpgradeVMOffering)
+simple_audit.register(DatabaseConfigureDBParams)
 
 
 #########################################################

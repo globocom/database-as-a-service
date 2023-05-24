@@ -70,7 +70,7 @@
             */
             migrate_database: function(database_id, new_environment_id, new_offering_id, hosts_zones) {
                 var self = this;
-                if (new_offering_id===0 && hosts_zones===0) {
+                if (new_offering_id===0) {
                     $.ajax({
                         "url": "/admin/logical/database/" + database_id + "/migrate/",
                         "type": "POST",
@@ -78,6 +78,7 @@
                             "database_id": database_id,
                             "new_environment_region": new_environment_id,
                             "is_region_migrate": true,
+                            "hosts_zones": JSON.stringify(hosts_zones)
                         },
                     }).complete(function() {
                         location.reload();

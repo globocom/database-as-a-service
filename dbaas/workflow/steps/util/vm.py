@@ -42,13 +42,31 @@ class VmStep(BaseInstanceStep):
 
 class WaitingBeReady(VmStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Waiting for VM be ready..."
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         host_ready = self.host.ssh.check(wait=5, interval=10)
         if not host_ready:
             raise EnvironmentError('VM is not ready')
+
+
+class WaitingBeReadyTemporaryInstance(WaitingBeReady):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(WaitingBeReadyTemporaryInstance, self).do()
 
 
 class WaitingBeReadyRollback(WaitingBeReady):
@@ -70,6 +88,17 @@ class UpdateOSDescription(VmStep):
 
     def do(self):
         self.host.update_os_description()
+
+
+class UpdateOSDescriptionTemporaryInstance(UpdateOSDescription):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if self.is_valid:
+            super(UpdateOSDescriptionTemporaryInstance, self).do()
 
 
 class ChangeMaster(VmStep):
@@ -117,6 +146,72 @@ class ChangeMaster(VmStep):
                 return
             try:
                 self.driver.check_replication_and_switch(self.target_instance)
+            except Exception as e:
+                error = e
+                sleep(CHANGE_MASTER_SECONDS)
+            else:
+                return
+
+        raise error
+    
+
+class ChangeMasterTemporaryInstance(ChangeMaster):
+
+    @property
+    def is_valid(self):
+        if self.instance.temporary or self.check_master_is_temporary():
+            return False
+        return super(ChangeMasterTemporaryInstance, self).is_valid
+
+    def check_master_is_temporary(self):
+        master = self.driver.get_master_instance()
+        if master.temporary:
+            return True
+        return False
+
+    def change_master(self):
+        error = None
+
+        for _ in range(CHANGE_MASTER_ATTEMPS):
+            if self.is_slave:
+                return
+            try:
+                self.driver.check_replication_and_switch(self.target_instance)
+                if not self.check_master_is_temporary():
+                    raise Exception('Master is not the temporary instance')
+            except Exception as e:
+                error = e
+                sleep(CHANGE_MASTER_SECONDS)
+            else:
+                return
+
+        raise error
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.change_master()
+
+
+class ChangeMasterNotTemporaryInstance(ChangeMasterTemporaryInstance):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(ChangeMasterTemporaryInstance, self).is_valid
+    
+    def change_master(self):
+        error = None
+
+        for _ in range(CHANGE_MASTER_ATTEMPS):
+            if self.is_slave:
+                return
+            try:
+                self.driver.check_replication_and_switch(self.target_instance)
+                if self.check_master_is_temporary():
+                    raise Exception('Master is the temporary instance')
             except Exception as e:
                 error = e
                 sleep(CHANGE_MASTER_SECONDS)

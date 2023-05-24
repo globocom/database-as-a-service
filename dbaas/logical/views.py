@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from django.core import serializers
 from workflow.steps.util.base import HostProviderClient
 
 from dbaas_credentials.models import CredentialType
@@ -692,6 +693,17 @@ class DatabaseParameters(TemplateView):
         self.context['form_status'] = self.form_status
         self.context['last_change_parameters'] = last_change_parameters
 
+        user_teams = self.request.user.team_set.all()
+        teams_names = []
+        for team in user_teams:
+            teams_names.append(team.name)
+
+        show_auto_configure_btn = False
+        if self.request.user.is_superuser or 'dbaas' in teams_names:
+            show_auto_configure_btn = True
+
+        self.context['show_auto_configure_btn'] = show_auto_configure_btn
+
         return self.context
 
     def post(self, request, *args, **kwargs):
@@ -1116,6 +1128,17 @@ def database_resizes(request, context, database):
             break
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
+
+    user_teams = request.user.team_set.all()
+    teams_names = []
+    for team in user_teams:
+        teams_names.append(team.name)
+
+    show_resize_btns = False
+    if request.user.is_superuser or 'dbaas' in teams_names:
+        show_resize_btns = True
+
+    context['show_resize_btns'] = show_resize_btns
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
@@ -2302,33 +2325,31 @@ def database_migrate(request, context, database):
             hp = Provider(database.infra.instances.first(), environment)
             hp_zones = sorted(hp.list_zones())
 
-            if len(hp_zones) > 0:
-                zone = hp_zones[0]['name']
-
-            instances = database.infra.instances.all().order_by('shard', 'id')
-            for instance in instances:
-                host_id = instance.hostname.id
-                break
-
-            if environment not in current_offering.environments.all():
-                messages.add_message(
-                    request, messages.ERROR, "There is no offering {} to {} environment".format(current_offering, environment)
-                )
-                return
+            hp_zones_list = []
+            for hp_zone in hp_zones:
+                hp_zones_list.append(hp_zone.get('name'))
 
             hosts_zones = OrderedDict()
-            host = get_object_or_404(Host, pk=host_id)
-            hosts_zones[host] = zone
+            data = json.loads(request.POST.get('hosts_zones'))
+            for host_id, zone in data.items():
+                if zone not in hp_zones_list and database.infra.migration_stage == database.infra.NOT_STARTED:
+                    error = "Zone {} isn't available in {} environment".format(zone, environment)
+                    messages.add_message(request, messages.ERROR, error)
+                    return
 
-            if not database.infra.migration_stage == database.infra.NOT_STARTED:
-                error = "Zone {} isn't available in {} environment".format(zone, environment)
-                messages.add_message(request, messages.ERROR, error)
-                return
+                host = get_object_or_404(Host, pk=host_id)
+                hosts_zones[host] = zone
+                if environment not in current_offering.environments.all():
+                    messages.add_message(
+                        request, messages.ERROR,
+                        "There is no offering {} to {} environment".format(current_offering, environment)
+                    )
+                    return
 
-            if hosts_zones and 'gcp' in environment.name:
-                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones, flag_region)
-            else:
+            if not hosts_zones and not ('gcp' in environment.name):
                 messages.add_message(request, messages.ERROR, "There is no host to migrate")
+            else:
+                TaskRegister.region_migrate(database, environment, current_offering, request.user, hosts_zones, flag_region)
         return
 
     hosts = set()
@@ -2725,3 +2746,36 @@ def check_offering_sizes(request):
                                 'cpus': cpus,
                                 'memory': memory})
     return HttpResponse(response_json, content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def resize_vm_from_btn(request, database_id, resize_target):    
+    database = get_object_or_404(Database, pk=database_id)
+    user = request.user
+    from notification.tasks import TaskRegister
+
+    LOG.info("Starting database auto upgrade: database {}, user: {}".format(database, user))
+
+    TaskRegister.auto_upgrade_database_vm_offering(
+        database=database, user=user, resize_target=resize_target
+    )
+
+    return HttpResponse(json.dumps({}), content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def auto_configure_db_params_btn(request, database_id):
+    database = get_object_or_404(Database, pk=database_id)
+    user = request.user
+
+    from notification.tasks import TaskRegister
+
+    LOG.info("Starting auto configure DB Params: database {}, user: {}".format(database, user))
+
+    TaskRegister.configure_db_params(
+        database=database, user=user
+    )
+
+    return HttpResponse(json.dumps({}), content_type="application/json")

@@ -136,7 +136,7 @@ class DisableMonitors(ZabbixStep):
     def do(self):
         hostname = self.instance.dns
         if 'redis_sentinel' in self.infra.get_driver().topology_name():
-            if 'redis' in hostname:
+            if 'sentinel' in hostname:
                 self.disable_monitors()
         else:
             self.disable_monitors()
@@ -155,7 +155,7 @@ class EnableMonitors(ZabbixStep):
     def do(self):
         hostname = self.instance.dns
         if 'redis_sentinel' in self.infra.get_driver().topology_name():
-            if 'redis' in hostname:
+            if 'sentinel' in hostname:
                 self.enable_monitors()
         else:
             self.enable_monitors()
@@ -176,6 +176,19 @@ class DestroyAlarms(ZabbixStep):
         for host in self.hosts_in_zabbix:
             if self.zabbix_provider.get_host_triggers(host):
                 self.zabbix_provider.delete_instance_monitors(host)
+
+
+class DestroyAlarmsTemporaryInstance(DestroyAlarms):
+    
+    @property
+    def is_valid(self):
+        return self.instance.temporary
+    
+    def do(self):
+        if not self.is_valid:
+            return
+        
+        return super(DestroyAlarmsTemporaryInstance, self).do()
 
 
 class CreateAlarms(ZabbixStep):
@@ -200,6 +213,15 @@ class CreateAlarms(ZabbixStep):
 
     def undo(self):
         DestroyAlarms(self.instance).do()
+
+
+class CreateAlarmsTemporaryInstance(CreateAlarms):
+
+    @property
+    def is_valid(self):
+        if not self.instance.temporary:
+            return False
+        return super(CreateAlarmsTemporaryInstance, self).is_valid
 
 
 class CreateAlarmsDatabaseMigrateBase(ZabbixStep):
@@ -302,13 +324,21 @@ class CreateAlarmsForMigrateEngine(CreateAlarms):
 
 class DisableAlarms(ZabbixStep):
 
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
     def __unicode__(self):
         return "Disabling Zabbix alarms..."
 
     def do(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.disable_alarms()
 
     def undo(self):
+        if not self.is_valid:
+            return
         self.zabbix_provider.enable_alarms()
 
 
@@ -316,8 +346,15 @@ class EnableAlarms(ZabbixStep):
 
     def __unicode__(self):
         return "Enabling Zabbix alarms..."
+    
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
     def do(self):
+        if not self.is_valid:
+            return
+        
         self.zabbix_provider.enable_alarms()
 
     def undo(self):

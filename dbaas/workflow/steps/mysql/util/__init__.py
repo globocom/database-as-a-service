@@ -64,6 +64,13 @@ def build_remove_deprecated_files_script():
     """
 
 
+def build_update_kernel_params_script():
+    # by updating only fs.file-max, the fs.file-nr is also updated by the OS
+    return """
+        sysctl -w fs.file-max=67677
+    """
+
+
 def get_client(instance):
     databaseinfra = instance.databaseinfra
     driver = databaseinfra.get_driver()
