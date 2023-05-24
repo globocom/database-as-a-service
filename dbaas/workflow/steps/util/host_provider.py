@@ -252,6 +252,73 @@ class Provider(BaseInstanceStep):
         host.save()
         return host
 
+    def create_host_with_environment_tag_to_foxha(self, infra, offering, name, team_name, zone=None,
+                                                  database_name='', host_obj=None, port=None,
+                                                  volume_name=None, init_user=None, init_password=None,
+                                                  static_ip=None):
+        url = "{}/{}/{}/host/new".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+
+        data = {
+            "engine": self.engine,
+            "name": name,
+            "cpu": offering.cpus,
+            "memory": offering.memory_size_mb,
+            "group": infra.name,
+            "team_name": team_name,
+            "database_name": database_name,
+            "static_ip_id": static_ip and static_ip.identifier,
+            "service_account": self.infra_service_account
+        }
+        if zone:
+            data['zone'] = zone
+        if port:
+            data['port'] = port
+        if volume_name:
+            data['volume_name'] = volume_name
+        if init_user:
+            data['init_user'] = init_user
+        if init_password:
+            data['init_password'] = init_password
+
+        dev = ['dev-gcp-hdg-us-east1', 'dev-gcp-hdg-sa-east1', 'dev-gcp-hdg-us-central1',
+               'dev-gcp-tsuru-us-east1', 'dev-gcp-tsuru-sa-east1', 'dev-gcp-tsuru-us-central1',
+               'gcp-lab-dev']
+        devqa = ['dbaas-devqa-gcp-us-east1x']
+        prod = ['prod-gcp-hdg-us-east1', 'prod-gcp-hdg-sa-east-1', 'prod-gcp-hdg-us-central1',
+                'prod-gcp-tsuru-us-east1', 'prod-gcp-tsuru-sa-east1', 'prod-gcp-tsuru-us-central1',
+                'gcp-lab-prod']
+        tag = ''
+        env = infra.environment.name
+        if env in dev:
+            tag = 'dbaas-nodes-dev'
+        elif env in devqa:
+            tag = 'dbaas-nodes-devqa'
+        elif env in prod:
+            tag = 'dbaas-nodes-prod'
+        data['environment_tag'] = tag
+
+        response = self._request(post, url, json=data, timeout=900)
+        if response.status_code != 201:
+            raise HostProviderCreateVMException(response.content, response)
+
+        content = response.json()
+        if host_obj is None:
+            host = Host()
+            host.hostname = content["address"]
+        else:
+            host = host_obj
+        host.address = content["address"]
+        host.user = self.vm_credential.user
+        host.password = self.vm_credential.password
+        host.private_key = self.vm_credential.private_key
+        host.provider = self.provider
+        host.identifier = content["id"]
+        host.offering = offering
+        host.save()
+        return host
+
     def create_static_ip(self, infra):
         url = "{}/{}/{}/ip/".format(
             self.credential.endpoint, self.provider, self.environment
@@ -516,7 +583,7 @@ class Stop(HostProviderStep):
 
     def __unicode__(self):
         return "Stopping VM..."
-    
+
     @property
     def is_valid(self):
         return not self.instance.temporary
@@ -524,7 +591,7 @@ class Stop(HostProviderStep):
     def do(self):
         if not self.is_valid:
             return
-        
+
         stopped = self.provider.stop()
         if not stopped:
             raise EnvironmentError("Could not stop VM")
@@ -552,7 +619,7 @@ class Start(HostProviderStep):
     def do(self):
         if not self.is_valid:
             return
-        
+
         started = self.provider.start()
         if not started:
             raise EnvironmentError("Could not start VM")
@@ -627,7 +694,7 @@ class ChangeOffering(HostProviderStep):
     def do(self):
         if not self.is_valid:
             return
-        
+
         success = self.provider.new_offering(self.target_offering)
         if not success:
             raise Exception("Could not change offering")
@@ -751,6 +818,52 @@ class CreateVirtualMachine(HostProviderStep):
             host.delete()
 
 
+class CreateMySqlFoxVirtualMachineWithEnvTag(CreateVirtualMachine):
+
+    def __unicode__(self):
+        return "Creating Mysql Fox virtual machine..."
+
+    def do(self):
+        task_manager = self.create or self.destroy
+        if hasattr(self, 'step_manager') and task_manager is None:
+            task_manager = self.step_manager
+        try:
+            pair = self.infra.instances.get(dns=self.instance.dns)
+        except Instance.DoesNotExist:
+            host = self.provider.create_host_with_environment_tag_to_foxha(
+                self.infra, self.offering, self.vm_name, self.team, self.zone,
+                database_name=(self.database.name if self.database
+                               else task_manager.name),
+                static_ip=self.instance.static_ip
+            )
+            self.update_databaseinfra_last_vm_created()
+        else:
+            host = pair.hostname
+
+        self.create_instance(host)
+        self.associate_static_ip_with_instance()
+
+    def undo(self):
+        try:
+            host = self.instance.hostname
+        except ObjectDoesNotExist:
+            self.delete_instance()
+            return
+
+        try:
+            self.provider.destroy_host(self.host)
+        except HostProviderDestroyVMException as e:
+            content, response = e
+            if response.status_code == 404:
+                LOG.warning('Host {} not found in host-provider'.format(self.host))
+            else:
+                raise e
+
+        self.delete_instance()
+        if host.id:
+            host.delete()
+
+
 class DestroyVirtualMachineTemporaryInstance(CreateVirtualMachine):
 
     def __unicode__(self):
@@ -759,16 +872,16 @@ class DestroyVirtualMachineTemporaryInstance(CreateVirtualMachine):
     @property
     def is_valid(self):
         return self.instance.temporary
-    
+
     def do(self):
         if not self.is_valid:
             return
-        
+
         return super(DestroyVirtualMachineTemporaryInstance, self).undo()
 
 
 class CreateVirtualMachineTemporaryInstance(CreateVirtualMachine):
-    
+
     @property
     def is_valid(self):
         return self.instance.temporary
@@ -782,7 +895,7 @@ class CreateVirtualMachineTemporaryInstance(CreateVirtualMachine):
     def do(self):
         if self.is_valid:
             super(CreateVirtualMachineTemporaryInstance, self).do()
-    
+
     def undo(self):
         if self.is_valid:
             super(CreateVirtualMachineTemporaryInstance, self).undo()
@@ -804,18 +917,19 @@ class AllocateIP(HostProviderStep):
 
 
 class AllocateIPTemporaryInstance(AllocateIP):
-    
+
     @property
     def is_valid(self):
         return self.instance.temporary
-    
+
     def do(self):
         if self.is_valid:
             super(AllocateIPTemporaryInstance, self).do()
-    
+
     def undo(self):
         if self.is_valid:
             super(AllocateIPTemporaryInstance, self).undo()
+
 
 class AllocateIPRegionMigrate(HostProviderStep):
 
@@ -1020,7 +1134,6 @@ class UpdateHostRootVolumeSize(HostProviderStep):
 
 
 class WaitingBeReady(HostProviderStep):
-
     RETRIES = 30
 
     def __unicode__(self):
@@ -1192,21 +1305,21 @@ class DestroyIPMigrate(AllocateIP):
 
     def undo(self):
         raise NotImplementedError
-    
+
 
 class DestroyIPTemporaryInstance(DestroyIPMigrate):
 
     def __unicode__(self):
         return "Destroy IP..."
-    
+
     @property
     def is_valid(self):
         return self.instance.temporary
-    
+
     def do(self):
         if not self.is_valid:
             return
-        
+
         return super(DestroyIPTemporaryInstance, self).do()
 
 
@@ -1221,7 +1334,7 @@ class DestroyServiceAccountMigrate(CreateServiceAccount):
 
     def do(self):
         pass
-        #super(DestroyServiceAccountMigrate, self).undo()
+        # super(DestroyServiceAccountMigrate, self).undo()
 
     def undo(self):
         raise NotImplementedError
