@@ -219,13 +219,13 @@ class MongoDB(BaseDriver):
         sleep(mongodb_waiting_lock)
 
     def lock_database_ssh(self, instance, client):
-        mongodb_waiting_lock = Configuration.get_by_name_as_int(
-            'mongodb_waiting_lock', default=0
-        )
-
+        mongodb_waiting_lock = Configuration.get_by_name_as_int('mongodb_waiting_lock', default=0)
         ip = instance.address
-        # TODO get username and password from infra or plan
-        command = '/usr/local/mongodb/bin/mongo {}/admin -u user -p password --eval "db.fsyncLock();"'.format(ip)
+        infra = instance.databaseinfra
+
+        command = '/usr/local/mongodb/bin/mongo {}/admin -u {} -p {} --eval "db.fsyncLock();"'.format(
+            ip, infra.user, infra.password
+        )
 
         instance.hostname.ssh.run_script(script=command)
 
@@ -240,9 +240,11 @@ class MongoDB(BaseDriver):
 
     def unlock_database_ssh(self, instance, client):
         ip = instance.address
+        infra = instance.databaseinfra
 
-        # TODO get username and password from infra or plan
-        command = '/usr/local/mongodb/bin/mongo {}/admin -u user -p password --eval "db.fsyncUnlock();"'.format(ip)
+        command = '/usr/local/mongodb/bin/mongo {}/admin -u {} -p {} --eval "db.fsyncUnlock();"'.format(
+            ip, infra.user, infra.password
+        )
 
         instance.hostname.ssh.run_script(script=command)
 
