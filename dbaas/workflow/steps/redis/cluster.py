@@ -12,10 +12,13 @@ class BaseClusterStep(PlanStep):
         self._instances_even = None
         self.REDIS4 = 1
         self.REDIS5 = 2
+        self.REDIS6 = 3
         if self.engine.major_version < 5:
             self.current_redis = self.REDIS4
-        else:
+        elif self.engine.major_version == 5:
             self.current_redis = self.REDIS5
+        elif self.engine.major_version == 6:
+            self.current_redis = self.REDIS6
 
     @property
     def instances_odd(self):
@@ -55,6 +58,8 @@ class BaseClusterStep(PlanStep):
             return Configuration.get_by_name('redis_trib_path')
         elif self.current_redis == self.REDIS5:
             return '/usr/local/redis/src/redis-cli'
+        elif self.current_redis == self.REDIS6:
+            return '/usr/bin/redis-cli'
 
     @property
     def cluster_create_command(self):
@@ -62,6 +67,8 @@ class BaseClusterStep(PlanStep):
             return 'yes yes | {{ CLUSTER_COMMAND }} create --password {{ PASSWORD }} --replicas {{ CLUSTER_REPLICAS }} {% for address in CLUSTER_ADDRESSES %} {{ address }} {% endfor %}'
         elif self.current_redis == self.REDIS5:
             return 'yes yes | {{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster create {% for address in CLUSTER_MASTER_ADDRESSES %} {{ address }} {% endfor %} --cluster-replicas 0'
+        elif self.current_redis == self.REDIS6:
+            return 'yes yes | {{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster create {% for address in CLUSTER_MASTER_ADDRESSES %} {{ address }} {% endfor %} --cluster-replicas 0 --no-auth-warning'
 
     @property
     def cluster_check_command(self):
@@ -69,10 +76,13 @@ class BaseClusterStep(PlanStep):
             return '{{ CLUSTER_COMMAND }} check --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
         elif self.current_redis == self.REDIS5:
             return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster check  {{ CLUSTER_ADDRESS }}'
+        elif self.current_redis == self.REDIS6:
+            return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster check {{ CLUSTER_ADDRESS }} --no-auth-warning'
+
 
     @property
     def cluster_info_command(self):
-        return '{{ CLUSTER_COMMAND }} info --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
+        return '{{ CLUSTER_COMMAND }} info --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} --no-auth-warning'
 
     @property
     def cluster_slave_node_command(self):
@@ -80,13 +90,16 @@ class BaseClusterStep(PlanStep):
             return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} --slave --master-id {{ MASTER_ID }} {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }}'
         elif self.current_redis == self.REDIS5:
             return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster add-node {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }} --cluster-slave --cluster-master-id {{ MASTER_ID }}'
+        elif self.current_redis == self.REDIS6:
+            return '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster add-node {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }} --cluster-slave --cluster-master-id {{ MASTER_ID }} --no-auth-warning'
+
 
     @property
     def cluster_del_node_command(self):
         if self.current_redis == self.REDIS4:
             del_command = '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}'
-        elif self.current_redis == self.REDIS5:
-            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} ;echo $?'
+        elif self.current_redis == self.REDIS5 or self.current_redis == self.REDIS6:
+            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} --no-auth-warning ;echo $?'
         commands = [
             del_command,
             'rm -f /data/data/redis.aof',
@@ -100,8 +113,8 @@ class BaseClusterStep(PlanStep):
     def cluster_del_node_command_without_start(self):
         if self.current_redis == self.REDIS4:
             del_command = '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}'
-        elif self.current_redis == self.REDIS5:
-            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} ;echo $?'
+        elif self.current_redis == self.REDIS5 or self.current_redis == self.REDIS6:
+            del_command = '{{ CLUSTER_COMMAND }} -a {{ PASSWORD }} --cluster del-node {{ CLUSTER_ADDRESS }} {{ NODE_ID }} --no-auth-warning ;echo $?'
         commands = [
             del_command,
             'rm -f /data/data/redis.aof',
@@ -121,7 +134,6 @@ class BaseClusterStep(PlanStep):
             'CLUSTER_COMMAND': self.cluster_command,
             'PASSWORD': self.infra.password
         }
-
         variables.update(self.get_variables_specifics())
         return variables
 
@@ -129,7 +141,6 @@ class BaseClusterStep(PlanStep):
         response = str(response)
         if expected in response:
             return True
-
         raise AssertionError('"{}" not in {}'.format(expected, response))
 
 
@@ -166,8 +177,7 @@ class CreateCluster(BaseClusterStep):
         # self.run_script(self.cluster_create_command)
         self.run_script_host.ssh.run_script(
             self.make_script(
-                self.cluster_create_command,
-                script_variables=self.script_variables
+                self.cluster_create_command, script_variables=self.script_variables
             )
         )
 
@@ -186,16 +196,13 @@ class CheckClusterStatus(BaseClusterStep):
 
     def do(self):
         # output = self.run_script(self.cluster_check_command)
-
+        # if self.current_redis == self.REDIS6:
+        #     if self.instance not in self.instances_even:
+        #         return
         output = self.run_script_host.ssh.run_script(
-            self.make_script(
-                self.cluster_check_command,
-                script_variables=self.script_variables
-            )
+            self.make_script(self.cluster_check_command, script_variables=self.script_variables)
         )
-        self.check_response(
-            '[OK] All nodes agree about slots configuration.', output['stdout']
-        )
+        self.check_response('[OK] All nodes agree about slots configuration.', output['stdout'])
         self.check_response('[OK] All 16384 slots covered.', output['stdout'])
 
 
