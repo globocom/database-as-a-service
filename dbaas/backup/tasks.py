@@ -67,7 +67,7 @@ def mysql_binlog_save(client, instance):
 def lock_instance(driver, instance, client):
     try:
         LOG.debug('Locking instance {}'.format(instance))
-        driver.lock_database(client)
+        driver.lock_database_ssh(instance, client)
         LOG.debug('Instance {} is locked'.format(instance))
         return True
     except Exception as e:
@@ -78,7 +78,7 @@ def lock_instance(driver, instance, client):
 def unlock_instance(driver, instance, client):
     try:
         LOG.debug('Unlocking instance {}'.format(instance))
-        driver.unlock_database(client)
+        driver.unlock_database_ssh(instance, client)
         LOG.debug('Instance {} is unlocked'.format(instance))
         return True
     except Exception as e:
