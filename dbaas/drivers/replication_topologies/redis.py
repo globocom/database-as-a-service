@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 from base import BaseTopology, InstanceDeploy
 from physical.models import Instance
@@ -56,6 +57,9 @@ class BaseRedis(BaseTopology):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
+    
+    def get_configure_db_params_steps(self):
+        return []
 
 
 class RedisSingle(BaseRedis):
@@ -123,7 +127,7 @@ class RedisSingle(BaseRedis):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
@@ -494,7 +498,7 @@ class RedisSentinel(BaseRedis):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
@@ -803,14 +807,10 @@ class RedisCluster(BaseRedis):
             )}, {
             'Check ACL': (
                 'workflow.steps.util.acl.BindNewInstance',
-            )},
-            # {
-            # 'Creating monitoring and alarms': (
-            #     'workflow.steps.util.zabbix.CreateAlarms',
-            #     'workflow.steps.util.db_monitor.CreateInfraMonitoring',
-            # )},
-            {
+            )}, {
             'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring',
             )}, {
             'Create Extra DNS': (
@@ -822,7 +822,7 @@ class RedisCluster(BaseRedis):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_filer_migrate_steps(self):
         return [{

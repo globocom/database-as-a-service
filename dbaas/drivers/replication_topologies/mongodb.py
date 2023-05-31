@@ -179,6 +179,9 @@ class BaseMongoDB(BaseTopology):
             'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
             'workflow.steps.util.ssl.UpdateExpireAtDate',
         )
+    
+    def get_configure_db_params_steps(self):
+        return []
 
 
 class MongoDBSingle(BaseMongoDB):
@@ -285,7 +288,7 @@ class MongoDBSingle(BaseMongoDB):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )}
-        ]
+        ] + self.get_configure_db_params_steps()
 
     def get_host_migrate_steps(self):
         return [{
@@ -748,7 +751,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
@@ -915,16 +918,19 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
-        }]
+        }] + self.get_configure_db_params_steps()
     
     def get_auto_upgrade_database_vm_offering(self):
         return [{
+            'Take new Snapshot': (
+                'workflow.steps.util.volume_provider.TakeSnapshotForSecondaryOrReadOnly',
+            )}, {
             'Create new VM': (
                 'workflow.steps.util.infra.OfferingAutoUpgrade',
                 'workflow.steps.util.host_provider.AllocateIPTemporaryInstance',
                 'workflow.steps.util.host_provider.CreateVirtualMachineTemporaryInstance',
-                # 'workflow.steps.util.dns.CreateDNS',
-                # 'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.dns.CreateDNSTemporaryInstance',
+                'workflow.steps.util.dns.CheckIsReadyTemporaryInstance',
                 'workflow.steps.util.vm.WaitingBeReadyTemporaryInstance',
                 'workflow.steps.util.vm.UpdateOSDescriptionTemporaryInstance',
             )}, {
@@ -987,7 +993,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartSlave',
                 'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.database.WaitForReplicationSpecificInstance',
                 'workflow.steps.util.infra.Offering',
                 'workflow.steps.util.vm.InstanceIsSlave',
                 'workflow.steps.util.zabbix.EnableAlarms',
@@ -1006,11 +1012,11 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.DetachDataVolumeTemporaryInstance',
                 'workflow.steps.util.volume_provider.DestroyVolumeTemporaryInstance',
 
-                # 'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
+                'workflow.steps.util.dns.DestroyDNSTemporaryInstance',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineTemporaryInstance',
                 'workflow.steps.util.host_provider.DestroyIPTemporaryInstance',
             )}
-        ]
+        ] + self.get_configure_db_params_steps()
 
     def get_host_migrate_steps(self):
         return [{
@@ -1565,7 +1571,7 @@ class MongoDBSingleK8s(MongoDBSingle):
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
             # 'workflow.steps.util.zabbix.EnableAlarms',
-        )}]
+        )}] + self.get_configure_db_params_steps()
 
     def get_deploy_steps(self):
         return [{
@@ -1629,7 +1635,7 @@ class MongoDBSingleK8s(MongoDBSingle):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
 
 class MongoGenericGCE(object):
@@ -1663,7 +1669,10 @@ class MongoGenericGCE(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
-        }]
+        }] + self.get_configure_db_params_steps()
+    
+    def get_configure_db_params_steps(self):
+        return []
 
     def get_replica_migration_steps(self):
         return [{

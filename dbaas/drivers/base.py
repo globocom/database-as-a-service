@@ -214,8 +214,14 @@ class BaseDriver(object):
     def lock_database(self, client):
         raise NotImplementedError()
 
+    def lock_database_ssh(self, instance, client):
+        return self.lock_database(client)
+
     def unlock_database(self, client):
         raise NotImplementedError()
+
+    def unlock_database_ssh(self, instance, client):
+        return self.unlock_database(client)
 
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()
@@ -306,6 +312,11 @@ class BaseDriver(object):
             raise Exception("Master could not be detected")
 
         return instances
+
+    def get_temporary_instances(self):
+        instances = [instance if instance.temporary is True else None
+                     for instance in self.databaseinfra.instances.all()]
+        return filter(None, instances)
 
     def start_slave(self, instance):
         pass

@@ -136,7 +136,7 @@ class DisableMonitors(ZabbixStep):
     def do(self):
         hostname = self.instance.dns
         if 'redis_sentinel' in self.infra.get_driver().topology_name():
-            if 'redis' in hostname:
+            if 'sentinel' in hostname:
                 self.disable_monitors()
         else:
             self.disable_monitors()
@@ -155,7 +155,7 @@ class EnableMonitors(ZabbixStep):
     def do(self):
         hostname = self.instance.dns
         if 'redis_sentinel' in self.infra.get_driver().topology_name():
-            if 'redis' in hostname:
+            if 'sentinel' in hostname:
                 self.enable_monitors()
         else:
             self.enable_monitors()

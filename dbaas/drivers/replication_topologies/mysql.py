@@ -209,7 +209,7 @@ class MySQLSingle(BaseMysql):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
     
     def get_configure_db_params_steps(self):
         return [{
@@ -608,7 +608,7 @@ class MySQLFoxHA(MySQLSingle):
             'Save Snapshot': (
                 'workflow.steps.util.database.MakeSnapshot',
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_clone_steps(self):
         return [{
@@ -894,7 +894,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_reinstallvm_steps_final()
+        }] + self.get_reinstallvm_steps_final() + self.get_configure_db_params_steps()
 
     def get_upgrade_steps(self):
         return [{
@@ -1074,8 +1074,6 @@ class MySQLFoxHA(MySQLSingle):
             'Disable monitoring and alarms': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
-                'workflow.steps.util.ssl.UpdateExpireAtDateRollback',
-                'workflow.steps.util.ssl.BackupSSLFolder',
             ),
         }] + [{
             'Disable SSL': (
@@ -1083,13 +1081,23 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Configure SSL': (
-                'workflow.steps.util.ssl.UpdateSSLForInfra',
-                'workflow.steps.util.ssl.UpdateSSLForInstance',
+                'workflow.steps.util.ssl.UpdateExpireAtDateRollback',
+                'workflow.steps.util.ssl.MoveSSLFolder',
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
                 'workflow.steps.util.ssl.CreateCertificateInfra',
                 'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureLog',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
@@ -1098,7 +1106,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
-                'workflow.steps.util.ssl.RestoreSSLFolder4Rollback',
+                # 'workflow.steps.util.ssl.RestoreSSLFolder4Rollback',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
@@ -1112,6 +1120,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -1166,7 +1175,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
             )
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_base_host_migrate_steps(self):
         return (
@@ -2481,7 +2490,7 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.zabbix.EnableAlarms',
                 'workflow.steps.util.database.ConfigurePrometheusMonitoring'
                 )
-            }]
+            }] + self.get_configure_db_params_steps()
 
     def get_reinstallvm_steps(self):
         return [{
@@ -2519,4 +2528,4 @@ class MySQLFoxHAGCP(MySQLFoxHA):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_reinstallvm_steps_final()
+        }] + self.get_reinstallvm_steps_final() + self.get_configure_db_params_steps()

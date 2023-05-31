@@ -218,11 +218,35 @@ class MongoDB(BaseDriver):
         LOG.info('Wait {} seconds for mongodb sync'.format(mongodb_waiting_lock))
         sleep(mongodb_waiting_lock)
 
+    def lock_database_ssh(self, instance, client):
+        mongodb_waiting_lock = Configuration.get_by_name_as_int('mongodb_waiting_lock', default=0)
+        ip = instance.address
+        infra = instance.databaseinfra
+
+        command = '/usr/local/mongodb/bin/mongo {}/admin -u {} -p {} --eval "db.fsyncLock();"'.format(
+            ip, infra.user, infra.password
+        )
+
+        instance.hostname.ssh.run_script(script=command)
+
+        LOG.info('Wait {} seconds for mongodb sync'.format(mongodb_waiting_lock))
+        sleep(mongodb_waiting_lock)
+
     def unlock_database(self, client):
         """ This method unlocks a database instance for writing purposes.
         MongoDB is going to throw an exception when trying to unlock an already
         locked database. """
         client.unlock()
+
+    def unlock_database_ssh(self, instance, client):
+        ip = instance.address
+        infra = instance.databaseinfra
+
+        command = '/usr/local/mongodb/bin/mongo {}/admin -u {} -p {} --eval "db.fsyncUnlock();"'.format(
+            ip, infra.user, infra.password
+        )
+
+        instance.hostname.ssh.run_script(script=command)
 
     @contextmanager
     def pymongo(self, instance=None, database=None, default_timeout=False):

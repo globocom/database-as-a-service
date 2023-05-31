@@ -468,9 +468,32 @@ class WaitForReplicationTemporaryInstance(WaitForReplication):
     def is_valid(self):
         return self.instance.temporary
     
-    def do(self):
-        if self.is_valid:
-            super(WaitForReplicationTemporaryInstance, self).do()
+    def do(self):        
+        if not self.infra.plan.is_ha or not self.is_valid:
+            return
+
+        not_running = []
+        sleep(CHECK_SECONDS)
+        try:
+            if not self.check_replication_ok(self.instance):
+                not_running.append(self.instance)
+        except ReplicationNotRunningError:
+            not_running.append(self.instance)
+
+        for instance in not_running:
+            self.driver.stop_slave(instance)
+            sleep(CHECK_SECONDS)
+            self.driver.start_slave(instance)
+            sleep(CHECK_SECONDS)
+            if not self.check_replication_ok(instance):
+                raise ReplicationNotRunningError
+
+
+class WaitForReplicationSpecificInstance(WaitForReplicationTemporaryInstance):
+
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
 
 
 class CheckIsUp(DatabaseStep):

@@ -6,7 +6,8 @@
   <div class="panel-heading">
     <h3 class="panel-title">Custom Parameters</h3>
     {% if show_auto_configure_btn %}
-      <a href="{% url 'auto_configure_db_params_btn' database.id %}" target="_blank" class="btn btn-primary">AutoConfigure DB Params</a>
+      <a href="#" data-toggle="modal" id="autoconfig_btn" data-target="#autoconfig_params" target="_blank" class="btn btn-primary">AutoConfigure DB Params</a>
+      <em>* Atualiza somente o max_connections (MySQL) e não gera downtime!</em>
     {% endif %}
   </div>
 
@@ -165,6 +166,8 @@
       </div>
     </div>
   {% endif %}
+{% include "admin/confirmation_modal.html" with modal_id="autoconfig_params" confirmation_message="Are you sure you want to AutoConfigure database parameters now?" box_title="AutoConfigure Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_params_confirm" id_optional="id=id_autoconfig_params" %}
+
 {% endblock %}
 
 {% block js_footer %}
@@ -173,6 +176,7 @@
 <script src="{% static "assets/js/bignumber.min.js" %}"></script>
 <script src="{% static "js/parameters_validator.js" %}"></script>
 <script type="text/javascript">
+  var database_id = '{{ database.id }}';
 
   function resetDefault(checkbox_control, id)
   {
@@ -240,7 +244,30 @@
     });
     $("#id_change_parameter_yes").keyup();
 
+    running_update = false
+
   })
+
+  $("#id_autoconfig_params").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_autoconfig_params").attr('disabled','disabled');
+      url = "/logical/autoconfigure_db_params/"+ database_id;
+
+      jQuery.ajax({
+          "dataType": "json",
+          "url": url,
+          "type": "GET"
+      }).success(function() {
+        running_update = false;
+        window.location.reload();
+
+      }).error(function() {
+          alert("invalid server response")
+      });
+    });
 
 function check_static_parameter_changed()
 {
