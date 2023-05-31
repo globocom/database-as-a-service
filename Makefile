@@ -282,7 +282,6 @@ docker_deploy_gcp:
 	@echo "make docker_deploy_gcp TAG=v1.02 ENV=PROD"
 	make docker_deploy_build TAG=${TAG}
 	make docker_deploy_push TAG=${TAG}
-	make set_new_tag ENV=${ENV} TAG=${TAG}
 
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
