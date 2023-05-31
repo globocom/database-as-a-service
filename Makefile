@@ -1,3 +1,4 @@
+include .env
 
 .PHONY: default clean pip test run
 
@@ -17,6 +18,19 @@ export PROJECT_PATH=$(shell dirname $$PWD)
 
 default:
 	@awk -F\: '/^[a-z_]+:/ && !/default/ {printf "- %-20s %s\n", $$1, $$2}' Makefile
+
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
+check_defined = \
+    $(strip $(foreach 1,$1, \
+        $(call __check_defined,$1,$(strip $(value 2)))))
+__check_defined = \
+    $(if $(value $1),, \
+      $(error Undefined $1$(if $2, ($2))))
 
 
 clean: # remove temporary files
@@ -278,7 +292,7 @@ docker_deploy_build:
 	docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-app:${TAG} \
 		--label git-commit=$(git rev-parse --short HEAD) \
 		--build-arg build_info="$$INFO"  \
-		-f Dockerfile_gcp
+		-f Dockerfile.gcp
 
 docker_deploy_push:
 	@echo "tag usada:${TAG}"
@@ -316,4 +330,30 @@ docker_build:
 	DATE=$$(date +"%Y-%M-%d_%T"); \
 	INFO="date:$$DATE  branch:$$GIT_BRANCH  commit:$$GIT_COMMIT"; \
 	docker build -t dbaas/dbaas_app --label git-commit=$(git rev-parse --short HEAD) --build-arg build_info="$$INFO" . -f Dockerfile_gcp
+
+gcp_deploy_dev:
+	$(call check_defined, TAG, 'Precisa enviar a TAG=v1.x.x')
+	make docker_deploy_gcp ${TAG}
+	make set_new_tag TAG=${TAG} ENV=DEV
+	make gcp_deploy_dev_script
+
+gcp_deploy_dev_script:
+	./scripts/deploy_dev.sh
+
+# Mysql utilities
+gcp_mysql_dev_cli:
+	make set_env PROJECT_ENV=DEV; \
+	HOST=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_HOST"); \
+	USER=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_USER"); \
+	DB=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_NAME"); \
+	PASS=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_PASSWORD"); \
+	mysql -u$$USER -p$$PASS -h$$HOST
+
+gcp_mysql_dev_dump:
+	make set_env PROJECT_ENV=DEV; \
+	HOST=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_HOST"); \
+	USER=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_USER"); \
+	DB=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_NAME"); \
+	PASS=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_PASSWORD"); \
+	mysqldump -u$$USER -p$$PASS -h$$HOST -B $$DB --column-statistics=0 --verbose  > ./dbaas_dev_$(shell date +%Y-%m-%d-%H:%M:%S).sql
 

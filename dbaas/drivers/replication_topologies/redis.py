@@ -456,7 +456,7 @@ class RedisSentinel(BaseRedis):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.AttachDataVolumeWithUndo',
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfraSentinel',
+                'workflow.steps.util.plan.InitializationForNewInfraSentinel', #redis_initialization.sh
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureLogForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
