@@ -498,16 +498,18 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.host_provider.CreateMySqlFoxVirtualMachineWithEnvTag',
             )}, {
             'Creating VIP': (
-                'workflow.steps.util.vip_provider.CreateVip',
-                'workflow.steps.util.vip_provider.CreateInstanceGroup',
-                'workflow.steps.util.vip_provider.AddInstancesInGroup',
-                'workflow.steps.util.vip_provider.CreateHeathcheck',
-                'workflow.steps.util.vip_provider.CreateBackendService',
-                'workflow.steps.util.vip_provider.AllocateIP',
-                'workflow.steps.util.vip_provider.AllocateDNS',
-                'workflow.steps.util.vip_provider.CreateForwardingRule',
-                'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
-                'workflow.steps.util.dns.RegisterDNSVip',
+                # 'workflow.steps.util.vip_provider.CreateVip',
+                # 'workflow.steps.util.vip_provider.CreateInstanceGroup',
+                # 'workflow.steps.util.vip_provider.AddInstancesInGroup',
+                # 'workflow.steps.util.vip_provider.CreateHeathcheck',
+                # 'workflow.steps.util.vip_provider.CreateBackendService',
+                # 'workflow.steps.util.vip_provider.AllocateIP',
+                # 'workflow.steps.util.vip_provider.AllocateDNS',
+                # 'workflow.steps.util.vip_provider.CreateForwardingRule',
+                # 'workflow.steps.util.vip_provider.AddLoadBalanceLabels',
+                # 'workflow.steps.util.dns.RegisterDNSVip',
+                'workflow.steps.util.ingress_provider.AllocateProvider',
+                'workflow.steps.util.ingress_provider.RegisterDNSIngress',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
