@@ -78,6 +78,15 @@
     </div>
   </div>
   <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.can_do_autoupgrade %} checked="checked" {% endif %} id="id_can_do_autoupgrade" name="can_do_autoupgrade" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_can_do_autoupgrade">Allow AutoUpgrade of VM Offering</label></span>
+      </label>
+      <p class="help-block">Check this box if you'd like to allow this database to automatically upgrade its hosts CPU/RAM offer when the database is in distress.</p>
+    </div>
+  </div>
+  <div class="control-group">
     <div class="control-label"><label>Changes in Service Now:</label></div>
     <div class="controls">
       <table>

@@ -37,6 +37,10 @@ def create_maintenance(database, task, resize_target, retry_from):
 def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target=None):
     auto_upgrade_vm = None
     try:
+        # validate that the database can be auto_upgraded
+        if not database.can_do_autoupgrade:
+            raise RuntimeError("Database is set to not allow DBaaS to automatically upgrade its CPU/RAM Offer.")
+
         infra = database.infra
         driver = infra.get_driver()
 

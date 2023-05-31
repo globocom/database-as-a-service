@@ -1135,7 +1135,7 @@ def database_resizes(request, context, database):
         teams_names.append(team.name)
 
     show_resize_btns = False
-    if request.user.is_superuser or 'dbaas' in teams_names:
+    if (request.user.is_superuser or 'dbaas' in teams_names) and database.can_do_autoupgrade:
         show_resize_btns = True
 
     context['show_resize_btns'] = show_resize_btns
