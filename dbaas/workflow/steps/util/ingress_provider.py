@@ -1,12 +1,13 @@
-from requests import post, get
-from time import sleep
-from physical.models import Vip
-from dbaas_dnsapi.models import FOXHA
-from dbaas_credentials.models import CredentialType
-from dbaas_dnsapi.utils import add_dns_record
-from base import BaseInstanceStep
-from dbaas_dnsapi.provider import DNSAPIProvider
 import socket
+from time import sleep
+from requests import post, get
+from physical.models import Vip
+from base import BaseInstanceStep
+from util import get_credentials_for
+from dbaas_dnsapi.models import FOXHA
+from dbaas_dnsapi.utils import add_dns_record
+from dbaas_dnsapi.provider import DNSAPIProvider
+from dbaas_credentials.models import CredentialType
 
 
 class IngressProvider(object):
@@ -14,7 +15,7 @@ class IngressProvider(object):
     def __init__(self, instance):
         self.instance = instance
         self._team = None
-        self._url = 'https://dbdev-ingress-provider-dev.apps.tsuru.dev.gcp.i.globo/provider/'
+        self._credential = None
         self._ip = None
         self._port = None
 
@@ -45,6 +46,17 @@ class IngressProvider(object):
     def ip(self):
         return self._ip
 
+    def credential(self):
+        print('*-----------------------INSERTING CREDENTIAL----------------------------*')
+        print(f'*-----------------------ENVIRONMENT [{self.infra.environment}]----------------------------*')
+        if not self._credential:
+            self._credential = get_credentials_for(
+                self.infra.environment, CredentialType.INGRESS_PROVIDER
+            )
+        print('*-----------------------CREATED CREDENTIAL----------------------------*')
+        print(f'*-----------------------[{self._credential}]----------------------------*')
+        return self._credential
+
     def create_ingress(self, infra, port, team_name):
         data = {
             "team": team_name,
@@ -55,7 +67,7 @@ class IngressProvider(object):
             "bank_service_account": str(infra.service_account)
         }
         try:
-            response = self._request(post, self._url, json=data, timeout=6000)
+            response = self._request(post, self.credential.endpoint, json=data, timeout=6000)
 
             if response.status_code not in [200, 201]:
                 raise response.raise_for_status()
@@ -67,18 +79,6 @@ class IngressProvider(object):
         self._port = ingress['port_external']
         self._team = team_name
         return ingress
-
-    def check_ip(self, id):
-        url = "{}{}".format(self._url, id)
-        response = self._request(get, url, json={}, timeout=6000)
-        print('checking if IP is available...')
-        while response.json()['value']['ip_external'] == '':
-            sleep(3)
-            print('checking...')
-            response = self._request(get, url, json={}, timeout=6000)
-        self._ip = response.json()['value']['ip_external']
-        print('IP is available!!!')
-        return response.json()['value']
 
 
 class IngressProviderStep(BaseInstanceStep):
@@ -122,10 +122,6 @@ class AllocateProvider(IngressProviderStep):
             self.infra,
             self.ingressprovider.port,
             self.team_name)
-        if not ingress['ip_external']:
-            ingress = self.ingressprovider.check_ip(ingress['id'])
-            print('*-------------------------------------------------------*')
-            print('ingress: ', ingress)
         return ingress
 
     def register_ingress_vip(self, ingress):
