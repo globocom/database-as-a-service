@@ -282,13 +282,12 @@ class Provider(BaseInstanceStep):
         if init_password:
             data['init_password'] = init_password
 
-        dev = ['dev-gcp-hdg-us-east1', 'dev-gcp-hdg-sa-east1', 'dev-gcp-hdg-us-central1',
-               'dev-gcp-tsuru-us-east1', 'dev-gcp-tsuru-sa-east1', 'dev-gcp-tsuru-us-central1',
-               'gcp-lab-dev']
-        devqa = ['dbaas-devqa-gcp-us-east1x']
+        dev = ['gcp-lab-dev']
+        devqa = ['dev-gcp-hdg-us-east1', 'dev-gcp-hdg-sa-east1', 'dev-gcp-hdg-us-central1',
+                 'dev-gcp-tsuru-us-east1', 'dev-gcp-tsuru-sa-east1', 'dev-gcp-tsuru-us-central1',
+                 'dbaas-devqa-gcp-us-east1']
         prod = ['prod-gcp-hdg-us-east1', 'prod-gcp-hdg-sa-east-1', 'prod-gcp-hdg-us-central1',
-                'prod-gcp-tsuru-us-east1', 'prod-gcp-tsuru-sa-east1', 'prod-gcp-tsuru-us-central1',
-                'gcp-lab-prod']
+                'prod-gcp-tsuru-us-east1', 'prod-gcp-tsuru-sa-east1', 'prod-gcp-tsuru-us-central1']
         tag = ''
         env = infra.environment.name
         if env in dev:
