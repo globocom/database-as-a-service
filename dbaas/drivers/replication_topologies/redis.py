@@ -807,13 +807,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Check ACL': (
                 'workflow.steps.util.acl.BindNewInstance',
-            )},
-            # {
-            # 'Creating monitoring and alarms': (
-            #     'workflow.steps.util.zabbix.CreateAlarms',
-            #     'workflow.steps.util.db_monitor.CreateInfraMonitoring',
-            # )},
-            {
+            )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',

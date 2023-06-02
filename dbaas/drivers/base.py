@@ -214,8 +214,14 @@ class BaseDriver(object):
     def lock_database(self, client):
         raise NotImplementedError()
 
+    def lock_database_ssh(self, instance, client):
+        return self.lock_database(client)
+
     def unlock_database(self, client):
         raise NotImplementedError()
+
+    def unlock_database_ssh(self, instance, client):
+        return self.unlock_database(client)
 
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()

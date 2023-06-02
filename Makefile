@@ -228,27 +228,27 @@ docker_stop:
 # a gcp possui mais de um env
 # para acessar os secrets corretos, garantimos que estamos no projeto correto
 set_env:
-	@echo "Project env:${PROJECT_ENV}"; \
-	if [ "${PROJECT_ENV}" = "DEV" ]; then \
+	@echo "Project env:${ENV}"; \
+	if [ "${ENV}" = "DEV" ]; then \
     	echo 'changing project to DEV'; \
     	LOWERCASE_ENV="dev"; \
     	gcloud config set project gglobo-dbaaslab-dev-qa; \
 		exit 0; \
-	elif [ "${PROJECT_ENV}" = "PROD" ]; then \
+	elif [ "${ENV}" = "PROD" ]; then \
 		echo 'changing project to PROD'; \
 		LOWERCASE_ENV="prod"; \
 		gcloud config set project gglobo-dbaas-hub; \
 		exit 0; \
 	else\
-		echo "PROJECT_ENV not found. Exiting";\
-		echo "please call like this: make set_env PROJECT_ENV=PROD or DEV";\
+		echo "ENV not found. Exiting";\
+		echo "please call like this: make set_env ENV=PROD or DEV";\
 		exit 1;\
 	fi\
 
 get_last_tag:
 	@echo "exemplo de uso make get_last_tag ENV=DEV"; \
 	echo "exemplo de uso make get_last_tag ENV=PROD"; \
-	make set_env PROJECT_ENV=${ENV}; \
+	make set_env ENV=${ENV}; \
 	SECRET_NAME="DBDEV_${ENV}_DBAAS_IMAGE_VERSION"; \
 	echo "Getting secret $${SECRET_NAME}"; \
 	gcloud secrets versions access "latest" --secret "$${SECRET_NAME}"; \
@@ -258,7 +258,7 @@ set_new_tag:
 	@echo "tag usada:${TAG}"
 	@echo "exemplo de uso make set_tag TAG=v1.02 ENV=DEV"
 	@echo "exemplo de uso make set_tag TAG=v1.034 ENV=PROD"
-	@make set_env PROJECT_ENV=${ENV}; \
+	@make set_env ENV=${ENV}; \
 	if [ $$? -eq 0 ]; then \
 		echo "env set"; \
 	else \
@@ -282,7 +282,6 @@ docker_deploy_gcp:
 	@echo "make docker_deploy_gcp TAG=v1.02 ENV=PROD"
 	make docker_deploy_build TAG=${TAG}
 	make docker_deploy_push TAG=${TAG}
-	make set_new_tag ENV=${ENV} TAG=${TAG}
 
 docker_deploy_build: 
 	@echo "tag usada:${TAG}"
@@ -344,7 +343,7 @@ gcp_deploy_dev_script:
 
 # Mysql utilities
 gcp_mysql_dev_cli:
-	make set_env PROJECT_ENV=DEV; \
+	make set_env ENV=DEV; \
 	HOST=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_HOST"); \
 	USER=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_USER"); \
 	DB=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_NAME"); \
@@ -352,7 +351,7 @@ gcp_mysql_dev_cli:
 	mysql -u$$USER -p$$PASS -h$$HOST
 
 gcp_mysql_dev_dump:
-	make set_env PROJECT_ENV=DEV; \
+	make set_env ENV=DEV; \
 	HOST=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_HOST"); \
 	USER=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_USER"); \
 	DB=$(shell gcloud secrets versions access "latest" --secret "DBDEV_DEV_DBAAS_DBAAS_DATABASE_NAME"); \

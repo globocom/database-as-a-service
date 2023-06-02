@@ -993,7 +993,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartSlave',
                 'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.database.WaitForReplicationSpecificInstance',
                 'workflow.steps.util.infra.Offering',
                 'workflow.steps.util.vm.InstanceIsSlave',
                 'workflow.steps.util.zabbix.EnableAlarms',

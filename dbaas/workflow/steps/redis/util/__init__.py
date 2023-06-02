@@ -47,3 +47,31 @@ def failover_sentinel(host, sentinel_host, sentinel_port, service_name):
     """.format(sentinel_host, sentinel_port, service_name)
     script = build_context_script({}, script)
     host.ssh.run_script(script)
+
+
+def reset_sentinel_redis_6(host, sentinel_host, sentinel_port, service_name):
+    LOG.info('Reseting Sentinel {}:{}'.format(sentinel_host, sentinel_port))
+    script = test_bash_script_error()
+    script += """
+        /usr/bin/redis-cli -h {} -p {} <<EOF_DBAAS
+        SENTINEL reset {}
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error reseting sentinel"
+    """.format(sentinel_host, sentinel_port, service_name)
+    script = build_context_script({}, script)
+    host.ssh.run_script(script)
+
+
+def failover_sentinel_redis_6(host, sentinel_host, sentinel_port, service_name):
+    LOG.info('Failover of Sentinel {}:{}'.format(sentinel_host, sentinel_port))
+    script = test_bash_script_error()
+    script += """
+        /usr/bin/redis-cli -h {} -p {} <<EOF_DBAAS
+        SENTINEL failover {}
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error reseting sentinel"
+    """.format(sentinel_host, sentinel_port, service_name)
+    script = build_context_script({}, script)
+    host.ssh.run_script(script)

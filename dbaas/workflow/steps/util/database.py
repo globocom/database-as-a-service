@@ -489,6 +489,13 @@ class WaitForReplicationTemporaryInstance(WaitForReplication):
                 raise ReplicationNotRunningError
 
 
+class WaitForReplicationSpecificInstance(WaitForReplicationTemporaryInstance):
+
+    @property
+    def is_valid(self):
+        return not self.instance.temporary
+
+
 class CheckIsUp(DatabaseStep):
 
     def __unicode__(self):

@@ -37,6 +37,10 @@ def create_maintenance(database, task, resize_target, retry_from):
 def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target=None):
     auto_upgrade_vm = None
     try:
+        # validate that the database can be auto_upgraded
+        if not database.can_do_autoupgrade:
+            raise RuntimeError("Database is set to not allow DBaaS to automatically upgrade its CPU/RAM Offer.")
+
         infra = database.infra
         driver = infra.get_driver()
 
@@ -49,6 +53,7 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
         instances = infra.get_driver().get_database_instances()  # nao traz a instance do arbitro (mongodb)
 
         LOG.debug("Instances : %s", instances)
+        create_temporary_instance = False
 
         temporary_instance = None
         for instance in instances:
@@ -58,11 +63,15 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
         if temporary_instance is None:  # traz instances temporarias se n estiver como "database"
             temporary_instances = infra.get_driver().get_temporary_instances()
             LOG.debug("Temporary Instances: %s", temporary_instances)
-            instances.extend(infra.get_driver().get_temporary_instances())
+            if len(temporary_instances) != 0:  # se encontrar temporary instances, adiciona elas a execucao
+                instances.extend(infra.get_driver().get_temporary_instances())
+            else:  # se nao, pede pra criar uma nova
+                create_temporary_instance = True
 
         last_vm_created = number_of_instances_before_task
 
-        if not retry_from:
+        if create_temporary_instance:  # se precisar criar nova temporary instance, cria
+            LOG.info("Creating temporary instance")
             for i in range(number_of_instances):
                 instance = None
                 last_vm_created += 1
