@@ -368,9 +368,12 @@
       value = $("#id_start_stop_database").val();
       if(value.includes('Stop')){
         url = "/logical/stop_database/"+ database_id;
+        att_manually_stopped = true;
       }else{
         url = "/logical/start_database/"+ database_id;
+        att_manually_stopped = false
       }
+
       jQuery.ajax({
           "dataType": "json",
           "url": url,

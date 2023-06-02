@@ -228,7 +228,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return show_info_popup(
             database.name, "Show Endpoint", ed_point,
             "icon-info-sign", "show-endpoint"
-        ) + self.quarantine_html(database) + self.attention_html(database)
+        ) + self.quarantine_html(database) + self.attention_html(database) + self.manually_stopped_html(database)
 
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
@@ -240,6 +240,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             quarantine = html_default.format("important", "in quarantine")
 
         return format_html(quarantine)
+
+    def manually_stopped_html(self, database):
+        html_default = '<span class="label label-{}">{}</span>'
+        manually_stopped = ""
+        if database.was_manually_stopped:
+            manually_stopped = html_default.format("important", "Manually Stopped")
+
+        return format_html(manually_stopped)
 
     def attention_html(self, database):
         html_default = '<span id="att-btn" title="Click Me!" onclick="showAttentionDetails(\''+database.attention_description+'\', this)" ' \

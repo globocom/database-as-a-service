@@ -20,6 +20,9 @@ def task_start_database_vm(database, task, retry_from=None):
         if steps_for_instances(
                 steps, instances_to_start_database_vm, task, start_database_vm.update_step, since_step=since_step
         ):
+            database.was_manually_stopped = False
+            database.save()
+
             database.update_status()
             start_database_vm.set_success()
             task.set_status_success('Starting Database is done')

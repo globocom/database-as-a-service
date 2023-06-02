@@ -46,6 +46,9 @@
     {% if database.attention %}
       <span class="label label-warning title_tag" id="att_tag">Attention!</span>
     {% endif %}
+    {% if database.was_manually_stopped %}
+      <span class="label label-important" style="vertical-align: middle;">Manually Stopped</span>
+    {% endif %}
     <a target="_blank" id="task_running"></a>
     <div id="running_label"></div>
   </h1>
