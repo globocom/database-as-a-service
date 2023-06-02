@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 from workflow.steps.util.base import BaseInstanceStep
-from workflow.steps.redis.util import reset_sentinel
+from workflow.steps.redis.util import reset_sentinel, reset_sentinel_redis_6
 
 
 class Reset(BaseInstanceStep):
@@ -15,13 +15,22 @@ class Reset(BaseInstanceStep):
 
     def do(self):
         sleep(10)
-        if self.sentinel_instance:
-            reset_sentinel(
-                self.host,
-                self.sentinel_instance.address,
-                self.sentinel_instance.port,
-                self.sentinel_instance.databaseinfra.name
-            )
+        if self.infra.engine.major_version == 6:
+            if self.sentinel_instance:
+                reset_sentinel_redis_6(
+                    self.host,
+                    self.sentinel_instance.address,
+                    self.sentinel_instance.port,
+                    self.sentinel_instance.databaseinfra.name
+                )
+        else:
+            if self.sentinel_instance:
+                reset_sentinel(
+                    self.host,
+                    self.sentinel_instance.address,
+                    self.sentinel_instance.port,
+                    self.sentinel_instance.databaseinfra.name
+                )
 
     def undo(self):
         pass
@@ -34,13 +43,23 @@ class ResetAllSentinel(BaseInstanceStep):
 
     def reset_sentinels(self):
         driver = self.infra.get_driver()
-        for sentinel_instance in driver.get_non_database_instances():
-            reset_sentinel(
-                sentinel_instance.hostname,
-                sentinel_instance.address,
-                sentinel_instance.port,
-                self.infra.name
-            )
+        if self.infra.engine.major_version == 6:
+            for sentinel_instance in driver.get_non_database_instances():
+                reset_sentinel_redis_6(
+                    sentinel_instance.hostname,
+                    sentinel_instance.address,
+                    sentinel_instance.port,
+                    self.infra.name
+                )
+        else:
+            for sentinel_instance in driver.get_non_database_instances():
+                reset_sentinel(
+                    self.host,
+                    self.sentinel_instance.address,
+                    self.sentinel_instance.port,
+                    self.sentinel_instance.databaseinfra.name
+                )
+
 
     def do(self):
         self.reset_sentinels()
