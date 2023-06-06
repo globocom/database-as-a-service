@@ -2372,6 +2372,7 @@ def database_migrate(request, context, database):
     context["environments"] = set()
     context['zones'] = sorted(zones)
     context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
+    context['is_dba'] = request.user.team_set.filter(role__name="role_dba")
 
     environment_groups = environment.groups.all()
     if not environment_groups:
