@@ -269,15 +269,29 @@
       document.querySelector('#migrate_region_btn').disabled = true;
     }
 
+    function enable_disable_host_zone_btns(is_enabled){
+      $('.host-zone').each(function(){
+        var $hostZone = $(this);
+        var hostId = $hostZone.data('hostId');
+        if (is_enabled){
+          $("#migrate_host_btn_" + hostId).show();
+        }else{
+          $("#migrate_host_btn_" + hostId).hide();
+        }
+      });
+    }
+
     $("#migrate_region").change(function() {
+      var is_enabled = true;
       if ((is_in_waiting) || ($(this).val() === "---------")){
         status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
-        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE");
+        is_enabled = true;
       }
       else {
         status_migrate("migrate_region_btn", "DISABLE", "False");
-        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE");
+        is_enabled = false;
       }
+      enable_disable_host_zone_btns(is_enabled);
     });
 
     $(".host-zone").on("change", function() {
