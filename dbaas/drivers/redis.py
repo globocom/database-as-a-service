@@ -528,7 +528,7 @@ class RedisSentinel(Redis):
             fi
         }"""
 
-        if self.engine.major_version == 6:
+        if self.databaseinfra.engine.major_version == 6:
             script += """
             /usr/bin/redis-cli -h {} -p {} <<EOF_DBAAS
             SENTINEL failover {}
@@ -747,7 +747,7 @@ class RedisCluster(Redis):
             fi
         }"""
 
-        if self.engine.major_version == 6:
+        if self.databaseinfra.engine.major_version == 6:
             script += """
             /usr/bin/redis-cli -h {} -p {} -a {} -c<<EOF_DBAAS
             CLUSTER FAILOVER

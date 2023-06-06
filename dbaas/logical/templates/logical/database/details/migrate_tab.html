@@ -124,7 +124,9 @@
                   {% endfor %}
                 {% endif %}
                 </select>
-                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn host-zone-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal" disabled>Migrate Region to GCP</button>
+                {% if is_dba %}
+                  <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn host-zone-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal">Migrate Region to GCP</button>
+                {% endif %}
                 </p>
               </td>
             </div>
@@ -270,9 +272,11 @@
     $("#migrate_region").change(function() {
       if ((is_in_waiting) || ($(this).val() === "---------")){
         status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE");
       }
       else {
-        status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        status_migrate("migrate_region_btn", "DISABLE", "False");
+        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE");
       }
     });
 
