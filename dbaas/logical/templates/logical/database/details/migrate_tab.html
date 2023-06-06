@@ -284,11 +284,15 @@
     $("#migrate_region").change(function() {
       var is_enabled = true;
       if ((is_in_waiting) || ($(this).val() === "---------")){
-        status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        //status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        $("#migrate_region_btn").prop("disabled",true);
+        $("#migrate_region_btn").removeClass("btn-primary");
         is_enabled = true;
       }
       else {
-        status_migrate("migrate_region_btn", "DISABLE", "False");
+        //status_migrate("migrate_region_btn", "DISABLE", "False");
+        $("#migrate_region_btn").prop("disabled",false);
+        $("#migrate_region_btn").addClass("btn-primary");
         is_enabled = false;
       }
       enable_disable_host_zone_btns(is_enabled);
