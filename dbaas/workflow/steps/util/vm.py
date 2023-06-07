@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from time import sleep
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
@@ -6,6 +7,8 @@ from base import BaseInstanceStep
 
 CHANGE_MASTER_ATTEMPS = 30
 CHANGE_MASTER_SECONDS = 15
+
+LOG = logging.getLogger(__name__)
 
 
 class HostStatus(object):
@@ -159,33 +162,47 @@ class ChangeMasterTemporaryInstance(ChangeMaster):
 
     @property
     def is_valid(self):
-        if self.instance.temporary or self.check_master_is_temporary():
+        master_temporary = self.check_master_is_temporary()
+        # so executa para  a VM tepmoraria, e se a  Master nao eh temporaria
+        if not self.instance.temporary or master_temporary:
             return False
-        return super(ChangeMasterTemporaryInstance, self).is_valid
 
-    def check_master_is_temporary(self):
+        return True
+
+    def check_master_is_temporary(self, wait_seconds=0):
+        LOG.info("Checking master is temporary instance")
+        LOG.debug("Willl sleep for %s seconds before checking", wait_seconds)
+        sleep(wait_seconds)
+
         master = self.driver.get_master_instance()
-        if master.temporary:
-            return True
-        return False
+        LOG.info("Master instance is %s", master)
+        LOG.info("Master is temporary? %s", master.temporary)
+
+        if master is None or not master.temporary:
+            return False
+
+        return True
 
     def change_master(self):
         error = None
 
         for _ in range(CHANGE_MASTER_ATTEMPS):
-            if self.is_slave:
-                return
+            error = None
             try:
-                self.driver.check_replication_and_switch(self.target_instance)
-                if not self.check_master_is_temporary():
+                LOG.info("Trying to change master. Attempt %s", _)
+                self.driver.check_replication_and_switch_with_stepdown_time(self.target_instance, stepdown_time=300)
+                master_is_temporary = self.check_master_is_temporary(wait_seconds=60)
+
+                if not master_is_temporary:
                     raise Exception('Master is not the temporary instance')
+
+                return
             except Exception as e:
                 error = e
                 sleep(CHANGE_MASTER_SECONDS)
-            else:
-                return
 
-        raise error
+        if error is not None:
+            raise error
 
     def do(self):
         if not self.is_valid:
@@ -206,19 +223,18 @@ class ChangeMasterNotTemporaryInstance(ChangeMasterTemporaryInstance):
         error = None
 
         for _ in range(CHANGE_MASTER_ATTEMPS):
-            if self.is_slave:
-                return
             try:
                 self.driver.check_replication_and_switch(self.target_instance)
-                if self.check_master_is_temporary():
+                if self.check_master_is_temporary(wait_seconds=60):
                     raise Exception('Master is the temporary instance')
+
+                return
             except Exception as e:
                 error = e
                 sleep(CHANGE_MASTER_SECONDS)
-            else:
-                return
 
-        raise error
+        if error is not None:
+            raise error
 
 
 class ChangeMasterDatabaseMigrate(ChangeMaster):
