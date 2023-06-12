@@ -73,6 +73,7 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
         if create_temporary_instance:  # se precisar criar nova temporary instance, cria
             LOG.info("Creating temporary instance")
             email_notifications.upgrade_offering_notification(database, resize_target)
+
             for i in range(number_of_instances):
                 instance = None
                 last_vm_created += 1
