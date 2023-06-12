@@ -546,6 +546,16 @@ class MongoDB(BaseDriver):
         except pymongo.errors.AutoReconnect:
             pass
 
+    def switch_master_with_stepdowntime(self, instance=None, preferred_slave_instance=None, stepdown_time=60):
+        client = self.get_client(None)
+        try:
+            client.admin.command(
+                'replSetStepDown', stepdown_time,
+                secondaryCatchUpPeriodSecs=60
+            )
+        except pymongo.errors.AutoReconnect:
+            pass
+
     def get_database_agents(self):
         return []
 
