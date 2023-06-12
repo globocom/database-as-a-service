@@ -1,0 +1,88 @@
+stages:
+  - build
+  - publish
+
+build:
+  # Use the official docker image.
+  # image: docker:latest
+  image: docker.artifactory.globoi.com/tsuru/terraform-gke:latest
+  stage: build
+  when: manual
+  services:
+    - docker:dind
+  before_script:
+    # - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+      # Install CA certs, openssl to https downloads, python for gcloud sdk
+     - apk update; apk add python3 python3-dev py-pip make g++ py3-virtualenv
+     # - apk add python3
+     - apk add --update make ca-certificates openssl
+     - update-ca-certificates
+     # Write our GCP service account private key into a file
+     - echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
+     # Download and install Google Cloud SDK
+     # - wget https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz
+     # - tar zxvf google-cloud-sdk.tar.gz && ./google-cloud-sdk/install.sh --usage-reporting=false --path-update=true
+     - gcloud --quiet components update
+     - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+     - gcloud auth configure-docker us-east1-docker.pkg.dev
+     - docker login -u _json_key --password-stdin https://us-east1-docker.pkg.dev < ${HOME}/gcloud-service-key.json
+     - docker pull us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:v1.0
+  script:
+    - echo 'build'
+    - docker build . -t us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/$IMAGE_NAME:v1.0.0
+    #- docker tag $IMAGE_NAME "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME"
+    - docker push us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/$IMAGE_NAME:v1.0.0
+
+dev:
+  stage: publish
+  image: docker.artifactory.globoi.com/tsuru/terraform-gke:latest
+  when: manual
+  services:
+    - docker:dind
+  before_script:
+     # - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+     # Install CA certs, openssl to https downloads, python for gcloud sdk
+     - apk update; apk add python3 python3-dev py-pip make g++ py3-virtualenv
+     # - apk add python3
+     - apk add --update make ca-certificates openssl
+     - update-ca-certificates
+     - echo $GCLOUD_SERVICE_KEY_SSH_DEV > ${HOME}/gcloud-service-key.json
+     - gcloud --quiet components update
+     - gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+     - gcloud auth configure-docker us-east1-docker.pkg.dev
+  script:
+    - echo 'hello world!'
+    - ssh gitlab-ci-ssh@$GLCOUD_DEV_IP -vvv
+    - echo 'the end'
+
+
+# stages:
+#   - publish
+# publish:
+#   stage: publish
+#   script:
+#     - docker build -t $IMAGE_NAME .
+#     - docker tag $IMAGE_NAME "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME"
+#     - docker push "us-east1-docker.pkg.dev/$GCLOUD_PROJECT_ID/$IMAGE_NAME:latest"
+#   only:
+#     - master
+
+
+#   # Default branch leaves tag empty (= latest tag)
+#   # All other branches are tagged with the escaped branch name (commit ref slug)
+#   script:
+#     - |
+#       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+#         tag=""
+#         echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+#       else
+#         tag=":$CI_COMMIT_REF_SLUG"
+#         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+#       fi
+#     - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+#     - docker push "$CI_REGISTRY_IMAGE${tag}"
+#   # Run this job in a branch where a Dockerfile exists
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile

@@ -68,7 +68,7 @@ class DatabaseForm(models.ModelForm):
             'name', 'description', 'project', 'environment', 'team', 'pool',
             'engine', 'subscribe_to_email_events', 'backup_hour',
             'maintenance_window', 'maintenance_day', 'is_in_quarantine',
-            'plan'
+            'plan', 'can_do_autoupgrade'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -230,7 +230,7 @@ class DatabaseDetailsForm(forms.ModelForm):
         model = Database
         fields = [
             'team', 'project', 'is_protected', 'subscribe_to_email_events',
-            'description'
+            'description', 'can_do_autoupgrade'
         ]
 
     def __init__(self, *args, **kwargs):

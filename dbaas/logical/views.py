@@ -1135,7 +1135,7 @@ def database_resizes(request, context, database):
         teams_names.append(team.name)
 
     show_resize_btns = False
-    if request.user.is_superuser or 'dbaas' in teams_names:
+    if (request.user.is_superuser or 'dbaas' in teams_names) and database.can_do_autoupgrade:
         show_resize_btns = True
 
     context['show_resize_btns'] = show_resize_btns
@@ -2372,6 +2372,7 @@ def database_migrate(request, context, database):
     context["environments"] = set()
     context['zones'] = sorted(zones)
     context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
+    context['is_dba'] = request.user.team_set.filter(role__name="role_dba")
 
     environment_groups = environment.groups.all()
     if not environment_groups:
@@ -2761,8 +2762,7 @@ def resize_vm_from_btn(request, database_id, resize_target):
         database=database, user=user, resize_target=resize_target
     )
 
-    future_offering = database.get_future_offering(resize_target)
-    return HttpResponse(json.dumps({'future_offering': future_offering.name}), content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")
 
 
 @login_required()
@@ -2779,4 +2779,4 @@ def auto_configure_db_params_btn(request, database_id):
         database=database, user=user
     )
 
-    return HttpResponse(({'success'}), content_type="application/json")
+    return HttpResponse(json.dumps({}), content_type="application/json")

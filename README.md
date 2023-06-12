@@ -1,4 +1,14 @@
 
+
+# Deploy para dev
+
+    # para saber sua tag:
+    make get_last_tag ENV=DEV
+
+    # para fazer o deploy
+    make gcp_deploy_dev TAG=XXX
+
+
 # Para desenvolvimento local, use o docker
 
 se for desenvolvimento local, entre na pasta de dev e use o makefile dentro desta pasta

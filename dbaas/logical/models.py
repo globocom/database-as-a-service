@@ -176,6 +176,9 @@ class Database(BaseModel):
     send_all_chg = models.BooleanField(
         verbose_name=_("Send all changes to Service Now"), default=False, blank=True
     )
+    can_do_autoupgrade = models.BooleanField(
+        verbose_name=_("Allowed to AutoUpgrade its CPU/RAM Offer"), default=False
+    )
 
     def validate_unique(self, *args, **kwargs):
         ''' Validate if database name is unique

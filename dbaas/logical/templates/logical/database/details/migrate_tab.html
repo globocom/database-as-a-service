@@ -124,7 +124,9 @@
                   {% endfor %}
                 {% endif %}
                 </select>
-                <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn host-zone-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal" disabled>Migrate Region to GCP</button>
+                {% if is_dba %}
+                  <button data-toggle="modal" id="migrate_region_btn" class="resize_button btn host-zone-btn" data-region-name="{{reg.region}}" data-region-id="{{reg.env}}" data-target="#migrate_region_modal">Migrate Region to GCP</button>
+                {% endif %}
                 </p>
               </td>
             </div>
@@ -267,13 +269,33 @@
       document.querySelector('#migrate_region_btn').disabled = true;
     }
 
+    function enable_disable_host_zone_btns(is_enabled){
+      $('.host-zone').each(function(){
+        var $hostZone = $(this);
+        var hostId = $hostZone.data('hostId');
+        if (is_enabled){
+          $("#migrate_host_btn_" + hostId).show();
+        }else{
+          $("#migrate_host_btn_" + hostId).hide();
+        }
+      });
+    }
+
     $("#migrate_region").change(function() {
+      var is_enabled = true;
       if ((is_in_waiting) || ($(this).val() === "---------")){
-        status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        //status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        $("#migrate_region_btn").prop("disabled",true);
+        $("#migrate_region_btn").removeClass("btn-primary");
+        is_enabled = true;
       }
       else {
-        status_migrate("migrate_region_btn", "DISABLE", "DISABLE");
+        //status_migrate("migrate_region_btn", "DISABLE", "False");
+        $("#migrate_region_btn").prop("disabled",false);
+        $("#migrate_region_btn").addClass("btn-primary");
+        is_enabled = false;
       }
+      enable_disable_host_zone_btns(is_enabled);
     });
 
     $(".host-zone").on("change", function() {

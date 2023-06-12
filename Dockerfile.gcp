@@ -1,8 +1,13 @@
 FROM python:2.7.9-slim
+# FROM us-east1-docker.pkg.dev/gglobo-dbaas-hub/dbaas-docker-images/dbaas-base:latest
 
 # Python optimization to run on docker
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+
+# Fix old repositories.
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+
 
 # Maybe run upgrade as well???
 RUN apt-get update
@@ -19,7 +24,7 @@ RUN apt-get install -y ncdu --force-yes
 RUN apt install -y --force-yes curl
 
 # So we can install mysql libs properly
-RUN apt install -y --force-yes libmysqlclient-dev
+RUN apt install -y --force-yes default-libmysqlclient-dev
 
 # So we can install LDAP
 RUN apt install -y --force-yes python-ldap
@@ -43,9 +48,6 @@ RUN pip install --upgrade distribute
 
 # RUN export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include/sasl"
 RUN pip install python-ldap
-
-
-
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -i https://artifactory.globoi.com/artifactory/api/pypi/pypi-all/simple/ -r requirements.txt

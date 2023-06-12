@@ -61,7 +61,7 @@ class BaseTopology(object):
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
             'workflow.steps.util.zabbix.EnableAlarms',
-        )}]
+        )}] + self.get_configure_db_params_steps()
 
     def get_upgrade_disk_type_steps(self):
         return [{
@@ -269,7 +269,7 @@ class BaseTopology(object):
             self.get_add_database_instances_first_steps() +
             self.get_add_database_instances_middle_steps() +
             self.get_add_database_instances_last_steps()
-        }]
+        }] + self.get_configure_db_params_steps()
 
     def get_remove_readonly_instance_steps(self):
         return [{
@@ -384,7 +384,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_reinstallvm_steps_final()
+        }] + self.get_reinstallvm_steps_final() + self.get_configure_db_params_steps()
 
     def get_reinstallvm_ssl_steps(self):
         return ()
@@ -724,6 +724,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.checkAndFixMySQLReplication',
             )}, {
             'Stopping database': (
+                'workflow.steps.util.mysql.SaveMysqlBinlogToStopDatabase',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',

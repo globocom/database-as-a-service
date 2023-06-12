@@ -214,8 +214,14 @@ class BaseDriver(object):
     def lock_database(self, client):
         raise NotImplementedError()
 
+    def lock_database_ssh(self, instance, client):
+        return self.lock_database(client)
+
     def unlock_database(self, client):
         raise NotImplementedError()
+
+    def unlock_database_ssh(self, instance, client):
+        return self.unlock_database(client)
 
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()
@@ -245,6 +251,9 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def switch_master(self, instance=None, preferred_slave_instance=None):
+        raise NotImplementedError()
+
+    def switch_master_with_stepdowntime(self, instance=None, preferred_slave_instance=None, stepdown_time=60):
         raise NotImplementedError()
 
     def get_database_instances(self, ):
@@ -307,6 +316,11 @@ class BaseDriver(object):
 
         return instances
 
+    def get_temporary_instances(self):
+        instances = [instance if instance.temporary is True else None
+                     for instance in self.databaseinfra.instances.all()]
+        return filter(None, instances)
+
     def start_slave(self, instance):
         pass
 
@@ -338,6 +352,35 @@ class BaseDriver(object):
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
                 self.switch_master(instance, preferred_slave_instance)
+                LOG.info("Switch master returned ok...")
+
+                check_is_master_attempts_count = check_is_master_attempts
+                while self.check_instance_is_master(instance,
+                                                    default_timeout=False):
+                    if check_is_master_attempts_count == 0:
+                        break
+                    check_is_master_attempts_count -= 1
+                    sleep(10)
+                else:
+                    return
+
+                raise Exception("Could not change master")
+
+            LOG.info("Waiting 10s to check replication...")
+            sleep(10)
+        raise Exception(
+            "Could not switch master because of replication's delay"
+        )
+
+    def check_replication_and_switch_with_stepdown_time(self, instance, attempts=100,
+                                                        check_is_master_attempts=5,
+                                                        preferred_slave_instance=None,
+                                                        stepdown_time=60):
+        LOG.info("Check Replication with StepDown time of %s seconds", stepdown_time)
+        from time import sleep
+        for attempt in range(0, attempts):
+            if self.is_replication_ok(instance):
+                self.switch_master_with_stepdowntime(instance, preferred_slave_instance, stepdown_time)
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts_count = check_is_master_attempts

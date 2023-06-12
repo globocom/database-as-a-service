@@ -382,7 +382,12 @@ class Redis(BaseDriver):
     def get_metric_collector_password(self, password):
         return self.databaseinfra.password
 
+
 class RedisSentinel(Redis):
+
+    @property
+    def engine(self):
+        return self.databaseinfra.engine
 
     @property
     def ports(self):
@@ -490,18 +495,15 @@ class RedisSentinel(Redis):
         for sentinel in sentinels:
             client = self.get_sentinel_instance_client(sentinel)
             try:
-                master = client.sentinel_get_master_addr_by_name(
-                    self.databaseinfra.name)
+                master = client.sentinel_get_master_addr_by_name(self.databaseinfra.name)
                 masters_for_sentinel.append(master)
             except Exception as e:
-                error = 'Connection error to {}. Error: {}'.format(
-                    sentinel, e)
+                error = 'Connection error to {}. Error: {}'.format(sentinel, e)
                 LOG.info(error)
 
         sentinels_believe_is_master = 0
         for master_host, master_port in masters_for_sentinel:
-            if (instance.address == master_host and
-                instance.port == master_port):
+            if instance.address == master_host and instance.port == master_port:
                 sentinels_believe_is_master += 1
 
         if sentinels_believe_is_master > 1:
@@ -526,16 +528,22 @@ class RedisSentinel(Redis):
             fi
         }"""
 
-        script += """
-        /usr/local/redis/src/redis-cli -h {} -p {} <<EOF_DBAAS
-        SENTINEL failover {}
-        exit
-        \nEOF_DBAAS
-        die_if_error "Error reseting sentinel"
-        """.format(
-            sentinel_instance.address, sentinel_instance.port,
-            self.databaseinfra.name
-        )
+        if self.databaseinfra.engine.major_version == 6:
+            script += """
+            /usr/bin/redis-cli -h {} -p {} <<EOF_DBAAS
+            SENTINEL failover {}
+            exit
+            \nEOF_DBAAS
+            die_if_error "Error reseting sentinel"
+            """.format(sentinel_instance.address, sentinel_instance.port, self.databaseinfra.name)
+        else:
+            script += """
+            /usr/local/redis/src/redis-cli -h {} -p {} <<EOF_DBAAS
+            SENTINEL failover {}
+            exit
+            \nEOF_DBAAS
+            die_if_error "Error reseting sentinel"
+            """.format(sentinel_instance.address, sentinel_instance.port, self.databaseinfra.name)
 
         script = build_context_script({}, script)
         host.ssh.run_script(script)
@@ -739,19 +747,23 @@ class RedisCluster(Redis):
             fi
         }"""
 
-        script += """
-        /usr/local/redis/src/redis-cli -h {} -p {} -a {} -c<<EOF_DBAAS
-        CLUSTER FAILOVER
-        exit
-        \nEOF_DBAAS
-        die_if_error "Error executing cluster failover"
-        """.format(
-            slave_instance.address, slave_instance.port,
-            self.databaseinfra.password
-        )
-
+        if self.databaseinfra.engine.major_version == 6:
+            script += """
+            /usr/bin/redis-cli -h {} -p {} -a {} -c<<EOF_DBAAS
+            CLUSTER FAILOVER
+            exit
+            \nEOF_DBAAS
+            die_if_error "Error executing cluster failover"
+            """.format(slave_instance.address, slave_instance.port, self.databaseinfra.password)
+        else:
+            script += """
+            /usr/local/redis/src/redis-cli -h {} -p {} -a {} -c<<EOF_DBAAS
+            CLUSTER FAILOVER
+            exit
+            \nEOF_DBAAS
+            die_if_error "Error executing cluster failover"
+            """.format(slave_instance.address, slave_instance.port, self.databaseinfra.password)
         script = build_context_script({}, script)
-
         host.ssh.run_script(script)
 
     def get_master_instance(self):
