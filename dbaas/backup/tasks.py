@@ -277,6 +277,7 @@ def make_instance_gcp_snapshot_backup(
                 else:
                     raise e
 
+        count = 0
         if response.status_code < 400:
             while code != 200:
                 sleep(20)
@@ -287,6 +288,12 @@ def make_instance_gcp_snapshot_backup(
                     break
                 if snap_response.status_code >= 400:
                     raise error
+                if count >= 90:
+                    errormsg = "Timeout"
+                    set_backup_error(infra, snapshot, errormsg)
+                    raise Exception(errormsg)
+                else:
+                    count += 1
                 code = snap_response.status_code
 
             snapshot.done(snap_status)

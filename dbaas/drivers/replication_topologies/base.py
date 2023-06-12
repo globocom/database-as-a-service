@@ -268,9 +268,8 @@ class BaseTopology(object):
             self.get_add_database_instances_steps_description():
             self.get_add_database_instances_first_steps() +
             self.get_add_database_instances_middle_steps() +
-            self.get_add_database_instances_last_steps() +
-            self.get_configure_db_params_steps()
-        }]
+            self.get_add_database_instances_last_steps()
+        }] + self.get_configure_db_params_steps()
 
     def get_remove_readonly_instance_steps(self):
         return [{
