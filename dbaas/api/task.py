@@ -160,6 +160,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'maintenance.tasks.restart_database',
         'notification.tasks.change_database_persistence',
         'maintenance.tasks.task_upgrade_disk_type',
+        'maintenance.tasks.auto_upgrade_database_vm_offering',
     ]
 
     model = TaskHistory
