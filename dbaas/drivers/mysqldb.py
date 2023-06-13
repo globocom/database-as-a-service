@@ -611,7 +611,9 @@ class MySQL(BaseDriver):
         # RAM -> 25% < 1GB - 60% < 16GB - 75%
         if ram < 1024:
             default = ram / 4
-        elif ram < 16384:
+        elif ram < 8192:
+            default = ram * 0.5
+        elif ram == 8192:
             default = ram * 0.6
         else:
             default = (ram * 3) / 4
