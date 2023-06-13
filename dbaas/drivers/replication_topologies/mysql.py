@@ -220,6 +220,25 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.UpdateKernelParameters',
             )}] + self.get_change_parameter_steps_final()
 
+    def get_configure_static_db_params_steps(self):
+        return [{
+            'Configuring Static DB Params': (
+                'workflow.steps.util.database.CreateStaticParameterChange',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }] + self.get_change_parameter_steps_final()
+
     def get_host_migrate_steps(self):
         return [{
             'Migrating': (

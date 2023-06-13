@@ -2780,3 +2780,20 @@ def auto_configure_db_params_btn(request, database_id):
     )
 
     return HttpResponse(json.dumps({}), content_type="application/json")
+
+
+@login_required()
+@method_decorator(csrf_exempt)
+def auto_configure_static_db_params_btn(request, database_id):
+    database = get_object_or_404(Database, pk=database_id)
+    user = request.user
+
+    from notification.tasks import TaskRegister
+
+    LOG.info("Starting auto configure STATIC DB Params: database {}, user: {}".format(database, user))
+
+    TaskRegister.configure_static_db_params(
+        database=database, user=user
+    )
+
+    return HttpResponse(json.dumps({}), content_type="application/json")

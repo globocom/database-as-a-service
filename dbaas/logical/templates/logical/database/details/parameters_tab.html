@@ -290,7 +290,24 @@
     });
 
   $("#id_autoconfig_static_params").on("click", function() {
-      window.location.reload();
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_autoconfig_static_params").attr('disabled','disabled');
+      url = "/logical/autoconfigure_static_db_params/"+ database_id;
+
+      jQuery.ajax({
+          "dataType": "json",
+          "url": url,
+          "type": "GET"
+      }).success(function() {
+        running_update = false;
+        window.location.reload();
+
+      }).error(function() {
+          alert("invalid server response")
+      });
     });
 
 function check_static_parameter_changed()

@@ -696,6 +696,31 @@ class CreateParameterChange(DatabaseStep):
         self.driver.create_db_params_changes(self.database)
 
 
+class CreateStaticParameterChange(DatabaseStep):
+
+    def __unicode__(self):
+        return "Creating Static Parameter changes registers..."
+
+    @property
+    def is_valid(self):
+        if 'mysql' not in self.engine.name.lower():
+            return False
+
+        from physical.models import DatabaseInfraParameter
+        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(self.infra)
+
+        if len(changed_parameters) != 0:
+            return False
+
+        return True
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.driver.create_static_db_params_changes(self.database)
+
+
 class UpdateKernelParameters(DatabaseStep):
     def __unicode__(self):
         return "Updating Kernel params..."

@@ -409,7 +409,7 @@ class ConfigurationMySQL(ConfigurationBase):
         if self.memory_size_in_mb < 1024:
             default = self.memory_size_in_bytes / 4
         elif self.memory_size_in_mb < 16384:
-            default = self.memory_size_in_bytes / 2
+            default = self.memory_size_in_bytes * 0.6
         else:
             default = (self.memory_size_in_bytes * 3) / 4
         default = int(default)

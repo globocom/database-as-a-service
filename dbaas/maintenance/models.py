@@ -1392,6 +1392,12 @@ class DatabaseConfigureDBParams(DatabaseMaintenanceTask):
         return "Configuring DB Parameters for database: {}".format(self.database)
 
 
+class DatabaseConfigureStaticDBParams(DatabaseConfigureDBParams):
+
+    def __unicode__(self):
+        return "Configuring Static DB Parameters for database: {}".format(self.database)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
@@ -1409,6 +1415,7 @@ simple_audit.register(DatabaseSetSSLRequired)
 simple_audit.register(DatabaseSetSSLNotRequired)
 simple_audit.register(DatabaseAutoUpgradeVMOffering)
 simple_audit.register(DatabaseConfigureDBParams)
+simple_audit.register(DatabaseConfigureStaticDBParams)
 
 
 #########################################################
