@@ -6,7 +6,7 @@ from models import DatabaseAutoUpgradeVMOffering
 from physical.models import (Plan, DatabaseInfra, Instance, Pool)
 from util.providers import get_auto_upgrade_vm_settings
 from workflow.workflow import steps_for_instances
-from util import get_vm_name
+from util import get_vm_name, email_notifications
 
 LOG = logging.getLogger(__name__)
 
@@ -72,6 +72,8 @@ def task_auto_upgrade_vm_offering(database, task, retry_from=None, resize_target
 
         if create_temporary_instance:  # se precisar criar nova temporary instance, cria
             LOG.info("Creating temporary instance")
+            email_notifications.upgrade_offering_notification(database, resize_target)
+
             for i in range(number_of_instances):
                 instance = None
                 last_vm_created += 1

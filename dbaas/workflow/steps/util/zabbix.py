@@ -334,12 +334,22 @@ class DisableAlarms(ZabbixStep):
     def do(self):
         if not self.is_valid:
             return
-        self.zabbix_provider.disable_alarms()
+        # Try and Exception to fix error Session terminated
+        try:
+            self.zabbix_provider.disable_alarms()
+        except:
+            self.provider_write = None
+            self.zabbix_provider.disable_alarms()
 
     def undo(self):
         if not self.is_valid:
             return
-        self.zabbix_provider.enable_alarms()
+        # Try and Exception to fix error Session terminated
+        try:
+            self.zabbix_provider.enable_alarms()
+        except:
+            self.provider_write = None
+            self.zabbix_provider.enable_alarms()
 
 
 class EnableAlarms(ZabbixStep):
@@ -354,11 +364,22 @@ class EnableAlarms(ZabbixStep):
     def do(self):
         if not self.is_valid:
             return
-        
-        self.zabbix_provider.enable_alarms()
+        # Try and Exception to fix error Session terminated
+        try:
+            self.zabbix_provider.enable_alarms()
+        except:
+            self.provider_write = None
+            self.zabbix_provider.enable_alarms()
 
     def undo(self):
-        self.zabbix_provider.disable_alarms()
+        if not self.is_valid:
+            return
+        # Try and Exception to fix error Session terminated
+        try:
+            self.zabbix_provider.disable_alarms()
+        except:
+            self.provider_write = None
+            self.zabbix_provider.disable_alarms()
 
 
 class UpdateMonitoring(ZabbixStep):
