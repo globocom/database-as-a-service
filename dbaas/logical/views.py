@@ -693,17 +693,6 @@ class DatabaseParameters(TemplateView):
         self.context['form_status'] = self.form_status
         self.context['last_change_parameters'] = last_change_parameters
 
-        user_teams = self.request.user.team_set.all()
-        teams_names = []
-        for team in user_teams:
-            teams_names.append(team.name)
-
-        show_auto_configure_btn = False
-        if self.request.user.is_superuser or 'dbaas' in teams_names:
-            show_auto_configure_btn = True
-
-        self.context['show_auto_configure_btn'] = show_auto_configure_btn
-
         return self.context
 
     def post(self, request, *args, **kwargs):
@@ -1134,11 +1123,7 @@ def database_resizes(request, context, database):
     for team in user_teams:
         teams_names.append(team.name)
 
-    show_resize_btns = False
-    if (request.user.is_superuser or 'dbaas' in teams_names) and database.can_do_autoupgrade:
-        show_resize_btns = True
-
-    context['show_resize_btns'] = show_resize_btns
+    context['show_resize_btns'] = database.can_do_autoupgrade
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
