@@ -1,0 +1,19 @@
+Automatic GCP offering upgrade for Database {{ database.name }}
+
+We would like to inform you that an automatic offer update is being carried out on DBaaS to meet your database {{database.name}} needs.
+
+The update will be done automatically from {{ current_offering.name }} to {{ future_offering.name }}.
+
+Please be aware that this upgrade may increase the costs.
+Any questions please contact the DBDevops responsible for your team.
+
+{% if database.team.email %}
+You are receiving this email because in our records you are in team {{ database.team.name }}.<br>
+If this is not right, contact the DBaaS system administrators.
+{% else %}
+Team {{ database.team.name }} has no email set!
+{% endif %}
+
+Regards,
+DBaaS notification robot
+{{domain}}
