@@ -408,7 +408,7 @@ class ConfigurationMySQL(ConfigurationBase):
         parameter_name = inspect.stack()[0][3]
         if self.memory_size_in_mb < 1024:
             default = self.memory_size_in_bytes / 4
-        elif self.memory_size_in_mb < 8192:
+        elif self.memory_size_in_mb < 16384:
             default = self.memory_size_in_bytes / 2
         else:
             default = (self.memory_size_in_bytes * 3) / 4
