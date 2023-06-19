@@ -151,6 +151,7 @@ def create_database(
         database_create.set_success()
         task.set_status_success('Database created')
         database_create.database.finish_task()
+        email_notifications.notify_new_database_creation(database_create)
     else:
         database_create.set_error()
         task.set_status_error(

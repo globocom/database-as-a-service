@@ -14,7 +14,6 @@ def get_domain():
     domain = Site.objects.get(id=1).domain
     if not domain.startswith('http'):
         return "http://" + domain
-
     return domain
 
 
@@ -29,8 +28,34 @@ def email_to(team):
 
 
 def get_database_url(uuid):
-    return get_domain() + reverse('admin:logical_database_hosts',
-                                  kwargs={'id': uuid})
+    return get_domain() + reverse('admin:logical_database_hosts', kwargs={'id': uuid})
+
+
+def notify_new_database_creation(database=None):
+    subject = _("[DBAAS] a new database has just been created: %s" % database.name)
+    template = "database_create_notification"
+    addr_from = Configuration.get_by_name("email_addr_from")
+    addr_to = Configuration.get_by_name_as_list("new_user_notify_email")
+    domain = get_domain()
+
+    context = {
+        "database": database,
+        "database_name": database.name,
+        "offering": database.infra.offering.name,
+        "environment": database.environment.name,
+        "database_type": database.infra.engine.name,
+        "disk_size": database.infra.disk_offering.name,
+        "user": database.user,
+        "database_url": domain + reverse('admin:account_team_changelist'),
+        "domain": domain
+    }
+    LOG.debug("user: %s | addr_from: %s | addr_to: %s" % (database.user, addr_from, addr_to))
+    if database.user and addr_from and addr_to:
+        send_mail_template(
+            subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context
+        )
+    else:
+        LOG.warning("could not send email for new user creation")
 
 
 def notify_new_user_creation(user=None):
@@ -38,16 +63,15 @@ def notify_new_user_creation(user=None):
     template = "new_user_notification"
     addr_from = Configuration.get_by_name("email_addr_from")
     addr_to = Configuration.get_by_name_as_list("new_user_notify_email")
+
     context = {}
     context['user'] = user
     domain = get_domain()
     context['url'] = domain + reverse('admin:account_team_changelist')
-    LOG.debug("user: %s | addr_from: %s | addr_to: %s" %
-              (user, addr_from, addr_to))
+    LOG.debug("user: %s | addr_from: %s | addr_to: %s" % (user, addr_from, addr_to))
     if user and addr_from and addr_to:
         send_mail_template(
-            subject, template, addr_from, addr_to,
-            fail_silently=False, attachments=None, context=context
+            subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context
         )
     else:
         LOG.warning("could not send email for new user creation")
@@ -163,7 +187,7 @@ def upgrade_offering_notification(database, resize_target):
     current_offering = database.databaseinfra.offering
     future_offering = database.get_future_offering(resize_target)
 
-    subject = _('[DBaaS] Database {} auto upgrade offering to {}').format(database, future_offering.name)
+    subject = _('[DBaaS] Database {} is being auto upgrade offering to {}').format(database, future_offering.name)
     template = "auto_upgrade_offering_notification"
 
     context = {
