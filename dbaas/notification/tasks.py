@@ -151,6 +151,7 @@ def create_database(
         database_create.set_success()
         task.set_status_success('Database created')
         database_create.database.finish_task()
+        email_notifications.notify_new_database_creation(database_create)
     else:
         database_create.set_error()
         task.set_status_error(
@@ -2227,6 +2228,22 @@ class TaskRegister(TaskRegisterBase):
             retry_from=retry_from
         )
 
+    @classmethod
+    def configure_static_db_params(cls, database, user, retry_from=None):
+        task_params = {
+            'task_name': "configure_static_db_params",
+            'arguments': "Configuring Static DB params - {}".format(database.name),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+
+        maintenace_tasks.configure_static_db_params.delay(
+            database=database, task=task, user=user,
+            retry_from=retry_from
+        )
 
     @classmethod
     def database_upgrade(cls, database, user, since_step=None):

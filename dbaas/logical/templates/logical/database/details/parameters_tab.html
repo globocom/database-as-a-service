@@ -5,11 +5,23 @@
 <fieldset class="module aligned ">
   <div class="panel-heading">
     <h3 class="panel-title">Custom Parameters</h3>
-    {% if show_auto_configure_btn %}
-      <a href="#" data-toggle="modal" id="autoconfig_btn" data-target="#autoconfig_params" target="_blank" class="btn btn-primary">AutoConfigure DB Params</a>
-      <em>* Atualiza somente o max_connections (MySQL) e não gera downtime!</em>
-    {% endif %}
+
+  <div class="col-12">
+    <a href="#" data-toggle="modal" id="autoconfig_btn" data-target="#autoconfig_params" target="_blank" class="btn btn-primary">
+        AutoConfigure Dynamic Params
+    </a>
+    <span data-toggle="tooltip" data-placement="bottom" title="Atualiza somente o max_connections (MySQL) e não gera downtime!">
+        <i class="fa fa-info-circle"></i>
+    </span>
+
+    <a href="#" data-toggle="modal" id="autoconfig_btn" data-target="#autoconfig_static_params" target="_blank" class="btn btn-danger" style="margin-left: 3em">
+        AutoConfigure Static Params
+    </a>
+    <span data-toggle="tooltip" data-placement="bottom" title="Pode gerar DOWNTIME pois reinicia a DB!">
+        <i class="fa fa-info-circle"></i>
+    </span>
   </div>
+
 
   <div class="panel-body">
     <table id="table-parameters" class="table table-striped table-hover" data-database-id="{{database.pk}}" >
@@ -168,6 +180,9 @@
   {% endif %}
 {% include "admin/confirmation_modal.html" with modal_id="autoconfig_params" confirmation_message="Are you sure you want to AutoConfigure database parameters now?" box_title="AutoConfigure Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_params_confirm" id_optional="id=id_autoconfig_params" %}
 
+{% include "admin/confirmation_modal.html" with modal_id="autoconfig_static_params" confirmation_message='Are you sure you want to AutoConfigure database static parameters now? <br> <u style="color: red">This will reboot the database and might lead to a temporary DOWNTIME!</u>' box_title="AutoConfigure Static Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_static_params_confirm" id_optional="id=id_autoconfig_static_params" %}
+
+
 {% endblock %}
 
 {% block js_footer %}
@@ -175,7 +190,9 @@
 
 <script src="{% static "assets/js/bignumber.min.js" %}"></script>
 <script src="{% static "js/parameters_validator.js" %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-tooltip.js' %}"></script>
 <script type="text/javascript">
+
   var database_id = '{{ database.id }}';
 
   function resetDefault(checkbox_control, id)
@@ -232,6 +249,7 @@
   }
 
   jQuery(document).ready(function($) {
+    $('[data-toggle="tooltip"]').tooltip();
 
     $("#id_change_parameter_yes").keyup(function() {
       var btn = document.getElementById("id_change_parameter_btn_modal");
@@ -255,6 +273,27 @@
       running_update = true;
       $("#id_autoconfig_params").attr('disabled','disabled');
       url = "/logical/autoconfigure_db_params/"+ database_id;
+
+      jQuery.ajax({
+          "dataType": "json",
+          "url": url,
+          "type": "GET"
+      }).success(function() {
+        running_update = false;
+        window.location.reload();
+
+      }).error(function() {
+          alert("invalid server response")
+      });
+    });
+
+  $("#id_autoconfig_static_params").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_autoconfig_static_params").attr('disabled','disabled');
+      url = "/logical/autoconfigure_static_db_params/"+ database_id;
 
       jQuery.ajax({
           "dataType": "json",

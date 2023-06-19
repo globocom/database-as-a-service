@@ -542,7 +542,7 @@ class MySQL(BaseDriver):
     def create_db_params_changes(self, database):
         from physical.models import DatabaseInfraParameter
 
-        parameter = self.get_max_connections_parameter()
+        parameter = self.get_parameter(parameter_name='max_connections')
         value = self.get_max_connections_value(database)
 
         LOG.info('Parameter {} will be set to {}'.format(parameter.name, value))
@@ -552,13 +552,27 @@ class MySQL(BaseDriver):
             parameter=parameter,
             value=value
         )
+
+    def create_static_db_params_changes(self, database):
+        from physical.models import DatabaseInfraParameter
+
+        parameter = self.get_parameter(parameter_name='innodb_buffer_pool_size')
+        value = self.get_innodb_buffer_pool_size_value(database)
+
+        LOG.info('Parameter {} will be set to {}'.format(parameter.name, value))
+
+        DatabaseInfraParameter.update_parameter_value(
+            databaseinfra=database.databaseinfra,
+            parameter=parameter,
+            value=value
+        )
         
-    def get_max_connections_parameter(self):
+    def get_parameter(self, parameter_name):
         from physical.models import Parameter
 
-        param = Parameter.objects.filter(name='max_connections').first()
+        param = Parameter.objects.filter(name=parameter_name).first()
         if not param:
-            raise ObjectDoesNotExist('Parametro max_connections nao foi encontrado')
+            raise ObjectDoesNotExist('Parametro {} nao foi encontrado'.format(parameter_name))
         
         return param
     
@@ -571,7 +585,6 @@ class MySQL(BaseDriver):
         
         offering = database.databaseinfra.offering
         return self.get_max_connections_value_from_steps(steps, offering)
-
 
     def get_max_connections_value_from_steps(self, steps, offering):
         # steps ~= "0:1000,32768:2000,65536:4000"
@@ -589,6 +602,24 @@ class MySQL(BaseDriver):
             return int(steps_map['0'])
         
         return int(steps_map[ram])
+
+    def get_innodb_buffer_pool_size_value(self, database):
+        # TODO: duplicated on configurations.py, could be improved (?)
+        offering = database.databaseinfra.offering
+        ram = offering.memory_size_mb
+
+        # RAM -> 25% < 1GB - 60% < 16GB - 75%
+        if ram < 1024:
+            default = ram / 4
+        elif ram < 8192:
+            default = ram * 0.5
+        elif ram == 8192:
+            default = ram * 0.6
+        else:
+            default = (ram * 3) / 4
+
+        return int(default) * 1048576  # MB to Byte (this parameter needs to be set in bytes)
+
 
 class MySQLFOXHA(MySQL):
 

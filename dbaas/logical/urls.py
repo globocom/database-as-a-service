@@ -1,7 +1,9 @@
 from django.conf.urls import patterns, url
 from .views import refresh_status, toggle_monitoring, start_database_vm, stop_database_vm, set_attention, funct_send_all_chg
 from .views import (CredentialView, CredentialSSLView,
-                    credential_parameter_by_name, check_offering_sizes, resize_vm_from_btn, auto_configure_db_params_btn)
+                    credential_parameter_by_name, check_offering_sizes,
+                    resize_vm_from_btn, auto_configure_db_params_btn,
+                    auto_configure_static_db_params_btn)
 
 
 urlpatterns = patterns(
@@ -41,5 +43,8 @@ urlpatterns = patterns(
         name="resize_vm_from_btn"),
     url(r"^autoconfigure_db_params/(?P<database_id>\d*[\w\-\_]+)",
         auto_configure_db_params_btn,
-        name="auto_configure_db_params_btn")
+        name="auto_configure_db_params_btn"),
+    url(r"^autoconfigure_static_db_params/(?P<database_id>\d*[\w\-\_]+)",
+        auto_configure_static_db_params_btn,
+        name="auto_configure_static_db_params_btn")
 )
