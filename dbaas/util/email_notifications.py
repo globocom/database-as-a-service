@@ -32,7 +32,7 @@ def get_database_url(uuid):
 
 
 def notify_new_database_creation(database=None):
-    subject = _("[DBAAS] a new database has just been created: %s" % database.name)
+    subject = _("[DBAAS] a new database has just been created: {} by {}".format(database.name, database.team.name))
     template = "database_create_notification"
     addr_from = Configuration.get_by_name("email_addr_from")
     addr_to = Configuration.get_by_name_as_list("new_user_notify_email")
