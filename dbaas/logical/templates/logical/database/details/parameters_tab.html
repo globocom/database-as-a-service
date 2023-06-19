@@ -180,7 +180,7 @@
   {% endif %}
 {% include "admin/confirmation_modal.html" with modal_id="autoconfig_params" confirmation_message="Are you sure you want to AutoConfigure database parameters now?" box_title="AutoConfigure Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_params_confirm" id_optional="id=id_autoconfig_params" %}
 
-{% include "admin/confirmation_modal.html" with modal_id="autoconfig_static_params" confirmation_message="Are you sure you want to AutoConfigure database static parameters now?" box_title="AutoConfigure Static Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_static_params_confirm" id_optional="id=id_autoconfig_static_params" %}
+{% include "admin/confirmation_modal.html" with modal_id="autoconfig_static_params" confirmation_message="Are you sure you want to AutoConfigure database static parameters now? This will reboot the database and might lead to a temporary DOWNTIME!" box_title="AutoConfigure Static Params" button_type="button" button_value="Auto Configure Parameters" button_name="autoconfig_static_params_confirm" id_optional="id=id_autoconfig_static_params" %}
 
 
 {% endblock %}
