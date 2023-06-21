@@ -601,6 +601,14 @@ class ACLFromHellClient(object):
             hostname, resp.status_code
         ))
 
+    def add_job_acl_for_vip_if_needed(self, database, job_name):
+        databaseinfra = database.databaseinfra
+        if not databaseinfra.vips.exists():
+            return
+
+        vip_dns = self._get_vip_dns(databaseinfra)
+        self.add_job_acl(database, job_name, vip_dns)
+
     def remove_acl(self, database, app_name):
         rules = self.get_enabled_rules(database, app_name)
 
@@ -626,3 +634,124 @@ class ACLFromHellClient(object):
                         rule_id, host)
                     LOG.error(msg)
         return None
+
+    def add_job_acl(self, database, job_name, hostname):
+        rules = self.get_job_enabled_rules(
+            database,
+            job_name,
+            extra_params={'destination.externaldns.name': hostname}
+        )
+        if rules:
+            msg = "Rule already registered. Database: {}, \
+                   Job Name: {}, Hostname: {} - Rules: {}".format(
+                       database, job_name, hostname, rules
+                   )
+            LOG.info(msg)
+            return
+
+        infra = database.infra
+        driver = infra.get_driver()
+
+        payload = {
+            "source": {
+                "tsurujob": {
+                    "jobname": job_name
+                }
+            },
+            "destination": {
+                "externaldns": {
+                    "name": hostname,
+                    "ports": map(
+                        lambda p: {
+                            'protocol': 'tcp',
+                            'port': p
+                        },
+                        driver.ports
+                    )
+                }
+            },
+            "target": "accept",
+            "metadata": {
+                'owner': 'dbaas',
+                "service-name": self.credential.project,
+                "instance-name": database.name
+            }
+        }
+
+        LOG.info("Tsuru Add ACL For Job: payload for host {}:{}".format(
+            hostname, payload))
+        resp = self._request(
+            requests.post,
+            self.credential.endpoint,
+            json=payload,
+        )
+        if not resp.ok:
+            error = "Cant set acl for job {}:{}-{}. Error: {}".format(
+                job_name, database, hostname, resp.content
+            )
+            LOG.error(msg)
+            raise CantSetACLError(error)
+
+        LOG.info("Tsuru Add ACL Status for host {}: {}".format(
+            hostname, resp.status_code
+        ))
+
+    def remove_job_acl(self, database, job_name):
+        rules = self.get_job_enabled_rules(database, job_name)
+
+        if not rules:
+            msg = "Rule not found for {}.".format(
+                database.name)
+            LOG.debug(msg)
+
+        for rule in rules:
+            rule_id = rule.get('RuleID')
+            host = (rule.get('Destination', {})
+                    .get('ExternalDNS', {})
+                    .get('Name'))
+            if rule_id:
+                LOG.info('Tsuru Unbind App removing rule for job{}:{}-{}'.format(
+                    job_name, database, host))
+                resp = self._request(
+                    requests.delete,
+                    '{}/{}'.format(self.credential.endpoint, rule_id)
+                )
+                if not resp.ok:
+                    msg = "Error on delete rule {} for {}.".format(
+                        rule_id, host)
+                    LOG.error(msg)
+        return None
+
+    def get_job_enabled_rules(self, database, job_name, extra_params=None):
+        enabled_rules = []
+        params = {
+            'metadata.owner': 'dbaas',
+            'metadata.service-name': self.credential.project,
+            'metadata.instance-name': database.name,
+            'source.tsurujob.jobname': job_name,
+        }
+
+        if extra_params:
+            params.update(extra_params)
+
+        LOG.debug("Tsuru get rule for {} params:{}".format(
+            database.name, params))
+        resp = self._request(
+            requests.get,
+            self.credential.endpoint,
+            params=params,
+        )
+
+        if not resp.ok:
+            LOG.debug("Tsuru Status on Get Rules for database {}: {}".format(
+                database, resp.status_code))
+            return enabled_rules
+
+        all_rules = resp.json()
+        if all_rules:
+            for rule in all_rules:
+                if rule.get('Removed'):
+                    continue
+                enabled_rules.append(rule)
+
+        return enabled_rules

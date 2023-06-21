@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url, patterns
 from views import (ListPlans, GetServiceStatus, GetServiceInfo, ServiceAdd,
-                   ServiceAppBind, ServiceUnitBind, ServiceRemove)
+                   ServiceAppBind, ServiceUnitBind, ServiceRemove,
+                   ServiceJobBind)
 
 urlpatterns = patterns(
     'tsuru.views',
@@ -17,4 +18,6 @@ urlpatterns = patterns(
         ServiceUnitBind.as_view()),
     url(r'^resources/(?P<database_name>\w+)/bind-app$',
         ServiceAppBind.as_view(), name='service-app-bind'),
+    url(r'^resources/(?P<database_name>\w+)/bind-job$',
+        ServiceJobBind.as_view(), name='service-job-bind'),
     )
