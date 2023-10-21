@@ -21,7 +21,7 @@ PyHamcrest==1.7.2
 PyYAML==3.10
 South==1.0
 Unidecode==0.04.14
-Werkzeug==0.9.4
+Werkzeug==2.2.3
 Whoosh==2.7.2
 amqp==1.4.6
 anyjson==0.3.3
